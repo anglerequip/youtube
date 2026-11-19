@@ -111,18 +111,22 @@ def _jams(z, v, slow=5.0, pad=3.0, max_n=8):
     return [[round(a, 1), round(b, 1)] for a, b in segs[:max_n]]
 
 
-def _pick_story(R, Lr, w, c, v, offsets):
+def _pick_story(R, Lr, w, c, v, offsets, nb=None, v_split=None):
     """One followed car, three moments of its own simulated life (hard cuts between them): `w` where its
     lane flows and it overtakes other-lane cars without braking, `c` where it crawls in a jam while the
     other lane passes it, `v` where cars both pass it and get passed. A single continuous window with all
     three does not exist in this simulation (searched 2026-11-19), so the edit jumps forward in time at the
-    cuts, like any documentary. Returns (ego, [offset_w, offset_c, offset_v])."""
+    cuts, like any documentary. `nb` (the numbers beat) wants cars passing both ways around it; `v_split`
+    splits `v` at "The ones you pass": first other-lane cars overtake it, then it overtakes (picture review,
+    round 7: the yellow car overtook while the line said "the cars that pass you"). Returns
+    (ego, [offset_w, offset_c, offset_v, offset_nb]).""" 
     brk = _brakes(R.a)
     n = R.x.shape[1]
-    bw, bc, bv = np.full(n, -1e9), np.full(n, -1e9), np.full(n, -1e9)
-    ow, oc, ov = np.zeros(n, int), np.zeros(n, int), np.zeros(n, int)
+    nb = nb or v
+    bw, bc, bv, bn = np.full(n, -1e9), np.full(n, -1e9), np.full(n, -1e9), np.full(n, -1e9)
+    ow, oc, ov, on = np.zeros(n, int), np.zeros(n, int), np.zeros(n, int), np.zeros(n, int)
     for o in offsets:
-        if o + max(w[1], c[1], v[1]) >= R.v.shape[0]:
+        if o + max(w[1], c[1], v[1], nb[1]) >= R.v.shape[0]:
             break
         pw, qw = _crossings(R, Lr, o + w[0], o + w[1])
         sw = 2.0 * np.minimum(pw, 4) - 2.0 * qw - 12.0 * brk[o + w[0]: o + w[1]].mean(axis=0)
@@ -134,13 +138,20 @@ def _pick_story(R, Lr, w, c, v, offsets):
         vc = R.v[o + c[0]: o + c[1]]
         sc = 2.0 * np.minimum(qc, 3) - 3.0 * pc - 1.5 * vc.mean(axis=0) - 1.0 * vc.max(axis=0) \
             + 0.6 * np.minimum(ahead, 6) + 3.0 * np.minimum(flow, 3)      # crawling means really slow (round 4)
-        pv, qv = _crossings(R, Lr, o + v[0], o + v[1])
-        sv = np.minimum(qv, 2) + np.minimum(pv, 2) + 0.5 * ((qv > 0) & (pv > 0))
-        for s_, b_, o_ in ((sw, bw, ow), (sc, bc, oc), (sv, bv, ov)):
+        if v_split:
+            p1, q1 = _crossings(R, Lr, o + v[0], o + v_split)
+            p2, q2 = _crossings(R, Lr, o + v_split, o + v[1])
+            sv = 2.0 * np.minimum(q1, 2) - 3.0 * p1 + 2.0 * np.minimum(p2, 2) - 1.5 * q2
+        else:
+            pv, qv = _crossings(R, Lr, o + v[0], o + v[1])
+            sv = np.minimum(qv, 2) + np.minimum(pv, 2) + 0.5 * ((qv > 0) & (pv > 0))
+        pn, qn = _crossings(R, Lr, o + nb[0], o + nb[1])
+        sn = np.minimum(qn, 3) + np.minimum(pn, 3) + 1.0 * ((qn > 0) & (pn > 0)) + 0.5 * _flow_past(R, Lr, o + nb[0], o + nb[1], dv=1.5)
+        for s_, b_, o_ in ((sw, bw, ow), (sc, bc, oc), (sv, bv, ov), (sn, bn, on)):
             better = s_ > b_
             b_[better] = s_[better]; o_[better] = o
-    e = int(np.argmax(bw + bc + bv))
-    return e, [int(ow[e]), int(oc[e]), int(ov[e])]
+    e = int(np.argmax(bw + bc + bv + bn))
+    return e, [int(ow[e]), int(oc[e]), int(ov[e]), int(on[e])]
 
 
 def _pick_ego(R, Lr, a, b, c, d, offsets):
@@ -186,11 +197,18 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     # while the narration says "slow traffic is packed tight" (reviewer 2026-11-19: both lanes looked
     # equally sparse around the old ego). Score: cars ahead in its lane minus cars ahead in the other.
     ego_s = _pick_dense_ego(split_r, split_l, int(round(S("dense") * fps)), int(round(cut_eq * fps)), int(10 * fps))
-    # equal scenario: ego flows during "watch" and crawls during "crawl"
+    def at(bid, phrase):
+        """Approximate time a phrase is spoken: its character position within the beat's narration."""
+        txt = next(ln.text for ln in tl.lines if ln.id == bid).replace("*", "")
+        return S(bid) + (E(bid) - S(bid)) * max(txt.find(phrase), 0) / max(len(txt), 1)
+    # equal scenario: ego flows during "watch", crawls during "crawl", sees traffic pass both ways during the
+    # numbers, and during "view" is first overtaken, then overtakes
     f = lambda t: int(round((t - cut_eq) * fps))
     ego_e, offs = _pick_story(eq_r, eq_l, (f(S("watch")), f(E("watch"))), (f(S("crawl")), f(E("crawl"))),
-                              (f(S("view")), f(E("view"))), range(0, 5200, 15))
-    seg_off = lambda t: offs[0] if t < S("crawl") - 0.1 else offs[1] if t < S("view") - 0.1 else offs[2]
+                              (f(S("view")), f(E("view"))), range(0, 5200, 15),
+                              nb=(f(S("number")), f(E("number"))), v_split=f(at("view", "The ones you pass")))
+    seg_off = lambda t: (offs[0] if t < S("crawl") - 0.1 else offs[1] if t < S("number") - 0.1
+                         else offs[3] if t < S("view") - 0.1 else offs[2])
     off_e = offs[0]
 
     frames = {"right": [], "left": [], "rb": [], "lb": [], "ego": [], "scen": [], "scroll": [], "focal_pt": [], "jams": []}
@@ -220,6 +238,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         frames["jams"].append(_jams(-rel(R.x[k]), R.v[k]) if t < cut_eq else [])
 
     ego = lambda i: (LANE_X[0], 0.0, 0.0)
+    n_cut = at("number", "forty-two") - 0.35
     # Cuts every 2.5-6 s (house style: a new angle for most beats, no shot over ~6 s)
     shots = cam.chain([
         # 1. chase cam behind the ego car, the other lane rolling past
@@ -245,8 +264,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # 5. 3/4 aerial from behind the jam, looking forward along it (round 4: the old map view lost the
         # jam while the 62% card was up). The followed car leaves the jam's front at ~26 s and the jam drifts
         # backwards, so these shots frame the jam (z +30..+150 behind the car), not the car.
-        cam.shot(S("share") - 0.05, S("odds") - 0.1, [(S("share"), [9.0, 26.0, 118.0], [0.0, 0.0, 35.0], 42),
-                                                      (S("odds"), [10.0, 27.0, 126.0], [0.0, 0.0, 48.0], 42)], fps, "key", ego),
+        cam.shot(S("share") - 0.05, S("odds") - 0.1, [(S("share"), [-4.0, 26.0, 118.0], [0.0, 0.0, 35.0], 42),
+                                                      (S("odds"), [-4.5, 27.0, 126.0], [0.0, 0.0, 48.0], 42)], fps, "key", ego),
         # 6. the same jam from the fast-lane side, a little lower
         cam.shot(S("odds") - 0.1, cut_eq, [(S("odds"), [-12.0, 18.0, 140.0], [0.5, 0.0, 62.0], 42),
                                            (cut_eq, [-13.0, 19.0, 146.0], [0.5, 0.0, 72.0], 42)], fps, "key", ego),
@@ -264,10 +283,12 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         cam.shot(S("crawl") - 0.1, S("number") - 0.1, [(S("crawl"), [-1.2, 6.0, 16.0], [-0.7, 0.4, -4.0], 46),
                                                        (S("number"), [-1.4, 6.3, 15.0], [-0.7, 0.4, -4.5], 46)], fps, "golden", ego),
         # 10. the numbers, still on the ringed driver (round 4: they used to sit over a generic aerial)
-        cam.shot(S("number") - 0.1, S("number") + 3.9, [(S("number"), [5.0, 9.0, 13.0], [0.0, 1.0, -0.3], 44),
-                                                        (S("number") + 3.9, [6.0, 9.5, 11.0], [0.0, 1.0, -0.3], 44)], fps, "golden", ego),
-        cam.shot(S("number") + 3.9, S("view") - 0.1, [(S("number") + 3.9, [-6.5, 9.5, 12.0], [0.0, 1.0, -0.3], 44),
-                                                      (S("view"), [-7.5, 10.0, 10.0], [0.0, 1.0, -0.3], 44)], fps, "golden", ego),
+        # numbers (round 7 review: a 9 s near-static orbit with no overtaking under 48/42/10): a centreline
+        # shot behind the car while it is overtaken, then a high pull-out with traffic passing both ways
+        cam.shot(S("number") - 0.1, n_cut, [(S("number"), [-1.8, 8.0, 17.0], [-1.8, 0.0, -22.0], 42),
+                                            (n_cut, [-1.8, 9.0, 19.0], [-1.8, 0.0, -24.0], 42)], fps, "golden", ego),
+        cam.shot(n_cut, S("view") - 0.1, [(n_cut, [-6.0, 17.0, 30.0], [-1.0, 0.0, -30.0], 44),
+                                          (S("view"), [-6.5, 19.0, 34.0], [-1.0, 0.0, -34.0], 44)], fps, "golden", ego),
         # 11. just above and behind the ego roof: cars that pass stay in view ahead
         cam.shot(S("view") - 0.1, S("outro") - 0.1, [(S("view"), [-1.0, 6.5, 14.0], [-0.9, 0.0, -18], 46),
                                                      (S("outro"), [-1.2, 6.2, 13.0], [-0.9, 0.0, -17], 46)], fps, "golden", ego),
@@ -289,10 +310,6 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
 
     sh = tr.share_in_slow_lane(); ov = tr.overtaken_fraction()
 
-    def at(bid, phrase):
-        """Approximate time a phrase is spoken: its character position within the beat's narration."""
-        txt = next(ln.text for ln in tl.lines if ln.id == bid).replace("*", "")
-        return S(bid) + (E(bid) - S(bid)) * max(txt.find(phrase), 0) / max(len(txt), 1)
     # the rest of the time neither car is faster (within 0.5 m/s): shown as the remainder of the two rounded
     # numbers so the three cards add up to 100 (reviewer, round 3: "the remaining 10% is unexplained")
     level_pct = 100 - round(ov["passed_frac"] * 100) - round(ov["passing_frac"] * 100)

@@ -17,7 +17,7 @@ voice: af_bella
 speed: 1.1
 beats:
   - id: hook
-    text: "The other lane really is faster. You're not imagining it."
+    text: "The other lane really does pass you more. You're not imagining it."
     pause_after: 0.3
   - id: setup
     text: "You're crawling along, and the next lane just keeps sliding past. It feels like bad luck. Like the universe picked your lane."
