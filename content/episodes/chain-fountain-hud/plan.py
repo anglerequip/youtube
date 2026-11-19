@@ -39,7 +39,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         t = i / fps
         a = cf.ALPHA
         if t >= t_off:
-            a = cf.ALPHA * (1 - cam.ease((t - t_off) / 1.3))
+            a = cf.ALPHA * (1 - cam.ease((t - t_off) / 2.0))
         if t >= t_on:
             a = cf.ALPHA * cam.ease((t - t_on) / 1.2)
         alpha.append(a)
@@ -50,7 +50,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
             # model arch's top sinks to the jar rim, or the blended chain cuts through the glass (flicker at the rim)
             h_full = cf.steady(h2, cf.ALPHA)["h1"]
             u = (F["h1"][i] - H1_RIM) / max(1e-6, h_full - H1_RIM)
-            F["morph"][i] = round(cam.ease(min(1.0, max(0.0, u))), 4)
+            F["morph"][i] = round(min(1.0, max(0.0, u)), 4)      # linear: no snap at the end of the blend
     F["alpha_pct"] = [round(100 * a, 3) for a in alpha]
     # ---- hook: open close on the arch (it fills the middle of the frame), then pull back to the old framing
     s0 = plan["shots"][0]
