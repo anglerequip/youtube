@@ -6,8 +6,6 @@ renderer: three
 scene: clocks3d
 hook_family: 1          # impossible-sounding claim that is literally true
 structure: B            # surprising result -> mechanism -> proof -> consequence
-# DRAFT (2026-11-19): narration, claims and sources are final candidates; plan.py / scene / duration
-# fields wait for the content-driven duration work (thread "Make video length fit each story").
 description: |
   Gravity slows time, so the clocks at your feet tick a tiny bit slower than the clocks at your head.
   It's about one part in ten million billion per metre, and NIST measured it in 2010 by lifting an
@@ -17,32 +15,39 @@ description: |
 tags: [relativity, time dilation, gravity, einstein, atomic clock, physics, GPS, shorts]
 voice: af_bella
 speed: 1.1
+story:
+  core_idea: "Gravity slows time, so the feet, being closer to Earth, age a tiny bit slower than the head."
+  fascination: "your own body is a relativity experiment, and someone actually measured it with clocks 33 cm apart"
+  steps: 3            # gravity slows time; feet are deeper in it; how big the effect is
+  buildup: medium
+  extras: [history, scale]   # NIST 2010 makes it real; GPS shows the tiny number matters
+  payoff: drift
+  cut:
+    - "why gravity slows time (equivalence principle, light climbing out of a well): a second video"
+    - "Pound-Rebka 1959 and the 2022 millimetre measurement: true, but a second proof slows the build"
+    - "GPS velocity correction (minus 7 microseconds a day): accurate detail, kept in the caveats"
+    - "lying down a third of your life: in the caveats; the line already says 'stand upright'"
+    - "closing joke ('ask them which end'): adds nothing after the payoff"
+end_hold_s: 1.0
 beats:
   - id: hook
     text: "Your head is older than your feet. And that's been *measured*."
     pause_after: 0.3
   - id: why
-    text: "Einstein worked it out. Gravity slows time down. The deeper you sit in it, the slower every clock ticks."
+    text: "Gravity slows time. The deeper you sit in it, the slower every clock ticks."
   - id: feet
-    text: "Your feet are closer to Earth's centre than your head. So down there, time runs a little slower."
+    text: "Your feet are closer to Earth's centre, so down there, time runs a little slower. Not just clocks. Everything."
   - id: small
-    text: "How little? About one part in ten million billion... for every metre of height."
+    text: "How much slower? About one part in ten million billion... per metre."
   - id: proof
-    text: "In twenty ten, physicists at NIST raised an atomic clock by just thirty-three centimetres."
-  - id: result
-    text: "And the higher clock ran *faster*. By almost exactly the amount Einstein predicted."
-    pause_after: 0.3
+    text: "In twenty ten, physicists at NIST raised an atomic clock just thirty-three centimetres. And it ran *faster*, almost exactly as Einstein predicted."
+    pause_after: 0.2
   - id: lifetime
-    text: "So if you stood upright for eighty years, your head would end up about half a millionth of a second older than your feet."
-  - id: real
-    text: "You'll never feel it. But it isn't a quirk of clocks. Everything down there, atoms included, runs that tiny bit slower."
+    text: "Stand upright for eighty years, and your head ends up about half a millionth of a second older than your feet."
   - id: gps
-    text: "And it matters. Up where GPS satellites fly, their clocks run fast by about forty-five microseconds a day, mostly from this effect."
+    text: "Too small to matter? GPS satellites fly so high that their clocks gain about forty-five microseconds a day, from gravity alone."
   - id: drift
-    text: "Leave that uncorrected, and your map would be off by kilometres after a single day."
-  - id: outro
-    text: "So the next time someone says you look young for your age... ask them which end they mean."
-    sfx: ding
+    text: "Ignore that, and your map would be off by kilometres in a single day."
 
 caveats:
   - "The effect is real but tiny: about 1.1e-16 per metre of height near Earth's surface (g*h/c^2). Nobody can feel it."
@@ -60,28 +65,133 @@ sources:
 # ---------------------------------------------------------------------------------------------
 # Single source of truth (factory/qa): every number heard or shown maps to a claim.
 claims:
-  - {id: rate_per_m, beat: small, unit: "1/m", sim: rate_per_m, scope: universal, tolerance: 0.15,
-     match: "one part in ten million billion",
-     evidence: {quality: 5, source: "Chou et al. 2010: 'about 1.1 × 10^-16 per meter of change in height'; g/c^2 = 1.09e-16 /m"}}
-  - {id: nist_year, beat: proof, unit: year, value: 2010, scope: history,
-     evidence: {quality: 5, source: "Chou et al., Science 329, 1630 (2010)"}}
+  - {id: rate_per_m, beat: small, unit: parts, sim: parts_per_m, scope: universal, tolerance: 0.15,
+     evidence: {quality: 1, source: "Chou et al., Science 329, 1630 (2010): 'about 1.1 × 10^-16 per meter of change in height'; g/c^2 = 1.09e-16 per metre, i.e. one part in 9.2e15"}}
   - {id: nist_height, beat: proof, unit: cm, value: 33, scope: history,
-     evidence: {quality: 5, source: "Chou et al. 2010; NIST release: 33 centimeters"}}
-  - {id: nist_measured, card: "4.1 ± 1.6 × 10⁻¹⁷", unit: "1", value: 4.1e-17, scope: history,
-     evidence: {quality: 5, source: "Chou et al. 2010, Fig. 3: (4.1 ± 1.6) × 10^-17; prediction g*0.33/c^2 = 3.6e-17"}}
-  - {id: years, beat: lifetime, unit: year, value: 80, scope: condition}
-  - {id: lifetime_ns, beat: lifetime, unit: s, sim: lifetime_s, scope: condition, tolerance: 0.1,
-     match: "half a millionth of a second",
-     evidence: {quality: 5, source: "g*h/c^2 * t with h = 1.7 m, t = 80 years -> 4.7e-7 s; NIST scales to ~90 ns for 1 ft over 79 years"}}
-  - {id: gps_grav, beat: gps, unit: "µs/day", value: 45, scope: typical,
-     evidence: {quality: 5, source: "Ashby 2003: gravitational blueshift of GPS clocks ≈ 45.7 µs/day; net with velocity ≈ 38.4 µs/day"}}
-  - {id: gps_drift, beat: drift, unit: km, value: 11, scope: model, match: "kilometres",
-     evidence: {quality: 4, source: "Ashby 2003; 38 µs/day × c ≈ 11 km/day (uncorrected clock drift as a range error)"}}
+     evidence: {quality: 1, source: "Chou et al. 2010; NIST release (23 Sept 2010): 33 centimeters"}}
+  - {id: nist_year, card: "NIST, 2010", unit: year, value: 2010, scope: history,
+     evidence: {quality: 1, source: "Chou et al., Science 329, 1630 (2010)"}}
+  - {id: years, beat: lifetime, unit: count, value: 80, scope: condition}
+  - {id: lifetime, beat: lifetime, unit: s, sim: lifetime_s, scope: condition, tolerance: 0.1,
+     evidence: {quality: 1, source: "g h/c^2 x t with h = 1.7 m, t = 80 years = 4.7e-7 s; NIST scales the same formula to about 90 ns for 1 ft over 79 years"}}
+  - {id: lifetime_ns, card: "468 ns", unit: ns, sim: lifetime_ns, scope: condition, tolerance: 0.02,
+     evidence: {quality: 1, source: "same formula, shown on the live counter"}}
+  - {id: years_hud, card: "80 years", unit: count, value: 80, scope: condition}
+  - {id: height, card: "1.7 m", unit: m, sim: height_m, scope: condition,
+     evidence: {quality: 2, source: "assumed head-above-feet height for a standing adult (stated on screen)"}}
+  - {id: lift_hud, card: "33 cm", unit: cm, sim: nist_cm, scope: history, event: lift_33cm,
+     evidence: {quality: 1, source: "Chou et al. 2010"}}
+  - {id: gps_grav, beat: gps, unit: "µs", sim: gps_grav_us, scope: typical,
+     evidence: {quality: 1, source: "Ashby, Living Rev. Relativ. 6, 1 (2003): gravitational frequency shift of GPS clocks vs the geoid ≈ +45.7 µs/day (velocity -7.1, net +38.6)"}}
+  - {id: gps_drift, card: "11.6 km", unit: km, sim: gps_km_per_day, scope: model, tolerance: 0.05,
+     evidence: {quality: 2, source: "Ashby 2003: net 38.6 µs/day x speed of light = 11.6 km of range per day if uncorrected (the usual textbook estimate; real receiver errors depend on geometry)"}}
 
 absolute_ok:
-  - {beat: real, word: never, why: "a difference of ~1e-16 is far below any human perception; worded as 'feel'"}
-  - {beat: real, word: Everything, why: "gravitational time dilation applies to all physical processes at that height, not only clocks"}
-  - {beat: why, word: every, why: "the redshift is universal: it applies to every clock (equivalence principle), tested with many clock types"}
-  - {beat: result, word: exactly, why: "qualified as 'almost exactly'; measured 4.1 ± 1.6 vs predicted 3.6 (×10^-17), agreement within the error bar"}
+  - {beat: why, word: every, why: "the gravitational redshift is universal (equivalence principle): it applies to every clock, tested with many clock types"}
+  - {beat: proof, word: exactly, why: "qualified as 'almost exactly'; measured (4.1 ± 1.6)e-17 vs predicted 3.6e-17, agreement within the error bar"}
 
-hero: feet_clock
+entities:
+  - id: figure
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "a faceless wooden toy figure standing upright on a small round patio"}
+  - id: clocks
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "two round wall clocks on a post: one at head height, one at the feet; the head clock's pulses come faster while EXAGGERATED shows"}
+  - id: mast
+    type: support
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "a tall mast with four clocks; higher clocks pulse faster (EXAGGERATED)"}
+  - id: atomic_clocks
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "two white instrument boxes with a glowing ion window on two tables; the left table rises 33 cm"}
+  - id: car
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "one chunky estate car driving on a straight road, a white ring under it and a red map pin sliding away ahead"}
+  - id: satellite
+    type: support
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "a toy satellite with two blue solar wings in the sky (NOT TO SCALE)"}
+  - id: ground
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "continuous grass, road and sky; no black holes or flickering seams"}
+  - id: trees
+    type: environment
+    category: F
+    importance: background
+    visual_contract: {must_read_as: "sparse low-poly trees framing the sets", no_cut_shadows: true}
+
+hero: clocks
+
+publish:
+  cover_headline: "Your head is older"
+  cover_label: "+468 ns over 80 years"
+  hashtags: ["#shorts", "#physics", "#relativity", "#einstein", "#science"]
+
+# ---------------------------------------------------------------------------------------------
+# Retention toolkit (factory/retention): every number below comes from the physics module via the plan.
+retention:
+  hud:
+    - id: height                   # head-to-feet measuring line beside the figure
+      type: dimension
+      label: head to feet
+      from: feet_mark
+      to: head_mark
+      value: {fact: height_m}
+      format: "{v:.1f} m"
+      show: [feet+0.3, feet.end]
+      claims: [{claim: height, at: feet+1.5}]
+    - id: lift                     # the 33 cm the NIST clock was raised
+      type: dimension
+      label: raised
+      from: lab_low
+      to: lab_high
+      value: {frames: lift, scale: 100}
+      format: "{v:.0f} cm"
+      show: [proof@raised+0.2, proof.end]
+      claims: [{claim: lift_hud, at: proof.end-0.3}]
+    - id: years                    # the time-lapse: 80 years pass
+      type: counter
+      label: standing for
+      value: {frames: years}
+      format: "{v:.0f} years"
+      at: [0.27, 0.2]
+      show: [lifetime+0.3, lifetime.end+0.5]
+      claims: [{claim: years_hud, at: lifetime.end+0.3}]
+    - id: ahead                    # the head's lead, the real value
+      type: counter
+      label: head older by
+      value: {frames: ns}
+      format: "{v:.0f} ns"
+      at: [0.63, 0.2]
+      show: [lifetime+0.3, lifetime.end+0.5]
+      claims: [{claim: lifetime_ns, at: lifetime.end+0.3}]
+    - id: error                    # uncorrected GPS: the map error over one day
+      type: counter
+      label: map error
+      value: {frames: err_km}
+      format: "{v:.1f} km"
+      at: [0.63, 0.2]
+      show: [drift+0.1, end]
+      claims: [{claim: gps_drift, at: end-0.2}]
+    - id: hours
+      type: counter
+      label: uncorrected for
+      value: {frames: hours}
+      format: "{v:.0f} hours"
+      at: [0.27, 0.2]
+      show: [drift+0.1, end]
+  cues:
+    - {at: "hud:ahead.settle", sfx: lock, gain: 0.26}
+    - {at: "hud:error.settle", sfx: lock, gain: 0.26}

@@ -32,7 +32,8 @@ _ONES = {"zero": 0, "one": 1, "a": 1, "an": 1, "two": 2, "three": 3, "four": 4, 
          "fourteen": 14, "fifteen": 15, "sixteen": 16, "seventeen": 17, "eighteen": 18, "nineteen": 19}
 _TENS = {"twenty": 20, "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60, "seventy": 70, "eighty": 80,
          "ninety": 90}
-_SCALES = {"hundred": 100, "thousand": 1000, "million": 1_000_000}
+_SCALES = {"hundred": 100, "thousand": 1000, "million": 1_000_000, "billion": 1_000_000_000,
+           "trillion": 1_000_000_000_000}
 _FRACTIONS = {"half": 0.5, "quarter": 0.25, "third": 1 / 3, "three quarters": 0.75}
 
 # unit words -> canonical unit
@@ -44,6 +45,8 @@ UNITS = [
     (r"met(?:re|er)s? per second|m/s", "m/s"),
     (r"kilomet(?:re|er)s?|km", "km"),
     (r"met(?:re|er)s?(?! per)|m(?![a-z/])", "m"),
+    (r"microseconds?|µs", "µs"),
+    (r"nanoseconds?|ns", "ns"),
     (r"seconds?|s(?![a-z])", "s"),
     (r"percent|per cent|%", "%"),
     (r"degrees?|°", "deg"),
@@ -72,8 +75,12 @@ def _words_to_number(tokens: list[str]) -> float | None:
             cur += _TENS[w]; seen = True
         elif w == "hundred":
             cur = (cur or 1) * 100; seen = True
-        elif w in ("thousand", "million"):
-            total += (cur or 1) * _SCALES[w]; cur = 0; seen = True
+        elif w in ("thousand", "million", "billion", "trillion"):
+            if cur == 0 and total > 0:             # stacked scales: "ten million billion" = 10^16
+                total *= _SCALES[w]
+            else:
+                total += (cur or 1) * _SCALES[w]
+            cur = 0; seen = True
         elif w == "and":
             continue
         else:
@@ -153,6 +160,25 @@ def mentions(text: str) -> list[dict]:
                     "qualifier": _qualifier(before), "text": m.group(0),
                     "absolute": [w for w in ABSOLUTE if re.search(rf"\b{w}\b", sent.lower())],
                     "sentence": sent, "pos": m.start()})
+    for m in _ORDINAL.finditer(t):
+        k = m.group(1).lower()
+        val = (0.5 if k == "half" else 0.25 if k == "a quarter" else 1.0) * _ORDSCALE[m.group(2).lower()]
+        before = t[max(0, m.start() - 30): m.start()].lower()
+        sent = _sentence_of(t, m.start())
+        out = [o for o in out if not (m.start() <= o["pos"] < m.end())]
+        out.append({"value": val, "unit": "s", "qualifier": _qualifier(before), "text": m.group(0),
+                    "absolute": [w for w in ABSOLUTE if re.search(rf"\b{w}\b", sent.lower())],
+                    "sentence": sent, "pos": m.start()})
+    for m in _PARTS_IN.finditer(t):
+        val = _words_to_number([w for w in m.group(1).lower().replace("-", " ").split() if w])
+        if val is None:
+            continue
+        before = t[max(0, m.start() - 30): m.start()].lower()
+        sent = _sentence_of(t, m.start())
+        out = [o for o in out if not (m.start() <= o["pos"] < m.end())]
+        out.append({"value": float(val), "unit": "parts", "qualifier": _qualifier(before), "text": m.group(0).strip(),
+                    "absolute": [w for w in ABSOLUTE if re.search(rf"\b{w}\b", sent.lower())],
+                    "sentence": sent, "pos": m.start()})
     for rx, val, unit in _SPECIAL:
         for m in rx.finditer(t):
             if any(abs(o["pos"] - m.start()) < 3 for o in out):
@@ -184,6 +210,10 @@ def _qualifier(before: str) -> str:
 
 
 _FULL = re.compile(r"\b(?:a|one) full (turn|rotation|one)\b", re.I)
+# "half a millionth of a second" = 5e-7 s; "one part in ten million billion" = a ratio of 1e16
+_ORDINAL = re.compile(r"\b(half|a quarter|a|one) (?:a |an )?(thousandth|millionth|billionth)s? of a second\b", re.I)
+_ORDSCALE = {"thousandth": 1e-3, "millionth": 1e-6, "billionth": 1e-9}
+_PARTS_IN = re.compile(rf"\b(?:one|a) part in ((?:\b(?:{_NUMWORD})\b[\s-]*)+)", re.I)
 _SPECIAL = [(re.compile(r"\b(?:in|into) (two|half)\b(?!\s+(?:thousand|hundred|million|point))", re.I), 2.0, "pieces"),     # "breaks in two"
             (re.compile(r"\bdoubles?\b", re.I), 2.0, "x"),                       # "the arch doubles"
             (re.compile(r"\btriples?\b", re.I), 3.0, "x")]

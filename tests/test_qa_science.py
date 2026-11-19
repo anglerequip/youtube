@@ -72,3 +72,14 @@ def test_number_parsing():
 def test_almost_never_is_qualified():
     assert science.absolutes("You almost never can.") == []
     assert science.absolutes("You never can.") != []
+
+
+def test_large_scales_ordinal_times_and_parts_in():
+    """head-ages-faster wording: stacked scales, 'half a millionth of a second', 'one part in ...', µs/ns."""
+    from factory.qa.science import mentions
+    m = mentions("About one part in ten million billion... per metre.")
+    assert [(x["value"], x["unit"]) for x in m] == [(1e16, "parts")]
+    m = mentions("your head ends up about half a millionth of a second older")
+    assert [(x["value"], x["unit"], x["qualifier"]) for x in m] == [(5e-7, "s", "approx")]
+    assert [(x["value"], x["unit"]) for x in mentions("gain about forty-five microseconds a day")] == [(45.0, "µs")]
+    assert mentions("two million three thousand cars")[0]["value"] == 2_003_000
