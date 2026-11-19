@@ -14,7 +14,14 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
+
+# Windows Python defaults to cp1252 for text files, which cannot write "≈" or "°" (crashed the review
+# packet on Caesar's PC). Re-run in UTF-8 mode once, so every read_text/write_text is UTF-8 everywhere.
+if os.name == "nt" and not sys.flags.utf8_mode and __name__ == "__main__":
+    import subprocess
+    sys.exit(subprocess.call([sys.executable, "-X", "utf8", "-m", "factory", *sys.argv[1:]]))
 
 from .configuration import settings
 

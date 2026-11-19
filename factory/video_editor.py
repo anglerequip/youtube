@@ -100,3 +100,25 @@ def mux(video: Path, audio: Path, ass: Path, out: Path):
         "-shortest", "-movflags", "+faststart", str(out),
     ]
     subprocess.run(cmd, check=True)
+    _cap_true_peak(out)
+
+
+def _true_peak(path: Path) -> float | None:
+    import re
+    p = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", str(path), "-map", "0:a", "-af", "ebur128=peak=true",
+                        "-f", "null", "-"], capture_output=True, text=True)
+    m = re.findall(r"True peak:\s+Peak:\s+(-?[\d.]+|-inf)", p.stderr.replace("\n", " "))
+    return float(m[-1]) if m and m[-1] != "-inf" else None
+
+
+def _cap_true_peak(out: Path, limit: float = -1.0):
+    """AAC encoding overshoots the mastered WAV by up to ~2 dB, more with some ffmpeg builds (seen on
+    Windows ffmpeg 9). Measure the delivered file and, if needed, re-encode only the audio a little lower."""
+    tp = _true_peak(out)
+    if tp is None or tp <= limit:
+        return
+    tmp = out.with_suffix(".tp.mp4")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(out), "-c:v", "copy",
+                    "-af", f"volume={limit - 0.5 - tp:.2f}dB", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
+                    "-movflags", "+faststart", str(tmp)], check=True)
+    tmp.replace(out)

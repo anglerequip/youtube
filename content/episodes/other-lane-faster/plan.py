@@ -52,13 +52,31 @@ def _rel_speed(R, Lr, k0, k1):
 def _pick_ego(R, Lr, a, b, c, d, offsets):
     """(ego, offset): the ego passes its neighbours in window [a,b] and is passed in [c,d]."""
     best, arg = -1e9, (0, 0)
+    brk = _brakes(R.a)            # "they zip past" must not show brake lights (reviewer 2026-11-19)
     for o in offsets:
         if o + d >= R.v.shape[0]:
             break
-        score = _rel_speed(R, Lr, o + a, o + b) - 1.5 * _rel_speed(R, Lr, o + c, o + d)
+        score = (_rel_speed(R, Lr, o + a, o + b) - 1.5 * _rel_speed(R, Lr, o + c, o + d)
+                 - 12.0 * brk[o + a: o + b].mean(axis=0))
         e = int(np.argmax(score))
         if score[e] > best:
             best, arg = score[e], (e, o)
+    return arg
+
+
+def _pick_dense_ego(R, Lr, k0, k1, k_setup, ahead=70.0):
+    L = tr.LENGTH
+    best, arg = -1e9, 0
+    for e in range(R.x.shape[1]):
+        c = []
+        for k in range(k0, min(k1, R.x.shape[0]), 15):
+            xe = R.x[k, e] % L
+            dr = ((R.x[k] % L) - xe + L / 2) % L - L / 2
+            dl = ((Lr.x[k] % L) - xe + L / 2) % L - L / 2
+            c.append(((dr > -15) & (dr < ahead)).sum() - ((dl > -15) & (dl < ahead)).sum())
+        score = float(np.mean(c)) - 0.4 * float(R.v[:k_setup, e].mean())
+        if score > best:
+            best, arg = score, e
     return arg
 
 
@@ -70,8 +88,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     eq_r, eq_l = tr.scenario("equal")
     cut_eq = S("rehook") - 0.1            # hard cut to the second experiment (equal lanes, golden light)
 
-    # split scenario: ego = a right-lane (slow lane) car that is crawling during the setup
-    ego_s = int(np.argmin(split_r.v[: int(10 * fps)].mean(axis=0)))
+    # split scenario: ego = a slow-lane car that crawls during the setup AND sits in the densest stretch
+    # while the narration says "slow traffic is packed tight" (reviewer 2026-11-19: both lanes looked
+    # equally sparse around the old ego). Score: cars ahead in its lane minus cars ahead in the other.
+    ego_s = _pick_dense_ego(split_r, split_l, int(round(S("dense") * fps)), int(round(cut_eq * fps)), int(10 * fps))
     # equal scenario: ego flows during "watch" and crawls during "crawl"
     f = lambda t: int(round((t - cut_eq) * fps))
     ego_e, off_e = _pick_ego(eq_r, eq_l, f(S("watch")), f(E("watch")), f(S("crawl")), f(E("crawl")), range(0, 5200, 60))
@@ -135,11 +155,11 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         cam.shot(S("rehook") + 3.0, S("watch") - 0.1, [(S("rehook") + 3.0, [-3.0, 12.0, 18.0], [-0.3, 0.5, -6.0], 42),
                                                        (S("watch"), [-3.5, 11.0, 15.0], [-0.3, 0.5, -6.0], 42)], fps, "golden", ego),
         # 8. 3/4 tracking on the ego car (ring): it zips past the other lane
-        cam.shot(S("watch") - 0.1, S("crawl") - 0.1, [(S("watch"), [-5.0, 9.0, 13.0], [-0.3, 0.6, -1.5], 44),
-                                                      (S("crawl"), [-6.0, 9.5, 11.0], [-0.3, 0.6, -2.0], 44)], fps, "golden", ego),
+        cam.shot(S("watch") - 0.1, S("crawl") - 0.1, [(S("watch"), [-8.0, 12.0, 16.0], [0.4, 0.3, -5.0], 44),
+                                                      (S("crawl"), [-8.5, 12.5, 14.0], [0.4, 0.3, -5.5], 44)], fps, "golden", ego),
         # 9. low on the far side: now it crawls while the other lane drifts by
-        cam.shot(S("crawl") - 0.1, S("number") - 0.1, [(S("crawl"), [7.0, 3.2, 6.0], [-0.6, 0.6, -5.0], 42),
-                                                       (S("number"), [7.0, 3.6, 2.5], [-0.6, 0.6, -6.0], 42)], fps, "golden", ego),
+        cam.shot(S("crawl") - 0.1, S("number") - 0.1, [(S("crawl"), [5.5, 5.0, 10.0], [-0.6, 0.4, -3.0], 42),
+                                                       (S("number"), [5.0, 5.4, 8.5], [-0.6, 0.4, -3.5], 42)], fps, "golden", ego),
         # 10. big picture: both lanes from high up, waves of brake lights travelling backwards
         cam.shot(S("number") - 0.1, S("view") - 0.1, [(S("number"), [18.0, 55.0, 40.0], [0.0, 0.0, -60.0], 40),
                                                       (S("view"), [22.0, 70.0, 30.0], [0.0, 0.0, -80.0], 40)], fps, "golden", ego),
@@ -172,9 +192,13 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     for i, t in enumerate(T):
         if S("dense") <= t < cut_eq:
             badges[i] = "SAME ROAD, TWO LANES"
-        elif S("watch") <= t < S("number"):
+        elif S("rehook") + 1.5 <= t < S("number"):
             badges[i] = "EQUAL AVERAGE SPEED"
     frames["badge"] = badges
+    # slow-lane wash: fades in when the narration compares the lanes, out before the second experiment
+    def _fade(t, a, b, r=0.5):
+        return max(0.0, min(1.0, (t - a) / r, (b - t) / r))
+    frames["lane_tint"] = [round(_fade(t, S("dense"), cut_eq - 0.2), 3) for t in T]
     frames["ring"] = [1 if S("watch") - 0.1 <= t < S("number") - 0.1 or (S("rehook") <= t < S("watch")) else 0 for t in T]
 
     timing = {"cut_eq": cut_eq, "reveals": [S("share") + 2.6], "cuts": [s["start"] for s in shots[1:]],
