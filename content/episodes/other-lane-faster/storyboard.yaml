@@ -26,7 +26,7 @@ beats:
   - id: gaps
     text: "Drivers leave smaller gaps when they're slow, so a jam squeezes more cars into the same stretch of road."
   - id: share
-    text: "So at any moment, more drivers are sitting in the slow lane. In this simulation, sixty-two percent of them."
+    text: "So at any moment, more drivers are sitting in the slow lane. In our setup, the jammed lane holds sixty-two percent of the cars."
   - id: odds
     text: "If you feel stuck, the odds say you probably are."
     pause_after: 0.4
@@ -59,7 +59,7 @@ sources:
 claims:
   - {id: lanes, card: "SAME ROAD, TWO LANES", unit: count, value: 2, scope: condition}
   - {id: slow_share, beat: share, unit: "%", sim: slow_lane_share_pct, scope: model,
-     evidence: {quality: 1, source: "our IDM simulation (Treiber et al., PRE 62, 1805, 2000); effect described by Bostrom"}}
+     evidence: {quality: 1, source: "our IDM simulation (Treiber et al., PRE 62, 1805, 2000); effect described by Bostrom", note: "the car counts per lane (96 vs 60 on a 2.4 km loop) are chosen in the setup; the simulation shows the denser lane is the slow one. Worded as a property of our setup, not a measured result (picture review, round 6)"}}
   - {id: overtaken, beat: number, unit: "%", sim: overtaken_pct, scope: model, match: "being overtaken",
      evidence: {quality: 1, source: "our IDM simulation"}}
   - {id: overtaking, beat: number, unit: "%", sim: overtaking_pct, scope: model, match: "overtaking.",

@@ -69,8 +69,11 @@ def test_chain_v1_black_triangle_in_pixels():
 @renderer
 def test_chain_v1_black_triangle(tmp_path):
     sb, plan = _plan("chain-fountain")
-    old = _inspect("regression/chain3d_v1", plan, [57.0, 58.0], tmp_path)
-    new = _inspect("chain3d", plan, [57.0, 58.0], tmp_path)
+    # a time whose shot shows the clipped dome in the v1 scene (searched 2026-11-19: round 7 made 57-58 s a
+    # top-down shot, which never sees the horizon; 30 s, the rehook shot, does)
+    T_SKY = [30.0]
+    old = _inspect("regression/chain3d_v1", plan, T_SKY, tmp_path)
+    new = _inspect("chain3d", plan, T_SKY, tmp_path)
     assert _blockers(old, "geometry.world_missing"), "old scene must show the hole (clipped sky dome)"
     assert not _blockers(new, "geometry.world_missing")
 

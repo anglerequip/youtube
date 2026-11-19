@@ -12,7 +12,8 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { MAT, haloSprite } from '../materials.js';
 
 const BEAD = 0.0046, BR = 0.0019;    // bead pitch and bead radius (m): a 3.8 mm ball chain
-const LR = 0.00042;                  // radius of the short connecting link between beads
+const LR = 0.0007;                   // connecting link radius: drawn a little thicker than real (0.4 mm) so the beads read
+                                     // as one strand on a phone, not loose balls (picture review, rounds 5-6)
 const MAXB = 1400;
 const JR = 0.045, JH = 0.11;          // jar radius and height
 const NP = 600;                        // path resolution
@@ -32,7 +33,7 @@ function setLink(inst, i, p, q2) {
 }
 // a coiled heap of chain: stacked, wobbly spiral layers, bottom layer first; points every BEAD along it
 function coilPile(rand, rMax0, hTop, layers, rShrink) {
-  const pts = [], dy = (hTop - BR) / Math.max(1, layers - 1), pitch = 0.0042;
+  const pts = [], dy = (hTop - BR) / Math.max(1, layers - 1), pitch = 0.0062;   // gaps between turns: a coil, not a lattice
   for (let L = 0; L < layers; L++) {
     const rMax = Math.max(0.004, rMax0 * (1 - rShrink * (L / Math.max(1, layers - 1)) ** 1.6));
     const out = L % 2 === 0, ph = rand() * 6.283, ph2 = rand() * 6.283, y0 = BR + L * dy;
@@ -140,6 +141,11 @@ export function build(world, plan) {
     if (y > plan.pile_h - BR - 0.0045 && x > -0.003 && Math.abs(z) < 0.0055) pilePts.splice(i, 1);
   }
   const pile = mkInst(beadGeo, beadM, pilePts.length, jar), pileL = mkInst(linkGeo, linkMat, pilePts.length, jar);
+  // macro (badge "SIMPLIFIED"): the pile becomes a plain matte surface so the one tipping link and the strand
+  // lying on it read clearly (picture review, round 6: the bead pile looked like a molecule lattice)
+  const pileTop = new THREE.Mesh(new THREE.CylinderGeometry(JR - 0.002, JR - 0.002, plan.pile_h - BR, 48),
+    new THREE.MeshStandardMaterial({ color: '#6c7076', roughness: 0.85, metalness: 0.1 }));
+  pileTop.position.y = (plan.pile_h - BR) / 2; pileTop.receiveShadow = true; pileTop.visible = false; jar.add(pileTop);
   pilePts.forEach((P, i) => { setBead(pile, i, ...P); setLink(pileL, i, P, pilePts[i + 1]); });
   // floor heap (grows): the chain that has landed, coiled in a low mound, revealed in the order it was laid
   const heapPts = coilPile(world.rand, 0.11, 0.03, 9, 0.85);
@@ -160,7 +166,7 @@ export function build(world, plan) {
   // macro lever: one link (two beads + rod) being lifted; glow at the far end = the pile's push
   const lever = new THREE.Group(); S.add(lever);
   const linkM = new THREE.MeshStandardMaterial({ color: '#b9bdc2', metalness: 0.85, roughness: 0.3 });
-  const liftM = new THREE.MeshStandardMaterial({ color: '#e3e6ea', metalness: 0.7, roughness: 0.25, emissive: '#ffffff', emissiveIntensity: 0.12 });
+  const liftM = new THREE.MeshStandardMaterial({ color: '#e3e6ea', metalness: 0.7, roughness: 0.25, emissive: '#ffffff', emissiveIntensity: 0.35 });
   const lb1 = new THREE.Mesh(beadGeo, liftM), lb2 = new THREE.Mesh(beadGeo, liftM);
   const rod = new THREE.Mesh(new THREE.CylinderGeometry(LR, LR, BEAD, 8), linkM);
   [lb1, lb2, rod].forEach(o => { o.castShadow = true; lever.add(o); });
@@ -245,6 +251,7 @@ export function build(world, plan) {
       // macro lever
       const lv = F.lever ? F.lever[k] : null;
       lever.visible = !!lv;
+      pile.visible = pileL.visible = !lv; pileTop.visible = !!lv;
       if (lv) {
         // one cycle per link: lift by its end and tip (0-55%), hold tipped while the pile pushes back
         // (55-85%, red push glow + a small upward kick of the pushed end), then hand over to the next link

@@ -297,7 +297,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     # numbers so the three cards add up to 100 (reviewer, round 3: "the remaining 10% is unexplained")
     level_pct = 100 - round(ov["passed_frac"] * 100) - round(ov["passing_frac"] * 100)
     cards = [
-        {"start": S("share") + 2.6, "end": E("odds") + 0.3, "big": f"{sh['share'] * 100:.0f}%", "small": "of drivers are in the slow lane", "y": 0.17},
+        {"start": S("share") + 2.6, "end": E("odds") + 0.3, "big": f"{sh['share'] * 100:.0f}%", "small": "of the cars are in the jammed lane (our setup)", "y": 0.17},
         {"start": at("number", "forty-eight") - 0.3, "end": at("number", "forty-two") - 0.45, "big": f"{ov['passed_frac'] * 100:.0f}%", "small": "of the time being overtaken", "y": 0.17},
         {"start": at("number", "forty-two") - 0.3, "end": at("number", "The rest") - 0.45, "big": f"{ov['passing_frac'] * 100:.0f}%", "small": "of the time overtaking", "y": 0.17},
         {"start": at("number", "The rest") - 0.3, "end": E("number") + 0.4, "big": f"≈ {level_pct:.0f}%", "small": "roughly level", "y": 0.17},
