@@ -5,6 +5,7 @@
 inspect:                     # factory/qa/inspect3d.py (scene graph, renderer/inspect.js)
   sample_every_s: 2.0        # plus every shot boundary, card start and declared event
   hole_fraction_block: 0.0005        # share of the frame where the world is missing (clear colour shows)
+  ground_hole_fraction_block: 0.002  # share of the frame below the horizon with no ground (sky dome hidden)
   shadow_cut_block_px: 300           # visible area (px on a 360x640 phone, fog-weighted) of a cut shadow
   shadow_cut_risk_px: 60
   chain_gap_px: 1.0                  # bead gaps this wide (px at 1080) must be bridged by a connector...

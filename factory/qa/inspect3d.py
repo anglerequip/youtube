@@ -92,6 +92,14 @@ def analyse(report: dict, plan: dict, sb=None, cfg: dict | None = None) -> list[
                 expected="sky, ground or geometry behind every pixel",
                 repair="keep the sky dome inside the far plane (World.prepare) and close gaps in the set",
                 regression_test="tests/test_qa_regression.py::test_chain_v1_black_triangle")
+        g = f["holes"].get("ground") or {}
+        if g.get("fraction", 0) > c.get("ground_hole_fraction_block", 0.002):
+            add("geometry.ground_missing", 0, "BLOCKED_GEOMETRY",
+                f"{g['fraction']:.2%} of the frame looks down past the end of the ground (sky shows below the "
+                f"horizon) in box {g['bbox']}", t,
+                expected="ground or set geometry under the horizon in every shot",
+                repair="make the ground plane cover everything the camera can see, or move the camera",
+                regression_test="tests/test_qa_regression.py::test_ground_missing_is_caught")
         for nm in f.get("nonfinite", []):
             add(f"geometry.nonfinite.{nm}", 0, "BLOCKED_GEOMETRY", f"{nm} contains NaN/Infinity", t)
         for cp in f.get("coplanar", []):

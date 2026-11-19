@@ -160,3 +160,21 @@ def test_spaghetti_fracture_is_not_a_geometry_defect(tmp_path):
     F = _inspect("spaghetti3d", plan, times, tmp_path)
     bad = [f for f in F if f.severity <= 1]
     assert not bad, [f.message for f in bad]
+
+
+@renderer
+def test_ground_missing_is_caught(tmp_path):
+    """head-ages-faster round 1: the car drove past the end of the ground plane and the sky dome (a full
+    sphere) filled the frame below the horizon. The clear-colour hole check never saw it; both picture
+    reviewers did. Same failure staged in the chain scene: a camera beyond its 400 m ground looking down."""
+    sb, plan = _plan("chain-fountain")
+    t = 3.0
+    i = int(t * plan["fps"])
+    good = _inspect("chain3d", plan, [t, 30.0], tmp_path)
+    assert not _blockers(good, "geometry.ground_missing")
+    for s in plan["shots"]:
+        if s["i0"] <= i < s["i0"] + len(s["pos"]):
+            s["pos"] = [[0.0, 20.0, 260.0]] * len(s["pos"])
+            s["look"] = [[0.0, 0.0, 225.0]] * len(s["look"])
+    bad = _inspect("chain3d", plan, [t], tmp_path)
+    assert _blockers(bad, "geometry.ground_missing")

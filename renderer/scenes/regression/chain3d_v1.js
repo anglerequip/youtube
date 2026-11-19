@@ -62,7 +62,9 @@ function ropePath(p) {
 export function build(world, plan) {
   world.prepare = () => {};          // the old World.render: no sky-dome / far-plane guard
   const S = world.scene, F = plan.frames;
-  world.camera.near = 0.003; world.camera.far = 300; world.camera.updateProjectionMatrix();
+  // far 290 (v1 shipped 300): with the 300 m dome exactly at the far plane, whether the dome clipped depended
+  // on GPU precision, and on Caesar's GPU it did not (2026-11-19). 290 keeps the bug class, on every renderer.
+  world.camera.near = 0.003; world.camera.far = 290; world.camera.updateProjectionMatrix();
   world.ground(); world.hills(10, 95); world.hills(12, 150);
   for (let i = 0; i < 60; i++) {
     const a = world.rand() * Math.PI * 2, r = 9 + world.rand() * 32;

@@ -75,7 +75,36 @@ function holes(world) {
       top = Math.min(top, yy); bottom = Math.max(bottom, yy); left = Math.min(left, x); right = Math.max(right, x);
     }
   }
-  return { fraction: +(n / (w * h)).toFixed(5), bbox: n ? [left / w, top / h, (right + 1) / w, (bottom + 1) / h].map(v => +v.toFixed(3)) : null };
+  return { fraction: +(n / (w * h)).toFixed(5), bbox: n ? [left / w, top / h, (right + 1) / w, (bottom + 1) / h].map(v => +v.toFixed(3)) : null,
+    ground: groundHoles(world, w, h) };
+}
+
+// ---- ground coverage: below the horizon there must be ground or geometry, not sky ------------------
+// The sky dome is a full sphere, so a camera that runs past the end of the ground plane shows sky
+// under the horizon and the sentinel pass above never sees a hole (head-ages-faster, round 1: both
+// picture reviewers saw road shots with no ground; no automatic layer did). Render once more without
+// the dome and count sentinel pixels whose view ray points clearly downward.
+function groundHoles(world, w, h) {
+  const r = world.renderer, dome = world.skyDome;
+  if (!dome) return { fraction: 0, bbox: null };
+  const prevColor = new THREE.Color(); r.getClearColor(prevColor); const prevAlpha = r.getClearAlpha();
+  const prevBg = world.scene.background, prevVis = dome.visible;
+  world.scene.background = null; dome.visible = false;
+  r.setClearColor(new THREE.Color(SENTINEL[0] / 255, SENTINEL[1] / 255, SENTINEL[2] / 255), 1);
+  r.setRenderTarget(holeRT); r.clear(); r.render(world.scene, world.camera);
+  const px = new Uint8Array(w * h * 4); r.readRenderTargetPixels(holeRT, 0, 0, w, h, px);
+  r.setRenderTarget(null); r.setClearColor(prevColor, prevAlpha); world.scene.background = prevBg; dome.visible = prevVis;
+  const cam = world.camera, v = new THREE.Vector3();
+  let n = 0, top = h, bottom = -1, left = w, right = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const k = (y * w + x) * 4;
+    if (!(px[k] > 245 && px[k + 1] < 10 && px[k + 2] > 245)) continue;
+    v.set((x + 0.5) / w * 2 - 1, (y + 0.5) / h * 2 - 1, 0.5).unproject(cam).sub(cam.position).normalize();
+    if (v.y > -0.035) continue;                  // at or above the horizon (2 deg margin): sky is right there
+    n++; const yy = h - 1 - y;
+    top = Math.min(top, yy); bottom = Math.max(bottom, yy); left = Math.min(left, x); right = Math.max(right, x);
+  }
+  return { fraction: +(n / (w * h)).toFixed(5), bbox: n ? [left / w, top / h, (right + 1) / w, (bottom + 1) / h].map(v2 => +v2.toFixed(3)) : null };
 }
 
 // ---- depth precision and coplanar surfaces -----------------------------------------------------------
