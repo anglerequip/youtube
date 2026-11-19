@@ -39,7 +39,7 @@ class Settings:
     channel_name: str = _env("CHANNEL_NAME", "Counterphysical")
     channel_tagline: str = _env("CHANNEL_TAGLINE", "physics that breaks your intuition.")
     tts_provider: str = _env("TTS_PROVIDER", "kokoro")
-    kokoro_voice: str = _env("KOKORO_VOICE", "am_michael")
+    kokoro_voice: str = _env("KOKORO_VOICE", "af_bella")
     fps: int = int(_env("FPS", "30"))
     min_seconds: float = float(_env("MIN_SECONDS", "61"))
     max_seconds: float = float(_env("MAX_SECONDS", "90"))
