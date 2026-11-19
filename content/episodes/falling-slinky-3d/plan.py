@@ -290,6 +290,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                       "pos": pos, "look": look, "fov": fovs[0], "fovs": fovs, "lighting": lighting})
 
     hang = lambda i: bottom0          # camera framed on the hanging bottom coil, ignores the drop
+    bottom = lambda i: frames["coils"][i][-1]   # follows the bottom coil (it only moves after the collapse)
     # 1. Hook: wide push-in while the teaser drop runs (still hovering at the cut).
     shot(0.0, setup0, [(0.0, [2.0, 1.6, 5.6], 0.60, 38), (setup0, [1.0, 1.3, 3.3], 0.58, 36)], focal_fn=hang)
     # 2. Reset: one long move. High aerial 3/4 descends to the front during setup, holds still at the
@@ -301,9 +302,9 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                         (end2, [0.4, 1.4, 4.9], 0.60, 37)], focal_fn=hang)
     # 3. Low on the bottom coil: it hangs, the collapse arrives, it drops and lands; rewind; it rests.
     m3 = drop1.t_meet_video
-    shot(end2, S("why2"), [(end2, [1.3, 0.6, 2.9], 0.42, 36), (m3, [1.05, 0.6, 2.55], 0.42, 36),
-                           (m3 + 1.0, [1.05, 0.6, 2.55], 0.42, 36), (rew1, [1.6, 1.1, 3.0], 0.50, 36),
-                           (S("why2"), [-0.6, 1.05, 2.2], 0.52, 34)], focal_fn=hang)
+    shot(end2, S("why2"), [(end2, [1.3, 1.55, 2.9], 0.42, 36), (m3, [1.05, 1.5, 2.55], 0.42, 36),
+                           (m3 + 1.0, [1.05, 1.5, 2.55], 0.42, 36), (rew1, [1.6, 1.1, 3.0], 0.50, 36),
+                           (S("why2"), [-0.6, 1.05, 2.2], 0.52, 34)], focal_fn=bottom, smooth=0.08)
     # 4. Sunset replay: side bench, still at release, then cranes down with the travelling news and
     #    settles low on the bottom coil just before the collapse reaches it; holds through the landing.
     front_fn = lambda i: frames["coils"][i][frames["front"][i]] if frames["front"][i] >= 0 else frames["coils"][i][-1]
@@ -316,11 +317,11 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     # 5. Night: hanging again with a ball at the centre-of-mass height; both are released together.
     shot(cut5, cut6, [(cut5, [2.6, 1.9, 4.6], 0.58, 38), (drop3.t0, [1.9, 1.7, 4.2], 0.58, 38),
                       (drop3.t0 + 1.0, [1.9, 1.7, 4.2], 0.58, 38), (cut6, [1.7, 1.2, 3.6], 0.56, 38)],
-         lighting="key", focal_fn=hang)
+         lighting="key", focal_fn=bottom, smooth=0.08)
     # 6. Day, real speed: the same drop is over in a blink; then rewind and crane along the stretch.
     shot(cut6, cut7, [(cut6, [-1.6, 1.3, 4.6], 0.60, 38), (drop4.t0, [-1.2, 1.3, 4.3], 0.60, 38),
                       (drop4.t0 + 1.0, [-1.2, 1.3, 4.3], 0.60, 38), (rew2_1, [-0.8, 1.5, 3.9], 0.60, 38),
-                      (cut7, [0.9, 2.6, 3.4], 0.62, 38)], focal_fn=hang)
+                      (cut7, [0.9, 2.6, 3.4], 0.62, 38)], focal_fn=bottom, smooth=0.08)
     # 7. Steel bar: low along the bar, following the pulse from the tapped end to the far end.
     bar_y = GROUND + 0.03 + BAR_R
     fp = lambda i: frames["focal_pt"][i] or [0.0, bar_y, BAR_Z]
@@ -368,7 +369,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         "reveals": [hook_drop.t0, drop1.t0, drop1.t_meet_video, drop2.t0, drop2.t_meet_video,
                     drop3.t0, drop4.t0, tap],
     }
-    return {"scene": SCENE, "W": W, "H": H, "fps": fps, "n_frames": n, "seed": 11, "top_y": TOP, "supersample": 1.5,
+    return {"scene": SCENE, "W": W, "H": H, "fps": fps, "n_frames": n, "seed": 11, "top_y": TOP, "supersample": 1.25, "bloom_threshold": 50.0,
             "bar": {"x0": BAR_X0, "x1": BAR_X1, "z": BAR_Z, "r": BAR_R},
             "shots": shots, "cards": cards, "frames": frames, "timing": timing,
             "wordmark": None}

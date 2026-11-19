@@ -102,11 +102,11 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         cam.shot(S("number") - 0.1, S("view") - 0.1, [(S("number"), [18.0, 55.0, 40.0], [0.0, 0.0, -60.0], 40),
                                                       (S("view"), [22.0, 70.0, 30.0], [0.0, 0.0, -80.0], 40)], fps, "golden", ego),
         # 7. just above and behind the ego roof: cars that pass stay in view ahead
-        cam.shot(S("view") - 0.1, S("outro") - 0.1, [(S("view"), [0.3, 3.6, 11.0], [-1.6, 1.0, -40], 46),
-                                                     (S("outro"), [0.1, 3.3, 10.0], [-1.4, 1.0, -40], 46)], fps, "golden", ego),
+        cam.shot(S("view") - 0.1, S("outro") - 0.1, [(S("view"), [0.3, 3.6, 11.0], [-0.8, 0.0, -14], 46),
+                                                     (S("outro"), [0.1, 3.3, 10.0], [-0.7, 0.0, -13], 46)], fps, "golden", ego),
         # 8. rise and pull back over the road (calm ending)
-        cam.shot(S("outro") - 0.1, n / fps + 0.1, [(S("outro"), [3.0, 4.0, 14.0], [0.0, 1.0, -20.0], 40),
-                                                   (n / fps, [8.0, 22.0, 34.0], [0.0, 0.0, -40.0], 40)], fps, "golden", ego),
+        cam.shot(S("outro") - 0.1, n / fps + 0.1, [(S("outro"), [3.0, 4.0, 14.0], [0.0, 0.5, -12.0], 40),
+                                                   (n / fps, [8.0, 22.0, 34.0], [0.0, 0.0, -5.0], 40)], fps, "golden", ego),
     ])
 
     # wide shots are about the whole system: their focal point is where the camera looks

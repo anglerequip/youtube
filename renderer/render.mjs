@@ -2,6 +2,7 @@
 //
 //   node renderer/render.mjs --scene <name> --plan plan.json --out visual.mp4
 //   node renderer/render.mjs --scene <name> --plan plan.json --stills 0,2.5,10 --stills-dir dir/
+//   add --from <frame> [--to <frame>] to render only part of the video (for patching one shot)
 //
 // GPU: by default Chromium uses SwiftShader (CPU) so it runs anywhere. On a machine with a GPU set
 // RENDER_GPU=1 for much faster renders.
@@ -59,9 +60,10 @@ if (args.stills) {
   console.log(`stills done in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 } else {
   const n = info.frames;
+  const f0 = args.from ? parseInt(args.from) : 0, f1 = args.to ? Math.min(n, parseInt(args.to)) : n;
   const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(plan.fps), '-c:v', 'mjpeg',
     '-i', '-', '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', args.out], { stdio: ['pipe', 'inherit', 'inherit'] });
-  for (let i = 0; i < n; i++) {
+  for (let i = f0; i < f1; i++) {
     const url = await page.evaluate(i => window.renderFrame(i), i);
     if (!ff.stdin.write(Buffer.from(url.split(',')[1], 'base64'))) await new Promise(r => ff.stdin.once('drain', r));
     if (i % 60 === 0) {
@@ -71,7 +73,7 @@ if (args.stills) {
   }
   ff.stdin.end();
   await new Promise((res, rej) => ff.on('close', c => c === 0 ? res() : rej(new Error('ffmpeg ' + c))));
-  console.log(`rendered ${n} frames in ${((Date.now() - t0) / 1000).toFixed(0)}s`);
+  console.log(`rendered ${f1 - f0} frames in ${((Date.now() - t0) / 1000).toFixed(0)}s`);
   const meta = await page.evaluate(() => window.__meta);
   fs.writeFileSync(args.out.replace(/\.mp4$/, '') + '.meta.json', JSON.stringify(meta));
 }

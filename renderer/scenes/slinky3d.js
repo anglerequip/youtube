@@ -43,7 +43,7 @@ function ribbonSlinky(N) {
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aRed; attribute float aGlow; varying float vRed; varying float vGlow;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvRed = aRed; vGlow = aGlow;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vRed; varying float vGlow;')
-      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(1.0, 0.16, 0.12) * vRed * 5.0 + vec3(1.0, 0.93, 0.82) * vGlow * 4.5;');
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(1.0, 0.16, 0.12) * vRed * 5.0 + vec3(1.0, 0.93, 0.82) * vGlow * 1.5;');
   };
   const m = new THREE.Mesh(g, mat);
   m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false;
@@ -174,7 +174,7 @@ export function build(world, plan) {
       const ys = F.coils[k], gl = F.glow[k], fi = F.front[k];
       for (let c = 0; c < N; c++) {
         redC[c] = c >= N - 2 ? gl * (c === N - 1 ? 1 : 0.35) : 0;
-        glowC[c] = fi >= 0 ? Math.exp(-((c - fi) * (c - fi)) / 6) : 0;
+        glowC[c] = fi >= 0 ? Math.exp(-((c - fi) * (c - fi)) / 2.5) : 0;
       }
       sl.setCoils(ys, redC, glowC);
       const g = F.clamp[k];                 // gripper: 0 closed, 1 open, negative = anticipation squeeze

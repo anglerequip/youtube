@@ -16,7 +16,10 @@ export async function boot(sceneName, plan) {
   window.renderFrame = (i, quality = 0.93) => {
     const t = i / plan.fps;
     const shot = plan.shots.find(s => t >= s.start && t < s.end) ?? plan.shots[plan.shots.length - 1];
-    if (shot.lighting && shot.lighting !== world.lightingName) world.setLighting(shot.lighting, scene.lightCenter);
+    if (shot.lighting && shot.lighting !== world.lightingName) {
+      world.setLighting(shot.lighting, scene.lightCenter);
+      if (plan.bloom_threshold) world.bloom.threshold = plan.bloom_threshold;   // per-episode override (e.g. no specular bloom)
+    }
     scene.update(i, t, shot);
     world.applyShot(shot, t, i);
     if (scene.afterCamera) scene.afterCamera(i, t, shot);
