@@ -53,7 +53,7 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
     timings = {}
 
     t0 = time.time()
-    vkey = _key([(b.id, b.text, b.pause_after) for b in sb.beats], sb.voice, sb.speed, provider)
+    vkey = _key([(b.id, b.text, b.pause_after) for b in sb.beats], sb.voice, sb.speed, provider, "expressive-v1")
     if force or not _cached(out, "voice.wav", vkey) or not (out / "timeline.json").exists():
         log.info("[%s] voice (%s)", sb.slug, provider)
         tl = voice.narrate(sb, out / "voice.wav", provider)

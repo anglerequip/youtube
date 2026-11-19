@@ -12,6 +12,7 @@ import numpy as np
 import soundfile as sf
 
 from ..narration.pronounce import normalise
+from .expressive import clean
 from .providers import get_tts
 
 
@@ -71,16 +72,29 @@ def _trim(samples: np.ndarray, sr: int, thresh: float = 0.01) -> np.ndarray:
 
 def narrate(ep, out_wav: Path, provider: str | None = None) -> Timeline:
     tts = get_tts(provider)
+    delivery = _delivery()
+    # expressive delivery (sentence-by-sentence takes, emphasis, punctuation pauses): see expressive.py
+    expr = None
+    if getattr(tts, "name", "") == "kokoro" and delivery.get("expressive", True):
+        from .expressive import ExpressiveKokoro
+        expr = ExpressiveKokoro(tts)
     chunks: list[np.ndarray] = []
     timed: list[TimedLine] = []
     sr_ref = None
     t = LEAD_IN
-    delivery = _delivery()
     for ln in ep.lines:
         pace = delivery.get(getattr(ln, "pace", "calm") or "calm", {})
         speed = ep.speed * (getattr(ln, "speed", None) or pace.get("speed", 1.0))
         # The voice gets pronunciation-normalised text; captions keep the written text (ln.text).
-        samples, sr = tts.synth(normalise(ln.text), voice=ep.voice, speed=speed)
+        spoken = normalise(ln.text)
+        if expr is not None:
+            samples, sr = expr.synth(spoken, voice=ep.voice, speed=speed, key=f"{ep.slug}/{ln.id}")
+        elif getattr(tts, "name", "") == "elevenlabs":
+            i = ep.lines.index(ln)
+            ctx = lambda j: normalise(ep.lines[j].text) if 0 <= j < len(ep.lines) else None
+            samples, sr = tts.synth(spoken, voice=ep.voice, speed=speed, previous_text=ctx(i - 1), next_text=ctx(i + 1))
+        else:
+            samples, sr = tts.synth(clean(spoken), voice=ep.voice, speed=speed)
         samples = _trim(np.asarray(samples, dtype=np.float32), sr)
         if sr_ref is None:
             sr_ref = sr
@@ -88,7 +102,7 @@ def narrate(ep, out_wav: Path, provider: str | None = None) -> Timeline:
         elif sr != sr_ref:
             raise RuntimeError("TTS sample rate changed between lines")
         dur = len(samples) / sr
-        timed.append(TimedLine(ln.id, ln.text, round(t, 3), round(t + dur, 3)))
+        timed.append(TimedLine(ln.id, clean(ln.text), round(t, 3), round(t + dur, 3)))
         chunks.append(samples)
         pause = ln.pause_after + pace.get("pause", 0.0)
         chunks.append(np.zeros(int(pause * sr), dtype=np.float32))

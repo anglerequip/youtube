@@ -14,6 +14,10 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
    - 8-14 beats, 61-75 s total (hard rule: every video must be longer than 60 s; QC rejects anything shorter). Extend with real content, never filler. Beat 1 is the hook: a surprising claim in under 3 s.
    - Short spoken sentences; spell numbers the way they should be read.
    - `on_screen` for an occasional key phrase or equation, `sfx` (whoosh, thud, pop, tick, rise, ding).
+   - Write for the voice (factory/voice_engine/expressive.py turns this into delivery, free):
+     vary sentence length and keep it sounding like a person, not a summary; `*word*` stresses one key
+     word (at most one or two per beat); `...` is a deliberate pause before a reveal; `!` only for real
+     surprise; questions end in `?` (they get a longer pause). Captions drop the stars automatically.
 4. Create `sim.py` with `class Sim(Scene)`. Sync to beats with `self.tl.start("<beat id>")`.
    Keep visuals between y=0.25 and y=0.90 of the frame (captions sit at about y=0.30).
    Add `self_checks()` comparing the simulation to theory, and `sfx_events()` for physical moments.

@@ -246,10 +246,32 @@ def _place(buf, t, y, gain=1.0, pan=0.0):
     buf[i:j, 1] += y[: j - i] * gain * r * 1.414
 
 
+def _biquad(kind, f0, gain_db, q=0.9):
+    """RBJ cookbook peaking / high-shelf filter coefficients."""
+    A, w = 10 ** (gain_db / 40), 2 * np.pi * f0 / SR
+    al, cw = np.sin(w) / (2 * q), np.cos(w)
+    if kind == "peak":
+        b = [1 + al * A, -2 * cw, 1 - al * A]; a = [1 + al / A, -2 * cw, 1 - al / A]
+    else:   # high shelf
+        sA = 2 * np.sqrt(A) * al
+        b = [A * ((A + 1) + (A - 1) * cw + sA), -2 * A * ((A - 1) + (A + 1) * cw), A * ((A + 1) + (A - 1) * cw - sA)]
+        a = [(A + 1) - (A - 1) * cw + sA, 2 * ((A - 1) - (A + 1) * cw), (A + 1) - (A - 1) * cw - sA]
+    return np.array(b) / a[0], np.array(a) / a[0]
+
+
 def _voice_chain(v):
+    """Narration polish: high-pass, less mud and boxiness, presence and air, de-essing, compression."""
     v = _hp(v, 80)
+    for kind, f, g, q in (("peak", 280, -2.5, 1.0), ("peak", 520, -1.2, 1.4), ("shelf", 9500, 1.5, 0.7)):
+        b, a = _biquad(kind, f, g, q); v = signal.lfilter(b, a, v)
     b, a = signal.iirpeak(3200, 1.2, fs=SR)            # gentle presence lift
     v = v + 0.18 * signal.lfilter(b, a, v)
+    # de-esser: duck the 5-9 kHz band when it gets loud relative to the whole voice
+    s_band = _bp(v, 5000, 9000)
+    es = np.sqrt(signal.lfilter([0.01], [1, -0.99], s_band * s_band) + 1e-12)
+    ev = np.sqrt(signal.lfilter([0.01], [1, -0.99], v * v) + 1e-12)
+    red = np.clip(1.0 - 1.8 * np.maximum(0, es / ev - 0.35), 0.5, 1.0)
+    v = v - s_band * (1 - red)
     # light compression (RMS follower, 3:1 above -20 dBFS)
     env = np.sqrt(signal.lfilter([0.002], [1, -0.998], v * v) + 1e-9)
     db = 20 * np.log10(env); over = np.maximum(0, db + 20)
