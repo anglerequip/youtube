@@ -1,0 +1,31 @@
+# Length fixture (~30 s): a straightforward explainer. Not a production episode.
+title: "The Bullet You Fire and the One You Drop"
+topic: "independence of horizontal and vertical motion"
+description: "Length-planning fixture: two explanation steps and a clear payoff."
+tags: [test, projectile, gravity]
+voice: af_bella
+speed: 1.1
+end_hold_s: 1.0
+story:
+  core_idea: "Sideways speed doesn't change how fast something falls."
+  fascination: "a fired bullet and a dropped one hit the ground at the same time"
+  steps: 2
+  buildup: medium
+  extras: []
+  payoff: land
+  cut: ["air resistance details: covered by one caveat", "Earth's curvature: only matters for huge speeds"]
+beats:
+  - id: hook
+    text: "Fire one bullet sideways and drop another from the same height. Which lands first?"
+  - id: guess
+    text: "The fired one has to cover a whole field, so surely it stays up longer."
+  - id: split
+    text: "But gravity only pulls *down*. It doesn't care how fast you're moving sideways."
+  - id: same
+    text: "So both bullets gain downward speed at exactly the same rate, second by second."
+  - id: watch
+    text: "Watch their heights. They stay perfectly level the whole way."
+  - id: land
+    text: "Two thuds, one instant. One just landed a field away."
+caveats: ["test fixture: ignores air resistance"]
+sources: ["Any introductory mechanics text (projectile motion)"]

@@ -28,9 +28,9 @@ def category(fid: str) -> str:
         return "geometry_and_render"
     if fid.startswith(("recognition.", "readability.")):
         return "visual_clarity"
-    if fid.startswith(("pacing.slow_hook", "spec.slow_hook")):
+    if fid.startswith(("pacing.slow_hook", "spec.slow_hook", "length.generic_hook")):
         return "hook_and_retention"
-    if fid.startswith(("pacing.", "spec.too", "spec.beat")):
+    if fid.startswith(("pacing.", "spec.beat", "length.")):
         return "pacing_and_attention"
     if fid.startswith(("audio.", "sound.")):
         return "audio"
