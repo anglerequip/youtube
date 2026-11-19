@@ -1,0 +1,87 @@
+slug: head-ages-faster
+title: "Your Head Is Older Than Your Feet"
+topic: "general relativity / gravitational time dilation between your head and your feet"
+component: custom   # physics: factory/simulation_engine/physics/time_dilation.py (weak-field g*h/c^2)
+renderer: three
+scene: clocks3d
+hook_family: 1          # impossible-sounding claim that is literally true
+structure: B            # surprising result -> mechanism -> proof -> consequence
+# DRAFT (2026-11-19): narration, claims and sources are final candidates; plan.py / scene / duration
+# fields wait for the content-driven duration work (thread "Make video length fit each story").
+description: |
+  Gravity slows time, so the clocks at your feet tick a tiny bit slower than the clocks at your head.
+  It's about one part in ten million billion per metre, and NIST measured it in 2010 by lifting an
+  atomic clock just 33 cm. Visuals exaggerate the effect; every number is the real one.
+
+  #shorts #physics #relativity #einstein #science
+tags: [relativity, time dilation, gravity, einstein, atomic clock, physics, GPS, shorts]
+voice: af_bella
+speed: 1.1
+beats:
+  - id: hook
+    text: "Your head is older than your feet. And that's been *measured*."
+    pause_after: 0.3
+  - id: why
+    text: "Einstein worked it out. Gravity slows time down. The deeper you sit in it, the slower every clock ticks."
+  - id: feet
+    text: "Your feet are closer to Earth's centre than your head. So down there, time runs a little slower."
+  - id: small
+    text: "How little? About one part in ten million billion... for every metre of height."
+  - id: proof
+    text: "In twenty ten, physicists at NIST raised an atomic clock by just thirty-three centimetres."
+  - id: result
+    text: "And the higher clock ran *faster*. By almost exactly the amount Einstein predicted."
+    pause_after: 0.3
+  - id: lifetime
+    text: "So if you stood upright for eighty years, your head would end up about half a millionth of a second older than your feet."
+  - id: real
+    text: "You'll never feel it. But it isn't a quirk of clocks. Everything down there, atoms included, runs that tiny bit slower."
+  - id: gps
+    text: "And it matters. Up where GPS satellites fly, their clocks run fast by about forty-five microseconds a day, mostly from this effect."
+  - id: drift
+    text: "Leave that uncorrected, and your map would be off by kilometres after a single day."
+  - id: outro
+    text: "So the next time someone says you look young for your age... ask them which end they mean."
+    sfx: ding
+
+caveats:
+  - "The effect is real but tiny: about 1.1e-16 per metre of height near Earth's surface (g*h/c^2). Nobody can feel it."
+  - "The half-a-millionth-of-a-second figure assumes standing upright (head about 1.7 m above the feet) for 80 years. Real people lie down for about a third of their lives, so the true difference is smaller."
+  - "The NIST 2010 result was (4.1 ± 1.6) × 10^-17 for 33 cm, consistent with the predicted 3.6 × 10^-17 within its uncertainty; 'almost exactly' means within the error bar, not to many digits."
+  - "GPS: the gravitational part is about +45 microseconds per day; the satellites' orbital speed takes off about 7, so the net correction is about 38 microseconds per day. The 'kilometres per day' figure is the textbook estimate of uncorrected clock drift times the speed of light (about 11 km per day)."
+  - "On screen the slowdown is exaggerated by many orders of magnitude so it can be seen; the counters show the real values."
+sources:
+  - "C. W. Chou, D. B. Hume, T. Rosenband and D. J. Wineland, 'Optical Clocks and Relativity', Science 329, 1630-1633 (2010). doi:10.1126/science.1192720"
+  - "NIST news release, 'NIST Pair of Aluminum Atomic Clocks Reveal Einstein's Relativity at a Personal Scale' (23 Sept 2010): about 90 billionths of a second over a 79-year lifetime for a 1-foot height difference."
+  - "T. Bothwell et al., 'Resolving the gravitational redshift across a millimetre-scale atomic sample', Nature 602, 420-424 (2022). doi:10.1038/s41586-021-04349-7"
+  - "N. Ashby, 'Relativity in the Global Positioning System', Living Reviews in Relativity 6, 1 (2003)."
+  - "R. V. Pound and G. A. Rebka Jr., 'Apparent Weight of Photons', Physical Review Letters 4, 337 (1960)."
+
+# ---------------------------------------------------------------------------------------------
+# Single source of truth (factory/qa): every number heard or shown maps to a claim.
+claims:
+  - {id: rate_per_m, beat: small, unit: "1/m", sim: rate_per_m, scope: universal, tolerance: 0.15,
+     match: "one part in ten million billion",
+     evidence: {quality: 5, source: "Chou et al. 2010: 'about 1.1 × 10^-16 per meter of change in height'; g/c^2 = 1.09e-16 /m"}}
+  - {id: nist_year, beat: proof, unit: year, value: 2010, scope: history,
+     evidence: {quality: 5, source: "Chou et al., Science 329, 1630 (2010)"}}
+  - {id: nist_height, beat: proof, unit: cm, value: 33, scope: history,
+     evidence: {quality: 5, source: "Chou et al. 2010; NIST release: 33 centimeters"}}
+  - {id: nist_measured, card: "4.1 ± 1.6 × 10⁻¹⁷", unit: "1", value: 4.1e-17, scope: history,
+     evidence: {quality: 5, source: "Chou et al. 2010, Fig. 3: (4.1 ± 1.6) × 10^-17; prediction g*0.33/c^2 = 3.6e-17"}}
+  - {id: years, beat: lifetime, unit: year, value: 80, scope: condition}
+  - {id: lifetime_ns, beat: lifetime, unit: s, sim: lifetime_s, scope: condition, tolerance: 0.1,
+     match: "half a millionth of a second",
+     evidence: {quality: 5, source: "g*h/c^2 * t with h = 1.7 m, t = 80 years -> 4.7e-7 s; NIST scales to ~90 ns for 1 ft over 79 years"}}
+  - {id: gps_grav, beat: gps, unit: "µs/day", value: 45, scope: typical,
+     evidence: {quality: 5, source: "Ashby 2003: gravitational blueshift of GPS clocks ≈ 45.7 µs/day; net with velocity ≈ 38.4 µs/day"}}
+  - {id: gps_drift, beat: drift, unit: km, value: 11, scope: model, match: "kilometres",
+     evidence: {quality: 4, source: "Ashby 2003; 38 µs/day × c ≈ 11 km/day (uncorrected clock drift as a range error)"}}
+
+absolute_ok:
+  - {beat: real, word: never, why: "a difference of ~1e-16 is far below any human perception; worded as 'feel'"}
+  - {beat: real, word: Everything, why: "gravitational time dilation applies to all physical processes at that height, not only clocks"}
+  - {beat: why, word: every, why: "the redshift is universal: it applies to every clock (equivalence principle), tested with many clock types"}
+  - {beat: result, word: exactly, why: "qualified as 'almost exactly'; measured 4.1 ± 1.6 vs predicted 3.6 (×10^-17), agreement within the error bar"}
+
+hero: feet_clock
