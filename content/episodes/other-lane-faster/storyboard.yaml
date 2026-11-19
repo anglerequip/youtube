@@ -17,7 +17,7 @@ voice: af_bella
 speed: 1.1
 beats:
   - id: hook
-    text: "The other lane really is faster. You're not imagining it."
+    text: "The other lane really does pass you more. You're not imagining it."
     pause_after: 0.3
   - id: setup
     text: "You're crawling along, and the next lane just keeps sliding past. It feels like bad luck. Like the universe picked your lane."
@@ -26,7 +26,7 @@ beats:
   - id: gaps
     text: "Drivers leave smaller gaps when they're slow, so a jam squeezes more cars into the same stretch of road."
   - id: share
-    text: "So at any moment, more drivers are sitting in the slow lane. In this simulation, sixty-two percent of them."
+    text: "So at any moment, more drivers are sitting in the slow lane. In our setup, the jammed lane holds sixty-two percent of the cars."
   - id: odds
     text: "If you feel stuck, the odds say you probably are."
     pause_after: 0.4
@@ -37,7 +37,7 @@ beats:
   - id: crawl
     text: "When it jams, they crawl, and the other lane drifts past for a long, long time."
   - id: number
-    text: "Averaged over every driver, they spend forty-eight percent of the time being overtaken, and only forty-two percent overtaking."
+    text: "Averaged over every driver, they spend forty-eight percent of the time being overtaken, and only forty-two percent overtaking. The rest, about ten percent, you're roughly level."
     pause_after: 0.3
   - id: view
     text: "And the cars that pass you stay in view ahead. The ones you pass vanish behind you."
@@ -59,11 +59,13 @@ sources:
 claims:
   - {id: lanes, card: "SAME ROAD, TWO LANES", unit: count, value: 2, scope: condition}
   - {id: slow_share, beat: share, unit: "%", sim: slow_lane_share_pct, scope: model,
-     evidence: {quality: 1, source: "our IDM simulation (Treiber et al., PRE 62, 1805, 2000); effect described by Bostrom"}}
+     evidence: {quality: 1, source: "our IDM simulation (Treiber et al., PRE 62, 1805, 2000); effect described by Bostrom", note: "the car counts per lane (96 vs 60 on a 2.4 km loop) are chosen in the setup; the simulation shows the denser lane is the slow one. Worded as a property of our setup, not a measured result (picture review, round 6)"}}
   - {id: overtaken, beat: number, unit: "%", sim: overtaken_pct, scope: model, match: "being overtaken",
      evidence: {quality: 1, source: "our IDM simulation"}}
   - {id: overtaking, beat: number, unit: "%", sim: overtaking_pct, scope: model, match: "overtaking.",
      evidence: {quality: 1, source: "our IDM simulation"}}
+  - {id: level, beat: number, unit: "%", sim: level_pct, scope: model, match: "level",
+     evidence: {quality: 1, source: "our IDM simulation: nearest other-lane car within 0.5 m/s of the driver"}}
 
 absolute_ok:
   - {beat: rehook, word: exactly, why: "a condition set in the simulation: both lanes are given the same average speed"}

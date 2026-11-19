@@ -253,7 +253,7 @@ export function drawCard(ctx, W, H, card, alpha = 1) {
 export function drawBadge(ctx, W, H, text) {
   // small dark pill with a red dot: one consistent indicator for playback speed
   if (!text) return;
-  ctx.save(); const px = Math.round(H * 0.0135); ctx.font = `700 ${px}px Poppins`;
+  ctx.save(); const px = Math.round(H * 0.019); ctx.font = `700 ${px}px Poppins`;   // round 7: 0.0135 H was unreadable on a phone
   const tw = ctx.measureText(text).width, padX = px * 0.9, dot = px * 0.36;
   const w = tw + padX * 2 + dot * 2.6, h = px * 2.0, x = W / 2 - w / 2, y = H * 0.088 - h / 2;
   ctx.fillStyle = 'rgba(20,22,26,0.55)'; ctx.beginPath(); ctx.roundRect(x, y, w, h, h / 2); ctx.fill();

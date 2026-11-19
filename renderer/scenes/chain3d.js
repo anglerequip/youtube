@@ -12,7 +12,8 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { MAT, haloSprite } from '../materials.js';
 
 const BEAD = 0.0046, BR = 0.0019;    // bead pitch and bead radius (m): a 3.8 mm ball chain
-const LR = 0.00042;                  // radius of the short connecting link between beads
+const LR = 0.0007;                   // connecting link radius: drawn a little thicker than real (0.4 mm) so the beads read
+                                     // as one strand on a phone, not loose balls (picture review, rounds 5-6)
 const MAXB = 1400;
 const JR = 0.045, JH = 0.11;          // jar radius and height
 const NP = 600;                        // path resolution
@@ -32,7 +33,7 @@ function setLink(inst, i, p, q2) {
 }
 // a coiled heap of chain: stacked, wobbly spiral layers, bottom layer first; points every BEAD along it
 function coilPile(rand, rMax0, hTop, layers, rShrink) {
-  const pts = [], dy = (hTop - BR) / Math.max(1, layers - 1), pitch = 0.0042;
+  const pts = [], dy = (hTop - BR) / Math.max(1, layers - 1), pitch = 0.0062;   // gaps between turns: a coil, not a lattice
   for (let L = 0; L < layers; L++) {
     const rMax = Math.max(0.004, rMax0 * (1 - rShrink * (L / Math.max(1, layers - 1)) ** 1.6));
     const out = L % 2 === 0, ph = rand() * 6.283, ph2 = rand() * 6.283, y0 = BR + L * dy;
@@ -102,13 +103,16 @@ export function build(world, plan) {
   add(S, rbox(3.2, 0.06, 2.6, 0.01), MAT.concrete('#bdb6a3'), 0, -0.027, 0);   // patio slab, top 3 mm above the
   // grass so the two surfaces never share a depth (z-fighting; found by factory/qa inspect: geometry.coplanar)
 
-  // telescoping stand: heavy base, outer tube, inner (sliding) tube, wooden platform
+  // telescoping stand: heavy base, outer tube, inner (sliding) tube, and a wooden shelf board reaching out to
+  // the jar. The pole stands well back (SX) so the falling chain and the floor heap clear the base and the
+  // board (picture review 2026-11-19: the chain passed through the board, the heap through the base)
+  const SX = -0.3;
   const steel = MAT.brushedSteel(), dark = MAT.darkSteel();
-  add(S, new THREE.CylinderGeometry(0.17, 0.19, 0.035, 40), dark, 0, 0.0175, -0.02);
-  const outer = add(S, new THREE.CylinderGeometry(0.022, 0.022, 0.9, 24), steel, 0, 0.45 + 0.035, -0.02);
-  const collar = add(S, new THREE.CylinderGeometry(0.03, 0.03, 0.03, 24), dark, 0, 0.935, -0.02);
-  const inner = add(S, new THREE.CylinderGeometry(0.016, 0.016, 1, 24), steel, 0, 0, -0.02);
-  const plat = add(S, rbox(0.16, 0.022, 0.16, 0.006), new THREE.MeshStandardMaterial({ color: '#a8835a', roughness: 0.7 }), 0, 0, 0);
+  add(S, new THREE.CylinderGeometry(0.17, 0.19, 0.035, 40), dark, SX, 0.0175, -0.02);
+  const outer = add(S, new THREE.CylinderGeometry(0.022, 0.022, 0.9, 24), steel, SX, 0.45 + 0.035, -0.02);
+  const collar = add(S, new THREE.CylinderGeometry(0.03, 0.03, 0.03, 24), dark, SX, 0.935, -0.02);
+  const inner = add(S, new THREE.CylinderGeometry(0.016, 0.016, 1, 24), steel, SX, 0, -0.02);
+  const plat = add(S, rbox(0.39, 0.022, 0.16, 0.006), new THREE.MeshStandardMaterial({ color: '#a8835a', roughness: 0.7 }), 0, 0, 0);
 
   // glass jar (cheap glass: thin transparent shell + rim highlight, no transmission pass)
   const jar = new THREE.Group(); S.add(jar);
@@ -136,8 +140,36 @@ export function build(world, plan) {
     const [x, y, z] = pilePts[i];
     if (y > plan.pile_h - BR - 0.0045 && x > -0.003 && Math.abs(z) < 0.0055) pilePts.splice(i, 1);
   }
+  const pileDarkM = new THREE.MeshStandardMaterial({ color: '#6d7178', metalness: 0.55, roughness: 0.55 });
+  const pileDarkL = new THREE.MeshStandardMaterial({ color: '#5e6268', metalness: 0.5, roughness: 0.6 });
   const pile = mkInst(beadGeo, beadM, pilePts.length, jar), pileL = mkInst(linkGeo, linkMat, pilePts.length, jar);
-  pilePts.forEach((P, i) => { setBead(pile, i, ...P); setLink(pileL, i, P, pilePts[i + 1]); });
+  // macro (badge "SIMPLIFIED"): the pile becomes a plain matte surface so the one tipping link and the strand
+  // lying on it read clearly (picture review, round 6: the bead pile looked like a molecule lattice)
+  const pileTop = new THREE.Mesh(new THREE.CylinderGeometry(JR - 0.002, JR - 0.002, plan.pile_h - BR, 48),
+    new THREE.MeshStandardMaterial({ color: '#6c7076', roughness: 0.85, metalness: 0.1 }));
+  pileTop.position.y = (plan.pile_h - BR) / 2; pileTop.receiveShadow = true; pileTop.visible = false; jar.add(pileTop);
+  // round 7 review: the plain plate read as "a flat grey plane", not a pile. Lay one loose spiral of chain
+  // on it (one strand, coiled, not a lattice), leaving the lever's corner and the camera-side
+  // foreground clear (big foreground beads read as a lattice).
+  const coilPts = [];
+  for (let a = 0, r = 0.006; r < JR - 0.006 && coilPts.length < 900; ) {
+    const x = r * Math.cos(a), z = r * Math.sin(a);
+    if (!(x > -0.004 && Math.abs(z) < 0.007) && z < 0.004) coilPts.push([x, plan.pile_h - 0.45 * BR, z]);
+    a += BEAD / r; r = 0.006 + (2.6 * BR) * a / (2 * Math.PI);
+  }
+  const coil = mkInst(beadGeo, beadM, coilPts.length, jar), coilL = mkInst(linkGeo, linkMat, coilPts.length, jar);
+  coilPts.forEach((P, i) => {
+    setBead(coil, i, ...P);
+    const Q = coilPts[i + 1];
+    setLink(coilL, i, P, Q && Math.hypot(Q[0] - P[0], Q[2] - P[2]) < 1.6 * BEAD ? Q : null);
+  });
+  coil.visible = coilL.visible = false;
+  // links only along the strand: a jump to the next turn or layer drew long rods "in every direction" and the
+  // close-up read as a molecule model (picture review, round 10)
+  pilePts.forEach((P, i) => {
+    const Q = pilePts[i + 1];
+    setBead(pile, i, ...P); setLink(pileL, i, P, Q && Math.hypot(Q[0] - P[0], Q[1] - P[1], Q[2] - P[2]) < 1.45 * BEAD ? Q : null);
+  });
   // floor heap (grows): the chain that has landed, coiled in a low mound, revealed in the order it was laid
   const heapPts = coilPile(world.rand, 0.11, 0.03, 9, 0.85);
   const heapN = heapPts.length, heap = mkInst(beadGeo, beadM, heapN, S), heapL = mkInst(linkGeo, linkMat, heapN, S);
@@ -146,10 +178,18 @@ export function build(world, plan) {
   const ropeMat = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.0, depthWrite: false, toneMapped: false });
   let ropeMesh = null;
 
+  // height bracket: a thin white bar from the pile top to the arch top, with end ticks (picture review,
+  // round 5: "the arch doubles" needs a scale on screen; measured from the pile, as the narration says)
+  const brM = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, toneMapped: false });
+  const bracket = new THREE.Group(); S.add(bracket);
+  const brBar = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), brM), brT1 = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), brM),
+    brT2 = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), brM);
+  bracket.add(brBar, brT1, brT2); bracket.visible = false;
+
   // macro lever: one link (two beads + rod) being lifted; glow at the far end = the pile's push
   const lever = new THREE.Group(); S.add(lever);
   const linkM = new THREE.MeshStandardMaterial({ color: '#b9bdc2', metalness: 0.85, roughness: 0.3 });
-  const liftM = new THREE.MeshStandardMaterial({ color: '#e3e6ea', metalness: 0.7, roughness: 0.25, emissive: '#ffffff', emissiveIntensity: 0.12 });
+  const liftM = new THREE.MeshStandardMaterial({ color: '#e3e6ea', metalness: 0.7, roughness: 0.25, emissive: '#ffffff', emissiveIntensity: 0.35 });
   const lb1 = new THREE.Mesh(beadGeo, liftM), lb2 = new THREE.Mesh(beadGeo, liftM);
   const rod = new THREE.Mesh(new THREE.CylinderGeometry(LR, LR, BEAD, 8), linkM);
   [lb1, lb2, rod].forEach(o => { o.castShadow = true; lever.add(o); });
@@ -159,18 +199,26 @@ export function build(world, plan) {
     const r2 = new THREE.Mesh(linkGeo, linkMat); r2.castShadow = true; lever.add(r2); flatRods.push(r2);
   }
   const push = haloSprite('#ff3b30', 0.02, 0); lever.add(push);
+  push.material.depthTest = false;   // the glow cut a hard edge where it met the pile plate (round 8 stills)
   const pushDot = new THREE.Mesh(new THREE.SphereGeometry(0.0012, 12, 8), MAT.emissive('#ff3b30', 6)); lever.add(pushDot);
+  // one upward red arrow from the pile into the pushed end (round 7 review: "nothing shows an upward push")
+  const arrowM = MAT.emissive('#ff3b30', 2.5);
+  const arrow = new THREE.Group(); lever.add(arrow);
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.00045, 0.00045, 1, 10), arrowM);
+  const headA = new THREE.Mesh(new THREE.ConeGeometry(0.0013, 0.0026, 14), arrowM);
+  arrow.add(shaft, headA); arrow.visible = false;
+  arrowM.depthTest = false; shaft.renderOrder = headA.renderOrder = 5;
 
   const dummy = new THREE.Object3D();
   let travelled = 0;
   return {
     lightCenter: new THREE.Vector3(0, 0.8, 0),
-    update(i) {
+    update(i, t, shot) {
       const k = Math.min(i, F.h2.length - 1);
       const h2 = F.h2[k], h1 = F.h1[k];
       const pileY = h2, standTop = pileY - plan.pile_h - 0.011;       // jar base on platform top
       const jarBase = standTop + 0.011;
-      plat.position.set(0, standTop, 0);
+      plat.position.set(-0.145, standTop, 0);      // board spans x -0.34..0.05; jar radius 0.045
       inner.scale.y = Math.max(0.05, standTop - 0.9); inner.position.y = 0.9 + inner.scale.y / 2;
       jar.position.set(0, jarBase, 0);
       const p = { xr: 0.006, xf: JR + 0.032, pile: pileY, top: pileY + h1, floor: 0.004, rim: jarBase + JH };
@@ -218,13 +266,36 @@ export function build(world, plan) {
         }
         ropeMat.opacity = 0.55 * ro; ropeMesh.visible = true;
       } else if (ropeMesh) ropeMesh.visible = false;
+      // height bracket beside the rising leg, scaled so it reads at any camera distance
+      const bv = F.bracket ? F.bracket[k] : 0;
+      bracket.visible = bv > 0.01 && h1 > 0.005;
+      if (bracket.visible) {
+        const jj = shot && shot.pos ? Math.min(Math.max(0, i - (shot.i0 ?? 0)), shot.pos.length - 1) : -1;
+        const cp = jj >= 0 ? new THREE.Vector3(...shot.pos[jj]) : new THREE.Vector3(0.3, pileY + 0.1, 0.5);
+        const d = cp.distanceTo(new THREE.Vector3(0, pileY + h1 / 2, 0)), w = Math.max(0.0012, d * 0.004);
+        const bx = -0.03, y0 = pileY, y1 = pileY + h1, z = 0.02;
+        brBar.scale.set(w, h1, w); brBar.position.set(bx, (y0 + y1) / 2, z);
+        brT1.scale.set(6 * w, w, w); brT1.position.set(bx, y0, z);
+        brT2.scale.set(6 * w, w, w); brT2.position.set(bx, y1, z);
+        brM.opacity = 0.9 * bv;
+      }
       // macro lever
       const lv = F.lever ? F.lever[k] : null;
       lever.visible = !!lv;
+      // round 8 review: the plate + tidy spiral read as a placeholder; the macro now shows the same loose
+      // heap as the jar (pitch 0.0062 since round 7, so it reads as coils, not the round-6 lattice)
+      pileTop.visible = coil.visible = coilL.visible = false;
+      // in the macro the heap steps back (darker, matte) so the one lifted link and its push carry the shot
+      pile.material = lv ? pileDarkM : beadM; pileL.material = lv ? pileDarkL : linkMat;
       if (lv) {
-        const u = (F.dist[k] % BEAD) / BEAD, d = u * BEAD, th = Math.asin(Math.min(1, d / BEAD));
-        const xl = p.xr, yl = pileY + d;
-        const xr2 = xl + BEAD * Math.cos(th), yr2 = pileY;
+        // one cycle per link: lift by its end and tip (0-45%), then the pile pushes the far end back up
+        // (45-85%: red arrow + glow, the pushed end visibly kicked up), then hand over to the next link
+        const u = (F.dist[k] % BEAD) / BEAD;
+        const ease = x => x * x * (3 - 2 * x);
+        const th = 1.2 * ease(Math.min(1, u / 0.45));
+        const kick = u > 0.45 ? 1.3 * BR * Math.sin(Math.PI * Math.min(1, (u - 0.45) / 0.4)) * Math.max(0.35, lv.glow) : 0;
+        const xl = p.xr, yl = pileY + BEAD * Math.sin(th);
+        const xr2 = xl + BEAD * Math.cos(th), yr2 = pileY + kick;
         lb1.position.set(xl, yl, 0); lb2.position.set(xr2, yr2, 0);
         rod.position.set((xl + xr2) / 2, (yl + yr2) / 2, 0); rod.rotation.set(0, 0, Math.atan2(yl - yr2, xl - xr2) - Math.PI / 2);
         for (let j = 0; j < flat.length; j++) {
@@ -235,7 +306,16 @@ export function build(world, plan) {
           const L = A.distanceTo(B); flatRods[j].position.copy(A).add(B).multiplyScalar(0.5); flatRods[j].scale.set(1, L, 1);
           flatRods[j].quaternion.setFromUnitVectors(_up, B.clone().sub(A).normalize());
         }
-        const g = Math.sin(Math.PI * u) * lv.glow;
+        const g = (u > 0.4 ? Math.sin(Math.PI * Math.min(1, (u - 0.4) / 0.5)) : 0) * lv.glow;
+        const ga = lv.glow * (0.65 + 0.35 * g);      // held for the whole "pushes back" line (round 8 review)
+        arrow.visible = ga > 0.05;
+        if (arrow.visible) {           // at the contact point: rises out of the pile into the end that digs in
+          const L = (0.75 + 0.25 * g) * 2.0 * BEAD, top = yr2 - 1.1 * BR, base = top - L, len = L - 0.0026;
+          const ax = xr2, az = 2.2 * BR;     // just in front of the bead (camera side), drawn over the pile
+          shaft.scale.set(1, len, 1); shaft.position.set(ax, base + len / 2, az);
+          headA.position.set(ax, base + len + 0.0013, az);
+          arrowM.emissiveIntensity = 2.5 * ga;
+        }
         push.position.set(xr2, yr2 - BR * 0.6, 0.0005); push.material.opacity = 0.75 * g;
         pushDot.position.set(xr2, yr2 - BR * 0.9, 0); pushDot.visible = g > 0.05; pushDot.material.emissiveIntensity = 6 * g;
       }

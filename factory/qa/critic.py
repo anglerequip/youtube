@@ -79,8 +79,9 @@ somebody curious? Is the ending satisfying?
 - Labels covering the thing they describe; key events off screen or too small on a phone.
 
 ## Output
-Write `critique.json` in this folder, following `schema.json` exactly, with `video_sha256` copied
-from `packet.json`. Nothing else is needed.
+Write `critique.json` in this folder (or `critique_2.json` if `critique.json` already exists: you are
+then the second, independent reviewer, so do NOT open the first critique), following `schema.json`
+exactly, with `video_sha256` copied from `packet.json`. Nothing else is needed.
 """
 
 
@@ -155,20 +156,55 @@ def build_packet(ctx, video: Path) -> Path:
     return d
 
 
-def read(ctx, video: Path) -> tuple[list[Finding], dict | None]:
-    """Findings and scores from an independent critique of exactly this video, or a blocker."""
+REVIEW_FILES = ["critique.json", "critique_2.json"]      # Caesar (2026-11-19): two independent picture reviewers
+
+
+def read(ctx, video: Path, n: int = 2) -> tuple[list[Finding], dict | None]:
+    """Two independent picture reviews of exactly this video, combined (Caesar, 2026-11-19: single reviewers
+    swung between rounds on unchanged shots). Scores are averaged per category. A rejection blocks only when
+    both reviewers reject; a severity-1 problem raised by one reviewer while the other approves becomes
+    severity 2 (it stays in the report). With fewer than `n` reviews the gate blocks."""
     d = ctx.out / "qa" / "review"
-    p = d / "critique.json"
     if not video.exists():
         return [], None
+    got = [_read_one(d / name, video, k + 1) for k, name in enumerate(REVIEW_FILES[:n])]
+    blocked = [F for F, c in got if c is None]
+    if blocked:
+        return [f for F in blocked for f in F], None
+    if n == 1:
+        return got[0]
+    cs = [c for _, c in got]
+    rejects = [str(c.get("release", "")).lower().startswith("rej") for c in cs]
+    F = []
+    for (Fk, c), rej in zip(got, rejects):
+        for f in Fk:
+            if f.id.startswith("review.rejected"):
+                if all(rejects):
+                    F.append(f)
+                continue
+            if f.severity <= 1 and not all(rejects):
+                f.severity, f.blocks = 2, None
+                f.message = f"(one of two reviewers) {f.message}"
+            F.append(f)
+    scores = {k: round(sum(float(c["scores"][k]) for c in cs) / len(cs), 2) for k in CATEGORIES}
+    merged = {**cs[0], "scores": scores, "reviewers": [{"file": REVIEW_FILES[k], "release": c.get("release"),
+                                                        "scores": c["scores"]} for k, c in enumerate(cs)],
+              "release": "reject" if all(rejects) else "approve" if not any(rejects) else "split"}
+    return F, merged
+
+
+def _read_one(p: Path, video: Path, idx: int) -> tuple[list[Finding], dict | None]:
+    """Findings and scores from one independent critique of exactly this video, or a blocker."""
+    d = p.parent
+    tag = "" if idx == 1 else f" (reviewer {idx})"
     if not p.exists():
         return [Finding("review.unavailable", "review", 1, "BLOCKED_REVIEW_UNAVAILABLE",
-                        "no independent Critical Designer review of this video",
+                        f"no independent Critical Designer review of this video{tag}: {p.name} missing",
                         repair=f"run the review on {d} then python -m factory qa-gate <slug>")], None
     try:
         c = json.loads(p.read_text())
     except json.JSONDecodeError as e:
-        return [Finding("review.invalid", "review", 1, "BLOCKED_REVIEW_UNAVAILABLE", f"critique.json is not valid JSON: {e}")], None
+        return [Finding("review.invalid", "review", 1, "BLOCKED_REVIEW_UNAVAILABLE", f"{p.name} is not valid JSON: {e}")], None
     if c.get("video_sha256") != sha256(video):
         return [Finding("review.stale", "review", 1, "BLOCKED_REVIEW_UNAVAILABLE",
                         "the critique reviews a different version of the video (sha256 mismatch)",
@@ -192,13 +228,13 @@ def read(ctx, video: Path) -> tuple[list[Finding], dict | None]:
             sev = int(str(prob.get("severity", 3))[0])
         except ValueError:
             sev = 3
-        F.append(Finding(f"review.problem.{k + 1}", "review", sev,
+        F.append(Finding(f"review.problem.{idx}.{k + 1}", "review", sev,
                          "BLOCKED_OBJECT_RECOGNITION" if sev <= 1 else None, prob.get("problem", ""),
                          t=prob.get("t"), repair=prob.get("repair", ""), confidence=float(prob.get("confidence", 0.5)),
                          objective=bool(prob.get("objective", False)),
                          evidence={"reviewer": c.get("reviewer", "")}))
     if str(c.get("release", "")).lower().startswith("rej"):
-        F.append(Finding("review.rejected", "review", 1, "BLOCKED_OBJECT_RECOGNITION",
+        F.append(Finding(f"review.rejected.{idx}", "review", 1, "BLOCKED_OBJECT_RECOGNITION",
                          f"Critical Designer rejects this version: {c.get('highest_priority_repair', '')}",
                          objective=False, evidence={"evidence": c.get("evidence", "")}))
     return F, c

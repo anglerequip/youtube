@@ -5,6 +5,7 @@
 inspect:                     # factory/qa/inspect3d.py (scene graph, renderer/inspect.js)
   sample_every_s: 2.0        # plus every shot boundary, card start and declared event
   hole_fraction_block: 0.0005        # share of the frame where the world is missing (clear colour shows)
+  ground_hole_fraction_block: 0.002  # share of the frame below the horizon with no ground (sky dome hidden)
   shadow_cut_block_px: 300           # visible area (px on a 360x640 phone, fog-weighted) of a cut shadow
   shadow_cut_risk_px: 60
   chain_gap_px: 1.0                  # bead gaps this wide (px at 1080) must be bridged by a connector...
@@ -19,6 +20,7 @@ frames:                      # factory/qa/frames.py (the encoded MP4)
   overexposed_share: 0.08            # share of near-white pixels (>= 250) per frame
   flicker_tile: 48                   # px tiles on a 360-wide copy
   flicker_z: 9.0                     # second-difference spike vs that tile's median (cuts and events excluded)
+  flicker_motion_ratio: 0.85         # spike ignored when the tile's pixels change this much in most nearby frames (moving content); v1 brake blink <= 0.6, passing queue >= 1.05
   flicker_min_delta: 18              # and at least this many grey levels
 
 pacing:                      # factory/qa/pacing.py
@@ -47,3 +49,33 @@ rubric:                      # factory/qa/gate.py: 0-5 per category, weighted
     design_and_style: 0.10
     hook_and_retention: 0.05
   primary: [scientific_accuracy, cross_modal_consistency, visual_clarity, geometry_and_render]
+
+sound:                        # factory/qa/sound.py (the sound team; proxies, nothing listens)
+  texture_max_dur_s: 0.08            # shorter, never-identical cues: exempt from the identical-sample count only
+  repeat_window_s: 5.0
+  repeat_warn: 4                     # identical sample this many times within the window -> high
+  repeat_block: 8                    # ...or this many -> blocks
+  repeat_total_warn: 12
+  repeat_total_block: 30
+  density_window_s: 5.0
+  density_warn: 1.0                  # audible cues per second
+  density_block: 2.0
+  periodic_min_run: 8                # this many even intervals -> blocks
+  periodic_cv: 0.35
+  periodic_short_run: 3              # even a short run of 4 evenly spaced cues sounds like a metronome -> high
+  periodic_short_cv: 0.12
+  periodic_max_interval_s: 2.5
+  train_gap_s: 1.2                   # click train: same-name cues with no pause longer than this
+  train_warn_s: 5.0
+  train_block_s: 10.0
+  masking_db: -12.0                  # effects within this of the voice (50 ms frames, while speaking)
+  masking_warn: 0.05
+  masking_block: 0.15
+  music_max_db: -12.0
+  startle_db: 0.0
+
+review:                       # factory/qa/critic.py (Caesar, 2026-11-19: "two picture reviewers")
+  picture_reviewers: 2        # critique.json + critique_2.json, each a fresh context; scores averaged,
+                              # a rejection blocks only when both reject
+  max_rounds: 2               # Caesar, 2026-11-19: at most two review rounds per video, then it goes to
+                              # Caesar with its score and the reviewers' notes, whatever it scored

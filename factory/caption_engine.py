@@ -133,7 +133,7 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Cap,Poppins SemiBold,{size},&H00FFFFFF,&H00FFFFFF,&H9A000000,&H8C000000,0,0,0,0,100,100,0,0,1,2.5,3,5,80,80,0,1
+Style: Cap,Poppins SemiBold,{size},&H00FFFFFF,&H00FFFFFF,&H48000000,&H70000000,0,0,0,0,100,100,0,0,1,3.5,3,5,80,80,0,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -141,8 +141,12 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     lines = []
     for s, e, text in timed_chunks(tl):
         # soft shadow: blurred semi-transparent outline + offset shadow, no box (Blueprint 6)
-        tag = rf"{{\pos({W // 2},{cy})\blur5\fad(80,80)}}"
-        lines.append(f"Dialogue: 0,{_ts(s)},{_ts(e)},Cap,,0,0,0,,{tag}{text}")
+        tag = rf"{{\pos({W // 2},{cy})\blur4\fad(80,80)}}"
+        # wide, faint dark halo underneath (picture review, round 7: white words got lost over the silver
+        # chain pile and a yellow car); still no box, just more shadow where the frame is bright
+        halo = rf"{{\pos({W // 2},{cy})\bord11\blur14\1a&HFF&\3a&HA8&\4a&HFF&\fad(80,80)}}"
+        lines.append(f"Dialogue: 0,{_ts(s)},{_ts(e)},Cap,,0,0,0,,{halo}{text}")
+        lines.append(f"Dialogue: 1,{_ts(s)},{_ts(e)},Cap,,0,0,0,,{tag}{text}")
     path.write_text(header + "\n".join(lines) + "\n", encoding="utf-8")
 
 

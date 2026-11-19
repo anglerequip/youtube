@@ -25,7 +25,14 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
+
+# Windows Python defaults to cp1252 for text files, which cannot write "≈" or "°" (crashed the review
+# packet on Caesar's PC). Re-run in UTF-8 mode once, so every read_text/write_text is UTF-8 everywhere.
+if os.name == "nt" and not sys.flags.utf8_mode and __name__ == "__main__":
+    import subprocess
+    sys.exit(subprocess.call([sys.executable, "-X", "utf8", "-m", "factory", *sys.argv[1:]]))
 
 from .configuration import settings
 
@@ -111,12 +118,16 @@ def main(argv=None) -> int:
         verdict, rep, _ = qa.run(sb, video, inspect=not getattr(args, "no_inspect", False))
         print(rep.with_suffix(".md").read_text())
         row = db.get(sb.slug) if hasattr(db, "get") else None
-        if args.cmd == "qa-gate" and verdict["state"] == "READY_FOR_RELEASE" and row and row["state"] == "QC_FAILED":
+        ok = verdict["state"] == "READY_FOR_RELEASE" or verdict["verdict"] == "deliver"
+        if args.cmd == "qa-gate" and ok and row and row["state"] == "QC_FAILED":
             from .production import sha256_file
             if row["video_sha256"] == sha256_file(video):
-                db.transition(sb.slug, "QUALITY_CHECKED", note=f"release gate passed, score {verdict['score']}")
+                note = (f"release gate passed, score {verdict['score']}" if verdict["verdict"] == "approve" else
+                        f"review round cap reached (round {verdict['review_round']}), score {verdict['score']}, "
+                        f"{verdict['blockers']} blocker(s): for Caesar to decide")
+                db.transition(sb.slug, "QUALITY_CHECKED", note=note)
                 _auto_package(db, sb.slug)
-        return 0 if verdict["state"] == "READY_FOR_RELEASE" else 2
+        return 0 if ok else 2
     if args.cmd in ("package", "review", "bot", "publish", "posts", "publish-auth", "publish-check"):
         return _publishing(db, args)
     return 1

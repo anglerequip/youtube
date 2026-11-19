@@ -26,7 +26,7 @@ beats:
   - id: slow
     text: "So slow it way down. The first crack opens near the middle, exactly as expected."
   - id: wave
-    text: "But the instant it breaks, each half springs back, and a wave of extra bending races along it."
+    text: "But the instant it breaks, each half starts to spring back. Watch the red: a wave of extra bending races out from the crack."
   - id: burst
     text: "Behind that wave, the stick bends even harder than when it first broke. So it cracks again."
   - id: rehook

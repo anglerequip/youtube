@@ -69,8 +69,11 @@ def test_chain_v1_black_triangle_in_pixels():
 @renderer
 def test_chain_v1_black_triangle(tmp_path):
     sb, plan = _plan("chain-fountain")
-    old = _inspect("regression/chain3d_v1", plan, [57.0, 58.0], tmp_path)
-    new = _inspect("chain3d", plan, [57.0, 58.0], tmp_path)
+    # a time whose shot shows the clipped dome in the v1 scene (searched 2026-11-19: round 7 made 57-58 s a
+    # top-down shot, which never sees the horizon; 30 s, the rehook shot, does)
+    T_SKY = [30.0]
+    old = _inspect("regression/chain3d_v1", plan, T_SKY, tmp_path)
+    new = _inspect("chain3d", plan, T_SKY, tmp_path)
     assert _blockers(old, "geometry.world_missing"), "old scene must show the hole (clipped sky dome)"
     assert not _blockers(new, "geometry.world_missing")
 
@@ -115,6 +118,13 @@ def test_traffic_v1_flicker_in_pixels():
     assert F and m["flicker_tiles"] >= 1
 
 
+def test_flicker_ignores_cars_streaming_past():
+    """Round 4 PC render, other lane at 38 s: a queue of cars sweeping through the frame was called flicker
+    (8 tiles) although every frame was clean (checked frame by frame, 2026-11-19)."""
+    F, m = frames.check_flicker(FIX / "other_lane_r4_passing_queue_37-39s.mp4", CFG, [], [], region=(0.0, 0.64))
+    assert not F, [f.message for f in F]
+
+
 def test_flicker_false_positive_control():
     """A clean clip (accepted slinky video) shows no flicker and no black regions."""
     F, m = frames.check_flicker(FIX / "slinky_control_20-24s.mp4", CFG, [], [], region=(0.0, 0.64))
@@ -132,7 +142,9 @@ def test_spaghetti_cards_never_cover_the_pieces(tmp_path):
     old_plan = json.loads(json.dumps(plan))
     for c in old_plan["cards"]:
         if c["big"].endswith("pieces") and "twisted" in c["small"]:
-            c["y"], c["start"] = 0.2, ev - 0.6 + 0.6       # as shipped: y 0.2, right at the break
+            # as shipped in v1 the card sat right on the pieces (y 0.2 in that close shot). The round 6 wide shot
+            # puts the broken ends at ~0.36 of the frame height, so the "card on the pieces" case is now y 0.37
+            c["y"], c["start"] = 0.37, ev
     old = _inspect("spaghetti3d", old_plan, times, tmp_path)
     assert _blockers(old, "recognition.card_covers_hero")
     assert not _blockers(new, "recognition.card_covers_hero")
@@ -148,3 +160,21 @@ def test_spaghetti_fracture_is_not_a_geometry_defect(tmp_path):
     F = _inspect("spaghetti3d", plan, times, tmp_path)
     bad = [f for f in F if f.severity <= 1]
     assert not bad, [f.message for f in bad]
+
+
+@renderer
+def test_ground_missing_is_caught(tmp_path):
+    """head-ages-faster round 1: the car drove past the end of the ground plane and the sky dome (a full
+    sphere) filled the frame below the horizon. The clear-colour hole check never saw it; both picture
+    reviewers did. Same failure staged in the chain scene: a camera beyond its 400 m ground looking down."""
+    sb, plan = _plan("chain-fountain")
+    t = 3.0
+    i = int(t * plan["fps"])
+    good = _inspect("chain3d", plan, [t, 30.0], tmp_path)
+    assert not _blockers(good, "geometry.ground_missing")
+    for s in plan["shots"]:
+        if s["i0"] <= i < s["i0"] + len(s["pos"]):
+            s["pos"] = [[0.0, 20.0, 260.0]] * len(s["pos"])
+            s["look"] = [[0.0, 0.0, 225.0]] * len(s["look"])
+    bad = _inspect("chain3d", plan, [t], tmp_path)
+    assert _blockers(bad, "geometry.ground_missing")

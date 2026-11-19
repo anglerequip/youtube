@@ -61,7 +61,7 @@ function setTube(m, xs, ys, zs, phase, glow, hl) {
       P[v] = xs[i] + ox * RAD; P[v + 1] = ys[i] + oy * RAD + BENCH_Y; P[v + 2] = zs + oz * RAD;
       N[v] = ox; N[v + 1] = oy; N[v + 2] = oz;
       const d = Math.cos(a - phase[i]);   // stripe: a narrow band around the surface angle `phase`
-      const st = d > 0.86 ? 1 : 0;
+      const st = d > 0.72 ? 1 : 0;      // a wider stripe: the twist must read on a phone (round 5)
       cTmp.copy(PASTA).lerp(PASTA_DARK, 0.35 * (1 - (ca * 0.5 + 0.5)));
       if (st) cTmp.copy(STRIPE);
       C[v] = cTmp.r; C[v + 1] = cTmp.g; C[v + 2] = cTmp.b;
@@ -120,6 +120,8 @@ export function build(world, plan) {
   }
   const band = new THREE.Mesh(new THREE.TorusGeometry(0.0072, 0.0016, 8, 24), MAT.plastic('#3d6f8e')); band.rotation.y = Math.PI / 2; band.position.y = 0.0065; bundle.add(band);
   bundle.position.set(0.02, BENCH_Y, -0.2); bundle.rotation.y = 0.18;
+  // reviewer 2026-11-19: the spare bundle read as the clamped stick and crowded the lower third
+  bundle.visible = false;
 
   // grip stands: posts on the board holding the grips (grips move with the stick ends)
   const gl = grip(S), gr = grip(S);
@@ -128,7 +130,10 @@ export function build(world, plan) {
   const postR = add(S, new THREE.CylinderGeometry(0.005, 0.005, 1, 12), steel, 0, 0, -0.035);
   const armL = add(S, rbox(0.012, 0.012, 0.04, 0.003), steel, 0, 0, -0.018);
   const armR = add(S, rbox(0.012, 0.012, 0.04, 0.003), steel, 0, 0, -0.018);
-  for (const x of [-0.16, 0.16]) add(S, rbox(0.05, 0.008, 0.05, 0.003), MAT.darkSteel(), x, BENCH_Y + 0.004, -0.035);
+  // foot plates follow their posts (picture review, round 5: fixed plates looked detached from the moving posts)
+  const footM = new THREE.MeshStandardMaterial({ color: '#8d9197', metalness: 0.5, roughness: 0.6 });   // matte: no glare
+  const footL = add(S, rbox(0.04, 0.006, 0.04, 0.002), footM, -0.16, BENCH_Y + 0.003, -0.035);
+  const footR = add(S, rbox(0.04, 0.006, 0.04, 0.002), footM, 0.16, BENCH_Y + 0.003, -0.035);
 
   const tubes = Array.from({ length: POOL }, () => { const m = pastaTube(); S.add(m); return m; });
   const flash = haloSprite('#fff1dc', 0.035, 0); S.add(flash);
@@ -138,7 +143,7 @@ export function build(world, plan) {
 
   return {
     lightCenter: new THREE.Vector3(0, BENCH_Y, 0),
-    update(i) {
+    update(i, t, shot) {
       const k = Math.min(i, F.pieces.length - 1);
       const ps = F.pieces[k];
       for (let p = 0; p < POOL; p++) {
@@ -149,21 +154,25 @@ export function build(world, plan) {
         setTube(tubes[p], pc.x, pc.y, pc.z ?? 0, phase, pc.e, pc.h);
       }
       const G = F.grips[k];
-      [[gl, G[0], postL, armL, 0], [gr, G[1], postR, armR, G[2]]].forEach(([g, q, post, arm, roll], side) => {
+      [[gl, G[0], postL, armL, 0, footL], [gr, G[1], postR, armR, G[2], footR]].forEach(([g, q, post, arm, roll, foot], side) => {
         g.position.set(q[0], q[1] + BENCH_Y, 0);
         g.rotation.z = q[2];
         g.userData.roll.rotation.x = roll;
         const top = q[1] + BENCH_Y, h = top - BENCH_Y;
         post.scale.y = h; post.position.set(q[0], BENCH_Y + h / 2, -0.035);
         arm.position.set(q[0], top, -0.018);
-        g.visible = post.visible = arm.visible = !F.nogrip || !F.nogrip[k];
+        foot.position.set(q[0], BENCH_Y + 0.003, -0.035);
+        g.visible = post.visible = arm.visible = foot.visible = !F.nogrip || !F.nogrip[k];
       });
       const fl = F.flash[k];
       flash.material.opacity = fl ? 0.95 * fl[2] : 0; flash2.material.opacity = fl ? 0.5 * fl[2] : 0;
       if (fl) { flash.position.set(fl[0], fl[1] + BENCH_Y, 0.002); flash2.position.copy(flash.position); }
       const rg = F.ring[k];
       ring.visible = !!rg;
-      if (rg) { ring.position.set(rg[0], rg[1] + BENCH_Y, 0); ring.rotation.order = 'ZYX'; ring.rotation.set(0, Math.PI / 2, rg[3] ?? 0); ringMat.opacity = 0.9 * rg[2]; }
+      if (rg) { ring.position.set(rg[0], rg[1] + BENCH_Y, 0); ring.rotation.order = 'ZYX'; ring.rotation.set(0, Math.PI / 2, rg[3] ?? 0); ringMat.opacity = 0.9 * rg[2];
+        // keep the ring readable at any shot distance: about 3% of the frame height
+        const jj = shot && shot.pos ? Math.min(Math.max(0, i - (shot.i0 ?? 0)), shot.pos.length - 1) : -1;
+        const dcam = jj >= 0 ? ring.position.distanceTo(new THREE.Vector3(...shot.pos[jj])) : 0.25; ring.scale.setScalar(Math.max(1, dcam / 0.25)); }
     },
     probes(i) {          // every visible fragment's two ends (do pieces read as separate?) + stick thickness
       const k = Math.min(i, F.pieces.length - 1), segs = [];

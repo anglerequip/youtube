@@ -8,3 +8,7 @@ google-api-python-client>=2.100
 google-auth>=2.23
 google-auth-oauthlib>=1.1
 num2words>=0.5
+scipy>=1.11
+pillow>=10
+librosa>=0.10          # expressive voice delivery (factory/voice_engine/expressive.py)
+faster-whisper>=1.0    # narration check (factory/narration/verify.py)

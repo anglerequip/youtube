@@ -31,11 +31,13 @@ recognisable objects (cars, jars), D deformable and fracturing objects, E large 
 | 2 | science | before render | `qa/science.py` | numbers that disagree with their claim, unbound numbers, overstated or absolute wording, wrong cards and badges. Understands "three or more", "almost a full turn", "four of them", "in two" |
 | 3 | events | before render | `qa/spec.py` | drawn state differs from the simulation at a declared event; on/off tracks that blink for one frame |
 | 4 | pacing | before render | `qa/pacing.py` | stretches with no attention event (cut, card, badge, sound event, reveal), slow hook, jump cuts, dead air at the end |
+| 5a | sound | before render | `qa/sound.py` | the sound team's logic: the identical sample on repeat, too many effects per second, metronome rhythms, effects competing with the voice (measured on the exact stems the mixer sums), startling cues, music too loud under the voice |
 | 5 | geometry | before render | `qa/inspect3d.py` + `renderer/inspect.js` | world missing (sentinel render), NaN, z-fighting (gap vs depth precision at the visible distance), shadow-map cut-offs, chain beads without visible links, piece counts that do not read on a 360x640 phone, labels covering the hero, popping |
 | 6 | pixels | after render | `qa/frames.py` | solid black regions, blown-out frames |
 | 7 | flicker | after render | `qa/frames.py` | repeated single-frame brightness spikes per screen tile (cuts and declared events excluded) |
 | 8 | audio | after render | `qa/audio.py` | duration, clipping, true peak, loudness, unvoiced beats, dead air, silent physical events |
 | 9 | review | after render | `qa/critic.py` | independent Critical Designer critique of the actual frames |
+| 10 | sound review | after render | `qa/sound.py` | independent Sound Reviewer: "would a viewer find anything in this soundtrack annoying?", judged from the cue sheet, a level timeline and a spectrogram of the final mix |
 
 Layers 1-5 run inside `produce` right after the plan is built. A blocker stops the production there,
 before the 1.5-2.5 hour full render, and writes the report.
@@ -59,8 +61,40 @@ can be sent to Caesar for approval.
 phone size, `intent.md` (narration, claims, contracts, expected events, caveats), the review brief
 (brief Part XLII) and `schema.json`. It contains none of the generator's explanations or automated
 verdicts. A separate reviewer (a fresh model context with no generator history, or a person) writes
-`critique.json` with the video's sha256. Without a valid critique for the exact file, the gate blocks
-with `BLOCKED_REVIEW_UNAVAILABLE`. The generator never writes this file.
+`critique.json` with the video's sha256, and a second fresh reviewer, who never sees the first critique,
+writes `critique_2.json`. Caesar asked for two (2026-11-19) after single reviewers swung between rounds on
+unchanged shots. The gate averages the two reviewers' scores per category; a rejection blocks only when
+both reject, and a severity-1 problem raised by one reviewer while the other approves is kept in the
+report at severity 2. Without both valid critiques for the exact file (`review: picture_reviewers` in
+`config/quality.yaml`), the gate blocks with `BLOCKED_REVIEW_UNAVAILABLE`. The generator never writes
+these files.
+
+**Round cap (Caesar, 2026-11-19).** A video gets at most `review: max_rounds` (2) review rounds. A round is
+one distinct reviewed video (both picture critiques and the sound critique present), counted in
+`out/<slug>/qa/rounds.json` and seeded from the PC's `qa_round*` backups the first time. When the cap is
+reached and the video is not approved, the verdict is `deliver`: it goes to Caesar with the report (score,
+blockers, both reviewers' notes) whatever it scored, and `qa-gate` moves it to `QUALITY_CHECKED` so it can
+reach Caesar's approval. Caesar decides; the 4.0 bar stays as the reported score. Nothing is published
+without Caesar's approval in Telegram.
+
+## 4b. The sound team
+
+Added after Caesar heard the chain fountain go "ding ding ding" every half second: 203 cues of one
+identical bell sample, each quiet enough that loudness checks never noticed. `sound.check` reads the cue
+sheet (every cue rendered and hashed, so "the same sample" is exact) and the voice / effects / music stems
+from `sound_design.stems`, the same function the mixer uses. Cues within 0.15 s are one event (a crack-crack
+burst at a snap is meaning, not clutter). Varying the sample does not make a rhythm acceptable: round 2 of
+the chain swapped the bell for 168 varied "coil" clicks, about 3 a second, which the old logic waved through as
+"texture" and the Sound Reviewer heard as a ticking clock. Now every cue counts towards density, the
+`click_train` check catches one kind of cue going on without a pause (by name, whatever the sample), and a
+run of only four evenly spaced cues is already flagged as a metronome. Texture (short, never-identical cues)
+is only exempt from the identical-sample count. Thresholds: `config/quality.yaml` `sound:`.
+
+`sound.build_packet` writes `out/<slug>/qa/review_audio/` (cue_sheet.md, timeline.png, stats.json,
+intent.md, INSTRUCTIONS.md, schema.json, packet.json). A separate reviewer writes `critique_audio.json`
+bound to the video's sha256; without it the gate blocks (`review.audio_unavailable`). The audio score is
+the Sound Reviewer's (the Critical Designer's audio score is provisional: it only sees levels). Episode rule: vary every repeated cue
+(`seed`, `pitch`, `ring` on tinks), one cue per event the viewer should notice, nothing over the words.
 
 ## 5. Commands
 
@@ -87,6 +121,7 @@ classes and their tests: `config/defects.yaml`. Regression tests: `tests/test_qa
 - Number parsing covers how our scripts speak (number words, fractions, "a full turn", "in two",
   "double"). An unusual phrasing can slip through; every unbound number is still reported.
 - Perceptual listening (pronunciation, naturalness, music) is not automated and is always reported as
-  NOT performed. Engagement can only be measured on the platform after release.
+  NOT performed. The sound team judges annoyance from measurable proxies and plots; it does not hear.
+  Caesar's own listen stays the final check for sound. Engagement can only be measured on the platform after release.
 - The Critical Designer is another model instance: independent of the generator's context, but not of
   the model family. Caesar's own review in Telegram stays the final gate.

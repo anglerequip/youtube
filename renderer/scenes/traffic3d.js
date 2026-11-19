@@ -71,6 +71,15 @@ export function build(world, plan) {
   const ring = new THREE.Mesh(new THREE.TorusGeometry(3.1, 0.07, 6, 96), ringMat);
   ring.rotation.x = Math.PI / 2; ring.scale.set(0.62, 1, 1); ring.position.set(XR, 0.05, 0.2); S.add(ring);
 
+  // translucent red wash over the jammed stretches of the slow lane (moves with the jams)
+  const tintMat = new THREE.MeshBasicMaterial({ color: '#c92a2e', transparent: true, opacity: 0, depthWrite: false,
+    polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+  const jams = [];
+  for (let q = 0; q < 8; q++) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(3.3, 1), tintMat);
+    m.rotation.x = -Math.PI / 2; m.position.set(XR, 0.034, 0); m.renderOrder = 1; m.visible = false; S.add(m); jams.push(m);
+  }
+
   let camNear = null;     // low cameras: hide same-lane cars sitting between the camera and the hero
   const place = (cars, zs, br, ego, x) => {
     for (let c = 0; c < cars.length; c++) {
@@ -98,6 +107,13 @@ export function build(world, plan) {
       scen.position.z = ((sz % P) + P) % P;
       gtex.offset.y = (sz / 9) % 1;
       ring.visible = !!(F.ring && F.ring[k]);
+      const tv = F.lane_tint ? F.lane_tint[k] : 0, js = (F.jams && F.jams[k]) || [];
+      tintMat.opacity = 0.24 * tv;
+      jams.forEach((m, q) => {
+        const sg = js[q];
+        m.visible = tv > 0.01 && !!sg;
+        if (m.visible) { m.scale.y = sg[1] - sg[0]; m.position.z = (sg[0] + sg[1]) / 2; }
+      });
 
       // shadows and haze follow the shot: sun box centred on the look point, sized to the view
       const j = Math.min(Math.max(0, i - (shot.i0 ?? 0)), (shot.look?.length ?? 1) - 1);
