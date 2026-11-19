@@ -1,6 +1,6 @@
 """Self-checking production: QA layers and the release gate (see docs/QA.md).
 
-    pre_render(sb)          spec, science, events, temporal tracks, 3D inspection, pacing, sound (cue sheet + stems)
+    pre_render(sb)          spec, science, length (padding, not a target), events, temporal tracks, 3D inspection, pacing, sound (cue sheet + stems)
                             (seconds; runs before the hours-long full render and blocks it on a blocker)
     post_render(sb, video)  pixels, flicker, audio, Critical Designer and Sound Reviewer packets/critiques, gate + report
     run(sb)                 both, on an existing render
@@ -34,12 +34,18 @@ def _layer(name, fn):
         return LayerResult(name, False, [], {}, note=f"crashed: {type(e).__name__}: {e}")
 
 
+def _length(sb, ctx):
+    from .. import story_length
+    return story_length.check(sb, ctx.tl)
+
+
 def pre_render(sb, ctx=None, inspect: bool = True) -> tuple[list[LayerResult], spec.Context]:
     ctx = ctx or spec.load(sb)
     cfg = inspect3d.config()
     L = [_layer("spec", lambda: spec.check(ctx)),
          _layer("science", lambda: science.check(sb, ctx.facts, ctx.cards, ctx.badges)),
          _layer("events", lambda: spec.check_events(ctx) + spec.check_tracks(ctx)),
+         _layer("length", lambda: _length(sb, ctx)),
          _layer("pacing", lambda: pacing.check(ctx, cfg)),
          _layer("sound", lambda: sound.check(ctx, cfg))]
     if ctx.plan is not None and ctx.plan.get("hud"):            # retention toolkit (factory/retention)

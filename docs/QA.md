@@ -27,7 +27,8 @@ recognisable objects (cars, jars), D deformable and fracturing objects, E large 
 
 | # | layer | when | file | finds |
 |---|---|---|---|---|
-| 1 | spec | before render | `qa/spec.py` | missing claims, entities, hero, sources; duration rule (> 60 s); slow hook |
+| 1 | spec | before render | `qa/spec.py` | missing claims, entities, hero, sources; slow hook (no duration rule: content decides length) |
+| 1b | length | before render | `story_length.py` | padding, not a target: recap beats, words after the payoff, generic hooks/endings and calls to action, slowed or sped-up narration, long pauses; length vs the story's own plan (soft); opt-in platform rules (TikTok Creator Rewards, off by default) |
 | 2 | science | before render | `qa/science.py` | numbers that disagree with their claim, unbound numbers, overstated or absolute wording, wrong cards and badges. Understands "three or more", "almost a full turn", "four of them", "in two" |
 | 3 | events | before render | `qa/spec.py` | drawn state differs from the simulation at a declared event; on/off tracks that blink for one frame |
 | 4 | pacing | before render | `qa/pacing.py` | stretches with no attention event (cut, card, badge, sound event, reveal), slow hook, jump cuts, dead air at the end |
@@ -35,7 +36,7 @@ recognisable objects (cars, jars), D deformable and fracturing objects, E large 
 | 5 | geometry | before render | `qa/inspect3d.py` + `renderer/inspect.js` | world missing (sentinel render), NaN, z-fighting (gap vs depth precision at the visible distance), shadow-map cut-offs, chain beads without visible links, piece counts that do not read on a 360x640 phone, labels covering the hero, popping |
 | 6 | pixels | after render | `qa/frames.py` | solid black regions, blown-out frames |
 | 7 | flicker | after render | `qa/frames.py` | repeated single-frame brightness spikes per screen tile (cuts and declared events excluded) |
-| 8 | audio | after render | `qa/audio.py` | duration, clipping, true peak, loudness, unvoiced beats, dead air, silent physical events |
+| 8 | audio | after render | `qa/audio.py` | narration not cut at the end, clipping, true peak, loudness, unvoiced beats, dead air, silent physical events |
 | 9 | review | after render | `qa/critic.py` | independent Critical Designer critique of the actual frames |
 | 10 | sound review | after render | `qa/sound.py` | independent Sound Reviewer: "would a viewer find anything in this soundtrack annoying?", judged from the cue sheet, a level timeline and a spectrogram of the final mix |
 

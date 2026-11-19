@@ -69,7 +69,10 @@ improvements, the single weakest aspect, and scores 0-5 per category (5 = broadc
 Questions to keep asking: what is the viewer supposed to understand, and is that what they actually
 get? Is the main object recognisable at phone size? Are the graphics scientifically correct? Does any
 scene look like a placeholder render? Are there stretches with nothing new? Would the opening make
-somebody curious? Is the ending satisfying?
+somebody curious? Is the ending satisfying? Does the video end soon after its payoff, or does it keep
+going (a recap, a slow hold, a generic sign-off)? Is any beat there only to fill time, or is anything
+missing that the explanation needs? The right length is whatever the story needs; never reward or
+punish a video for being a particular number of seconds.
 
 ## Known failure classes (look for these specifically)
 - Narration, numbers on screen and the simulation disagree (e.g. "three pieces" while four are shown).

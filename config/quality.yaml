@@ -33,7 +33,7 @@ audio:                       # factory/qa/audio.py
   peak_dbfs_max: -0.3
   lufs_target: -14.0
   lufs_tolerance: 2.0
-  min_duration_s: 60.5
+  # no duration minimum: length is set by the story (config/rules.yaml `length:`)
 
 rubric:                      # factory/qa/gate.py: 0-5 per category, weighted
   approve_at: 4.0
