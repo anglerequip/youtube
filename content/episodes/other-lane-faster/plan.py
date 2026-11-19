@@ -18,6 +18,7 @@ LANE_X = (1.8, -1.8)          # right, left
 BRAKE_ACC = -0.7              # m/s^2: brake lights on below this deceleration
 BRAKE_OFF = -0.3              # ...and off again only above this (hysteresis: no one-frame blinking)
 BRAKE_MIN_ON = 12             # frames (0.4 s): a brake light that comes on stays on at least this long
+BRAKE_MIN_OFF = 4             # frames: and once off, stays off at least this long
 
 
 def _brakes(a):
@@ -27,12 +28,12 @@ def _brakes(a):
     import numpy as np
     a = np.asarray(a)
     on = np.zeros(a.shape, bool)
-    state = np.zeros(a.shape[1], bool); held = np.zeros(a.shape[1], int)
+    state = np.zeros(a.shape[1], bool); held = np.full(a.shape[1], 10 ** 6)
     for k in range(a.shape[0]):
-        start = ~state & (a[k] < BRAKE_ACC)
+        start = ~state & (a[k] < BRAKE_ACC) & (held >= BRAKE_MIN_OFF)
         stop = state & (a[k] > BRAKE_OFF) & (held >= BRAKE_MIN_ON)
         state = (state | start) & ~stop
-        held = np.where(start, 0, held + 1)
+        held = np.where(start | stop, 0, held + 1)
         on[k] = state
     return on
 

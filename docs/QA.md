@@ -1,0 +1,92 @@
+# Self-checking production (factory/qa)
+
+Built 2026-11-19 after Caesar rejected three videos (other lane: sidewalk glitches; spaghetti: said
+three pieces, showed four; chain fountain: no visible links and a black hole in the sky). The rule since
+then: **nothing reaches Caesar unless the system has checked it against its own specification, and an
+independent reviewer has looked at the actual video.** Nothing in this system publishes anything;
+release still needs Caesar's approval in Telegram.
+
+## 1. One source of truth
+
+`storyboard.yaml` now holds, next to the narration:
+
+| key | what it says | checked by |
+|---|---|---|
+| `claims:` | every number the viewer hears or reads: unit, true value (`value:` from a source, or `sim:` from the plan's `facts`), scope (specific / typical / model / universal / condition / history), evidence quality 1-5 and source | science layer |
+| `absolute_ok:` | each absolute word ("never", "exactly", "every") with the reason it is literally true | science layer |
+| `entities:` | what must be visible: type, risk category A-F, importance, `visual_contract` (`must_read_as`, pixel minimums) | geometry layer, Critical Designer |
+| `hero:` | the one thing the viewer must follow | review packet |
+
+`plan.py` returns `facts` (the simulated values, the slow-motion factors, and `events`: moments where
+what is drawn must equal what was simulated, read through `observe(plan, i, what)`).
+
+Risk categories (brief Part VI): A faces, B thin connected objects (chains, springs), C mechanically
+recognisable objects (cars, jars), D deformable and fracturing objects, E large surfaces, F background.
+
+## 2. Layers
+
+| # | layer | when | file | finds |
+|---|---|---|---|---|
+| 1 | spec | before render | `qa/spec.py` | missing claims, entities, hero, sources; duration rule (> 60 s); slow hook |
+| 2 | science | before render | `qa/science.py` | numbers that disagree with their claim, unbound numbers, overstated or absolute wording, wrong cards and badges. Understands "three or more", "almost a full turn", "four of them", "in two" |
+| 3 | events | before render | `qa/spec.py` | drawn state differs from the simulation at a declared event; on/off tracks that blink for one frame |
+| 4 | pacing | before render | `qa/pacing.py` | stretches with no attention event (cut, card, badge, sound event, reveal), slow hook, jump cuts, dead air at the end |
+| 5 | geometry | before render | `qa/inspect3d.py` + `renderer/inspect.js` | world missing (sentinel render), NaN, z-fighting (gap vs depth precision at the visible distance), shadow-map cut-offs, chain beads without visible links, piece counts that do not read on a 360x640 phone, labels covering the hero, popping |
+| 6 | pixels | after render | `qa/frames.py` | solid black regions, blown-out frames |
+| 7 | flicker | after render | `qa/frames.py` | repeated single-frame brightness spikes per screen tile (cuts and declared events excluded) |
+| 8 | audio | after render | `qa/audio.py` | duration, clipping, true peak, loudness, unvoiced beats, dead air, silent physical events |
+| 9 | review | after render | `qa/critic.py` | independent Critical Designer critique of the actual frames |
+
+Layers 1-5 run inside `produce` right after the plan is built. A blocker stops the production there,
+before the 1.5-2.5 hour full render, and writes the report.
+
+## 3. Severity, states and the gate
+
+Severity 0 critical, 1 major (both block), 2 high (repair before approval unless an exception is
+recorded), 3 polish, 4 optional. Every blocker names a `BLOCKED_*` state, and the report says which
+stage repairs it (`RETURN_TO` in `qa/findings.py`): a factual error goes back to research, a visual
+contradiction to the script/simulation, geometry to the visual plan, a missing review to review.
+
+Rubric (`config/quality.yaml`): eight categories scored 0-5. The automated score starts at 5 and loses
+points per finding; the reviewer's score is used when lower. Approve only with a weighted score of at
+least 4.0, no primary category (science, cross-modal, clarity, geometry) under 3.5, and no blocker.
+`READY_FOR_RELEASE` then moves the database to `QUALITY_CHECKED`, the only state from which a video
+can be sent to Caesar for approval.
+
+## 4. The Critical Designer
+
+`critic.build_packet` writes `out/<slug>/qa/review/`: six blind frames, time-stamped contact sheets at
+phone size, `intent.md` (narration, claims, contracts, expected events, caveats), the review brief
+(brief Part XLII) and `schema.json`. It contains none of the generator's explanations or automated
+verdicts. A separate reviewer (a fresh model context with no generator history, or a person) writes
+`critique.json` with the video's sha256. Without a valid critique for the exact file, the gate blocks
+with `BLOCKED_REVIEW_UNAVAILABLE`. The generator never writes this file.
+
+## 5. Commands
+
+```
+python -m factory produce <slug> --previews   # pre-render gate, render, post-render QA, report
+python -m factory qa <slug> [--video f.mp4] [--no-inspect]   # all layers on an existing render
+python -m factory qa-gate <slug>              # after critique.json exists: re-run the gate
+```
+
+Reports: `out/<slug>/qa/report.md` and `report.json`. Thresholds: `config/quality.yaml`. Known defect
+classes and their tests: `config/defects.yaml`. Regression tests: `tests/test_qa_science.py`,
+`tests/test_qa_regression.py` (old scenes in `renderer/scenes/regression/`, clips in
+`tests/fixtures/regression/`).
+
+## 6. Limitations (honest)
+
+- The geometry checks see what scenes expose: meshes, the camera, the sun's shadow camera, and the
+  `probes()` a scene declares. A defect in something no probe covers (say a texture that looks wrong
+  but is technically fine) is left to the pixel layers and the reviewer.
+- Shadow cut-off detection uses bounding boxes, so it can flag a caster whose real shadow is only
+  barely cut; it weights by on-screen area and haze to keep this to real cases.
+- Flicker detection samples 24 px tiles on a 360-wide copy: slow crawling seams (not single-frame
+  spikes) are not caught by it; the shadow-cutoff check covers the known cause.
+- Number parsing covers how our scripts speak (number words, fractions, "a full turn", "in two",
+  "double"). An unusual phrasing can slip through; every unbound number is still reported.
+- Perceptual listening (pronunciation, naturalness, music) is not automated and is always reported as
+  NOT performed. Engagement can only be measured on the platform after release.
+- The Critical Designer is another model instance: independent of the generator's context, but not of
+  the model family. Caesar's own review in Telegram stays the final gate.

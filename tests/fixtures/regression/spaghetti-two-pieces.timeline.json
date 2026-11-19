@@ -1,0 +1,89 @@
+{
+  "duration": 70.27495833333333,
+  "lines": [
+    {
+      "id": "hook",
+      "text": "Try snapping spaghetti in two. You almost never can.",
+      "start": 0.35,
+      "end": 3.342
+    },
+    {
+      "id": "setup",
+      "text": "Bend a dry stick from both ends, and it breaks into three pieces or more, nearly every time.",
+      "start": 3.642,
+      "end": 8.837
+    },
+    {
+      "id": "wrong",
+      "text": "You'd guess it snaps at a weak spot, and the extra bits are just bad luck.",
+      "start": 9.087,
+      "end": 13.014
+    },
+    {
+      "id": "slow",
+      "text": "So slow it way down. The first crack opens near the middle, exactly as expected.",
+      "start": 13.264,
+      "end": 18.228
+    },
+    {
+      "id": "wave",
+      "text": "But the instant it breaks, each half springs back, and a wave of extra bending races along it.",
+      "start": 18.478,
+      "end": 23.884
+    },
+    {
+      "id": "burst",
+      "text": "Behind that wave, the stick bends even harder than when it first broke. So it cracks again.",
+      "start": 24.134,
+      "end": 29.039
+    },
+    {
+      "id": "rehook",
+      "text": "Richard Feynman reportedly spent a whole evening trying to get just two pieces. He never managed it.",
+      "start": 29.289,
+      "end": 35.146
+    },
+    {
+      "id": "history",
+      "text": "The snap-back explanation came in two thousand five, and it won an Ig Nobel Prize.",
+      "start": 35.396,
+      "end": 40.22
+    },
+    {
+      "id": "reveal",
+      "text": "Then in two thousand eighteen, a team at MIT found the trick. Twist it first.",
+      "start": 40.47,
+      "end": 45.211
+    },
+    {
+      "id": "twist",
+      "text": "Turn the stick almost a full turn, then bend it slowly.",
+      "start": 45.461,
+      "end": 48.386
+    },
+    {
+      "id": "result",
+      "text": "Now it breaks cleanly in two.",
+      "start": 48.636,
+      "end": 50.029
+    },
+    {
+      "id": "why",
+      "text": "Twisted, it snaps with much less bend stored inside. The twist unwinds in a flash, and the leftover wave is too weak to crack it again.",
+      "start": 50.279,
+      "end": 58.648
+    },
+    {
+      "id": "catch",
+      "text": "Their model says about three quarters of a turn is enough. In the lab it took nearly a full one.",
+      "start": 58.898,
+      "end": 63.812
+    },
+    {
+      "id": "outro",
+      "text": "So twist, then bend slowly. The first break doesn't have to cause the second.",
+      "start": 64.062,
+      "end": 68.825
+    }
+  ]
+}

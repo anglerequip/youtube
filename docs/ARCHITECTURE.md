@@ -13,7 +13,11 @@ Phases 3 to 7 are listed at the bottom with what is and isn't built.
                      │ simulation_engine render frames synced to beat timings     │
                      │ caption_engine   2-3 word captions from the same timings   │
                      │ video_editor     mix generated sfx, burn captions, mux     │
+                     │ qa (pre-render)  spec, claims, events, 3D inspection, pacing│
+                     │                  (blocks before the full render)           │
                      │ quality_control  24+ checks incl. the sim's physics tests  │
+                     │ qa (post-render) pixels, flicker, audio, independent review│
+                     │                  -> release gate + out/<slug>/qa/report.md │
                      └───────────────────────────────┬────────────────────────────┘
                                                      ▼
                                    PENDING_APPROVAL ─► Telegram: Approve / Reject / Revise
@@ -23,6 +27,8 @@ Phases 3 to 7 are listed at the bottom with what is and isn't built.
                      │ analytics_engine   pull metrics into SQLite, compare formats     │
                      └──────────────────────────────────────────────────────────────────┘
 ```
+
+The self-checking QA system and its release gate are described in `docs/QA.md`.
 
 Production and publishing are separate commands, and the database refuses any state change that
 skips approval (see `factory/database.py`, `ALLOWED`).

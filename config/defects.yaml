@@ -1,0 +1,72 @@
+# Defect knowledge base: every defect class we have seen, how it is detected, how it is repaired, and the
+# test that keeps it from coming back. Add an entry whenever a review (human or Critical Designer) finds
+# something the automated layers missed, then add the check and the regression test.
+
+- id: narration_simulation_mismatch
+  first_seen: "2026-11-19, spaghetti-two-pieces (said three pieces, showed four)"
+  class: cross-modal contradiction
+  detect: [science.mismatch (claims vs plan facts), event.mismatch (drawn state vs simulation), recognition.piece_count]
+  repair: bind every spoken/shown number to a claim whose value comes from the simulation (sim:); qualify wording
+  test: tests/test_qa_science.py::test_old_spaghetti_line_contradicts_simulation
+
+- id: overstated_claim
+  first_seen: "brief, Part IV (absolute language)"
+  class: scientific accuracy
+  detect: [science.absolute, science.mismatch (single value for a varying range, universal wording)]
+  repair: qualify ("usually", "three or more"), or record the justification in absolute_ok with evidence
+  test: tests/test_qa_science.py::test_overstated_universal_is_flagged
+
+- id: card_before_value
+  first_seen: "2026-11-19, chain-fountain (card '≈ 27 cm' shown while the arch was still at 21 cm)"
+  class: cross-modal contradiction
+  detect: [event.mismatch (arch_cm at card start)]
+  repair: derive the card start from the simulated value settling (plan.py settled())
+  test: content/episodes/chain-fountain events arch_1m / arch_2m (checked on every produce)
+
+- id: world_missing_black_hole
+  first_seen: "2026-11-19, chain-fountain ~57 s (black triangle on the horizon)"
+  class: geometry / render
+  detect: [geometry.world_missing (sentinel render), render.black_region (pixels)]
+  repair: World.prepare keeps the sky dome centred on the camera and inside the far plane
+  test: tests/test_qa_regression.py::test_chain_v1_black_triangle
+
+- id: thin_connected_object_breaks_up
+  first_seen: "2026-11-19, chain-fountain (beads with no links: loose balls, not a chain)"
+  class: object recognition (category B)
+  detect: [recognition.chain_loose_beads (projected gap vs connector px)]
+  repair: model the connecting links; check them at phone size
+  test: tests/test_qa_regression.py::test_chain_v1_loose_beads
+
+- id: shadow_map_cutoff
+  first_seen: "2026-11-19, other-lane-faster (sidewalk 'bugs out': tree shadows cut by the shadow box)"
+  class: render artefact (category E/F)
+  detect: [render.shadow_cutoff (casters partly inside the shadow camera with their shadow in view)]
+  repair: shadow box sized to the view and the haze; distant casters off, with a contact shadow
+  test: tests/test_qa_regression.py::test_traffic_v1_shadow_seams
+
+- id: single_frame_blink
+  first_seen: "2026-11-19, other-lane-faster (brake lights on/off for one frame), found by the flicker layer"
+  class: temporal artefact
+  detect: [temporal.flicker (pixels), temporal.blink (plan tracks)]
+  repair: hysteresis and a minimum on-time for any on/off state
+  test: tests/test_qa_regression.py::test_traffic_brake_chatter
+
+- id: coplanar_z_fighting
+  first_seen: "2026-11-19, inspection of chain patio slab and traffic road layers"
+  class: geometry
+  detect: [geometry.coplanar (gap vs depth precision at the visible distance)]
+  repair: separate the surfaces by more than the depth step, or polygonOffset for stacked decals
+  test: geometry layer runs on every produce
+
+- id: label_covers_hero
+  first_seen: "2026-11-19, spaghetti-two-pieces ('2 pieces' card over the broken ends)"
+  class: object recognition / layout
+  detect: [recognition.card_covers_hero]
+  repair: move the card or reframe; cards sit beside what they describe
+  test: tests/test_qa_regression.py::test_spaghetti_cards_never_cover_the_pieces
+
+- id: fracture_false_positive
+  first_seen: "brief, Part XXIX"
+  class: QA false positive control
+  detect: "must NOT fire: deliberate separation of pieces is not missing geometry"
+  test: tests/test_qa_regression.py::test_spaghetti_fracture_is_not_a_geometry_defect

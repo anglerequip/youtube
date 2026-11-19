@@ -21,7 +21,14 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
 4. Create `sim.py` with `class Sim(Scene)`. Sync to beats with `self.tl.start("<beat id>")`.
    Keep visuals between y=0.25 and y=0.90 of the frame (captions sit at about y=0.30).
    Add `self_checks()` comparing the simulation to theory, and `sfx_events()` for physical moments.
-5. Run `python -m factory produce <slug> --previews` and look at `out/<slug>/previews/*.png`.
+5. Fill in the single source of truth (docs/QA.md): `claims:` for every number spoken or shown (value or
+   `sim:` from plan facts, scope, evidence), `absolute_ok:` for absolute words, `entities:` with risk
+   category and visual contract, `hero:`. Export `facts` (and `events` + `observe()`) from plan.py and
+   `probes()` from the scene.
+6. Run `python -m factory produce <slug> --previews`. The pre-render gate blocks before the long render
+   on any blocker; read `out/<slug>/qa/report.md` and fix the cause, not the symptom. After the render,
+   an independent reviewer (fresh context, never the generator) writes `out/<slug>/qa/review/critique.json`;
+   then `python -m factory qa-gate <slug>`. Never write or edit a critique yourself.
    Fix anything QC flags. Commit the episode folder only (never `out/`, `data/`, `.env`).
 
 ## Rules

@@ -1,0 +1,89 @@
+{
+  "duration": 69.022375,
+  "lines": [
+    {
+      "id": "hook",
+      "text": "This chain jumps out of its jar. Nothing is pulling it up.",
+      "start": 0.35,
+      "end": 3.374
+    },
+    {
+      "id": "setup",
+      "text": "Drop the end of a long bead chain over the edge, and let gravity do the rest.",
+      "start": 3.674,
+      "end": 7.766
+    },
+    {
+      "id": "wrong",
+      "text": "You'd expect it to slide over the rim, like a rope.",
+      "start": 8.016,
+      "end": 10.561
+    },
+    {
+      "id": "reality",
+      "text": "Instead it leaps up, and holds a steady arch above the jar.",
+      "start": 10.811,
+      "end": 13.96
+    },
+    {
+      "id": "payoff",
+      "text": "And the drop sets the height. In our model, a one metre fall lifts the arch about fourteen centimetres.",
+      "start": 14.21,
+      "end": 20.054
+    },
+    {
+      "id": "double",
+      "text": "Double the drop, and the arch doubles too.",
+      "start": 20.304,
+      "end": 22.497
+    },
+    {
+      "id": "speed",
+      "text": "From two metres up, the chain races along at almost five metres per second.",
+      "start": 22.747,
+      "end": 27.079
+    },
+    {
+      "id": "rehook",
+      "text": "So what pushes it up? Not the falling chain. The pile itself.",
+      "start": 27.329,
+      "end": 30.745
+    },
+    {
+      "id": "links",
+      "text": "A bead chain is made of short, stiff links. Lift one by its end, and it tips like a tiny lever.",
+      "start": 30.995,
+      "end": 36.609
+    },
+    {
+      "id": "push",
+      "text": "Its other end digs into the pile, and the pile pushes back, upward.",
+      "start": 36.859,
+      "end": 40.703
+    },
+    {
+      "id": "rope",
+      "text": "A rope can't do that. It's floppy, so there's nothing to lever against the pile, and nothing throws it up.",
+      "start": 40.953,
+      "end": 46.415
+    },
+    {
+      "id": "kick",
+      "text": "That push helps throw every link up, so the chain shoots above the jar before gravity turns it around. A longer fall means a faster chain, and a harder push.",
+      "start": 46.665,
+      "end": 55.878
+    },
+    {
+      "id": "catch",
+      "text": "Physicists still argue about the details, like how much the beads bounce. But with no push from below, there's no fountain.",
+      "start": 56.128,
+      "end": 63.23
+    },
+    {
+      "id": "outro",
+      "text": "So the chain isn't pulled out of the jar. It's pushed, one link at a time.",
+      "start": 63.48,
+      "end": 67.572
+    }
+  ]
+}
