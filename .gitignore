@@ -10,3 +10,4 @@ token*.json
 models
 data/
 *.db
+renderer/node_modules/
