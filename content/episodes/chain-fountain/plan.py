@@ -75,7 +75,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
             b = "IF IT ACTED LIKE A ROPE"
         # round 7 review: the badge came up ~0.5 s before the chain actually fell, so text and picture
         # briefly disagreed. Show it only once the arch is more than half gone.
-        elif rope0 <= t < rope1 and m < 0.5:
+        elif rope0 <= t < min(rope1, S("kick") - 0.1) and m < 0.5:   # not into the kick shot (round 9)
             b = "IF IT ACTED LIKE A ROPE"
         elif nopush0 <= t < nopush1 and m < 0.5:
             b = "WITHOUT THE PILE'S PUSH"
@@ -84,6 +84,17 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         frames["badge"].append(b)
 
     pile = lambda i: (0.0, frames["h2"][min(i, n - 1)], 0.0)
+    a1, a2 = cf.steady(1.0), cf.steady(2.0)
+
+    def settled(t0, target):
+        """First time after t0 at which the drawn arch is within 2% of the value its card will show
+        (a card must never announce a height the arch on screen has not reached yet)."""
+        for i in range(int(t0 * fps), n):
+            if abs(frames["h1"][i] - target) <= 0.02 * target:
+                return i / fps
+        return t0
+    show1 = max(S("payoff") + 3.2, settled(S("payoff"), a1["h1"]))
+    dbl_w1 = S("double") + 2.0          # the wide shot holds until the stand has risen (h2 eases over 1.6 s)
     K = lambda *a: list(a)
     shots = cam.chain([
         cam.shot(0.0, S("setup") + 1.2, [(0.0, K(0.33, 0.12, 0.5), K(0.03, 0.065, 0.0), 30),
@@ -92,9 +103,16 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                                                       (S("wrong") - 0.1, K(0.7, 0.4, 1.5), K(0.08, 0.15, 0.0), 34)], fps, "key"),
         cam.shot(S("wrong") - 0.1, S("payoff") + 2.0, [(S("wrong") - 0.1, K(0.02, 0.11, 0.36), K(0.03, 0.07, 0.0), 30),
                                                        (S("payoff") + 2.0, K(0.0, 0.12, 0.33), K(0.03, 0.07, 0.0), 30)], fps, "key", pile),
-        cam.shot(S("payoff") + 2.0, S("double") - 0.1, [(S("payoff") + 2.0, K(0.7, 1.15, 1.3), K(0.05, 0.93, 0.0), 38),
-                                                        (S("double") - 0.1, K(0.75, 1.2, 1.35), K(0.05, 0.95, 0.0), 38)], fps, "key"),
-        cam.shot(S("double") - 0.1, S("rehook") - 0.1, [(S("double") - 0.1, K(0.42, 0.1, 0.85), K(0.04, 0.1, 0.0), 32),
+        # round 9 review: the 14 cm card sat on a wide shot where the arch was a few pixels, and "double the
+        # drop" was never shown. Wide on the 1 m drop, then the arch framed like the 2 m one; at "Double the
+        # drop" a wide shot shows the stand rising to 2 m, then the same close framing again.
+        cam.shot(S("payoff") + 2.0, show1 - 0.3, [(S("payoff") + 2.0, K(0.7, 1.15, 1.3), K(0.05, 0.93, 0.0), 38),
+                                                  (show1 - 0.3, K(0.75, 1.2, 1.35), K(0.05, 0.95, 0.0), 38)], fps, "key"),
+        cam.shot(show1 - 0.3, S("double") - 0.1, [(show1 - 0.3, K(0.42, 0.1, 0.85), K(0.04, 0.1, 0.0), 32),
+                                                  (S("double") - 0.1, K(0.4, 0.11, 0.82), K(0.04, 0.1, 0.0), 32)], fps, "key", pile),
+        cam.shot(S("double") - 0.1, dbl_w1, [(S("double") - 0.1, K(1.3, 1.3, 4.3), K(0.0, 1.3, 0.0), 40),
+                                             (dbl_w1, K(1.3, 1.36, 4.45), K(0.0, 1.34, 0.0), 40)], fps, "key"),
+        cam.shot(dbl_w1, S("rehook") - 0.1, [(dbl_w1, K(0.42, 0.1, 0.85), K(0.04, 0.1, 0.0), 32),
                                                         (S("speed"), K(0.5, 0.16, 1.0), K(0.04, 0.15, 0.0), 32),
                                                         (S("rehook") - 0.1, K(0.45, 0.18, 0.9), K(0.04, 0.16, 0.0), 32)], fps, "key", pile),
         cam.shot(S("rehook") - 0.1, S("rehook") + 3.3, [(S("rehook") - 0.1, K(-0.35, 0.2, 0.6), K(0.04, 0.17, 0.0), 32),
@@ -109,8 +127,9 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                                                (S("kick") - 0.1, K(0.03, 0.11, 0.35), K(0.03, 0.06, 0.0), 32)], fps, "key", pile),
         cam.shot(S("kick") - 0.1, S("kick") + 4.3, [(S("kick") - 0.1, K(0.3, 0.3, 0.45), K(0.03, 0.19, 0.0), 32),
                                                     (S("kick") + 4.3, K(0.36, 0.32, 0.55), K(0.03, 0.2, 0.0), 32)], fps, "golden", pile),
-        cam.shot(S("kick") + 4.3, S("catch") - 0.1, [(S("kick") + 4.3, K(0.1, 0.75, 0.22), K(0.03, 0.08, 0.0), 36),
-                                                     (S("catch") - 0.1, K(0.16, 0.78, 0.18), K(0.03, 0.08, 0.0), 36)], fps, "golden", pile),
+        # round 9 review: the top-down flattened the arch during "shoots above the jar"; high 3/4 instead
+        cam.shot(S("kick") + 4.3, S("catch") - 0.1, [(S("kick") + 4.3, K(-0.3, 0.42, 0.62), K(0.03, 0.18, 0.0), 34),
+                                                     (S("catch") - 0.1, K(-0.24, 0.45, 0.66), K(0.03, 0.18, 0.0), 34)], fps, "golden", pile),
         cam.shot(S("catch") - 0.1, S("catch") + 3.4, [(S("catch") - 0.1, K(-0.42, 0.3, 0.6), K(0.04, 0.1, 0.0), 32),
                                                       (S("catch") + 3.4, K(-0.36, 0.32, 0.64), K(0.04, 0.1, 0.0), 32)], fps, "golden", pile),
         cam.shot(S("catch") + 3.4, S("outro") - 0.1, [(S("catch") + 3.4, K(0.08, 0.16, 0.34), K(0.03, 0.09, 0.0), 30),
@@ -130,28 +149,18 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         if frames["focal_pt"][i] is None:
             frames["focal_pt"][i] = frames["focal_pt"][i - 1] if i else [0, 1.05, 0]
 
-    a1, a2 = cf.steady(1.0), cf.steady(2.0)
-
-    def settled(t0, target):
-        """First time after t0 at which the drawn arch is within 2% of the value its card will show
-        (a card must never announce a height the arch on screen has not reached yet)."""
-        for i in range(int(t0 * fps), n):
-            if abs(frames["h1"][i] - target) <= 0.02 * target:
-                return i / fps
-        return t0
-    show1 = max(S("payoff") + 3.2, settled(S("payoff"), a1["h1"]))
-    show2 = max(S("double") + 1.2, settled(S("double"), a2["h1"]) + 0.1)
+    show2 = max(dbl_w1 + 0.3, settled(S("double"), a2["h1"]) + 0.1)
     cards = [
         {"start": show1, "end": S("double") - 0.05, "big": f"≈ {a1['h1'] * 100:.0f} cm", "small": "arch for a 1 m drop (our model)", "y": 0.17},
-        {"start": show2, "end": S("speed") + 0.7, "big": f"≈ {a2['h1'] * 100:.0f} cm", "small": "arch for a 2 m drop", "y": 0.17},
-        {"start": S("speed") + 0.8, "end": S("rehook") - 0.15, "big": f"≈ {a2['v']:.1f} m/s", "small": "chain speed", "y": 0.17},
+        {"start": show2, "end": S("speed") + 0.7, "big": f"≈ {a2['h1'] * 100:.0f} cm", "small": "arch for a 2 m drop (our model)", "y": 0.17},
+        {"start": S("speed") + 0.8, "end": S("rehook") - 0.15, "big": f"≈ {a2['v']:.1f} m/s", "small": "chain speed (our model)", "y": 0.17},
     ]
     # Sound: only the moments that matter (Caesar, 2026-11-19: "ding ding ding"; round 2 swapped the dings
     # for ~3 varied clicks per second and the Sound Reviewer still heard a ticking clock). The running chain is
     # carried by the music; effects mark the leap, the higher drop and the lever moment, nothing else.
     for i, t in enumerate(T):           # the height bracket while the arch heights are on screen
         frames["bracket"][i] = round(max(0.0, min(1.0, (t - (show1 - 0.4)) / 0.3, (S("rehook") - 0.2 - t) / 0.3)), 3)
-    events = [(round(morph_t0, 3), "rise", {"gain": 0.3}),
+    events = [(round(morph_t0 - 0.6, 3), "rise", {"gain": 0.3}),     # round 9: peak on "leaps", not after
               (round(S("double") + 0.15, 3), "swish", {"gain": 0.22, "seed": 31})]
     # in the macro (slowed 1,500x): one soft tick as the first link lifts, one as the lever bites the pile
     # round 8 sound review: the first tick landed ~2 s before the link visibly tipped. Each tick now sits on
