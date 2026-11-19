@@ -56,8 +56,12 @@ def _service():
 
 def check() -> str:
     yt = _service()
-    ch = yt.channels().list(part="snippet", mine=True).execute()["items"][0]
-    return f"YouTube: signed in as channel '{ch['snippet']['title']}'"
+    items = yt.channels().list(part="snippet", mine=True).execute().get("items") or []
+    if not items:
+        raise NotConfigured("YouTube: this Google account has no YouTube channel. Run "
+                            "`python -m factory publish-auth youtube` again and pick the Counterphysical "
+                            "channel (brand account) on Google's account chooser.")
+    return f"YouTube: signed in as channel '{items[0]['snippet']['title']}'"
 
 
 def body(pkg: dict) -> dict:
