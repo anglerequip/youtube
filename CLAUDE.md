@@ -30,11 +30,17 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
    an independent reviewer (fresh context, never the generator) writes `out/<slug>/qa/review/critique.json`;
    then `python -m factory qa-gate <slug>`. Never write or edit a critique yourself.
    Fix anything QC flags. Commit the episode folder only (never `out/`, `data/`, `.env`).
+7. Write the `publish:` block in storyboard.yaml (docs/PUBLISHING.md): a cover frame (`cover_at_s`), a
+   cover headline of 3-5 words, the one key number for the cover card, 3-5 topical hashtags, and
+   hand-written YouTube / TikTok / Facebook copy. Every number in it must also be a `claims:` entry.
+   Once QA passes, the package (out/<slug>/publish/) is built automatically and sent to Telegram;
+   check `review.md` and `cover.jpg`. Never approve or post on Caesar's behalf.
 
 ## Rules
 
-- Nothing is ever published without the human's approval in Telegram. Do not add code paths that
-  upload from the production workflow.
+- Nothing is ever published without the human's approval in Telegram, per platform, for the exact
+  package hash (factory/publishing). Do not add code paths that upload from the production workflow.
+- AI labels stay on (YouTube synthetic media, TikTok is_aigc, Facebook AI info) unless Caesar says otherwise.
 - Secrets only in `.env` / environment variables.
 - Run `python -m pytest -q` before committing.
 

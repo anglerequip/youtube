@@ -9,6 +9,17 @@
                                           (writes out/<slug>/qa/report.md and the review packet)
   python -m factory qa-gate <slug>        re-run the gate once an independent critique.json exists;
                                           moves QC_FAILED -> QUALITY_CHECKED only if it now passes
+
+Publishing (separate workflow, docs/PUBLISHING.md). A package is built automatically when a video
+passes QA, and sent to Telegram for review if the bot is configured. Nothing posts without a press
+of "Post to ..." in Telegram.
+  python -m factory package <slug> [--video f] [--send]   build out/<slug>/publish/ (title, captions, cover)
+  python -m factory review <slug>         send the package to Telegram for approval
+  python -m factory bot [--once]          handle Approve / Skip / edits from Telegram and post approved items
+  python -m factory publish               retry posting rows already approved (hash re-checked)
+  python -m factory posts [<slug>]        per-platform status
+  python -m factory publish-auth youtube|tiktok   one-time sign-in
+  python -m factory publish-check         test each platform's credentials (posts nothing)
 """
 from __future__ import annotations
 
@@ -47,6 +58,20 @@ def main(argv=None) -> int:
     qa_.add_argument("--no-inspect", action="store_true")
     qg = sub.add_parser("qa-gate")
     qg.add_argument("slug")
+    pk = sub.add_parser("package")
+    pk.add_argument("slug")
+    pk.add_argument("--video", default=None)
+    pk.add_argument("--send", action="store_true")
+    rv = sub.add_parser("review")
+    rv.add_argument("slug")
+    bt = sub.add_parser("bot")
+    bt.add_argument("--once", action="store_true")
+    sub.add_parser("publish")
+    ps = sub.add_parser("posts")
+    ps.add_argument("slug", nargs="?")
+    pa = sub.add_parser("publish-auth")
+    pa.add_argument("platform", choices=["youtube", "tiktok"])
+    sub.add_parser("publish-check")
     args = p.parse_args(argv)
     _logging()
 
@@ -57,6 +82,8 @@ def main(argv=None) -> int:
         res = produce(args.slug, db=db, provider=args.tts, previews=args.previews, force=args.force)
         print(f"\n{'QC PASSED' if res['qc_passed'] else 'QC FAILED'}: {res['video']} ({res['duration']:.1f}s) "
               f"timings={res['timings']}")
+        if res["qc_passed"]:
+            _auto_package(db, args.slug)
         return 0 if res["qc_passed"] else 2
     if args.cmd == "status":
         for r in db.conn.execute("SELECT slug, state, duration_s, youtube_id, updated_at FROM videos ORDER BY slug"):
@@ -88,7 +115,76 @@ def main(argv=None) -> int:
             from .production import sha256_file
             if row["video_sha256"] == sha256_file(video):
                 db.transition(sb.slug, "QUALITY_CHECKED", note=f"release gate passed, score {verdict['score']}")
+                _auto_package(db, sb.slug)
         return 0 if verdict["state"] == "READY_FOR_RELEASE" else 2
+    if args.cmd in ("package", "review", "bot", "publish", "posts", "publish-auth", "publish-check"):
+        return _publishing(db, args)
+    return 1
+
+
+def _auto_package(db, slug: str) -> None:
+    """After QA passes: build the publishing package and, if Telegram is set up, send it for review.
+    This never posts anything."""
+    import os
+    try:
+        from .publishing import approvals, package
+        pkg = package.build(slug)
+        approvals.register(db, pkg)
+        print(f"Publishing package: {settings.out_dir / slug / 'publish' / 'review.md'}")
+        if os.environ.get("TELEGRAM_BOT_TOKEN") and os.environ.get("TELEGRAM_CHAT_ID"):
+            from .publishing import telegram
+            telegram.send_review(db, slug)
+            print("Sent to Telegram for approval.")
+    except Exception as e:   # noqa: BLE001  packaging must never break production
+        logging.getLogger("factory").warning("publishing package not built for %s: %s", slug, e)
+
+
+def _publishing(db, args) -> int:
+    from .publishing import PLATFORMS, approvals, package, publisher, telegram
+    approvals.init(db)
+    if args.cmd == "package":
+        pkg = package.build(args.slug, video=args.video)
+        approvals.register(db, pkg)
+        print((settings.out_dir / args.slug / "publish" / "review.md").read_text(encoding="utf-8"))
+        if args.send:
+            telegram.send_review(db, args.slug)
+            print("Sent to Telegram for approval.")
+        return 0 if pkg["ok"] else 2
+    if args.cmd == "review":
+        telegram.send_review(db, args.slug)
+        print("Sent to Telegram for approval.")
+        return 0
+    if args.cmd == "bot":
+        print("Listening to Telegram. Ctrl+C to stop." if not args.once else "Handling waiting Telegram updates.")
+        telegram.poll(db, once=args.once)
+        return 0
+    if args.cmd == "publish":
+        res = publisher.publish_approved(db)
+        for r in res:
+            print(f"{r['slug']:<28} {r['platform']:<9} {'LIVE ' + str(r.get('url')) if r['ok'] else 'NOT POSTED: ' + r['error']}")
+        return 0 if all(r["ok"] for r in res) else 2
+    if args.cmd == "posts":
+        for r in approvals.rows(db, slug=args.slug):
+            print(f"{r['slug']:<28} {r['platform']:<9} {r['status']:<10} {r['remote_url'] or r['last_error'] or ''}")
+        return 0
+    if args.cmd == "publish-auth":
+        print(publisher.uploader(args.platform).authorize())
+        return 0
+    if args.cmd == "publish-check":
+        ok = True
+        for p in PLATFORMS:
+            try:
+                print(publisher.uploader(p).check())
+            except Exception as e:   # noqa: BLE001
+                ok = False
+                print(f"{p}: NOT READY: {e}")
+        try:
+            telegram.Telegram().call("getMe")
+            print("Telegram: bot token works")
+        except Exception as e:   # noqa: BLE001
+            ok = False
+            print(f"telegram: NOT READY: {e}")
+        return 0 if ok else 2
     return 1
 
 
