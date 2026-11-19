@@ -27,7 +27,7 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
    `probes()` from the scene.
 6. Run `python -m factory produce <slug> --previews`. The pre-render gate blocks before the long render
    on any blocker; read `out/<slug>/qa/report.md` and fix the cause, not the symptom. After the render,
-   independent reviewers (fresh context, never the generator) write `out/<slug>/qa/review/critique.json` (picture) and `out/<slug>/qa/review_audio/critique_audio.json` (sound);
+   independent reviewers (fresh context, never the generator) write `out/<slug>/qa/review/critique.json` and `critique_2.json` (two picture reviewers, averaged) and `out/<slug>/qa/review_audio/critique_audio.json` (sound);
    then `python -m factory qa-gate <slug>`. Never write or edit a critique yourself.
    Fix anything QC flags. Commit the episode folder only (never `out/`, `data/`, `.env`).
 

@@ -101,3 +101,31 @@ def test_doubled_tink_is_flagged(tmp_path):
     ev = [(29.47, "tink", {"gain": 0.3, "seed": 1}), (29.53, "tink", {"gain": 0.3, "seed": 2})]
     F, _ = sound.check(_ctx(ev, tmp_path), CFG)
     assert any(f.id == "sound.double_trigger.tink" for f in F), [f.message for f in F]
+
+
+def test_two_picture_reviewers_are_averaged_and_one_rejection_does_not_block(tmp_path):
+    """Caesar, 2026-11-19: two independent picture reviews, averaged, so one harsh or lenient reviewer
+    can't swing the verdict."""
+    from factory.qa import critic
+    vid = tmp_path / "final.mp4"; vid.write_bytes(b"x")
+    ctx = NS(out=tmp_path)
+    d = tmp_path / "qa" / "review"; d.mkdir(parents=True)
+    base = {"video_sha256": critic.sha256(vid), "blind_impression": "a", "main_strength": "b",
+            "biggest_visual_weakness": "c", "highest_priority_repair": "d", "evidence": "e",
+            "top_problems": [{"problem": "p", "severity": 3}]}
+    (d / "critique.json").write_text(json.dumps({**base, "release": "approve",
+                                                 "scores": {k: 4 for k in critic.CATEGORIES}}))
+    F, c = critic.read(ctx, vid)
+    assert c is None and any(f.id == "review.unavailable" and "critique_2.json" in f.message for f in F)
+    (d / "critique_2.json").write_text(json.dumps({**base, "release": "reject",
+                                                   "top_problems": [{"problem": "q", "severity": 1}],
+                                                   "scores": {k: 3 for k in critic.CATEGORIES}}))
+    F, c = critic.read(ctx, vid)
+    assert c is not None and all(v == 3.5 for v in c["scores"].values()) and c["release"] == "split"
+    assert not _blocking(F) and any(f.severity == 2 and "one of two" in f.message for f in F)
+    (d / "critique.json").write_text(json.dumps({**base, "release": "reject",
+                                                 "scores": {k: 2 for k in critic.CATEGORIES}}))
+    F, c = critic.read(ctx, vid)
+    assert _blocking(F) and any(f.id.startswith("review.rejected") for f in F)
+    F, c = critic.read(ctx, vid, n=1)
+    assert c["scores"][critic.CATEGORIES[0]] == 2

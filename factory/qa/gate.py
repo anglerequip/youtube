@@ -113,6 +113,10 @@ def write_report(ctx, layers: list[LayerResult], verdict: dict, review: dict | N
     if review:
         md += ["", "## Critical Designer review", "",
                f"Reviewer: {review.get('reviewer', '')}. Release: **{review.get('release')}**.", "",
+               *[f"- Reviewer {k + 1} ({r['file']}): release {r['release']}, scores "
+                 + ", ".join(f"{c} {float(v):.1f}" for c, v in r["scores"].items()) for k, r in
+                 enumerate(review.get("reviewers", []))],
+               *(["- Scores below are the average of the reviewers.", ""] if review.get("reviewers") else []),
                f"- Main strength: {review.get('main_strength', '')}",
                f"- Biggest scientific risk: {review.get('biggest_scientific_risk', '')}",
                f"- Biggest visual weakness: {review.get('biggest_visual_weakness', '')}",

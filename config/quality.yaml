@@ -72,3 +72,7 @@ sound:                        # factory/qa/sound.py (the sound team; proxies, no
   masking_block: 0.15
   music_max_db: -12.0
   startle_db: 0.0
+
+review:                       # factory/qa/critic.py (Caesar, 2026-11-19: "two picture reviewers")
+  picture_reviewers: 2        # critique.json + critique_2.json, each a fresh context; scores averaged,
+                              # a rejection blocks only when both reject

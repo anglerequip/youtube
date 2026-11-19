@@ -67,7 +67,7 @@ def post_render(sb, video: Path, ctx, layers: list[LayerResult] | None = None, r
     crit = None
     if review and video.exists():
         critic.build_packet(ctx, video)
-        F, crit = critic.read(ctx, video)
+        F, crit = critic.read(ctx, video, n=int((cfg.get("review") or {}).get("picture_reviewers", 2)))
         layers.append(LayerResult("review", crit is not None, F, {},
                                   note="independent Critical Designer review" if crit else
                                   "NOT performed yet: packet ready in out/<slug>/qa/review/"))

@@ -61,8 +61,13 @@ can be sent to Caesar for approval.
 phone size, `intent.md` (narration, claims, contracts, expected events, caveats), the review brief
 (brief Part XLII) and `schema.json`. It contains none of the generator's explanations or automated
 verdicts. A separate reviewer (a fresh model context with no generator history, or a person) writes
-`critique.json` with the video's sha256. Without a valid critique for the exact file, the gate blocks
-with `BLOCKED_REVIEW_UNAVAILABLE`. The generator never writes this file.
+`critique.json` with the video's sha256, and a second fresh reviewer, who never sees the first critique,
+writes `critique_2.json`. Caesar asked for two (2026-11-19) after single reviewers swung between rounds on
+unchanged shots. The gate averages the two reviewers' scores per category; a rejection blocks only when
+both reject, and a severity-1 problem raised by one reviewer while the other approves is kept in the
+report at severity 2. Without both valid critiques for the exact file (`review: picture_reviewers` in
+`config/quality.yaml`), the gate blocks with `BLOCKED_REVIEW_UNAVAILABLE`. The generator never writes
+these files.
 
 ## 4b. The sound team
 
