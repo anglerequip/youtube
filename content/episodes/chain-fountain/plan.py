@@ -47,7 +47,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     for i, t in enumerate(T):
         h2 = h2_at(t); st = cf.steady(h2)
         macro = cut_macro0 <= t < cut_macro1
-        slow = 3000.0 if macro else 4.0       # macro: one link-lift every ~3 s, so each step can be followed
+        slow = 1500.0 if macro else 4.0       # macro: one link-lift every ~1.5 s (round 7: at 3,000x the pose "barely moved")
         if S("wrong") - 0.1 <= t < morph_t0:
             m = 0.0
         elif morph_t0 <= t < morph_t0 + 1.1:
@@ -68,12 +68,14 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         frames["sway"].append(0.0015 if not macro else 0.0)
         frames["lever"].append({"glow": 1.0 if t >= S("push") - 0.1 else 0.0} if macro else None)
         if macro:
-            b = "SLOWED 3,000× · SIMPLIFIED"
+            b = "SLOWED 1,500× · SIMPLIFIED"
         elif S("wrong") - 0.1 <= t < morph_t0:
             b = "IF IT ACTED LIKE A ROPE"
-        elif rope0 <= t < rope1:
+        # round 7 review: the badge came up ~0.5 s before the chain actually fell, so text and picture
+        # briefly disagreed. Show it only once the arch is more than half gone.
+        elif rope0 <= t < rope1 and m < 0.5:
             b = "IF IT ACTED LIKE A ROPE"
-        elif nopush0 <= t < nopush1:
+        elif nopush0 <= t < nopush1 and m < 0.5:
             b = "WITHOUT THE PILE'S PUSH"
         else:
             b = "SLOWED 4×"
@@ -149,14 +151,14 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         frames["bracket"][i] = round(max(0.0, min(1.0, (t - (show1 - 0.4)) / 0.3, (S("rehook") - 0.2 - t) / 0.3)), 3)
     events = [(round(morph_t0, 3), "rise", {"gain": 0.3}),
               (round(S("double") + 0.15, 3), "swish", {"gain": 0.22, "seed": 31})]
-    # in the macro (slowed 3,000x): one soft tick as the first link lifts, one as the lever bites the pile
+    # in the macro (slowed 1,500x): one soft tick as the first link lifts, one as the lever bites the pile
     events += [(round(cut_macro0 + 0.6, 3), "tick", {"gain": 0.16, "seed": 60, "pitch": 0.95, "ring": 0.25}),
                (round(S("push") + 0.25, 3), "tick", {"gain": 0.2, "seed": 63, "pitch": 0.82, "ring": 0.4})]
     timing = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [morph_t0], "events": events,
               "mutes": [[S("wrong") - 0.1, morph_t0 - 0.05]], "swells": [morph_t0]}
     facts = {"drop_1m": 1.0, "drop_2m": 2.0, "arch_1m_cm": a1["h1"] * 100, "arch_2m_cm": a2["h1"] * 100,
              "arch_ratio_2m_1m": a2["h1"] / a1["h1"], "speed_2m": a2["v"], "alpha": cf.ALPHA,
-             "slow_factors": [4, 3000],
+             "slow_factors": [4, 1500],
              "events": {
                  "arch_1m": {"t": show1, "observe": "arch_cm", "expect": a1["h1"] * 100, "tol": 0.03},
                  "arch_2m": {"t": show2, "observe": "arch_cm", "expect": a2["h1"] * 100, "tol": 0.03}}}

@@ -146,6 +146,22 @@ export function build(world, plan) {
   const pileTop = new THREE.Mesh(new THREE.CylinderGeometry(JR - 0.002, JR - 0.002, plan.pile_h - BR, 48),
     new THREE.MeshStandardMaterial({ color: '#6c7076', roughness: 0.85, metalness: 0.1 }));
   pileTop.position.y = (plan.pile_h - BR) / 2; pileTop.receiveShadow = true; pileTop.visible = false; jar.add(pileTop);
+  // round 7 review: the plain plate read as "a flat grey plane", not a pile. Lay one loose spiral of chain
+  // on it (one strand, coiled, not a lattice), leaving the lever's corner and the camera-side
+  // foreground clear (big foreground beads read as a lattice).
+  const coilPts = [];
+  for (let a = 0, r = 0.006; r < JR - 0.006 && coilPts.length < 900; ) {
+    const x = r * Math.cos(a), z = r * Math.sin(a);
+    if (!(x > -0.004 && Math.abs(z) < 0.007) && z < 0.004) coilPts.push([x, plan.pile_h - 0.45 * BR, z]);
+    a += BEAD / r; r = 0.006 + (2.6 * BR) * a / (2 * Math.PI);
+  }
+  const coil = mkInst(beadGeo, beadM, coilPts.length, jar), coilL = mkInst(linkGeo, linkMat, coilPts.length, jar);
+  coilPts.forEach((P, i) => {
+    setBead(coil, i, ...P);
+    const Q = coilPts[i + 1];
+    setLink(coilL, i, P, Q && Math.hypot(Q[0] - P[0], Q[2] - P[2]) < 1.6 * BEAD ? Q : null);
+  });
+  coil.visible = coilL.visible = false;
   pilePts.forEach((P, i) => { setBead(pile, i, ...P); setLink(pileL, i, P, pilePts[i + 1]); });
   // floor heap (grows): the chain that has landed, coiled in a low mound, revealed in the order it was laid
   const heapPts = coilPile(world.rand, 0.11, 0.03, 9, 0.85);
@@ -176,7 +192,14 @@ export function build(world, plan) {
     const r2 = new THREE.Mesh(linkGeo, linkMat); r2.castShadow = true; lever.add(r2); flatRods.push(r2);
   }
   const push = haloSprite('#ff3b30', 0.02, 0); lever.add(push);
+  push.material.depthTest = false;   // the glow cut a hard edge where it met the pile plate (round 8 stills)
   const pushDot = new THREE.Mesh(new THREE.SphereGeometry(0.0012, 12, 8), MAT.emissive('#ff3b30', 6)); lever.add(pushDot);
+  // one upward red arrow from the pile into the pushed end (round 7 review: "nothing shows an upward push")
+  const arrowM = MAT.emissive('#ff3b30', 2.5);
+  const arrow = new THREE.Group(); lever.add(arrow);
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.00045, 0.00045, 1, 10), arrowM);
+  const headA = new THREE.Mesh(new THREE.ConeGeometry(0.0013, 0.0026, 14), arrowM);
+  arrow.add(shaft, headA); arrow.visible = false;
 
   const dummy = new THREE.Object3D();
   let travelled = 0;
@@ -251,14 +274,14 @@ export function build(world, plan) {
       // macro lever
       const lv = F.lever ? F.lever[k] : null;
       lever.visible = !!lv;
-      pile.visible = pileL.visible = !lv; pileTop.visible = !!lv;
+      pile.visible = pileL.visible = !lv; pileTop.visible = coil.visible = coilL.visible = !!lv;
       if (lv) {
-        // one cycle per link: lift by its end and tip (0-55%), hold tipped while the pile pushes back
-        // (55-85%, red push glow + a small upward kick of the pushed end), then hand over to the next link
+        // one cycle per link: lift by its end and tip (0-45%), then the pile pushes the far end back up
+        // (45-85%: red arrow + glow, the pushed end visibly kicked up), then hand over to the next link
         const u = (F.dist[k] % BEAD) / BEAD;
         const ease = x => x * x * (3 - 2 * x);
-        const th = 1.2 * ease(Math.min(1, u / 0.55));
-        const kick = u > 0.55 ? 0.35 * BR * Math.sin(Math.PI * Math.min(1, (u - 0.55) / 0.3)) : 0;
+        const th = 1.2 * ease(Math.min(1, u / 0.45));
+        const kick = u > 0.45 ? 1.3 * BR * Math.sin(Math.PI * Math.min(1, (u - 0.45) / 0.4)) * Math.max(0.35, lv.glow) : 0;
         const xl = p.xr, yl = pileY + BEAD * Math.sin(th);
         const xr2 = xl + BEAD * Math.cos(th), yr2 = pileY + kick;
         lb1.position.set(xl, yl, 0); lb2.position.set(xr2, yr2, 0);
@@ -271,7 +294,15 @@ export function build(world, plan) {
           const L = A.distanceTo(B); flatRods[j].position.copy(A).add(B).multiplyScalar(0.5); flatRods[j].scale.set(1, L, 1);
           flatRods[j].quaternion.setFromUnitVectors(_up, B.clone().sub(A).normalize());
         }
-        const g = (u > 0.45 ? Math.sin(Math.PI * Math.min(1, (u - 0.45) / 0.5)) : 0) * lv.glow;
+        const g = (u > 0.4 ? Math.sin(Math.PI * Math.min(1, (u - 0.4) / 0.5)) : 0) * lv.glow;
+        arrow.visible = g > 0.05;
+        if (arrow.visible) {           // stands on the pile surface right beside the pushed bead, pointing up
+          const L = (0.6 + 0.4 * g) * 2.4 * BEAD, base = pileY - BR, len = L - 0.0026;
+          const ax = xr2 + 1.6 * BR, az = 0.0028;
+          shaft.scale.set(1, len, 1); shaft.position.set(ax, base + len / 2, az);
+          headA.position.set(ax, base + len + 0.0013, az);
+          arrowM.emissiveIntensity = 2.5 * g;
+        }
         push.position.set(xr2, yr2 - BR * 0.6, 0.0005); push.material.opacity = 0.75 * g;
         pushDot.position.set(xr2, yr2 - BR * 0.9, 0); pushDot.visible = g > 0.05; pushDot.material.emissiveIntensity = 6 * g;
       }

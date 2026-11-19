@@ -90,7 +90,8 @@ def check_audio(wav: Path) -> list[Check]:
 
 def check_captions(tl: Timeline, ass: Path, duration: float) -> list[Check]:
     text = ass.read_text(encoding="utf-8")
-    times = re.findall(r"Dialogue: \d+,(\d+):(\d\d):(\d\d\.\d\d),(\d+):(\d\d):(\d\d\.\d\d)", text)
+    # layer 0 is the soft halo drawn under each caption (same timing): count the text layer only
+    times = re.findall(r"Dialogue: [1-9]\d*,(\d+):(\d\d):(\d\d\.\d\d),(\d+):(\d\d):(\d\d\.\d\d)", text)
     to_s = lambda h, m, s: int(h) * 3600 + int(m) * 60 + float(s)  # noqa: E731
     spans = [(to_s(*t[:3]), to_s(*t[3:])) for t in times]
     out = [Check("captions_present", len(spans) > 0, f"{len(spans)} caption events")]
