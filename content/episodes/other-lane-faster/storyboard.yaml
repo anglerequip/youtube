@@ -53,3 +53,44 @@ sources:
   - "D. A. Redelmeier and R. J. Tibshirani, 'Why cars in the next lane seem to go faster', Nature 401, 35 (1999)"
   - "N. Bostrom, 'Cars in the next lane really do go faster', Plus Magazine (plus.maths.org)"
   - "M. Treiber, A. Hennecke and D. Helbing, 'Congested traffic states in empirical observations and microscopic simulations', Physical Review E 62, 1805 (2000) (Intelligent Driver Model)"
+
+# ---------------------------------------------------------------------------------------------
+# Single source of truth (factory/qa): every number heard or shown maps to a claim.
+claims:
+  - {id: lanes, card: "SAME ROAD, TWO LANES", unit: count, value: 2, scope: condition}
+  - {id: slow_share, beat: share, unit: "%", sim: slow_lane_share_pct, scope: model,
+     evidence: {quality: 1, source: "our IDM simulation (Treiber et al., PRE 62, 1805, 2000); effect described by Bostrom"}}
+  - {id: overtaken, beat: number, unit: "%", sim: overtaken_pct, scope: model, match: "being overtaken",
+     evidence: {quality: 1, source: "our IDM simulation"}}
+  - {id: overtaking, beat: number, unit: "%", sim: overtaking_pct, scope: model, match: "overtaking.",
+     evidence: {quality: 1, source: "our IDM simulation"}}
+
+absolute_ok:
+  - {beat: rehook, word: exactly, why: "a condition set in the simulation: both lanes are given the same average speed"}
+  - {beat: number, word: every, why: "literally an average over every simulated driver"}
+  - {beat: outro, word: every, why: "the dense-lane effect applies to each lane in turn; framed as how it feels, not a measurement"}
+
+entities:
+  - id: cars
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "chunky low-poly cars in two lanes, dense packs vs spread-out flow"}
+  - id: watched_driver
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "one highlighted car (ring) the viewer can follow"}
+  - id: road
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "clean asphalt and kerbs; no flickering shadow patches or seams"}
+
+  - id: trees
+    type: environment
+    category: F
+    importance: background
+    visual_contract: {must_read_as: "sparse low-poly trees framing the set", no_cut_shadows: true}
+
+hero: watched_driver

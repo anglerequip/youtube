@@ -130,6 +130,17 @@ def _render_three(sb: Storyboard, tl, out: Path, previews: bool, force: bool):
     if previews:
         stills = ",".join(f"{t:.1f}" for t in [x * 2.5 for x in range(int(tl.duration / 2.5) + 1)])
         subprocess.run(node + ["--stills", stills, "--stills-dir", str(out / "previews")], check=True)
+    # pre-render QA (factory/qa): spec, science, cross-modal events, geometry inspection, pacing. Takes
+    # seconds to minutes; a blocker stops here, before the hours-long full render.
+    from . import qa
+    ctx = qa.spec.Context(sb=sb, out=out, tl=tl, plan=plan, module=mod)
+    layers, _ = qa.pre_render(sb, ctx)
+    sb._qa = (layers, ctx)
+    verdict = qa.gate.evaluate(layers, qa.inspect3d.config(), None, False)
+    if verdict["blockers"]:
+        rep = qa.gate.write_report(ctx, layers, verdict, None, None)
+        raise qa.QABlocked(verdict, rep)
+    log.info("[%s] pre-render QA: no blockers (%s)", sb.slug, verdict["state"])
     if force or not _cached(out, "visual.mp4", skey):
         log.info("[%s] 3D render (%d frames)", sb.slug, plan["n_frames"])
         subprocess.run(node + ["--out", str(out / "visual.mp4")], check=True)
@@ -160,9 +171,20 @@ def produce(slug: str, db: DB | None = None, provider: str | None = None, previe
         passed, checks = quality_control.run_all(sb, res["sim_report"])
         db.add_qc_report(sb.slug, passed, json.dumps([c.__dict__ for c in checks]))
         log.info("[%s] QC %s\n%s", sb.slug, "passed" if passed else "FAILED", quality_control.summarize(checks))
-        db.transition(sb.slug, "QUALITY_CHECKED" if passed else "QC_FAILED",
-                      note="qc passed" if passed else "qc failed")
-        res.update(qc_passed=passed, checks=checks, sha256=digest)
+        # post-render QA + release gate (factory/qa): pixels, flicker, audio, independent review
+        verdict = None
+        if getattr(sb, "_qa", None):
+            from . import qa
+            layers, ctx = sb._qa
+            verdict, rep, _ = qa.post_render(sb, sb.final_video, ctx, layers)
+            log.info("[%s] release gate: %s (%s, score %.2f); report %s", sb.slug, verdict["verdict"],
+                     verdict["state"], verdict["score"], rep.with_suffix(".md"))
+        ok = passed and (verdict is None or verdict["state"] == "READY_FOR_RELEASE")
+        note = "qc passed" if passed else "qc failed"
+        if verdict is not None:
+            note += f"; gate {verdict['state']} score {verdict['score']}"
+        db.transition(sb.slug, "QUALITY_CHECKED" if ok else "QC_FAILED", note=note)
+        res.update(qc_passed=ok, checks=checks, sha256=digest, gate=verdict)
         return res
     except Exception as e:
         db.update(sb.slug, last_error=f"{type(e).__name__}: {e}")

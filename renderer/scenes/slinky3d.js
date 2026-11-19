@@ -195,6 +195,10 @@ export function build(world, plan) {
       flash.material.opacity = F.flash ? 0.8 * F.flash[k] : 0;
       if (F.striker) striker.position.x = bar.x0 - 0.06 - F.striker[k];
     },
+    probes(i) {
+      const f = this.focal(i);
+      return [{ entity: 'slinky', part: 'coil', kind: 'thickness', p: [f.x, f.y, f.z], size: 2 * R }];
+    },
     focal(i) {
       const k = Math.min(i, F.coils.length - 1);
       if (F.focal_pt && F.focal_pt[k]) return new THREE.Vector3(...F.focal_pt[k]);

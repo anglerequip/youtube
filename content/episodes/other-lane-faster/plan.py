@@ -16,6 +16,25 @@ from factory.simulation_engine.physics import traffic as tr
 SCENE = "traffic3d"
 LANE_X = (1.8, -1.8)          # right, left
 BRAKE_ACC = -0.7              # m/s^2: brake lights on below this deceleration
+BRAKE_OFF = -0.3              # ...and off again only above this (hysteresis: no one-frame blinking)
+BRAKE_MIN_ON = 12             # frames (0.4 s): a brake light that comes on stays on at least this long
+
+
+def _brakes(a):
+    """Brake-light state per frame and car from the simulated acceleration, with hysteresis and a minimum
+    on-time. A plain threshold made lights chatter on and off for single frames (seen as flicker by
+    factory/qa/frames.py in the 2026-11-19 render)."""
+    import numpy as np
+    a = np.asarray(a)
+    on = np.zeros(a.shape, bool)
+    state = np.zeros(a.shape[1], bool); held = np.zeros(a.shape[1], int)
+    for k in range(a.shape[0]):
+        start = ~state & (a[k] < BRAKE_ACC)
+        stop = state & (a[k] > BRAKE_OFF) & (held >= BRAKE_MIN_ON)
+        state = (state | start) & ~stop
+        held = np.where(start, 0, held + 1)
+        on[k] = state
+    return on
 
 
 def _rel_speed(R, Lr, k0, k1):
@@ -58,6 +77,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
 
     frames = {"right": [], "left": [], "rb": [], "lb": [], "ego": [], "scen": [], "scroll": [], "focal_pt": []}
     L = tr.LENGTH
+    brakes = {id(r): _brakes(r.a) for r in (split_r, split_l, eq_r, eq_l)}
     for i, t in enumerate(T):
         if t < cut_eq:
             R, Lr, e, k = split_r, split_l, ego_s, min(i, split_r.x.shape[0] - 1)
@@ -74,8 +94,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         frames["right"].append([round(float(-d), 2) for d in rel(R.x[k])])
         frames["left"].append([round(float(-d), 2) for d in rel(Lr.x[k])])
         frames["scroll"].append(round(float(-ze), 3))
-        frames["rb"].append("".join("1" if a < BRAKE_ACC else "0" for a in R.a[k]))
-        frames["lb"].append("".join("1" if a < BRAKE_ACC else "0" for a in Lr.a[k]))
+        frames["rb"].append("".join("1" if b else "0" for b in brakes[id(R)][k]))
+        frames["lb"].append("".join("1" if b else "0" for b in brakes[id(Lr)][k]))
         frames["ego"].append(e)
         frames["scen"].append(0 if t < cut_eq else 1)
         frames["focal_pt"].append([LANE_X[0], 0.7, 0.0])
@@ -136,7 +156,9 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     return {"scene": SCENE, "W": W, "H": H, "fps": fps, "n_frames": n, "seed": 5, "supersample": 1.25,
             "lanes": LANE_X, "n_right": max(split_r.x.shape[1], eq_r.x.shape[1]),
             "n_left": max(split_l.x.shape[1], eq_l.x.shape[1]),
-            "shots": shots, "cards": cards, "frames": frames, "timing": timing, "wordmark": None}
+            "shots": shots, "cards": cards, "frames": frames, "timing": timing, "wordmark": None,
+            "facts": {"slow_lane_share_pct": sh["share"] * 100, "overtaken_pct": ov["passed_frac"] * 100,
+                      "overtaking_pct": ov["passing_frac"] * 100}}
 
 
 def sfx_events(plan: dict) -> list:

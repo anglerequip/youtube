@@ -56,3 +56,59 @@ sources:
   - "R. H. Heisser, V. P. Patil, N. Stoop, E. Villermaux and J. Dunkel, 'Controlling fracture cascades through twisting and quenching', PNAS 115 (35), 8665-8670 (2018)."
   - "MIT News / ScienceDaily, 13 August 2018: 'MIT mathematicians solve age-old spaghetti mystery'."
   - "WBUR, 16 August 2018: the Feynman anecdote."
+
+# ---------------------------------------------------------------------------------------------
+# Single source of truth (factory/qa). Every number the viewer hears or reads maps to a claim;
+# `sim:` values come from plan.py facts, so narration, simulation and graphics cannot drift apart.
+claims:
+  - {id: target_two, beat: hook, unit: pieces, value: 2, scope: condition}
+  - {id: plain_count, beat: setup, unit: pieces, sim: plain_pieces, scope: specific, event: snap_plain,
+     evidence: {quality: 1, source: "our simulation; Audoly & Neukirch 2005 (PRL 95, 095505)", range: [3, null]}}
+  - {id: feynman_two, beat: rehook, unit: pieces, value: 2, scope: condition}
+  - {id: snapback_year, beat: history, unit: year, value: 2005, scope: history,
+     evidence: {quality: 1, source: "Audoly & Neukirch, PRL 95, 095505 (2005)"}}
+  - {id: ignobel_year, card: "IG NOBEL PRIZE, 2006", unit: year, value: 2006, scope: history,
+     evidence: {quality: 2, source: "Improbable Research, Ig Nobel Prize in Physics 2006"}}
+  - {id: mit_year, beat: reveal, unit: year, value: 2018, scope: history,
+     evidence: {quality: 1, source: "Heisser et al., PNAS 115 (35), 8665 (2018)"}}
+  - {id: twist_amount, beat: twist, unit: turn, sim: twist_turns, scope: specific,
+     evidence: {quality: 1, source: "Heisser et al. 2018: about 360 degrees in experiments"}}
+  - {id: twisted_count, beat: result, unit: pieces, sim: twisted_pieces, scope: specific, event: snap_twisted,
+     evidence: {quality: 1, source: "our simulation; Heisser et al. 2018"}}
+  - {id: model_turn, beat: catch, unit: turn, value: 0.75, scope: model, match: "three quarters",
+     evidence: {quality: 1, source: "Heisser et al. 2018: 270 degrees in the model (25 cm stick)"}}
+  - {id: lab_turn, beat: catch, unit: turn, value: 1.0, scope: specific, match: "full one",
+     evidence: {quality: 1, source: "Heisser et al. 2018: about 360 degrees in the lab"}}
+  - {id: model_deg, card: "≈ 270°", unit: deg, value: 270, scope: model,
+     evidence: {quality: 1, source: "Heisser et al. 2018"}}
+  - {id: lab_deg, card: "≈ 360°", unit: deg, value: 360, scope: specific,
+     evidence: {quality: 1, source: "Heisser et al. 2018"}}
+  - {id: model_stick, card: "model (25 cm stick)", unit: cm, value: 25, scope: condition,
+     evidence: {quality: 1, source: "Heisser et al. 2018 (stick length used in the model)"}}
+
+# absolute words that are literally true, with the reason on record
+absolute_ok:
+  - {beat: rehook, word: never, why: "the reported anecdote: Feynman did not manage it that evening (caveat: anecdote)"}
+  - {beat: slow, word: exactly, why: "'exactly as expected' describes the simulated first crack position, not a number"}
+
+# entities with a visual contract: what must be readable on screen and how
+entities:
+  - id: stick
+    type: hero_object
+    category: D            # deformable / fracturing: the break is the subject
+    importance: primary
+    visual_contract:
+      must_read_as: "one dry spaghetti stick, then separate pieces with clean gaps"
+      count_must_match: pieces          # the number of visible fragments equals the simulated count
+      min_px_at_360: 2.0                # thickness on a 360x640 phone preview
+  - id: hands
+    type: support
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "two grips bending the stick from both ends"}
+  - id: badge
+    type: annotation
+    importance: secondary
+    visual_contract: {must_read_as: "slow-motion factor / citation", stays_out_of_caption_band: true}
+
+hero: stick

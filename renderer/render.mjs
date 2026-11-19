@@ -2,6 +2,7 @@
 //
 //   node renderer/render.mjs --scene <name> --plan plan.json --out visual.mp4
 //   node renderer/render.mjs --scene <name> --plan plan.json --stills 0,2.5,10 --stills-dir dir/
+//   node renderer/render.mjs --scene <name> --plan plan.json --inspect 0,2.5,10 --inspect-out report.json
 //   add --from <frame> [--to <frame>] to render only part of the video (for patching one shot)
 //
 // GPU: by default Chromium uses SwiftShader (CPU) so it runs anywhere. On a machine with a GPU set
@@ -50,7 +51,18 @@ await page.waitForFunction(() => window.__ready === true);
 const info = await page.evaluate(async ({ scene, plan }) => window.__boot(scene, plan), { scene: args.scene, plan });
 
 const t0 = Date.now();
-if (args.stills) {
+if (args.inspect) {
+  // scene-graph inspection (renderer/inspect.js) at the given times: each time and the frame after it
+  const frames = [];
+  for (const ts of String(args.inspect).split(',')) {
+    const i = Math.min(info.frames - 2, Math.round(parseFloat(ts) * plan.fps));
+    frames.push(await page.evaluate(i => window.inspectFrame(i), i));
+    frames.push(await page.evaluate(i => window.inspectFrame(i), i + 1));
+  }
+  const report = { scene: args.scene, static: await page.evaluate(() => window.inspectStatic()), frames };
+  fs.writeFileSync(args['inspect-out'], JSON.stringify(report));
+  console.log(`inspected ${frames.length} frames in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+} else if (args.stills) {
   fs.mkdirSync(args['stills-dir'], { recursive: true });
   for (const ts of String(args.stills).split(',')) {
     const i = Math.round(parseFloat(ts) * plan.fps);

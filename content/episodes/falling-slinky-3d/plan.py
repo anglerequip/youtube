@@ -372,7 +372,12 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     return {"scene": SCENE, "W": W, "H": H, "fps": fps, "n_frames": n, "seed": 11, "top_y": TOP, "supersample": 1.25, "bloom_threshold": 50.0,
             "bar": {"x0": BAR_X0, "x1": BAR_X1, "z": BAR_Z, "r": BAR_R},
             "shots": shots, "cards": cards, "frames": frames, "timing": timing,
-            "wordmark": None}
+            "wordmark": None,
+            "facts": {"hover_s": phys.t_meet(), "hover_theory_s": phys.theory_hover_time(),
+                      # steel bar wave speed sqrt(E/rho): E 200 GPa, rho 7850 kg/m^3 (Kinsler et al.)
+                      "bar_wave_kms": (200e9 / 7850) ** 0.5 / 1000,
+                      "slow_factors": sorted({round(d.slow) for d in (hook_drop, drop1, drop2, drop3) if d.slow > 1}
+                                            | {round(bar_slow)})}}
 
 
 def sfx_events(plan: dict) -> list:

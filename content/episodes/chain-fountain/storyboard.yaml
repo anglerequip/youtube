@@ -58,3 +58,57 @@ sources:
   - "J. Pantaleone, 'A quantitative analysis of the chain fountain', American Journal of Physics 85, 414 (2017)."
   - "E. G. Flekkoy, M. Moura and K. J. Maloy, 'Mechanisms of the flying chain fountain', Frontiers in Physics 6, 84 (2018)."
   - "The phenomenon was popularised by Steve Mould's 2013 video; this episode uses none of its footage or framing."
+
+# ---------------------------------------------------------------------------------------------
+# Single source of truth (factory/qa): every number heard or shown maps to a claim.
+claims:
+  - {id: drop_1m, beat: payoff, unit: m, sim: drop_1m, scope: condition}
+  - {id: arch_1m, beat: payoff, unit: cm, sim: arch_1m_cm, scope: model, tolerance: 0.06, event: arch_1m,
+     evidence: {quality: 1, source: "our steady-state model after Biggins & Warner, Proc. R. Soc. A 470, 20130689 (2014)"}}
+  - {id: drop_double, beat: double, unit: x, value: 2, scope: condition, match: "double the drop"}
+  - {id: arch_double, beat: double, unit: x, sim: arch_ratio_2m_1m, scope: model, match: "doubles too",
+     evidence: {quality: 1, source: "Biggins & Warner 2014: arch height proportional to the drop"}}
+  - {id: arch_2m, card: "≈ 27 cm", unit: cm, sim: arch_2m_cm, scope: model, event: arch_2m,
+     evidence: {quality: 1, source: "our steady-state model after Biggins & Warner 2014"}}
+  - {id: drop_2m, beat: speed, unit: m, sim: drop_2m, scope: condition}
+  - {id: speed_2m, beat: speed, unit: m/s, sim: speed_2m, scope: model, event: null,
+     evidence: {quality: 1, source: "our model: v = sqrt(g h / (1 - alpha)) style balance, Biggins & Warner 2014"}}
+
+absolute_ok:
+  - {beat: hook, word: nothing, why: "no external lifting agent acts on the chain; the upward push comes from the pile (Biggins & Warner 2014)"}
+  - {beat: rope, word: nothing, why: "an idealised flexible rope has no bending stiffness to lever against the pile"}
+  - {beat: kick, word: every, why: "in the steady state each link passes the pile and receives the push"}
+  - {beat: catch, word: "no", why: "Biggins & Warner: without the anomalous pile force the arch height is zero"}
+
+entities:
+  - id: chain
+    type: hero_object
+    category: B            # thin connected object: beads must read as one connected chain
+    importance: primary
+    visual_contract:
+      must_read_as: "a ball chain: round beads joined by short visible links, one continuous strand"
+      connectors_visible_px_at_1080: 1.5
+      no_gaps_or_floating_beads: true
+  - id: jar
+    type: support
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "a glass jar holding a coiled pile"}
+  - id: arch
+    type: phenomenon
+    category: B
+    importance: primary
+    visual_contract: {must_read_as: "a smooth arch above the rim whose height matches the card", measured_by: arch_cm}
+  - id: ground
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "continuous floor and sky, no black clipping holes"}
+
+  - id: trees
+    type: environment
+    category: F
+    importance: background
+    visual_contract: {must_read_as: "sparse low-poly trees framing the set", no_cut_shadows: true}
+
+hero: chain

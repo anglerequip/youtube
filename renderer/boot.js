@@ -1,6 +1,7 @@
 // Loads a scene module, builds it, and exposes renderFrame(i) -> JPEG data URL.
 import * as THREE from 'three';
 import { World, drawCard, drawWordmark, drawBadge } from './world.js';
+import { inspectFrame, staticChecks } from './inspect.js';
 
 export async function boot(sceneName, plan) {
   await document.fonts.load('800 40px Poppins'); await document.fonts.load('700 40px Poppins');
@@ -13,7 +14,7 @@ export async function boot(sceneName, plan) {
   const scene = mod.build(world, plan);
 
   window.__meta = {};
-  window.renderFrame = (i, quality = 0.93) => {
+  const pose = i => {           // put the world in its state for frame i (shared by render and inspect)
     const t = i / plan.fps;
     const shot = plan.shots.find(s => t >= s.start && t < s.end) ?? plan.shots[plan.shots.length - 1];
     if (shot.lighting && shot.lighting !== world.lightingName) {
@@ -23,6 +24,17 @@ export async function boot(sceneName, plan) {
     scene.update(i, t, shot);
     world.applyShot(shot, t, i);
     if (scene.afterCamera) scene.afterCamera(i, t, shot);
+    return { t, shot };
+  };
+  window.inspectStatic = () => staticChecks(world);
+  window.inspectFrame = i => {
+    const { shot } = pose(i);
+    world.prepare();
+    world.scene.updateMatrixWorld(true); world.camera.updateMatrixWorld(true);
+    return inspectFrame(world, scene, plan, i, shot);
+  };
+  window.renderFrame = (i, quality = 0.93) => {
+    const { t, shot } = pose(i);
     world.render();
     if (scene.focal) {           // render metadata for QC (focal object position on screen)
       const p = scene.focal(i).clone().project(world.camera);

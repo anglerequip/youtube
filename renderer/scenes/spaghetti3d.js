@@ -101,7 +101,8 @@ export function build(world, plan) {
     const x = r * Math.sin(a), z = r * Math.cos(a);
     if (z > 0 && Math.abs(Math.atan2(x, z)) < 0.6 && r < 20) continue;
     const s = 0.9 + world.rand() * 0.9;
-    world.rand() < 0.35 ? world.conifer(x, z, s * 1.1) : world.roundTree(x, z, s);
+    const tree = world.rand() < 0.35 ? world.conifer(x, z, s * 1.1) : world.roundTree(x, z, s);
+    world.contactShadow(tree, x, z, s);     // outside the small, sharp shadow box around the bench
   }
   // flagstone patio + workbench
   add(S, rbox(3.0, 0.06, 2.4, 0.01), MAT.concrete('#bdb6a3'), 0, 0.03, 0);
@@ -163,6 +164,17 @@ export function build(world, plan) {
       const rg = F.ring[k];
       ring.visible = !!rg;
       if (rg) { ring.position.set(rg[0], rg[1] + BENCH_Y, 0); ring.rotation.order = 'ZYX'; ring.rotation.set(0, Math.PI / 2, rg[3] ?? 0); ringMat.opacity = 0.9 * rg[2]; }
+    },
+    probes(i) {          // every visible fragment's two ends (do pieces read as separate?) + stick thickness
+      const k = Math.min(i, F.pieces.length - 1), segs = [];
+      for (const pc of F.pieces[k]) {
+        if (!pc || pc.x.length < 2) continue;
+        const n = pc.x.length - 1, z = j => Array.isArray(pc.z) ? pc.z[j] : (pc.z ?? 0);
+        segs.push([[pc.x[0], pc.y[0] + BENCH_Y, z(0)], [pc.x[n], pc.y[n] + BENCH_Y, z(n)]]);
+      }
+      const f = this.focal(i);
+      return [{ entity: 'stick', kind: 'pieces', segs },
+              { entity: 'stick', part: 'diameter', kind: 'thickness', p: [f.x, f.y, f.z], size: 2 * RAD }];
     },
     focal(i) {
       const k = Math.min(i, F.focal_pt.length - 1);

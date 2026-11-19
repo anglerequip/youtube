@@ -27,7 +27,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         if t < S("double"):
             return 1.0
         if t < S("outro"):
-            return 1.0 + cam.ease((t - S("double")) / 2.6)
+            return 1.0 + cam.ease((t - S("double")) / 1.6)
         return 2.0 - cam.ease((t - S("outro")) / (n / fps - S("outro") - 0.4))
 
     cut_macro0, cut_macro1 = S("links") - 0.1, S("rope") - 0.1
@@ -100,9 +100,19 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
             frames["focal_pt"][i] = frames["focal_pt"][i - 1] if i else [0, 1.05, 0]
 
     a1, a2 = cf.steady(1.0), cf.steady(2.0)
+
+    def settled(t0, target):
+        """First time after t0 at which the drawn arch is within 2% of the value its card will show
+        (a card must never announce a height the arch on screen has not reached yet)."""
+        for i in range(int(t0 * fps), n):
+            if abs(frames["h1"][i] - target) <= 0.02 * target:
+                return i / fps
+        return t0
+    show1 = max(S("payoff") + 3.2, settled(S("payoff"), a1["h1"]))
+    show2 = max(S("double") + 1.2, settled(S("double"), a2["h1"]) + 0.1)
     cards = [
-        {"start": S("payoff") + 3.2, "end": S("double") - 0.05, "big": f"≈ {a1['h1'] * 100:.0f} cm", "small": "arch for a 1 m drop (our model)", "y": 0.17},
-        {"start": S("double") + 1.4, "end": S("speed") - 0.05, "big": f"≈ {a2['h1'] * 100:.0f} cm", "small": "arch for a 2 m drop", "y": 0.17},
+        {"start": show1, "end": S("double") - 0.05, "big": f"≈ {a1['h1'] * 100:.0f} cm", "small": "arch for a 1 m drop (our model)", "y": 0.17},
+        {"start": show2, "end": S("speed") + 0.7, "big": f"≈ {a2['h1'] * 100:.0f} cm", "small": "arch for a 2 m drop", "y": 0.17},
         {"start": S("speed") + 0.8, "end": S("rehook") - 0.15, "big": f"≈ {a2['v']:.1f} m/s", "small": "chain speed", "y": 0.17},
     ]
     events = [(round(morph_t0, 3), "rise", {"gain": 0.4})]
@@ -119,8 +129,21 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         t += cyc
     timing = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [morph_t0], "events": events,
               "mutes": [[S("wrong") - 0.1, morph_t0 - 0.05]], "swells": [morph_t0]}
+    facts = {"drop_1m": 1.0, "drop_2m": 2.0, "arch_1m_cm": a1["h1"] * 100, "arch_2m_cm": a2["h1"] * 100,
+             "arch_ratio_2m_1m": a2["h1"] / a1["h1"], "speed_2m": a2["v"], "alpha": cf.ALPHA,
+             "slow_factors": [4, 1000],
+             "events": {
+                 "arch_1m": {"t": show1, "observe": "arch_cm", "expect": a1["h1"] * 100, "tol": 0.03},
+                 "arch_2m": {"t": show2, "observe": "arch_cm", "expect": a2["h1"] * 100, "tol": 0.03}}}
     return {"scene": SCENE, "W": W, "H": H, "fps": fps, "n_frames": n, "seed": 12, "supersample": 1.0, "bloom_threshold": 50.0,
-            "pile_h": PILE_H, "shots": shots, "cards": cards, "frames": frames, "timing": timing, "wordmark": None}
+            "pile_h": PILE_H, "shots": shots, "cards": cards, "frames": frames, "timing": timing, "wordmark": None,
+            "facts": facts}
+
+
+def observe(plan: dict, i: int, what: str):
+    if what == "arch_cm":
+        return plan["frames"]["h1"][min(i, plan["n_frames"] - 1)] * 100
+    raise KeyError(what)
 
 
 def sfx_events(plan: dict) -> list:

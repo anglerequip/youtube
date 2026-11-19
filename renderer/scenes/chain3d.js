@@ -96,9 +96,11 @@ export function build(world, plan) {
     const x = r * Math.sin(a), z = r * Math.cos(a);
     if (z > 0 && Math.abs(Math.atan2(x, z)) < 0.7 && r < 22) continue;
     const s = 0.9 + world.rand() * 0.9;
-    world.rand() < 0.35 ? world.conifer(x, z, s * 1.1) : world.roundTree(x, z, s);
+    const tree = world.rand() < 0.35 ? world.conifer(x, z, s * 1.1) : world.roundTree(x, z, s);
+    world.contactShadow(tree, x, z, s);     // outside the small, sharp shadow box around the jar
   }
-  add(S, rbox(3.2, 0.06, 2.6, 0.01), MAT.concrete('#bdb6a3'), 0, -0.03, 0);   // patio slab, top at y=0
+  add(S, rbox(3.2, 0.06, 2.6, 0.01), MAT.concrete('#bdb6a3'), 0, -0.027, 0);   // patio slab, top 3 mm above the
+  // grass so the two surfaces never share a depth (z-fighting; found by factory/qa inspect: geometry.coplanar)
 
   // telescoping stand: heavy base, outer tube, inner (sliding) tube, wooden platform
   const steel = MAT.brushedSteel(), dark = MAT.darkSteel();
@@ -246,6 +248,10 @@ export function build(world, plan) {
       world.camera.updateProjectionMatrix();
     },
     focal(i) { const k = Math.min(i, F.focal_pt.length - 1); return new THREE.Vector3(...F.focal_pt[k]); },
+    probes(i) {          // readability probes for renderer/inspect.js (hero: beads joined by visible links)
+      const k = Math.min(i, F.focal_pt.length - 1), p = F.focal_pt[k];
+      return [{ entity: 'chain', kind: 'chain', p, pitch: BEAD, bead: 2 * BR, connector: 2 * LR }];
+    },
     vars(i) { return {}; },
   };
 }

@@ -4,6 +4,11 @@
   python -m factory status                show every video and its state
   python -m factory history <slug>        state changes for one video
   python -m factory qc <slug>             re-run quality checks on an existing render
+  python -m factory qa <slug> [--video f] [--no-inspect]
+                                          all QA layers + release gate on an existing render
+                                          (writes out/<slug>/qa/report.md and the review packet)
+  python -m factory qa-gate <slug>        re-run the gate once an independent critique.json exists;
+                                          moves QC_FAILED -> QUALITY_CHECKED only if it now passes
 """
 from __future__ import annotations
 
@@ -36,6 +41,12 @@ def main(argv=None) -> int:
     h.add_argument("slug")
     q = sub.add_parser("qc")
     q.add_argument("slug")
+    qa_ = sub.add_parser("qa")
+    qa_.add_argument("slug")
+    qa_.add_argument("--video", default=None)
+    qa_.add_argument("--no-inspect", action="store_true")
+    qg = sub.add_parser("qa-gate")
+    qg.add_argument("slug")
     args = p.parse_args(argv)
     _logging()
 
@@ -64,6 +75,20 @@ def main(argv=None) -> int:
         passed, checks = quality_control.run_all(sb, Sim.self_checks() if hasattr(Sim, "self_checks") else None)
         print(quality_control.summarize(checks))
         return 0 if passed else 2
+    if args.cmd in ("qa", "qa-gate"):
+        from pathlib import Path
+        from . import qa
+        from .storyboard_engine import load
+        sb = load(args.slug)
+        video = Path(getattr(args, "video", None) or sb.final_video)
+        verdict, rep, _ = qa.run(sb, video, inspect=not getattr(args, "no_inspect", False))
+        print(rep.with_suffix(".md").read_text())
+        row = db.get(sb.slug) if hasattr(db, "get") else None
+        if args.cmd == "qa-gate" and verdict["state"] == "READY_FOR_RELEASE" and row and row["state"] == "QC_FAILED":
+            from .production import sha256_file
+            if row["video_sha256"] == sha256_file(video):
+                db.transition(sb.slug, "QUALITY_CHECKED", note=f"release gate passed, score {verdict['score']}")
+        return 0 if verdict["state"] == "READY_FOR_RELEASE" else 2
     return 1
 
 

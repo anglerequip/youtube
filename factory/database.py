@@ -38,7 +38,8 @@ ALLOWED: dict[str, set[str]] = {
     "SCHEDULED": {"PUBLISHED", "FAILED"},
     "PUBLISHED": {"ANALYZED"},
     "ANALYZED": {"ANALYZED"},
-    "QC_FAILED": {"SCRIPTED", "STORYBOARDED", "REJECTED"},
+    "QC_FAILED": {"SCRIPTED", "STORYBOARDED", "REJECTED", "QUALITY_CHECKED"},   # the release gate passes once the
+    # independent review of the same file arrives (factory qa-gate)
     "REVISION_REQUESTED": {"SCRIPTED", "STORYBOARDED", "REJECTED"},
     "REJECTED": set(),
     "FAILED": {"SCRIPTED", "STORYBOARDED", "APPROVED", "REJECTED"},

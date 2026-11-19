@@ -271,11 +271,21 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         if frames["focal_pt"][i] is None:
             frames["focal_pt"][i] = frames["focal_pt"][i - 1] if i else [0, 0.08, 0]
 
+    def badge_clear(t0):
+        """First time after t0 with no badge on screen."""
+        for j in range(int(t0 * fps), n):
+            if not frames["badge"][j]:
+                return j / fps + 0.1
+        return t0
+
     cards = [
         {"start": count_hl[3] + 0.3, "end": cut_wrong - 0.1, "big": f"{plain.n_pieces} pieces", "small": "from one snap", "y": 0.2},
-        {"start": break_v + 0.6, "end": cut_why - 0.1, "big": f"{twisted.n_pieces} pieces", "small": "twisted first", "y": 0.2},
-        {"start": S("catch") + 0.4, "end": S("catch") + 2.6, "big": "≈ 270°", "small": "model (25 cm stick)", "y": 0.2},
-        {"start": S("catch") + 2.8, "end": cut_outro - 0.1, "big": "≈ 360°", "small": "in the lab", "y": 0.2},
+        # the halves fly up to y~0.24 after the break: this card sits higher, after the badge clears, so it
+        # never covers the gap between the two pieces (factory/qa inspect: recognition.card_covers_hero)
+        {"start": max(break_v + 0.6, badge_clear(break_v)), "end": cut_why - 0.1, "big": f"{twisted.n_pieces} pieces",
+         "small": "twisted first", "y": 0.125},
+        {"start": S("catch") + 0.4, "end": S("catch") + 2.6, "big": "≈ 270°", "small": "model (25 cm stick)", "y": 0.16},
+        {"start": S("catch") + 2.8, "end": cut_outro - 0.1, "big": "≈ 360°", "small": "in the lab", "y": 0.16},
     ]
     # sound cues at the moments the simulation produces them
     events = []
@@ -299,8 +309,27 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     timing = {"crack_v": crack_v, "second_v": second_v, "break_v": break_v, "slow2": slow2,
               "cuts": [s_["start"] for s_ in shots[1:]], "reveals": [break_v], "events": events,
               "mutes": [[second_v - 3.0, second_v - 0.05], [tw_end - 0.2, break_v - 0.05]], "swells": [second_v, break_v]}
+    # facts: the simulated values every spoken or shown number is checked against (factory/qa/science.py)
+    slowed = sorted({int(b.split()[1].replace(",", "").rstrip("×")) for b in frames["badge"] if b.startswith("SLOWED ")})
+    facts = {"plain_pieces": plain.n_pieces, "twisted_pieces": twisted.n_pieces,
+             "untwisted_min_pieces": min([plain.n_pieces] + [r.n_pieces for r in extra]),
+             "montage_pieces": [r.n_pieces for r in extra[:3]], "twist_turns": 1.0, "slow_factors": slowed,
+             "events": {
+                 # data-level check: the pieces drawn on screen at these times must equal the simulated count
+                 "snap_plain": {"t": count_hl[3] + 0.3, "observe": "pieces", "expect": plain.n_pieces},
+                 "snap_twisted": {"t": max(break_v + 0.6, badge_clear(break_v)), "observe": "pieces", "expect": twisted.n_pieces}}}
+    for j, (v0, v1, tr) in enumerate(mont):
+        facts["events"][f"snap_try{j + 2}"] = {"t": v1 - 0.2, "observe": "pieces", "expect": tr.run.n_pieces}
     return {"scene": SCENE, "W": W, "H": H, "fps": fps, "n_frames": n, "seed": 9, "supersample": 1.0,
-            "stick": sp.STICK, "shots": shots, "cards": cards, "frames": frames, "timing": timing, "wordmark": None}
+            "stick": sp.STICK, "shots": shots, "cards": cards, "frames": frames, "timing": timing, "wordmark": None,
+            "facts": facts}
+
+
+def observe(plan: dict, i: int, what: str):
+    """What the plan draws at frame i (QA data-level check)."""
+    if what == "pieces":
+        return len(plan["frames"]["pieces"][min(i, len(plan["frames"]["pieces"]) - 1)])
+    raise KeyError(what)
 
 
 def _video_time(track, t_real, v0, v1, fps):

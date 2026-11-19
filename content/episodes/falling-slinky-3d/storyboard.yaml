@@ -62,3 +62,36 @@ sources:
   - "M. G. Calkin, 'Motion of a falling spring', American Journal of Physics 61, 261 (1993)"
   - "Bar wave speed sqrt(E/rho): L. E. Kinsler et al., Fundamentals of Acoustics, 4th ed. (Wiley, 2000), chapter 3"
   - "Centre-of-mass check: an ideal slinky's hover time is sqrt(2L/3g), since its centre of mass sits L/3 above the bottom and falls freely"
+
+# ---------------------------------------------------------------------------------------------
+# Single source of truth (factory/qa): every number heard or shown maps to a claim.
+claims:
+  - {id: hover, beat: time, unit: s, sim: hover_s, scope: specific,
+     evidence: {quality: 1, source: "our 80-mass simulation; theory sqrt(2L/3g) (Cross & Wheatland 2012)", range: [0.2, 0.35]}}
+  - {id: bar_wave, beat: rod, unit: km/s, sim: bar_wave_kms, scope: typical,
+     evidence: {quality: 1, source: "sqrt(E/rho), Kinsler et al. 2000", range: [4.9, 5.2]}}
+
+absolute_ok:
+  - {beat: setup, word: perfectly, why: "the hanging slinky is in static equilibrium by construction"}
+  - {beat: land, word: only, why: "the bottom's forces are unchanged until the collapse front arrives (ideal model; caveat notes ~1 mm real motion)"}
+  - {beat: time, word: only, why: "same as 'land': motion starts when the front arrives"}
+  - {beat: com, word: exactly, why: "with drag ignored the only external force is gravity, so the centre of mass falls freely (exact)"}
+
+entities:
+  - id: slinky
+    type: hero_object
+    category: B            # thin connected object: coils must read as one spring
+    importance: primary
+    visual_contract: {must_read_as: "a metal spring of evenly spaced coils hanging from a clamp", count_coils_stable: true}
+  - id: bottom_coil
+    type: phenomenon
+    category: B
+    importance: primary
+    visual_contract: {must_read_as: "the bottom coil visibly stationary while the top collapses"}
+  - id: bar
+    type: hero_object
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "a steel bar with a travelling wave pulse"}
+
+hero: slinky

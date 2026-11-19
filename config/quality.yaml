@@ -1,0 +1,49 @@
+# Thresholds and weights for the QA layers (factory/qa). Tune here, not in code.
+# Every threshold names the layer that uses it. Values were calibrated on the three failed videos
+# (old versions must fail, fixed versions must pass): see tests/test_qa_regression.py.
+
+inspect:                     # factory/qa/inspect3d.py (scene graph, renderer/inspect.js)
+  sample_every_s: 2.0        # plus every shot boundary, card start and declared event
+  hole_fraction_block: 0.0005        # share of the frame where the world is missing (clear colour shows)
+  shadow_cut_block_px: 300           # visible area (px on a 360x640 phone, fog-weighted) of a cut shadow
+  shadow_cut_risk_px: 60
+  chain_gap_px: 1.0                  # bead gaps this wide (px at 1080) must be bridged by a connector...
+  chain_connector_px: 1.0            # ...at least this thick, or the chain reads as loose balls
+  pop_jump: 0.06                     # probe jumps more than this share of the frame in one frame (same shot)
+  depth_ratio_warn: 100000           # far/near
+
+frames:                      # factory/qa/frames.py (the encoded MP4)
+  sample_fps: 6
+  black_rgb: 12                      # a pixel this dark in all channels is "black"
+  black_blob_area: 0.003             # a connected black region larger than this share of the frame blocks
+  overexposed_share: 0.08            # share of near-white pixels (>= 250) per frame
+  flicker_tile: 48                   # px tiles on a 360-wide copy
+  flicker_z: 9.0                     # second-difference spike vs that tile's median (cuts and events excluded)
+  flicker_min_delta: 18              # and at least this many grey levels
+
+pacing:                      # factory/qa/pacing.py
+  hook_max_s: 3.5
+  max_gap_s: 6.0                     # longest stretch with no new attention event (cut, card, badge, sfx, reveal)
+  min_shot_s: 1.2
+  max_shot_s: 9.0
+  trailing_max_s: 1.6                # video after the last word
+
+audio:                       # factory/qa/audio.py
+  peak_dbfs_max: -0.3
+  lufs_target: -14.0
+  lufs_tolerance: 2.0
+  min_duration_s: 60.5
+
+rubric:                      # factory/qa/gate.py: 0-5 per category, weighted
+  approve_at: 4.0
+  primary_min: 3.5
+  weights:
+    scientific_accuracy: 0.20
+    cross_modal_consistency: 0.15
+    visual_clarity: 0.15
+    geometry_and_render: 0.15
+    pacing_and_attention: 0.10
+    audio: 0.10
+    design_and_style: 0.10
+    hook_and_retention: 0.05
+  primary: [scientific_accuracy, cross_modal_consistency, visual_clarity, geometry_and_render]

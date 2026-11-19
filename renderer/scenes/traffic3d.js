@@ -26,11 +26,14 @@ export function build(world, plan) {
   const flat = c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.95 });
   const zc = (Z_MIN - 400 + Z_MAX + 200) / 2, len = Z_MAX + 200 - (Z_MIN - 400);
   const plane = (w, l, mat, x, y) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, l), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, zc); m.receiveShadow = true; S.add(m); return m; };
-  plane(7.2, len, flat(PALETTE.asphaltDay), 0, 0.02);
-  const mk = new THREE.MeshStandardMaterial({ color: PALETTE.marking, roughness: 0.8 });
+  // stacked flat layers (grass < asphalt < markings) are only centimetres apart, which the depth buffer
+  // cannot separate far down the road (factory/qa inspect: geometry.coplanar); polygonOffset orders them
+  const layer = (m, k) => { m.polygonOffset = true; m.polygonOffsetFactor = -k; m.polygonOffsetUnits = -k; return m; };
+  plane(7.2, len, layer(flat(PALETTE.asphaltDay), 1), 0, 0.02);
+  const mk = layer(new THREE.MeshStandardMaterial({ color: PALETTE.marking, roughness: 0.8 }), 2);
   for (const x of [-3.35, 3.35]) plane(0.15, len, mk, x, 0.03);
   for (const s of [-1, 1]) {
-    const k = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.1, len), flat(PALETTE.concrete)); k.position.set(s * 4.6, 0.05, zc); k.receiveShadow = true; S.add(k);
+    const k = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.1, len), layer(flat(PALETTE.concrete), 1)); k.position.set(s * 4.6, 0.05, zc); k.receiveShadow = true; S.add(k);
   }
 
   // scrolling scenery: one tile of dashes, fence and trees, repeated every P metres
@@ -103,7 +106,10 @@ export function build(world, plan) {
       // The box must cover every bit of road and kerb the camera sees before the haze: when it stopped
       // short, the fence's shadow on the kerb ended in a hard edge that slid along with the camera.
       const h = cpos.y, reach = Math.max(cpos.distanceTo(look), 0.8 * (30 + h * 0.8));
-      const ext = Math.min(120, Math.max(30, h * 0.75 + reach * 0.55 + 12));
+      // ...and far enough that a car's shadow is never cut where the haze still shows it clearly (the box
+      // edge sits beyond 45% haze; factory/qa inspect: render.shadow_cutoff)
+      const fogN = 30 + h * 0.8, fogF = 170 + h * 2.6;
+      const ext = Math.min(120, Math.max(30, h * 0.75 + reach * 0.55 + 12, (fogN + 0.45 * (fogF - fogN)) / 1.8));
       const dir = sun.position.clone().sub(sun.target.position).normalize();
       const fwd = new THREE.Vector3(look.x - cpos.x, 0, look.z - cpos.z); if (fwd.lengthSq() < 1e-6) fwd.set(0, 0, -1); fwd.normalize();
       const c0 = new THREE.Vector3(cpos.x, 0, cpos.z).addScaledVector(fwd, ext * 0.8); c0.x *= 0.5;
@@ -112,11 +118,15 @@ export function build(world, plan) {
       sun.target.position.copy(c0); sun.position.copy(c0).addScaledVector(dir, 200);
       sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.near = 20; sc.far = 400; sc.updateProjectionMatrix();
       sun.shadow.normalBias = 0.02 + tx * 0.6;
-      S.fog.near = 30 + h * 0.8; S.fog.far = 170 + h * 2.6;
+      S.fog.near = fogN; S.fog.far = fogF;
     },
     focal(i) {
       const k = Math.min(i, F.focal_pt.length - 1);
       return new THREE.Vector3(...F.focal_pt[k]);
+    },
+    probes(i) {          // the followed car: a 4.2 m long box must read at phone size
+      const f = this.focal(i);
+      return [{ entity: 'cars', part: 'car length', kind: 'thickness', p: [f.x, f.y, f.z], size: 4.2 }];
     },
   };
 }

@@ -151,6 +151,17 @@ export class World {
     this.scene.add(g); return g;
   }
 
+  // A tree outside the scene's shadow box would have its cast shadow cut by the box edge (QA:
+  // render.shadow_cutoff). Such trees cast nothing and get a soft contact shadow on the ground instead.
+  contactShadow(tree, x, z, s = 1) {
+    if (!this._blobM) this._blobM = new THREE.MeshBasicMaterial({ color: '#1c2912', transparent: true, opacity: 0.35,
+      depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    tree.traverse(m => { if (m.isMesh) m.castShadow = false; });
+    const blob = new THREE.Mesh(new THREE.CircleGeometry(0.95 * s, 20), this._blobM);
+    blob.rotation.x = -Math.PI / 2; blob.position.set(x, 0.005, z); blob.renderOrder = 1; this.scene.add(blob);
+    return blob;
+  }
+
   scatterTrees(n, rMin, rMax, center = [0, 0]) {
     for (let i = 0; i < n; i++) {
       const a = this.rand() * Math.PI * 2, r = rMin + (rMax - rMin) * Math.sqrt(this.rand());
@@ -208,13 +219,14 @@ export class World {
     this.camera.position.set(...pos); this.camera.lookAt(...look);
   }
 
-  render() {
+  prepare() {
     // the sky dome (radius 300) is centred on the camera, and the far plane always reaches past it, so it
     // can never be clipped (a clipped dome showed the black clear colour as a triangle on the horizon)
     this.skyDome.position.copy(this.camera.position);
     if (this.camera.far < 330) { this.camera.far = 330; this.camera.updateProjectionMatrix(); }
-    this.composer.render();
   }
+
+  render() { this.prepare(); this.composer.render(); }
 }
 
 // ---------- 2D overlay: label cards and wordmark, composited over the 3D frame ----------
