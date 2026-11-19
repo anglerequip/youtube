@@ -1,6 +1,6 @@
 slug: spaghetti-two-pieces
 title: "Why Spaghetti Won't Snap in Two"
-topic: "fracture / flexural waves: why dry spaghetti breaks into three or more pieces"
+topic: "fracture / flexural waves: why dry spaghetti breaks into more than two pieces"
 component: custom   # physics: factory/simulation_engine/physics/spaghetti.py (snap-back beam waves + fracture)
 renderer: three
 scene: spaghetti3d
@@ -20,7 +20,7 @@ beats:
     text: "Try snapping spaghetti in two. You almost never can."
     pause_after: 0.3
   - id: setup
-    text: "Bend a dry stick from both ends, and it breaks into three pieces or more, nearly every time."
+    text: "Bend a dry stick from both ends, and it shatters into several pieces. Here, four of them."
   - id: wrong
     text: "You'd guess it snaps at a weak spot, and the extra bits are just bad luck."
   - id: slow

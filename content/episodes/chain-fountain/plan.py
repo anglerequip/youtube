@@ -119,7 +119,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         t += cyc
     timing = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [morph_t0], "events": events,
               "mutes": [[S("wrong") - 0.1, morph_t0 - 0.05]], "swells": [morph_t0]}
-    return {"scene": SCENE, "W": W, "H": H, "fps": fps, "n_frames": n, "seed": 12, "supersample": 1.0,
+    return {"scene": SCENE, "W": W, "H": H, "fps": fps, "n_frames": n, "seed": 12, "supersample": 1.0, "bloom_threshold": 50.0,
             "pile_h": PILE_H, "shots": shots, "cards": cards, "frames": frames, "timing": timing, "wordmark": None}
 
 

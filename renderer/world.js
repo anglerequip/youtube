@@ -208,7 +208,13 @@ export class World {
     this.camera.position.set(...pos); this.camera.lookAt(...look);
   }
 
-  render() { this.composer.render(); }
+  render() {
+    // the sky dome (radius 300) is centred on the camera, and the far plane always reaches past it, so it
+    // can never be clipped (a clipped dome showed the black clear colour as a triangle on the horizon)
+    this.skyDome.position.copy(this.camera.position);
+    if (this.camera.far < 330) { this.camera.far = 330; this.camera.updateProjectionMatrix(); }
+    this.composer.render();
+  }
 }
 
 // ---------- 2D overlay: label cards and wordmark, composited over the 3D frame ----------

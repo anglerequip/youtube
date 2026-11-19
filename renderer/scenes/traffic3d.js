@@ -46,6 +46,10 @@ export function build(world, plan) {
     const s = 1.4 + world.rand() * 1.6;
     world.rand() < 0.35 ? world.conifer(x, z, s * 1.1) : world.roundTree(x, z, s);
   }
+  // trees stand 10-48 m from the road; with the low sun their long shadows reached the kerb only partly
+  // (cut off by the edge of the shadow map) and showed as hard-edged dark patches that jumped between
+  // frames, so only the fence casts shadows onto the road and kerb
+  for (const o of S.children.slice(before)) { if (Math.abs(o.position.x) > 9) o.traverse(m => { if (m.isMesh) m.castShadow = false; }); }
   for (const o of S.children.slice(before)) tile.add(o);     // move fence + trees into the tile
   for (let k = -TILES_FWD; k <= TILES_BACK; k++) { const c = tile.clone(); c.position.z = -k * P; scen.add(c); }
 
@@ -96,11 +100,18 @@ export function build(world, plan) {
       const j = Math.min(Math.max(0, i - (shot.i0 ?? 0)), (shot.look?.length ?? 1) - 1);
       const look = shot.look ? new THREE.Vector3(...shot.look[j]) : new THREE.Vector3(XR, 0, 0);
       const cpos = shot.pos ? new THREE.Vector3(...shot.pos[j]) : new THREE.Vector3(0, 5, 10);
-      const h = cpos.y, ext = Math.min(85, Math.max(14, h * 0.75 + cpos.distanceTo(look) * 0.25));
+      // The box must cover every bit of road and kerb the camera sees before the haze: when it stopped
+      // short, the fence's shadow on the kerb ended in a hard edge that slid along with the camera.
+      const h = cpos.y, reach = Math.max(cpos.distanceTo(look), 0.8 * (30 + h * 0.8));
+      const ext = Math.min(120, Math.max(30, h * 0.75 + reach * 0.55 + 12));
       const dir = sun.position.clone().sub(sun.target.position).normalize();
-      const c0 = new THREE.Vector3(look.x * 0.5, 0, look.z);
+      const fwd = new THREE.Vector3(look.x - cpos.x, 0, look.z - cpos.z); if (fwd.lengthSq() < 1e-6) fwd.set(0, 0, -1); fwd.normalize();
+      const c0 = new THREE.Vector3(cpos.x, 0, cpos.z).addScaledVector(fwd, ext * 0.8); c0.x *= 0.5;
+      const tx = (2 * ext) / sun.shadow.mapSize.x;               // snap to whole shadow texels: no shimmer as it moves
+      c0.x = Math.round(c0.x / tx) * tx; c0.z = Math.round(c0.z / tx) * tx;
       sun.target.position.copy(c0); sun.position.copy(c0).addScaledVector(dir, 200);
-      sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.near = 50; sc.far = 400; sc.updateProjectionMatrix();
+      sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.near = 20; sc.far = 400; sc.updateProjectionMatrix();
+      sun.shadow.normalBias = 0.02 + tx * 0.6;
       S.fog.near = 30 + h * 0.8; S.fog.far = 170 + h * 2.6;
     },
     focal(i) {
