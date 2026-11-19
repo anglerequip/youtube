@@ -45,15 +45,15 @@ beats:
   - id: lifetime
     text: "Stand upright for eighty years, and your head ends up about half a millionth of a second older than your feet."
   - id: gps
-    text: "Too small to matter? GPS satellites fly so high that their clocks gain about forty-five microseconds a day, from gravity alone."
+    text: "Too small to matter? GPS satellites fly so high that their clocks run fast by about thirty-eight microseconds a day, mostly from this effect."
   - id: drift
-    text: "Ignore that, and your map would be off by kilometres in a single day."
+    text: "Ignore that, and GPS distances would be off by kilometres in a single day."
 
 caveats:
   - "The effect is real but tiny: about 1.1e-16 per metre of height near Earth's surface (g*h/c^2). Nobody can feel it."
   - "The half-a-millionth-of-a-second figure assumes standing upright (head about 1.7 m above the feet) for 80 years. Real people lie down for about a third of their lives, so the true difference is smaller."
   - "The NIST 2010 result was (4.1 ± 1.6) × 10^-17 for 33 cm, consistent with the predicted 3.6 × 10^-17 within its uncertainty; 'almost exactly' means within the error bar, not to many digits."
-  - "GPS: the gravitational part is about +45 microseconds per day; the satellites' orbital speed takes off about 7, so the net correction is about 38 microseconds per day. The map-error counter is the narrated gravitational 45 µs/day times the speed of light (about 14 km per day); with the velocity part included the textbook figure is about 11 km per day. Real receiver errors depend on satellite geometry."
+  - "GPS: the gravitational part is about +45 microseconds per day; the satellites' orbital speed takes off about 7, so the net correction is about 38 microseconds per day. The counter shows the net 38.6 µs/day times the speed of light: about 11.6 km of distance (pseudorange) drift per day if uncorrected. How much of that reaches a position fix depends on the receiver solution, which absorbs a clock offset common to all satellites."
   - "On screen the slowdown is exaggerated by many orders of magnitude so it can be seen; the counters show the real values."
 sources:
   - "C. W. Chou, D. B. Hume, T. Rosenband and D. J. Wineland, 'Optical Clocks and Relativity', Science 329, 1630-1633 (2010). doi:10.1126/science.1192720"
@@ -81,10 +81,14 @@ claims:
      evidence: {quality: 2, source: "assumed head-above-feet height for a standing adult (stated on screen)"}}
   - {id: lift_hud, card: "33 cm", unit: cm, sim: nist_cm, scope: history, event: lift_33cm,
      evidence: {quality: 1, source: "Chou et al. 2010"}}
-  - {id: gps_grav, beat: gps, unit: "µs", sim: gps_grav_us, scope: typical,
-     evidence: {quality: 1, source: "Ashby, Living Rev. Relativ. 6, 1 (2003): gravitational frequency shift of GPS clocks vs the geoid ≈ +45.7 µs/day (velocity -7.1, net +38.6)"}}
-  - {id: gps_drift, card: "13.7 km", unit: km, sim: gps_grav_km_per_day, scope: model, tolerance: 0.05,
-     evidence: {quality: 2, source: "Ashby 2003: the gravitational 45.8 µs/day x speed of light = 13.7 km of range per day if that part were left uncorrected (net with the velocity part: 38.6 µs/day, 11.6 km); real receiver errors depend on geometry"}}
+  - {id: gps_net, beat: gps, unit: "µs", sim: gps_net_us, scope: typical,
+     evidence: {quality: 1, source: "Ashby, Living Rev. Relativ. 6, 1 (2003): GPS clocks vs the geoid: gravity +45.7 µs/day, velocity -7.1, net +38.6 µs/day ('mostly from this effect')"}}
+  - {id: gps_grav_card, card: "gravity +46", unit: count, sim: gps_grav_us, scope: typical, tolerance: 0.05,
+     evidence: {quality: 1, source: "Ashby 2003: +45.7 µs/day gravitational"}}
+  - {id: gps_vel_card, card: "speed −7", unit: count, value: 7.2, scope: typical, tolerance: 0.1,
+     evidence: {quality: 1, source: "Ashby 2003: -7.1 µs/day from orbital speed; our circular-orbit value -7.2"}}
+  - {id: gps_drift, card: "11.6 km", unit: km, sim: gps_km_per_day, scope: model, tolerance: 0.05,
+     evidence: {quality: 2, source: "Ashby 2003: net 38.6 µs/day x speed of light = 11.6 km of pseudorange drift per day if uncorrected; real position errors depend on how the receiver solution absorbs a common clock offset"}}
 
 absolute_ok:
   - {beat: why, word: every, why: "the gravitational redshift is universal (equivalence principle): it applies to every clock, tested with many clock types"}
@@ -179,7 +183,7 @@ retention:
       claims: [{claim: lifetime_ns, at: lifetime.end+0.3}]
     - id: error                    # uncorrected GPS: the map error over one day
       type: counter
-      label: map error
+      label: distance error
       value: {frames: err_km}
       format: "{v:.1f} km"
       at: [0.63, 0.2]
@@ -193,4 +197,4 @@ retention:
       at: [0.27, 0.2]
       show: [drift+0.1, end]
   cues:
-    - {at: "lifetime.end+0.15", sfx: lock, gain: 0.16}     # after the last word of the payoff line (round 2 sound review)
+    - {at: "lifetime.end+0.08", sfx: lock, gain: 0.16}     # after the last word of the payoff line (round 2 sound review)

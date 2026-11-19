@@ -159,16 +159,23 @@ export function build(world, plan) {
     for (const [x, z] of [[-0.35, -0.25], [0.35, -0.25], [-0.35, 0.25], [0.35, 0.25]]) {
       const leg = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1, 0.05), MAT.wood('#7a5c3c')); leg.position.set(x, 0, z); tg.add(leg); legs.push(leg);
     }
+    // an optical atomic clock as a lab instrument (round 3 review: the white box read as a loudspeaker):
+    // a low grey base unit with a big digital time display on its front, a clear glass vacuum chamber on top
+    // with the single glowing ion inside, and a red laser beam crossing the chamber
     const box = new THREE.Group();
-    const shell = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.3, 0.34), MAT.ceramic('#e6e3dc')); shell.position.y = 0.15; box.add(shell);
-    const win = new THREE.Mesh(new THREE.CircleGeometry(0.07, 20), flat('#1d2230')); win.position.set(0, 0.16, 0.171); box.add(win);
-    const ion = new THREE.Mesh(new THREE.SphereGeometry(0.018, 12, 10), MAT.emissive('#8f7cff', 3)); ion.position.set(0, 0.16, 0.175); box.add(ion);
+    const shell = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.2, 0.36), MAT.brushedSteel()); shell.position.y = 0.1; box.add(shell);
+    const ch = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.2, 20, 1, true),
+      new THREE.MeshPhysicalMaterial({ color: '#dfe8ef', roughness: 0.05, transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false }));
+    ch.position.set(0, 0.31, 0); box.add(ch);
+    for (const y of [0.205, 0.415]) { const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.02, 20), MAT.darkSteel()); cap.position.set(0, y, 0); box.add(cap); }
+    const ion = new THREE.Mesh(new THREE.SphereGeometry(0.016, 12, 10), MAT.emissive('#8f7cff', 4)); ion.position.set(0, 0.31, 0); box.add(ion);
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.5, 6), MAT.emissive('#ff3b30', 3)); beam.rotation.z = Math.PI / 2; beam.position.set(0, 0.31, 0); box.add(beam);
     const ringM = new THREE.MeshBasicMaterial({ color: '#b9adff', transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
-    const ring = new THREE.Mesh(new THREE.RingGeometry(0.075, 0.085, 32), ringM); ring.position.set(0, 0.16, 0.176); box.add(ring);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.03, 0.036, 32), ringM); ring.position.set(0, 0.31, 0.0); box.add(ring);
     box.position.y = L.table_top; tg.add(box);
-    S.add(shadowed(tg)); ring.castShadow = false;
+    S.add(shadowed(tg)); ring.castShadow = false; ch.castShadow = false; beam.castShadow = false;
     const rd = readout(s < 0 ? 'LIFTED' : 'STAYS', 0.5, 0.19);
-    rd.position.set(0, 0.36, 0.0); box.add(rd);
+    rd.position.set(0, 0.1, 0.185); box.add(rd);           // the display is the front panel
     tables.push({ g: tg, top, legs, box, rd }); clocksA.push({ ion, ring, ringM });
   }
   const labSet = tables.map(t => t.g);
@@ -195,8 +202,13 @@ export function build(world, plan) {
   pinRing.rotation.x = -Math.PI / 2; pinRing.position.y = 0.06; pin.add(pinRing);
   shadowed(pin); pinRing.castShadow = false; S.add(pin);
   const sat = satellite(); sat.scale.setScalar(1.9); S.add(sat);
+  sat.traverse(o => { o.castShadow = false; });              // far outside the shadow box (round 3: cut shadow)
+  const satRd = readout('SATELLITE', 0.5, 0.19); satRd.scale.setScalar(13); S.add(satRd);
+  const carRd = readout('GROUND', 0.5, 0.19); carRd.scale.setScalar(4.5); S.add(carRd);
   const satClk = makeClock(0.75); satClk.position.set(0, 0, 1.75); sat.add(satClk);
   const roadSet = [hero, trueRing, pin, sat, ...others];
+  sat.traverse(o => { o.castShadow = false; });                      // incl. its clock
+  for (const c of others) c.traverse(o => { o.castShadow = false; });   // oncoming cars pass outside the shadow box
 
   // ---- sparse trees and a couple of props, clear of the sets and the road
   const clear = (x, z) => Math.hypot(x, z) < 6 || Math.hypot(x - tx, z - tz) < 5 || Math.hypot(x - lx, z - lz) < 4 || Math.abs(x - rx) < 8;
@@ -223,7 +235,10 @@ export function build(world, plan) {
       headRd.visible = feetRd.visible = set === 'fig' && !!ro;
       if (ro) { headRd.setText(ro[0]); feetRd.setText(ro[1]); }
       tables.forEach((tb, j) => tb.rd.setText(F.lab_readout[k][j]));
-      satClk.set(t * 3.0, (t - 1 / plan.fps) * 3.0, 0);
+      const sr = F.sat_readout[k];
+      satClk.set(F.sat_clk[k][0], F.sat_clk[Math.max(0, k - 1)][0], 0);
+      satRd.visible = carRd.visible = !!sr && set === 'road';
+      if (sr) { satRd.setText(sr[0]); carRd.setText(sr[1]); }
       headClk.set(F.head[k], F.head[p], F.warm[k]);
       feetClk.set(F.feet[k], F.feet[p], F.warm[k] * 0.8);
       towerClks.forEach((c, j) => c.set(F.tower[k][j], F.tower[p][j], 0));
@@ -244,6 +259,10 @@ export function build(world, plan) {
       trueRing.visible = pin.visible;
       sat.position.set(rx + L.sat[0] - L.road_x + F.sat_dx[k], L.sat[1], cz + L.sat[2]);
       sat.rotation.set(0.15, 0.3 + t * 0.02, 0.08);
+      satRd.position.set(sat.position.x, sat.position.y - 5.6, sat.position.z + 2);
+      if (t >= plan.timing.gps_close) {          // close on the satellite: the ground readout stacks under it
+        carRd.scale.setScalar(13); carRd.position.copy(satRd.position).add(new THREE.Vector3(0, -2.7, 0));
+      } else { carRd.scale.setScalar(4.5); carRd.position.set(rx - 1.8, 3.4, cz + 0.5); }
       sat.visible = set === 'road' && t < plan.timing.day[0] - 0.4;           // not in the map-pin shot (round 1: a cropped fragment)
       // the sun's shadow box follows the subject of each shot, sized to it
       if (shot !== lastShot) {
