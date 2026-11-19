@@ -77,7 +77,9 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
     timings["render_s"] = round(time.time() - t0, 1)
 
     t0 = time.time()
-    caption_engine.write_ass(tl, out / "captions.ass")
+    from . import retention
+    emph, mode = retention.caption_emphasis(sb)
+    caption_engine.write_ass(tl, out / "captions.ass", emphasis=emph, mode=mode)
     events = [(tl.start(b.id), b.sfx) for b in sb.beats if b.sfx] + list(events)
     if sb.renderer == "three":      # designed SFX + music + mastering (factory/sound_design.py)
         from . import sound_design
@@ -118,7 +120,8 @@ RENDERER_DIR = Path(__file__).resolve().parent.parent / "renderer"
 def _render_three(sb: Storyboard, tl, out: Path, previews: bool, force: bool):
     """3D diorama renderer (renderer/, three.js in headless Chromium). plan.py builds the per-frame plan."""
     import subprocess
-    mod = sb.load_module("plan.py")
+    from . import retention
+    mod = retention.load_plan_module(sb)       # plan.py, plus the storyboard's retention block (HUD, cues)
     plan = mod.build_plan(tl, fps=settings.fps)
     scene = sb.extra.get("scene") or plan["scene"]
     plan_json = json.dumps(plan, separators=(",", ":"))

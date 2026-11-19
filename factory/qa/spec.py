@@ -61,7 +61,8 @@ def load(sb, build_plan: bool = True) -> Context:
     else:
         ctx.notes.append("no timeline yet (narration not generated): plan-level checks skipped")
     if build_plan and ctx.tl is not None and (sb.path / "plan.py").exists():
-        ctx.module = sb.load_module("plan.py")
+        from .. import retention
+        ctx.module = retention.load_plan_module(sb)
         ctx.plan = ctx.module.build_plan(ctx.tl, fps=settings.fps)
     elif (out / "plan.json").exists() and ctx.tl is not None:
         ctx.plan = json.loads((out / "plan.json").read_text())
