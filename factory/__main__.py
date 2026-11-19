@@ -91,11 +91,15 @@ def main(argv=None) -> int:
         verdict, rep, _ = qa.run(sb, video, inspect=not getattr(args, "no_inspect", False))
         print(rep.with_suffix(".md").read_text())
         row = db.get(sb.slug) if hasattr(db, "get") else None
-        if args.cmd == "qa-gate" and verdict["state"] == "READY_FOR_RELEASE" and row and row["state"] == "QC_FAILED":
+        ok = verdict["state"] == "READY_FOR_RELEASE" or verdict["verdict"] == "deliver"
+        if args.cmd == "qa-gate" and ok and row and row["state"] == "QC_FAILED":
             from .production import sha256_file
             if row["video_sha256"] == sha256_file(video):
-                db.transition(sb.slug, "QUALITY_CHECKED", note=f"release gate passed, score {verdict['score']}")
-        return 0 if verdict["state"] == "READY_FOR_RELEASE" else 2
+                note = (f"release gate passed, score {verdict['score']}" if verdict["verdict"] == "approve" else
+                        f"review round cap reached (round {verdict['review_round']}), score {verdict['score']}, "
+                        f"{verdict['blockers']} blocker(s): for Caesar to decide")
+                db.transition(sb.slug, "QUALITY_CHECKED", note=note)
+        return 0 if ok else 2
     return 1
 
 

@@ -69,6 +69,14 @@ report at severity 2. Without both valid critiques for the exact file (`review: 
 `config/quality.yaml`), the gate blocks with `BLOCKED_REVIEW_UNAVAILABLE`. The generator never writes
 these files.
 
+**Round cap (Caesar, 2026-11-19).** A video gets at most `review: max_rounds` (2) review rounds. A round is
+one distinct reviewed video (both picture critiques and the sound critique present), counted in
+`out/<slug>/qa/rounds.json` and seeded from the PC's `qa_round*` backups the first time. When the cap is
+reached and the video is not approved, the verdict is `deliver`: it goes to Caesar with the report (score,
+blockers, both reviewers' notes) whatever it scored, and `qa-gate` moves it to `QUALITY_CHECKED` so it can
+reach Caesar's approval. Caesar decides; the 4.0 bar stays as the reported score. Nothing is published
+without Caesar's approval in Telegram.
+
 ## 4b. The sound team
 
 Added after Caesar heard the chain fountain go "ding ding ding" every half second: 203 cues of one

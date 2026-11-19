@@ -82,9 +82,26 @@ def post_render(sb, video: Path, ctx, layers: list[LayerResult] | None = None, r
     if crit is not None and snd is not None:     # sound is the Sound Reviewer's call: the picture reviewer's
         # audio score is provisional (it only sees levels), so the specialist's overall score replaces it
         merged = {**crit, "scores": {**crit["scores"], "audio": float(snd["scores"]["overall"])}}
-    verdict = gate.evaluate(layers, cfg, merged, video.exists())
+    rounds = _review_round(ctx, video) if crit is not None and snd is not None else None
+    verdict = gate.evaluate(layers, cfg, merged, video.exists(), rounds=rounds,
+                            max_rounds=int((cfg.get("review") or {}).get("max_rounds", 0)) or None)
     rep = gate.write_report(ctx, layers, verdict, merged, video)
     return verdict, rep, layers
+
+
+def _review_round(ctx, video: Path) -> int:
+    """Which review round this video is for its episode (Caesar, 2026-11-19: at most two review rounds per
+    video, then it goes to Caesar whatever it scored). Rounds are counted by distinct reviewed videos in
+    out/<slug>/qa/rounds.json; on first use the count is seeded from the qa_round* backups the PC keeps."""
+    import json
+    p = ctx.out / "qa" / "rounds.json"
+    d = json.loads(p.read_text()) if p.exists() else {"seeded": len(list(ctx.out.glob("qa_round*"))), "reviewed": []}
+    sha = critic.sha256(video)
+    if sha not in d["reviewed"]:
+        d["reviewed"].append(sha)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(d, indent=2))
+    return d["seeded"] + d["reviewed"].index(sha) + 1
 
 
 def run(sb, video: Path | None = None, inspect: bool = True):
