@@ -1,0 +1,70 @@
+# Pronunciation dictionary, used by every voice provider.
+#
+# terms:   exact word or phrase (case-sensitive, matched on word boundaries) -> how to say it.
+#          Use plain respelling that any TTS can read ("koh-ree-OH-liss"), not provider syntax.
+# units:   symbol after a number -> [singular, plural]
+# acronyms: spelled out letter by letter unless listed in `say_as_word`.
+#
+# To fix a mispronunciation: add the term here, then re-run produce; only lines containing it
+# are re-synthesised (voice steps are cached per line).
+
+terms:
+  Schrödinger: "SHROH-ding-er"
+  Schrodinger: "SHROH-ding-er"
+  Coriolis: "kor-ee-OH-liss"
+  Bernoulli: "ber-NOO-lee"
+  Euler: "OY-ler"
+  Doppler: "DOP-ler"
+  Kármán: "KAR-mahn"
+  Poiseuille: "pwah-ZOY"
+  Lagrange: "lah-GRAHNJ"
+  Fourier: "FOR-ee-ay"
+  Navier-Stokes: "nav-YAY stokes"
+  Mpemba: "em-PEM-bah"
+  Brachistochrone: "bruh-KISS-tuh-krone"
+  brachistochrone: "bruh-KISS-tuh-krone"
+  tautochrone: "TAW-tuh-krone"
+  Gaussian: "GOW-see-un"
+  Leidenfrost: "LYE-den-frost"
+  Feynman: "FINE-man"
+  Planck: "plahnk"
+  slinky: "slinky"
+  "e.g.": "for example"
+  "i.e.": "that is"
+  "vs.": "versus"
+  "≈": "about"
+  "~": "about"
+
+units:
+  "m/s²": ["metre per second squared", "metres per second squared"]
+  "m/s^2": ["metre per second squared", "metres per second squared"]
+  "m/s": ["metre per second", "metres per second"]
+  "km/h": ["kilometre per hour", "kilometres per hour"]
+  "mph": ["mile per hour", "miles per hour"]
+  "km": ["kilometre", "kilometres"]
+  "cm": ["centimetre", "centimetres"]
+  "mm": ["millimetre", "millimetres"]
+  "m": ["metre", "metres"]
+  "kg": ["kilogram", "kilograms"]
+  "g": ["gram", "grams"]
+  "s": ["second", "seconds"]
+  "ms": ["millisecond", "milliseconds"]
+  "N": ["newton", "newtons"]
+  "J": ["joule", "joules"]
+  "W": ["watt", "watts"]
+  "kW": ["kilowatt", "kilowatts"]
+  "Hz": ["hertz", "hertz"]
+  "°C": ["degree Celsius", "degrees Celsius"]
+  "°F": ["degree Fahrenheit", "degrees Fahrenheit"]
+  "K": ["kelvin", "kelvin"]
+  "%": ["percent", "percent"]
+  "x": ["times", "times"]
+  "×": ["times", "times"]
+
+acronyms:
+  say_as_word: [NASA, LASER, RADAR, SONAR, SCUBA, CERN]
+  expand:
+    LHC: "L H C"
+    GPS: "G P S"
+    DNA: "D N A"
+    ISS: "I S S"
