@@ -39,7 +39,8 @@ def category(fid: str) -> str:
     return "design_and_style"
 
 
-def evaluate(layers: list[LayerResult], cfg: dict, review: dict | None, video_exists: bool) -> dict:
+def evaluate(layers: list[LayerResult], cfg: dict, review: dict | None, video_exists: bool,
+             rounds: int | None = None, max_rounds: int | None = None) -> dict:
     rub = cfg["rubric"]
     findings = [f for L in layers for f in L.findings]
     blockers = [f for f in findings if f.is_blocker]
@@ -73,7 +74,14 @@ def evaluate(layers: list[LayerResult], cfg: dict, review: dict | None, video_ex
     else:
         state, return_to = "READY_FOR_RELEASE", None
     verdict = "approve" if state == "READY_FOR_RELEASE" else "block" if blockers else "not ready"
+    # round cap (Caesar, 2026-11-19): after the last allowed review round the video goes to Caesar with its
+    # score, blockers and the reviewers' notes, whatever it scored; Caesar decides. The 4.0 bar stays as the
+    # reported score. Nothing is published without Caesar's approval in Telegram either way.
+    cap = bool(review is not None and rounds and max_rounds and rounds >= max_rounds and verdict != "approve")
+    if cap:
+        verdict = "deliver"
     return {"state": state, "return_to": return_to, "verdict": verdict, "score": total, "scores": scores,
+            "review_round": rounds, "max_rounds": max_rounds, "round_cap_reached": cap,
             "automated_scores": {c: round(v, 2) for c, v in auto.items()}, "reviewer_scores": reviewer,
             "weak_primary": weak_primary, "blockers": len(blockers), "layers_not_run": not_run}
 
@@ -91,6 +99,10 @@ def write_report(ctx, layers: list[LayerResult], verdict: dict, review: dict | N
           + (f", returns to `{verdict['return_to']}`" if verdict["return_to"] else ""),
           f"Score {verdict['score']:.2f} / 5 (approve at {ctx_cfg(ctx)['rubric']['approve_at']}), "
           f"{verdict['blockers']} blocking finding(s).", ""]
+    if verdict.get("review_round"):
+        md += [f"Review round {verdict['review_round']} of {verdict.get('max_rounds') or '-'}."
+               + (" **Round cap reached: deliver to Caesar with this report (score, blockers, both reviewers' "
+                  "notes); Caesar decides.** No more automatic rework rounds." if verdict.get("round_cap_reached") else ""), ""]
     if verdict["state"] == "READY_FOR_RELEASE":
         md += ["Ready for Caesar's review in Telegram. Nothing is published without that approval.", ""]
     md += ["| category | automated | reviewer | final |", "|---|---|---|---|"]

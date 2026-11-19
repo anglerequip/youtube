@@ -68,6 +68,8 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
    on any blocker; read `out/<slug>/qa/report.md` and fix the cause, not the symptom. After the render,
    independent reviewers (fresh context, never the generator) write `out/<slug>/qa/review/critique.json` and `critique_2.json` (two picture reviewers, averaged) and `out/<slug>/qa/review_audio/critique_audio.json` (sound);
    then `python -m factory qa-gate <slug>`. Never write or edit a critique yourself.
+   At most two review rounds per video (Caesar): after round 2 the verdict is `deliver`, and the video goes to
+   Caesar with its score and the reviewers' notes, whatever it scored. Caesar decides; don't start round 3.
    Fix anything QC flags. Commit the episode folder only (never `out/`, `data/`, `.env`).
 
 ## Rules

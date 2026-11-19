@@ -129,3 +129,24 @@ def test_two_picture_reviewers_are_averaged_and_one_rejection_does_not_block(tmp
     assert _blocking(F) and any(f.id.startswith("review.rejected") for f in F)
     F, c = critic.read(ctx, vid, n=1)
     assert c["scores"][critic.CATEGORIES[0]] == 2
+
+
+def test_round_cap_delivers_to_caesar_after_two_review_rounds(tmp_path):
+    """Caesar, 2026-11-19: at most two review rounds per video; after that the video goes to Caesar with its
+    score and the reviewers' notes, whatever it scored (the 4.0 bar stays as the reported score)."""
+    from factory import qa
+    from factory.qa import critic, gate
+    from factory.qa.findings import LayerResult
+    review = {"scores": {k: 3.0 for k in critic.CATEGORIES}}
+    lay = [LayerResult("review", True, [], {})]
+    assert gate.evaluate(lay, CFG, review, True, rounds=1, max_rounds=2)["verdict"] == "not ready"
+    v = gate.evaluate(lay, CFG, review, True, rounds=2, max_rounds=2)
+    assert v["verdict"] == "deliver" and v["round_cap_reached"] and v["score"] < 4.0
+    assert gate.evaluate(lay, CFG, None, True, rounds=5, max_rounds=2)["verdict"] != "deliver"   # no review yet
+    # rounds are counted per distinct reviewed video, seeded from the PC's qa_round* backups
+    (tmp_path / "qa_round1").mkdir(); (tmp_path / "qa_round2").mkdir()
+    vid = tmp_path / "final.mp4"; vid.write_bytes(b"a")
+    ctx = NS(out=tmp_path)
+    assert qa._review_round(ctx, vid) == 3 and qa._review_round(ctx, vid) == 3
+    vid.write_bytes(b"b")
+    assert qa._review_round(ctx, vid) == 4

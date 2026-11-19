@@ -77,3 +77,5 @@ sound:                        # factory/qa/sound.py (the sound team; proxies, no
 review:                       # factory/qa/critic.py (Caesar, 2026-11-19: "two picture reviewers")
   picture_reviewers: 2        # critique.json + critique_2.json, each a fresh context; scores averaged,
                               # a rejection blocks only when both reject
+  max_rounds: 2               # Caesar, 2026-11-19: at most two review rounds per video, then it goes to
+                              # Caesar with its score and the reviewers' notes, whatever it scored
