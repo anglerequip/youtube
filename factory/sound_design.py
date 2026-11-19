@@ -15,7 +15,7 @@ simulation or timeline events, with parameters taken from the physics where poss
 The music bed is an original procedural composition (soft pad, plucked arpeggio, sub bass, light
 shaker) that ducks under the voice and drops out during "suspension" windows so the hover reads.
 Master: voice EQ and compression, music sidechain ducking, loudness normalised with ffmpeg
-(two-pass loudnorm) to about -15 LUFS integrated and -1.5 dBTP true peak.
+(two-pass loudnorm) to about -15 LUFS integrated and -1.5 dBTP true peak, limited to -3.1 dBFS sample peak because AAC encoding adds up to ~1.7 dB of inter-sample overshoot (QA blocks above -0.3 dBTP).
 """
 from __future__ import annotations
 
@@ -331,7 +331,7 @@ def master(src: Path, dst: Path, I: float = -15.0, TP: float = -1.5, LRA: float 
     js = json.loads(p1.stderr[p1.stderr.rindex("{"):p1.stderr.rindex("}") + 1])
     af = (f"loudnorm=I={I}:TP={TP}:LRA={LRA}:measured_I={js['input_i']}:measured_TP={js['input_tp']}:"
           f"measured_LRA={js['input_lra']}:measured_thresh={js['input_thresh']}:offset={js['target_offset']}:linear=true")
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src), "-af", af + ",alimiter=limit=0.83:level=false",
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src), "-af", af + ",alimiter=limit=0.70:level=false",
                     "-ar", str(SR), "-ac", "2", str(dst)], check=True)
     return measure(dst)
 

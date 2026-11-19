@@ -34,7 +34,7 @@ SCHEMA = {
     "top_problems": [{"problem": "", "t": 0.0, "severity": "0-4 (0 critical blocker ... 4 optional)",
                       "objective": True, "confidence": 0.0, "repair": ""}],
     "top_improvements": ["", "", ""],
-    "scores": {c: "0-5" for c in CATEGORIES},
+    "scores": {c: 0.0 for c in CATEGORIES},          # a number 0-5 per category
     "release": "approve | reject",
     "evidence": "what in the frames supports the verdict",
 }
@@ -175,7 +175,14 @@ def read(ctx, video: Path) -> tuple[list[Finding], dict | None]:
                         repair="review the current render")], None
     missing = [k for k in ("blind_impression", "main_strength", "biggest_visual_weakness", "highest_priority_repair",
                            "top_problems", "scores", "release", "evidence") if not c.get(k)]
-    bad_scores = [k for k in CATEGORIES if not isinstance((c.get("scores") or {}).get(k), (int, float))]
+    sc = c.get("scores") or {}
+    for k in CATEGORIES:                       # the reviewer may write "4" for 4: accept numeric strings
+        try:
+            sc[k] = float(sc[k])
+        except (KeyError, TypeError, ValueError):
+            pass
+    c["scores"] = sc
+    bad_scores = [k for k in CATEGORIES if not isinstance(sc.get(k), (int, float)) or not 0 <= sc[k] <= 5]
     if missing or bad_scores:
         return [Finding("review.incomplete", "review", 1, "BLOCKED_REVIEW_UNAVAILABLE",
                         f"critique incomplete: missing {missing + bad_scores}")], None

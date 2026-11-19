@@ -102,36 +102,61 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         frames["focal_pt"].append([LANE_X[0], 0.7, 0.0])
 
     ego = lambda i: (LANE_X[0], 0.0, 0.0)
+    # Cuts every 2.5-6 s (house style: a new angle for most beats, no shot over ~6 s)
     shots = cam.chain([
         # 1. chase cam behind the ego car, the other lane rolling past
-        cam.shot(0.0, S("dense") - 0.1, [(0.0, [-1.2, 3.0, 13.0], [-0.4, 0.8, -20], 40),
-                                         (S("dense"), [-0.8, 3.3, 14.5], [-0.4, 0.8, -22], 40)], fps, "key", ego),
-        # 2. crane up to a 3/4 aerial: the slow lane is packed, the fast lane spread out
-        cam.shot(S("dense") - 0.1, S("share") - 0.05, [(S("dense"), [5.0, 8.0, 16.0], [-1.8, 0.0, -30], 42),
-                                                       (S("share"), [8.0, 42.0, 40.0], [-1.8, 0.0, -90], 42)], fps, "key", ego),
-        # 3. high "map" view far down both lanes: the packed lane against the spread one
-        cam.shot(S("share") - 0.05, cut_eq, [(S("share"), [-1.8, 60.0, 62.0], [-1.8, 0.0, -50.0], 38),
-                                             (cut_eq, [-1.8, 70.0, 58.0], [-1.8, 0.0, -66.0], 38)], fps, "key", ego),
-        # 4. new experiment, golden light: highway centreline, symmetric, cars receding into haze
-        cam.shot(cut_eq, S("watch") - 0.1, [(cut_eq, [0.0, 5.5, 14.0], [0.0, 1.0, -60], 38),
-                                            (S("watch"), [0.0, 6.5, 18.0], [0.0, 1.0, -70], 38)], fps, "golden", ego),
-        # 5. 3/4 tracking on the ego car (ring): it zips past, then crawls while the other lane drifts by
-        cam.shot(S("watch") - 0.1, S("number") - 0.1, [(S("watch"), [-5.0, 9.0, 13.0], [-0.3, 0.6, -1.5], 44),
-                                                       (S("crawl"), [-6.0, 9.5, 11.0], [-0.3, 0.6, -2.0], 44),
-                                                       (S("number"), [-7.0, 10.0, 9.0], [-0.3, 0.6, -2.5], 44)], fps, "golden", ego),
-        # 6. big picture: both lanes from high up, waves of brake lights travelling backwards
+        cam.shot(0.0, S("setup") - 0.1, [(0.0, [-1.2, 3.0, 13.0], [-0.4, 0.8, -20], 40),
+                                         (S("setup"), [-1.0, 3.15, 13.8], [-0.4, 0.8, -21], 40)], fps, "key", ego),
+        # 2. low beside the road: both lanes stretch ahead, the ego car in front of us
+        cam.shot(S("setup") - 0.1, S("setup") + 3.0, [(S("setup"), [6.5, 1.7, 7.0], [-1.0, 0.8, -26], 40),
+                                                      (S("setup") + 3.0, [6.3, 1.85, 5.0], [-1.0, 0.8, -27], 40)], fps, "key", ego),
+        # 2b. over the slow lane's queue, looking back at the ego car and the cars behind it
+        cam.shot(S("setup") + 3.0, S("dense") - 0.1, [(S("setup") + 3.0, [-2.5, 7.0, -14.0], [0.0, 0.6, 6.0], 42),
+                                                      (S("dense"), [-2.8, 7.6, -12.0], [0.0, 0.6, 8.0], 42)], fps, "key", ego),
+        # 3. crane up to a 3/4 aerial: the slow lane is packed, the fast lane spread out
+        cam.shot(S("dense") - 0.1, S("gaps") - 0.1, [(S("dense"), [5.0, 8.0, 16.0], [-1.8, 0.0, -30], 42),
+                                                     (S("gaps"), [7.0, 26.0, 30.0], [-1.8, 0.0, -65], 42)], fps, "key", ego),
+        # 4. 3/4 aerial from the other side: the gaps in the fast lane
+        cam.shot(S("gaps") - 0.1, S("gaps") + 3.0, [(S("gaps"), [-16.0, 30.0, 28.0], [-1.8, 0.0, -70], 40),
+                                                    (S("gaps") + 3.0, [-14.5, 34.0, 31.0], [-1.8, 0.0, -79], 40)], fps, "key", ego),
+        # 4b. lower along the fast lane: long empty gaps between its cars
+        cam.shot(S("gaps") + 3.0, S("share") - 0.05, [(S("gaps") + 3.0, [-5.5, 6.0, 10.0], [-1.8, 0.5, -60], 40),
+                                                      (S("share"), [-5.0, 6.5, 12.0], [-1.8, 0.5, -66], 40)], fps, "key", ego),
+        # 5. high "map" view far down both lanes: the packed lane against the spread one
+        cam.shot(S("share") - 0.05, S("odds") - 0.1, [(S("share"), [-1.8, 60.0, 62.0], [-1.8, 0.0, -50.0], 38),
+                                                      (S("odds"), [-1.8, 66.0, 60.0], [-1.8, 0.0, -60.0], 38)], fps, "key", ego),
+        # 6. almost straight down, slowly turning: the queue as a map
+        cam.shot(S("odds") - 0.1, cut_eq, [(S("odds"), [2.0, 80.0, -22.0], [-1.8, 0.0, -48.0], 40),
+                                           (cut_eq, [-5.0, 84.0, -24.0], [-1.8, 0.0, -50.0], 40)], fps, "key", ego),
+        # 7. new experiment, golden light: highway centreline, symmetric, cars receding into haze
+        cam.shot(cut_eq, S("rehook") + 3.0, [(cut_eq, [0.0, 5.5, 14.0], [0.0, 1.0, -60], 38),
+                                             (S("rehook") + 3.0, [0.0, 6.0, 16.0], [0.0, 1.0, -66], 38)], fps, "golden", ego),
+        # 7b. high behind the ego car (ring): the car we follow
+        cam.shot(S("rehook") + 3.0, S("watch") - 0.1, [(S("rehook") + 3.0, [-3.0, 12.0, 18.0], [-0.3, 0.5, -6.0], 42),
+                                                       (S("watch"), [-3.5, 11.0, 15.0], [-0.3, 0.5, -6.0], 42)], fps, "golden", ego),
+        # 8. 3/4 tracking on the ego car (ring): it zips past the other lane
+        cam.shot(S("watch") - 0.1, S("crawl") - 0.1, [(S("watch"), [-5.0, 9.0, 13.0], [-0.3, 0.6, -1.5], 44),
+                                                      (S("crawl"), [-6.0, 9.5, 11.0], [-0.3, 0.6, -2.0], 44)], fps, "golden", ego),
+        # 9. low on the far side: now it crawls while the other lane drifts by
+        cam.shot(S("crawl") - 0.1, S("number") - 0.1, [(S("crawl"), [7.0, 3.2, 6.0], [-0.6, 0.6, -5.0], 42),
+                                                       (S("number"), [7.0, 3.6, 2.5], [-0.6, 0.6, -6.0], 42)], fps, "golden", ego),
+        # 10. big picture: both lanes from high up, waves of brake lights travelling backwards
         cam.shot(S("number") - 0.1, S("view") - 0.1, [(S("number"), [18.0, 55.0, 40.0], [0.0, 0.0, -60.0], 40),
                                                       (S("view"), [22.0, 70.0, 30.0], [0.0, 0.0, -80.0], 40)], fps, "golden", ego),
-        # 7. just above and behind the ego roof: cars that pass stay in view ahead
+        # 11. just above and behind the ego roof: cars that pass stay in view ahead
         cam.shot(S("view") - 0.1, S("outro") - 0.1, [(S("view"), [0.3, 3.6, 11.0], [-0.8, 0.0, -14], 46),
                                                      (S("outro"), [0.1, 3.3, 10.0], [-0.7, 0.0, -13], 46)], fps, "golden", ego),
-        # 8. rise and pull back over the road (calm ending)
-        cam.shot(S("outro") - 0.1, n / fps + 0.1, [(S("outro"), [3.0, 4.0, 14.0], [0.0, 0.5, -12.0], 40),
+        # 12. centreline again, low: the same road for everyone
+        cam.shot(S("outro") - 0.1, S("outro") + 2.6, [(S("outro"), [0.0, 4.5, 12.0], [0.0, 1.0, -60], 38),
+                                                      (S("outro") + 2.6, [0.0, 5.0, 14.0], [0.0, 1.0, -62], 38)], fps, "golden", ego),
+        # 13. rise and pull back over the road (calm ending)
+        cam.shot(S("outro") + 2.6, n / fps + 0.1, [(S("outro") + 2.6, [3.0, 6.0, 16.0], [0.0, 0.5, -12.0], 40),
                                                    (n / fps, [8.0, 22.0, 34.0], [0.0, 0.0, -5.0], 40)], fps, "golden", ego),
     ])
 
     # wide shots are about the whole system: their focal point is where the camera looks
-    for s_ in (shots[1], shots[2], shots[3], shots[5]):
+    for k_ in (3, 4, 5, 6, 7, 8, 12, 14):
+        s_ = shots[k_]
         for k, lk in enumerate(s_["look"]):
             i = s_["i0"] + k
             if i < n:

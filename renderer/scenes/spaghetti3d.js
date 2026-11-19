@@ -43,7 +43,7 @@ function pastaTube() {
   return m;
 }
 
-const PASTA = new THREE.Color('#e9c46f'), PASTA_DARK = new THREE.Color('#d9ab4f'), STRIPE = new THREE.Color('#b8322c');
+const PASTA = new THREE.Color('#e9c46f'), PASTA_DARK = new THREE.Color('#d9ab4f'), STRIPE = new THREE.Color('#2b3038')   // dark, so it is not confused with the red stress glow;
 const cTmp = new THREE.Color();
 
 // fill a tube from centreline arrays (sim coordinates, metres); stripe phase per node; glow per node
@@ -61,7 +61,7 @@ function setTube(m, xs, ys, zs, phase, glow, hl) {
       P[v] = xs[i] + ox * RAD; P[v + 1] = ys[i] + oy * RAD + BENCH_Y; P[v + 2] = zs + oz * RAD;
       N[v] = ox; N[v + 1] = oy; N[v + 2] = oz;
       const d = Math.cos(a - phase[i]);   // stripe: a narrow band around the surface angle `phase`
-      const st = d > 0.93 ? 1 : 0;
+      const st = d > 0.86 ? 1 : 0;
       cTmp.copy(PASTA).lerp(PASTA_DARK, 0.35 * (1 - (ca * 0.5 + 0.5)));
       if (st) cTmp.copy(STRIPE);
       C[v] = cTmp.r; C[v + 1] = cTmp.g; C[v + 2] = cTmp.b;

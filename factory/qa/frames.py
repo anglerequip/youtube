@@ -127,16 +127,28 @@ def check_flicker(path: Path, cfg: dict, cuts: list[float], events: list[float],
     if region:                                                    # restrict to the picture area (not captions)
         y0, y1 = int(region[0] * M.shape[1]), int(region[1] * M.shape[1])
         spike[:, :y0] = False; spike[:, y1:] = False
-    # a defect is repeated spiking in the same place: >= 3 spikes within 2 s in one tile
+    # a defect is repeated spiking in the same place: >= 3 separate spike episodes within 2 s in one tile.
+    # Spikes within 2 frames of each other form one episode: an object edge crossing a tile (a car passing
+    # close to the camera) gives one short burst, while shimmer and blinking keep coming back. A long
+    # unbroken run (>= 5 spikes, e.g. every-other-frame blinking) counts on its own.
     hits = []
     win = int(2 * fps)
     for r in range(spike.shape[1]):
         for cc in range(spike.shape[2]):
             idx = np.nonzero(spike[:, r, cc])[0]
-            for j in range(len(idx) - 2):
-                if idx[j + 2] - idx[j] <= win:
-                    hits.append(((idx[j] + 1) / fps, r, cc))
+            if not len(idx):
+                continue
+            eps = [[idx[0]]]
+            for i in idx[1:]:
+                (eps[-1].append(i) if i - eps[-1][-1] <= 2 else eps.append([i]))
+            starts = [e[0] for e in eps]
+            hit = next((e[0] for e in eps if len(e) >= 5), None)
+            for j in range(len(starts) - 2):
+                if starts[j + 2] - starts[j] <= win:
+                    hit = starts[j] if hit is None else min(hit, starts[j])
                     break
+            if hit is not None:
+                hits.append(((hit + 1) / fps, r, cc))
     F = []
     if hits:
         hits.sort()

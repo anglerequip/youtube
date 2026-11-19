@@ -230,36 +230,46 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         if name == "E":
             badge = "AUDOLY & NEUKIRCH, 2005" if t < S("history") + 2.6 else "IG NOBEL PRIZE, 2006"
         if name == "F" and tw_start <= t < tw_end:
-            badge = "TWIST: ONE FULL TURN"
+            badge = "TWIST: ≈ 1 TURN"          # narration: "almost a full turn"
         frames["badge"].append(badge)
 
     # ---------------------------------------------------------------- shots (world coordinates)
     K = lambda *a: list(a)
+    TW_POS, TW_POS2, TW_LOOK = K(0.27, 0.865, 0.085), K(0.25, 0.87, 0.10), K(-0.06, 0.82, 0.0)   # behind the turning clamp
     shots = cam.chain([
         cam.shot(0.0, cut_wrong - 5.4, [(0.0, K(0.42, 0.93, 0.56), K(0.0, 0.83, 0.0), 34),
                                         (cut_wrong - 5.4, K(0.38, 0.93, 0.52), K(0.0, 0.83, 0.0), 34)], fps, "key"),
         cam.shot(cut_wrong - 5.4, cut_wrong, [(cut_wrong - 5.4, K(0.34, 1.22, 0.44), K(0.0, 0.76, 0.0), 32),
                                               (cut_wrong, K(0.16, 1.27, 0.50), K(0.0, 0.76, 0.0), 32)], fps, "key"),
-        cam.shot(cut_wrong, cut_slow, [(cut_wrong, K(0.07, 0.875, 0.21), K(-0.005, 0.875, 0.0), 32),
+        # rewind: start wide enough to see the pieces on the bench fly back together, then push in
+        cam.shot(cut_wrong, cut_slow, [(cut_wrong, K(0.06, 0.95, 0.42), K(0.0, 0.80, 0.0), 34),
+                                       (cut_wrong + 1.6, K(0.07, 0.88, 0.24), K(-0.005, 0.87, 0.0), 32),
                                        (cut_slow, K(0.035, 0.88, 0.19), K(-0.005, 0.878, 0.0), 32)], fps, "key"),
         cam.shot(cut_slow, crack_v + 5.2, [(cut_slow, K(0.0, 0.88, 0.27), K(-0.01, 0.86, 0.0), 34),
                                            (crack_v + 5.2, K(-0.03, 0.88, 0.25), K(-0.03, 0.86, 0.0), 34)], fps, "key"),
-        cam.shot(crack_v + 5.2, cut_rehook, [(crack_v + 5.2, K(-0.03, 0.9, 0.36), K(-0.05, 0.85, 0.0), 34),
-                                             (cut_rehook, K(-0.06, 0.9, 0.33), K(-0.05, 0.85, 0.0), 34)], fps, "key"),
+        cam.shot(crack_v + 5.2, S("burst") - 0.1, [(crack_v + 5.2, K(-0.03, 0.9, 0.36), K(-0.05, 0.85, 0.0), 34),
+                                                   (S("burst"), K(-0.045, 0.9, 0.345), K(-0.05, 0.85, 0.0), 34)], fps, "key"),
+        cam.shot(S("burst") - 0.1, cut_rehook, [(S("burst"), K(0.12, 1.0, 0.4), K(-0.02, 0.84, 0.0), 34),
+                                                (cut_rehook, K(0.09, 1.0, 0.38), K(-0.02, 0.84, 0.0), 34)], fps, "key"),
         cam.shot(cut_rehook, cut_hist, [(cut_rehook, K(0.2, 1.18, 0.42), K(0.0, 0.77, 0.0), 34),
                                         (cut_hist, K(0.26, 1.2, 0.36), K(0.0, 0.77, 0.0), 34)], fps, "key"),
         cam.shot(cut_hist, cut_reveal, [(cut_hist, K(0.55, 1.08, 0.78), K(0.0, 0.79, -0.02), 30),
                                         (cut_reveal, K(-0.28, 1.08, 0.86), K(0.0, 0.79, -0.02), 30)], fps, "golden"),
-        cam.shot(cut_reveal, tw_end, [(cut_reveal, K(0.25, 0.855, 0.2), K(0.075, 0.825, 0.0), 34),
-                                      (tw_end, K(0.2, 0.862, 0.22), K(0.075, 0.825, 0.0), 34)], fps, "key"),
+        cam.shot(cut_reveal, tw_start - 0.2, [(cut_reveal, K(0.25, 0.855, 0.2), K(0.075, 0.825, 0.0), 34),
+                                              (tw_start, K(0.22, 0.86, 0.21), K(0.075, 0.825, 0.0), 34)], fps, "key"),
+        # both clamps in frame while one of them turns the stick (reviewer: the twist must be seen)
+        cam.shot(tw_start - 0.2, tw_end, [(tw_start - 0.2, TW_POS, TW_LOOK, 38),
+                                          (tw_end, TW_POS2, TW_LOOK, 38)], fps, "key"),
         cam.shot(tw_end, cut_why, [(tw_end, K(0.0, 0.88, 0.42), K(0.0, 0.83, 0.0), 34),
                                    (cut_why, K(0.0, 0.885, 0.38), K(0.0, 0.83, 0.0), 34)], fps, "key"),
         cam.shot(cut_why, S("catch") - 0.1, [(cut_why, K(0.045, 0.868, 0.19), K(0.0, 0.856, 0.0), 34),
                                              (S("catch") - 0.1, K(0.0, 0.87, 0.165), K(0.0, 0.856, 0.0), 34)], fps, "key"),
         cam.shot(S("catch") - 0.1, cut_outro, [(S("catch") - 0.1, K(0.3, 1.04, 0.5), K(0.0, 0.8, 0.0), 32),
                                                (cut_outro, K(0.25, 1.07, 0.45), K(0.0, 0.8, 0.0), 32)], fps, "key"),
-        cam.shot(cut_outro, n / fps + 0.05, [(cut_outro, K(0.5, 1.02, 0.66), K(0.0, 0.81, 0.0), 34),
-                                            (n / fps, K(0.42, 0.93, 0.56), K(0.0, 0.83, 0.0), 34)], fps, "key"),
+        cam.shot(cut_outro, cut_outro + 3.2, [(cut_outro, K(0.5, 1.02, 0.66), K(0.0, 0.81, 0.0), 34),
+                                              (cut_outro + 3.2, K(0.47, 0.99, 0.62), K(0.0, 0.815, 0.0), 34)], fps, "key"),
+        cam.shot(cut_outro + 3.2, n / fps + 0.05, [(cut_outro + 3.2, K(-0.3, 0.98, 0.6), K(0.0, 0.82, 0.0), 34),
+                                                  (n / fps, K(0.42, 0.93, 0.56), K(0.0, 0.83, 0.0), 34)], fps, "key"),
     ])
     frames["focal_pt"] = [None] * n
     for s_ in shots:
