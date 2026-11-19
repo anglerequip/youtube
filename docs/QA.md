@@ -76,7 +76,7 @@ crack-crack burst at a snap is meaning, not clutter). Thresholds: `config/qualit
 `sound.build_packet` writes `out/<slug>/qa/review_audio/` (cue_sheet.md, timeline.png, stats.json,
 intent.md, INSTRUCTIONS.md, schema.json, packet.json). A separate reviewer writes `critique_audio.json`
 bound to the video's sha256; without it the gate blocks (`review.audio_unavailable`). The audio score is
-the stricter of the Critical Designer's and the Sound Reviewer's. Episode rule: vary every repeated cue
+the Sound Reviewer's (the Critical Designer's audio score is provisional: it only sees levels). Episode rule: vary every repeated cue
 (`seed`, `pitch`, `ring` on tinks), one cue per event the viewer should notice, nothing over the words.
 
 ## 5. Commands

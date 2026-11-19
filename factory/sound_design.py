@@ -325,6 +325,9 @@ def stems(voice_wav: Path, events: list, duration: float | None = None, music: d
         e = e / (np.percentile(e, 99) or 1)
         duck = 1 - 0.65 * np.clip(e, 0, 1)
         bed = b * (mcfg.get("gain", 0.16) * duck)[:, None]
+        nf = int(1.2 * SR)                       # fade the music out over the last 1.2 s (clean loop)
+        if n > nf:
+            bed[-nf:] *= np.linspace(1.0, 0.0, nf)[:, None]
     return {"voice": v, "fx": fx, "bed": bed, "sr": SR, "duration": duration}
 
 

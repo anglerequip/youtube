@@ -37,7 +37,7 @@ beats:
   - id: crawl
     text: "When it jams, they crawl, and the other lane drifts past for a long, long time."
   - id: number
-    text: "Averaged over every driver, they spend forty-eight percent of the time being overtaken, and only forty-two percent overtaking."
+    text: "Averaged over every driver, they spend forty-eight percent of the time being overtaken, and only forty-two percent overtaking. The rest, about ten percent, you're roughly level."
     pause_after: 0.3
   - id: view
     text: "And the cars that pass you stay in view ahead. The ones you pass vanish behind you."
@@ -64,6 +64,8 @@ claims:
      evidence: {quality: 1, source: "our IDM simulation"}}
   - {id: overtaking, beat: number, unit: "%", sim: overtaking_pct, scope: model, match: "overtaking.",
      evidence: {quality: 1, source: "our IDM simulation"}}
+  - {id: level, beat: number, unit: "%", sim: level_pct, scope: model, match: "level",
+     evidence: {quality: 1, source: "our IDM simulation: nearest other-lane car within 0.5 m/s of the driver"}}
 
 absolute_ok:
   - {beat: rehook, word: exactly, why: "a condition set in the simulation: both lanes are given the same average speed"}

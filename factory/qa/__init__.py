@@ -79,9 +79,9 @@ def post_render(sb, video: Path, ctx, layers: list[LayerResult] | None = None, r
                                   note="independent Sound Reviewer" if snd else
                                   "NOT performed yet: packet ready in out/<slug>/qa/review_audio/"))
     merged = crit
-    if crit is not None and snd is not None:     # the audio score is the stricter of the two reviewers
-        merged = {**crit, "scores": {**crit["scores"], "audio": min(float(crit["scores"].get("audio", 5)),
-                                                                     float(snd["scores"]["overall"]))}}
+    if crit is not None and snd is not None:     # sound is the Sound Reviewer's call: the picture reviewer's
+        # audio score is provisional (it only sees levels), so the specialist's overall score replaces it
+        merged = {**crit, "scores": {**crit["scores"], "audio": float(snd["scores"]["overall"])}}
     verdict = gate.evaluate(layers, cfg, merged, video.exists())
     rep = gate.write_report(ctx, layers, verdict, merged, video)
     return verdict, rep, layers

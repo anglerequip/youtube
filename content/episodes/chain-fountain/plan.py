@@ -37,7 +37,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     for i, t in enumerate(T):
         h2 = h2_at(t); st = cf.steady(h2)
         macro = cut_macro0 <= t < cut_macro1
-        slow = 1000.0 if macro else 4.0
+        slow = 3000.0 if macro else 4.0       # macro: one link-lift every ~3 s, so each step can be followed
         if S("wrong") - 0.1 <= t < morph_t0:
             m = 0.0
         elif morph_t0 <= t < morph_t0 + 1.1:
@@ -53,7 +53,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         frames["sway"].append(0.0015 if not macro else 0.0)
         frames["lever"].append({"glow": 1.0 if t >= S("push") - 0.1 else 0.0} if macro else None)
         if macro:
-            b = "SLOWED 1,000× · SIMPLIFIED"
+            b = "SLOWED 3,000× · SIMPLIFIED"
         elif S("wrong") - 0.1 <= t < morph_t0:
             b = "IF IT WERE A ROPE"
         elif S("rope") - 0.1 <= t < S("kick") - 0.1:
@@ -71,22 +71,30 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                                                       (S("wrong") - 0.1, K(0.7, 0.4, 1.5), K(0.08, 0.15, 0.0), 34)], fps, "key"),
         cam.shot(S("wrong") - 0.1, S("payoff") + 2.0, [(S("wrong") - 0.1, K(0.02, 0.11, 0.36), K(0.03, 0.07, 0.0), 30),
                                                        (S("payoff") + 2.0, K(0.0, 0.12, 0.33), K(0.03, 0.07, 0.0), 30)], fps, "key", pile),
-        cam.shot(S("payoff") + 2.0, S("double") - 0.1, [(S("payoff") + 2.0, K(1.1, 0.95, 1.9), K(0.05, 0.72, 0.0), 36),
-                                                        (S("double") - 0.1, K(1.2, 1.0, 2.0), K(0.05, 0.76, 0.0), 36)], fps, "key"),
+        cam.shot(S("payoff") + 2.0, S("double") - 0.1, [(S("payoff") + 2.0, K(0.75, 0.95, 1.35), K(0.05, 0.72, 0.0), 38),
+                                                        (S("double") - 0.1, K(0.8, 1.0, 1.4), K(0.05, 0.76, 0.0), 38)], fps, "key"),
         cam.shot(S("double") - 0.1, S("rehook") - 0.1, [(S("double") - 0.1, K(0.42, 0.06, 0.8), K(0.04, 0.03, 0.0), 32),
                                                         (S("speed"), K(0.5, 0.12, 0.95), K(0.04, 0.09, 0.0), 32),
                                                         (S("rehook") - 0.1, K(0.45, 0.14, 0.85), K(0.04, 0.1, 0.0), 32)], fps, "key", pile),
         cam.shot(S("rehook") - 0.1, cut_macro0, [(S("rehook") - 0.1, K(0.2, 0.2, 0.32), K(0.03, 0.12, 0.0), 32),
                                                  (cut_macro0, K(0.07, 0.05, 0.12), K(0.01, 0.0, 0.0), 32)], fps, "key", pile),
-        cam.shot(cut_macro0, cut_macro1, [(cut_macro0, K(0.017, 0.02, 0.036), K(0.009, 0.003, 0.0), 40),
-                                          (cut_macro1, K(0.014, 0.018, 0.034), K(0.009, 0.003, 0.0), 40)], fps, "key", pile),
+        cam.shot(cut_macro0, S("push") - 0.1, [(cut_macro0, K(0.017, 0.02, 0.036), K(0.009, 0.003, 0.0), 40),
+                                               (S("push"), K(0.015, 0.019, 0.035), K(0.009, 0.003, 0.0), 40)], fps, "key", pile),
+        cam.shot(S("push") - 0.1, cut_macro1, [(S("push"), K(0.004, 0.012, 0.04), K(0.010, 0.002, 0.0), 40),
+                                               (cut_macro1, K(0.002, 0.013, 0.038), K(0.010, 0.002, 0.0), 40)], fps, "key", pile),
         cam.shot(cut_macro1, S("kick") - 0.1, [(cut_macro1, K(0.05, 0.1, 0.38), K(0.03, 0.06, 0.0), 32),
                                                (S("kick") - 0.1, K(0.03, 0.11, 0.35), K(0.03, 0.06, 0.0), 32)], fps, "key", pile),
-        cam.shot(S("kick") - 0.1, S("catch") - 0.1, [(S("kick") - 0.1, K(0.12, 0.03, 0.22), K(0.01, 0.03, 0.0), 32),
-                                                     (S("catch") - 0.1, K(0.45, 0.2, 0.75), K(0.04, 0.12, 0.0), 32)], fps, "golden", pile),
-        cam.shot(S("catch") - 0.1, S("outro") - 0.1, [(S("catch") - 0.1, K(-0.5, 0.1, 0.8), K(0.04, 0.07, 0.0), 32),
-                                                      (S("outro") - 0.1, K(-0.2, 0.13, 0.9), K(0.04, 0.08, 0.0), 32)], fps, "golden", pile),
-        cam.shot(S("outro") - 0.1, n / fps + 0.05, [(S("outro") - 0.1, K(0.6, 0.25, 0.9), K(0.03, 0.065, 0.0), 30),
+        cam.shot(S("kick") - 0.1, S("kick") + 4.3, [(S("kick") - 0.1, K(0.12, 0.03, 0.22), K(0.01, 0.03, 0.0), 32),
+                                                    (S("kick") + 4.3, K(0.3, 0.12, 0.5), K(0.03, 0.08, 0.0), 32)], fps, "golden", pile),
+        cam.shot(S("kick") + 4.3, S("catch") - 0.1, [(S("kick") + 4.3, K(0.0, 0.5, 0.7), K(0.03, 0.2, 0.0), 34),
+                                                     (S("catch") - 0.1, K(-0.05, 0.55, 0.75), K(0.03, 0.22, 0.0), 34)], fps, "golden", pile),
+        cam.shot(S("catch") - 0.1, S("catch") + 3.4, [(S("catch") - 0.1, K(-0.5, 0.1, 0.8), K(0.04, 0.07, 0.0), 32),
+                                                      (S("catch") + 3.4, K(-0.35, 0.12, 0.85), K(0.04, 0.08, 0.0), 32)], fps, "golden", pile),
+        cam.shot(S("catch") + 3.4, S("outro") - 0.1, [(S("catch") + 3.4, K(0.08, 0.16, 0.34), K(0.03, 0.09, 0.0), 30),
+                                                      (S("outro") - 0.1, K(0.06, 0.17, 0.32), K(0.03, 0.09, 0.0), 30)], fps, "golden", pile),
+        cam.shot(S("outro") - 0.1, S("outro") + 3.0, [(S("outro") - 0.1, K(0.6, 0.25, 0.9), K(0.03, 0.065, 0.0), 30),
+                                                      (S("outro") + 3.0, K(0.5, 0.2, 0.75), K(0.03, 0.065, 0.0), 30)], fps, "key", pile),
+        cam.shot(S("outro") + 3.0, n / fps + 0.05, [(S("outro") + 3.0, K(-0.3, 0.15, 0.55), K(0.03, 0.065, 0.0), 30),
                                                     (n / fps, K(0.33, 0.12, 0.5), K(0.03, 0.065, 0.0), 30)], fps, "key", pile),
     ])
     frames["focal_pt"] = [None] * n
@@ -127,7 +135,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                                                  "stack": float(rng.random()), "pan": float(rng.uniform(-0.3, 0.3))}))
         t += 0.22 + 0.25 * rng.random()
     # in the macro (slowed 1000x): a soft, varied tick each time a link is lifted off the pile
-    cyc = 0.0046 / (cf.steady(2.0)["v"] / 1000.0)
+    cyc = 0.0046 / (cf.steady(2.0)["v"] / 3000.0)
     t, j = cut_macro0 + 0.4, 0
     while t < cut_macro1 and j < 4:          # the first few links only: the idea is clear, then let it breathe
         events.append((round(t, 3), "tick", {"gain": 0.18, "seed": 60 + j, "pitch": 0.9 + 0.08 * (j % 3), "ring": 0.25}))
@@ -136,7 +144,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
               "mutes": [[S("wrong") - 0.1, morph_t0 - 0.05]], "swells": [morph_t0]}
     facts = {"drop_1m": 1.0, "drop_2m": 2.0, "arch_1m_cm": a1["h1"] * 100, "arch_2m_cm": a2["h1"] * 100,
              "arch_ratio_2m_1m": a2["h1"] / a1["h1"], "speed_2m": a2["v"], "alpha": cf.ALPHA,
-             "slow_factors": [4, 1000],
+             "slow_factors": [4, 3000],
              "events": {
                  "arch_1m": {"t": show1, "observe": "arch_cm", "expect": a1["h1"] * 100, "tol": 0.03},
                  "arch_2m": {"t": show2, "observe": "arch_cm", "expect": a2["h1"] * 100, "tol": 0.03}}}

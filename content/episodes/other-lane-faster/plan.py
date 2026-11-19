@@ -61,6 +61,19 @@ def _crossings(R, Lr, k0, k1):
     return passes, passed
 
 
+def _flow_past(R, Lr, k0, k1, back=15.0, ahead=90.0, dv=2.5):
+    """Per right-lane car: mean number of other-lane cars on screen beside/ahead of it (-back..ahead m) that
+    move at least `dv` m/s faster, frames k0..k1. Reviewer, round 3: during "the other lane drifts past" the
+    other lane looked almost empty; crossings alone (at most one in 4.5 s) did not reward a busy other lane."""
+    L = tr.LENGTH
+    acc, n = np.zeros(R.x.shape[1]), 0
+    for k in range(k0, k1, 6):
+        d = ((Lr.x[k][None, :] % L) - (R.x[k][:, None] % L) + L / 2) % L - L / 2
+        fast = Lr.v[k][None, :] > R.v[k][:, None] + dv
+        acc += ((d > -back) & (d < ahead) & fast).sum(axis=1); n += 1
+    return acc / max(n, 1)
+
+
 def _pick_ego_visible(R, Lr, w, c, v, offsets):
     """(ego, offset) whose story is visible on screen (reviewer, round 2): during `w` (watch) it overtakes
     several other-lane cars without braking, during `c` (crawl) and `v` (view) other-lane cars overtake it."""
@@ -88,7 +101,7 @@ def _jams(z, v, slow=5.0, pad=3.0, max_n=8):
     idx = np.argsort(z)
     segs = []
     for j in idx:
-        if v[j] < slow and -260 < z[j] < 60:
+        if v[j] < slow and -260 < z[j] < 150:
             a, b = z[j] - pad - 2.1, z[j] + pad + 2.1
             if segs and a <= segs[-1][1] + 6.0:
                 segs[-1][1] = max(segs[-1][1], b)
@@ -117,7 +130,10 @@ def _pick_story(R, Lr, w, c, v, offsets):
         km = o + (c[0] + c[1]) // 2                     # a visible queue ahead: cars within 45 m in its own lane
         dq = ((R.x[km][None, :] % tr.LENGTH) - (R.x[km][:, None] % tr.LENGTH)) % tr.LENGTH
         ahead = ((dq > 0) & (dq < 45)).sum(axis=1)
-        sc = 3.0 * np.minimum(qc, 4) - 3.0 * pc - 0.6 * R.v[o + c[0]: o + c[1]].mean(axis=0) + 0.6 * np.minimum(ahead, 6)
+        flow = _flow_past(R, Lr, o + c[0], o + c[1])
+        vc = R.v[o + c[0]: o + c[1]]
+        sc = 2.0 * np.minimum(qc, 3) - 3.0 * pc - 1.5 * vc.mean(axis=0) - 1.0 * vc.max(axis=0) \
+            + 0.6 * np.minimum(ahead, 6) + 3.0 * np.minimum(flow, 3)      # crawling means really slow (round 4)
         pv, qv = _crossings(R, Lr, o + v[0], o + v[1])
         sv = np.minimum(qv, 2) + np.minimum(pv, 2) + 0.5 * ((qv > 0) & (pv > 0))
         for s_, b_, o_ in ((sw, bw, ow), (sc, bc, oc), (sv, bv, ov)):
@@ -212,9 +228,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # 2. low beside the road: both lanes stretch ahead, the ego car in front of us
         cam.shot(S("setup") - 0.1, S("setup") + 3.0, [(S("setup"), [6.5, 1.7, 7.0], [-1.0, 0.8, -26], 40),
                                                       (S("setup") + 3.0, [6.3, 1.85, 5.0], [-1.0, 0.8, -27], 40)], fps, "key", ego),
-        # 2b. over the slow lane's queue, looking back at the ego car and the cars behind it
-        cam.shot(S("setup") + 3.0, S("dense") - 0.1, [(S("setup") + 3.0, [-2.5, 7.0, -14.0], [0.0, 0.6, 6.0], 42),
-                                                      (S("dense"), [-2.8, 7.6, -12.0], [0.0, 0.6, 8.0], 42)], fps, "key", ego),
+        # 2b. high behind the ego car, looking forward along its queue (round 4: the old look-back shot
+        # mirrored the lanes and made the car seem to change lanes)
+        cam.shot(S("setup") + 3.0, S("dense") - 0.1, [(S("setup") + 3.0, [3.2, 7.0, 13.0], [0.6, 0.6, -22.0], 42),
+                                                      (S("dense"), [3.0, 7.6, 12.0], [0.6, 0.6, -24.0], 42)], fps, "key", ego),
         # 3. crane up to a 3/4 aerial: the slow lane is packed, the fast lane spread out
         cam.shot(S("dense") - 0.1, S("gaps") - 0.1, [(S("dense"), [5.0, 8.0, 16.0], [-1.8, 0.0, -30], 42),
                                                      (S("gaps"), [7.0, 26.0, 30.0], [-1.8, 0.0, -65], 42)], fps, "key", ego),
@@ -224,12 +241,14 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # 4b. lower along the fast lane: long empty gaps between its cars
         cam.shot(S("gaps") + 3.0, S("share") - 0.05, [(S("gaps") + 3.0, [-5.5, 6.0, 10.0], [-1.8, 0.5, -60], 40),
                                                       (S("share"), [-5.0, 6.5, 12.0], [-1.8, 0.5, -66], 40)], fps, "key", ego),
-        # 5. high "map" view far down both lanes: the packed lane against the spread one
-        cam.shot(S("share") - 0.05, S("odds") - 0.1, [(S("share"), [-1.8, 60.0, 62.0], [-1.8, 0.0, -50.0], 38),
-                                                      (S("odds"), [-1.8, 66.0, 60.0], [-1.8, 0.0, -60.0], 38)], fps, "key", ego),
-        # 6. almost straight down, slowly turning: the queue as a map
-        cam.shot(S("odds") - 0.1, cut_eq, [(S("odds"), [2.0, 80.0, -22.0], [-1.8, 0.0, -48.0], 40),
-                                           (cut_eq, [-5.0, 84.0, -24.0], [-1.8, 0.0, -50.0], 40)], fps, "key", ego),
+        # 5. 3/4 aerial from behind the jam, looking forward along it (round 4: the old map view lost the
+        # jam while the 62% card was up). The followed car leaves the jam's front at ~26 s and the jam drifts
+        # backwards, so these shots frame the jam (z +30..+150 behind the car), not the car.
+        cam.shot(S("share") - 0.05, S("odds") - 0.1, [(S("share"), [9.0, 26.0, 118.0], [0.0, 0.0, 35.0], 42),
+                                                      (S("odds"), [10.0, 27.0, 126.0], [0.0, 0.0, 48.0], 42)], fps, "key", ego),
+        # 6. the same jam from the fast-lane side, a little lower
+        cam.shot(S("odds") - 0.1, cut_eq, [(S("odds"), [-12.0, 18.0, 140.0], [0.5, 0.0, 62.0], 42),
+                                           (cut_eq, [-13.0, 19.0, 146.0], [0.5, 0.0, 72.0], 42)], fps, "key", ego),
         # 7. new experiment, golden light: highway centreline, symmetric, cars receding into haze
         cam.shot(cut_eq, S("rehook") + 3.0, [(cut_eq, [0.0, 5.5, 14.0], [0.0, 1.0, -60], 38),
                                              (S("rehook") + 3.0, [0.0, 6.0, 16.0], [0.0, 1.0, -66], 38)], fps, "golden", ego),
@@ -237,16 +256,17 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         cam.shot(S("rehook") + 3.0, S("watch") - 0.1, [(S("rehook") + 3.0, [-3.0, 12.0, 18.0], [-0.3, 0.5, -6.0], 42),
                                                        (S("watch"), [-3.5, 11.0, 15.0], [-0.3, 0.5, -6.0], 42)], fps, "golden", ego),
         # 8. 3/4 tracking on the ego car (ring): it zips past the other lane
-        cam.shot(S("watch") - 0.1, S("crawl") - 0.1, [(S("watch"), [-2.4, 9.0, 13.0], [-1.6, 0.0, -14.0], 46),
-                                                      (S("crawl"), [-2.6, 9.5, 12.0], [-1.6, 0.0, -14.5], 46)], fps, "golden", ego),
-        # 9. low on the far side: now it crawls while the other lane drifts by
-        cam.shot(S("crawl") - 0.1, S("number") - 0.1, [(S("crawl"), [-1.2, 15.0, 15.0], [-1.8, 0.0, -9.0], 46),
-                                                       (S("number"), [-1.0, 16.0, 14.0], [-1.8, 0.0, -10.0], 46)], fps, "golden", ego),
-        # 10. big picture: both lanes from high up, waves of brake lights travelling backwards
-        cam.shot(S("number") - 0.1, S("number") + 3.6, [(S("number"), [18.0, 55.0, 40.0], [0.0, 0.0, -60.0], 40),
-                                                        (S("number") + 3.6, [20.0, 62.0, 35.0], [0.0, 0.0, -70.0], 40)], fps, "golden", ego),
-        cam.shot(S("number") + 3.6, S("view") - 0.1, [(S("number") + 3.6, [-20.0, 45.0, 30.0], [0.0, 0.0, -50.0], 40),
-                                                      (S("view"), [-24.0, 50.0, 26.0], [0.0, 0.0, -60.0], 40)], fps, "golden", ego),
+        cam.shot(S("watch") - 0.1, S("crawl") - 0.1, [(S("watch"), [-0.6, 7.0, 15.0], [-0.2, 0.4, -4.0], 46),
+                                                      (S("crawl"), [-0.8, 7.4, 14.0], [-0.2, 0.4, -4.5], 46)], fps, "golden", ego),
+        # 9. behind and above the ego, looking far down both lanes: it waits in its queue while the other
+        # lane keeps arriving from behind and drifting ahead (round 4)
+        cam.shot(S("crawl") - 0.1, S("number") - 0.1, [(S("crawl"), [-1.2, 6.0, 16.0], [-0.7, 0.4, -4.0], 46),
+                                                       (S("number"), [-1.4, 6.3, 15.0], [-0.7, 0.4, -4.5], 46)], fps, "golden", ego),
+        # 10. the numbers, still on the ringed driver (round 4: they used to sit over a generic aerial)
+        cam.shot(S("number") - 0.1, S("number") + 3.9, [(S("number"), [5.0, 9.0, 13.0], [0.0, 1.0, -0.3], 44),
+                                                        (S("number") + 3.9, [6.0, 9.5, 11.0], [0.0, 1.0, -0.3], 44)], fps, "golden", ego),
+        cam.shot(S("number") + 3.9, S("view") - 0.1, [(S("number") + 3.9, [-6.5, 9.5, 12.0], [0.0, 1.0, -0.3], 44),
+                                                      (S("view"), [-7.5, 10.0, 10.0], [0.0, 1.0, -0.3], 44)], fps, "golden", ego),
         # 11. just above and behind the ego roof: cars that pass stay in view ahead
         cam.shot(S("view") - 0.1, S("outro") - 0.1, [(S("view"), [-1.0, 6.5, 14.0], [-0.9, 0.0, -18], 46),
                                                      (S("outro"), [-1.2, 6.2, 13.0], [-0.9, 0.0, -17], 46)], fps, "golden", ego),
@@ -259,7 +279,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     ])
 
     # wide shots are about the whole system: their focal point is where the camera looks
-    for k_ in (3, 4, 5, 6, 7, 8, 12, 13, 15):
+    for k_ in (3, 4, 5, 6, 7, 8, 15):
         s_ = shots[k_]
         for k, lk in enumerate(s_["look"]):
             i = s_["i0"] + k
@@ -267,10 +287,19 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                 frames["focal_pt"][i] = [round(v, 2) for v in lk]
 
     sh = tr.share_in_slow_lane(); ov = tr.overtaken_fraction()
+
+    def at(bid, phrase):
+        """Approximate time a phrase is spoken: its character position within the beat's narration."""
+        txt = next(ln.text for ln in tl.lines if ln.id == bid).replace("*", "")
+        return S(bid) + (E(bid) - S(bid)) * max(txt.find(phrase), 0) / max(len(txt), 1)
+    # the rest of the time neither car is faster (within 0.5 m/s): shown as the remainder of the two rounded
+    # numbers so the three cards add up to 100 (reviewer, round 3: "the remaining 10% is unexplained")
+    level_pct = 100 - round(ov["passed_frac"] * 100) - round(ov["passing_frac"] * 100)
     cards = [
         {"start": S("share") + 2.6, "end": E("odds") + 0.3, "big": f"{sh['share'] * 100:.0f}%", "small": "of drivers are in the slow lane", "y": 0.17},
-        {"start": S("number") + 1.2, "end": S("number") + 4.4, "big": f"{ov['passed_frac'] * 100:.0f}%", "small": "of the time being overtaken", "y": 0.17},
-        {"start": S("number") + 4.6, "end": E("number") + 0.4, "big": f"{ov['passing_frac'] * 100:.0f}%", "small": "of the time overtaking", "y": 0.17},
+        {"start": at("number", "forty-eight") - 0.3, "end": at("number", "forty-two") - 0.45, "big": f"{ov['passed_frac'] * 100:.0f}%", "small": "of the time being overtaken", "y": 0.17},
+        {"start": at("number", "forty-two") - 0.3, "end": at("number", "The rest") - 0.45, "big": f"{ov['passing_frac'] * 100:.0f}%", "small": "of the time overtaking", "y": 0.17},
+        {"start": at("number", "The rest") - 0.3, "end": E("number") + 0.4, "big": f"≈ {level_pct:.0f}%", "small": "roughly level", "y": 0.17},
     ]
     badges = [""] * n
     for i, t in enumerate(T):
@@ -283,7 +312,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     def _fade(t, a, b, r=0.5):
         return max(0.0, min(1.0, (t - a) / r, (b - t) / r))
     frames["lane_tint"] = [round(_fade(t, S("dense"), cut_eq - 0.2), 3) for t in T]
-    frames["ring"] = [1 if S("watch") - 0.1 <= t < S("number") - 0.1 or (S("rehook") <= t < S("watch")) else 0 for t in T]
+    frames["ring"] = [1 if S("watch") - 0.1 <= t < S("view") - 0.1 or (S("rehook") <= t < S("watch")) else 0 for t in T]
 
     timing = {"cut_eq": cut_eq, "reveals": [S("share") + 2.6], "cuts": [s["start"] for s in shots[1:]],
               "ego_split": ego_s, "ego_equal": ego_e, "offset_equal": off_e, "offsets_equal": offs}
@@ -292,12 +321,13 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
             "n_left": max(split_l.x.shape[1], eq_l.x.shape[1]),
             "shots": shots, "cards": cards, "frames": frames, "timing": timing, "wordmark": None,
             "facts": {"slow_lane_share_pct": sh["share"] * 100, "overtaken_pct": ov["passed_frac"] * 100,
-                      "overtaking_pct": ov["passing_frac"] * 100}}
+                      "overtaking_pct": ov["passing_frac"] * 100,
+                      "level_pct": (1 - ov["passed_frac"] - ov["passing_frac"]) * 100}}
 
 
 def sfx_events(plan: dict) -> list:
     t = plan["timing"]
-    return [(c - 0.25, "swish", {"gain": 0.35}) for c in t["cuts"][2:4]]
+    return [(c - 0.08, "swish", {"gain": 0.35}) for c in t["cuts"][2:4]]     # lands on the cut (sound review, round 3)
 
 
 def music(plan: dict) -> dict:

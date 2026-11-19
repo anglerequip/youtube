@@ -222,9 +222,14 @@ export function build(world, plan) {
       const lv = F.lever ? F.lever[k] : null;
       lever.visible = !!lv;
       if (lv) {
-        const u = (F.dist[k] % BEAD) / BEAD, d = u * BEAD, th = Math.asin(Math.min(1, d / BEAD));
-        const xl = p.xr, yl = pileY + d;
-        const xr2 = xl + BEAD * Math.cos(th), yr2 = pileY;
+        // one cycle per link: lift by its end and tip (0-55%), hold tipped while the pile pushes back
+        // (55-85%, red push glow + a small upward kick of the pushed end), then hand over to the next link
+        const u = (F.dist[k] % BEAD) / BEAD;
+        const ease = x => x * x * (3 - 2 * x);
+        const th = 1.2 * ease(Math.min(1, u / 0.55));
+        const kick = u > 0.55 ? 0.35 * BR * Math.sin(Math.PI * Math.min(1, (u - 0.55) / 0.3)) : 0;
+        const xl = p.xr, yl = pileY + BEAD * Math.sin(th);
+        const xr2 = xl + BEAD * Math.cos(th), yr2 = pileY + kick;
         lb1.position.set(xl, yl, 0); lb2.position.set(xr2, yr2, 0);
         rod.position.set((xl + xr2) / 2, (yl + yr2) / 2, 0); rod.rotation.set(0, 0, Math.atan2(yl - yr2, xl - xr2) - Math.PI / 2);
         for (let j = 0; j < flat.length; j++) {
@@ -235,7 +240,7 @@ export function build(world, plan) {
           const L = A.distanceTo(B); flatRods[j].position.copy(A).add(B).multiplyScalar(0.5); flatRods[j].scale.set(1, L, 1);
           flatRods[j].quaternion.setFromUnitVectors(_up, B.clone().sub(A).normalize());
         }
-        const g = Math.sin(Math.PI * u) * lv.glow;
+        const g = (u > 0.45 ? Math.sin(Math.PI * Math.min(1, (u - 0.45) / 0.5)) : 0) * lv.glow;
         push.position.set(xr2, yr2 - BR * 0.6, 0.0005); push.material.opacity = 0.75 * g;
         pushDot.position.set(xr2, yr2 - BR * 0.9, 0); pushDot.visible = g > 0.05; pushDot.material.emissiveIntensity = 6 * g;
       }
