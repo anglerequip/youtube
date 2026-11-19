@@ -1,0 +1,55 @@
+slug: other-lane-faster
+title: "The Other Lane Really Is Faster (Mostly)"
+topic: "traffic / selection effects: why the next lane seems faster"
+component: custom   # physics: factory/simulation_engine/physics/traffic.py (IDM, two-lane ring road)
+renderer: three
+scene: traffic3d
+hook_family: 7          # mistaken assumption (attention plan)
+structure: C            # familiar problem -> hidden mechanism -> demonstration
+description: |
+  Stuck in traffic while the next lane rolls past? Part of that is real, and part of it is how
+  traffic bunches up. Simulated with the Intelligent Driver Model: two lanes, real car-following,
+  stop-and-go waves that form on their own.
+
+  #shorts #physics #traffic #science #maths
+tags: [traffic, physics, maths, selection effect, simulation, driving, shorts]
+voice: af_bella
+speed: 1.1
+beats:
+  - id: hook
+    text: "The other lane really is faster. You're not imagining it."
+    pause_after: 0.3
+  - id: setup
+    text: "You're crawling along, and the next lane just keeps sliding past. It feels like bad luck. Like the universe picked your lane."
+  - id: dense
+    text: "But look from above. Slow traffic is packed tight. Fast traffic is spread out."
+  - id: gaps
+    text: "Drivers leave smaller gaps when they're slow, so a jam squeezes more cars into the same stretch of road."
+  - id: share
+    text: "So at any moment, more drivers are sitting in the slow lane. In this simulation, sixty-two percent of them."
+  - id: odds
+    text: "If you feel stuck, the odds say you probably are."
+    pause_after: 0.4
+  - id: rehook
+    text: "Here's the strange part. Give both lanes exactly the same average speed, and the other one still wins."
+  - id: watch
+    text: "Watch this driver. When their lane flows, they zip past the neighbours in a few seconds."
+  - id: crawl
+    text: "When it jams, they crawl, and the other lane drifts past for a long, long time."
+  - id: number
+    text: "Averaged over every driver, they spend forty-eight percent of the time being overtaken, and only forty-two percent overtaking."
+    pause_after: 0.3
+  - id: view
+    text: "And the cars that pass you stay in view ahead. The ones you pass vanish behind you."
+  - id: outro
+    text: "So the other lane isn't magic. Traffic just makes every lane feel like the slow one."
+    sfx: ding
+
+caveats:
+  - "The simulation uses the Intelligent Driver Model on a two-lane loop with no lane changing; real roads have merges, exits and lane changes."
+  - "The 62 percent and the 48 versus 42 percent figures are from this simulation's settings (traffic density and driver parameters), not survey data."
+  - "Redelmeier and Tibshirani (1999) found drivers judge the next lane faster even when it is not; the size of the effect varies."
+sources:
+  - "D. A. Redelmeier and R. J. Tibshirani, 'Why cars in the next lane seem to go faster', Nature 401, 35 (1999)"
+  - "N. Bostrom, 'Cars in the next lane really do go faster', Plus Magazine (plus.maths.org)"
+  - "M. Treiber, A. Hennecke and D. Helbing, 'Congested traffic states in empirical observations and microscopic simulations', Physical Review E 62, 1805 (2000) (Intelligent Driver Model)"

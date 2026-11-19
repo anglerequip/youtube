@@ -8,7 +8,7 @@ export async function boot(sceneName, plan) {
   const gl = document.createElement('canvas'); gl.width = W; gl.height = H;
   const out = document.createElement('canvas'); out.width = W; out.height = H; document.body.appendChild(out);
   const ctx = out.getContext('2d');
-  const world = new World(gl, W, H, plan.seed ?? 7);
+  const world = new World(gl, W, H, plan.seed ?? 7, { supersample: plan.supersample ?? 1 });
   const mod = await import(`/renderer/scenes/${sceneName}.js`);
   const scene = mod.build(world, plan);
 
@@ -25,10 +25,12 @@ export async function boot(sceneName, plan) {
       const p = scene.focal(i).clone().project(world.camera);
       window.__meta[i] = { y: +(0.5 - p.y / 2).toFixed(4), x: +(0.5 + p.x / 2).toFixed(4), cut: shot.start };
     }
-    ctx.drawImage(gl, 0, 0);
+    ctx.imageSmoothingQuality = "high"; ctx.drawImage(gl, 0, 0, W, H);
     for (const card of plan.cards ?? []) {
       if (t < card.start || t >= card.end) continue;
       const a = Math.min(1, (t - card.start) / 0.15, (card.end - t) / 0.15);
+      const u = Math.min(1, (t - card.start) / 0.35), c1 = 1.7;   // spring-like scale-in (easeOutBack)
+      card.scale = 0.85 + 0.15 * (1 + (c1 + 1) * Math.pow(u - 1, 3) + c1 * Math.pow(u - 1, 2));
       const vars = scene.vars ? scene.vars(i, t) : {};
       const fill = s => (s ?? '').replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
       drawCard(ctx, W, H, { ...card, big: fill(card.big), small: fill(card.small) }, a);

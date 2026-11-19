@@ -5,6 +5,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 export const PALETTE = {
   grass: ['#5a5725', '#64662d', '#676b32', '#5d6329'], grassDark: '#3a4318', grassLight: '#848a4c',
@@ -19,6 +20,14 @@ export const LIGHTING = {
          sky: '#cfd1ce', skyTop: '#aeb9c4', fog: '#c9cbc8', fogNear: 60, fogFar: 260, exposure: 1.05 },
   sunset: { sun: '#ffb46e', sunI: 3.6, elev: 11, az: 250, hemiSky: '#e3b693', hemiGround: '#3a3318', hemiI: 0.8,
             sky: '#e8b98f', skyTop: '#8d8fa8', fog: '#d9a986', fogNear: 50, fogFar: 220, exposure: 1.0 },
+  // v2 presets (quality overhaul): key light from the camera side so forms read, a rim light from
+  // behind for silhouette separation, environment reflections for metals. Bright, consistent grade.
+  key: { sun: '#fff3e2', sunI: 2.3, elev: 34, az: 35, hemiSky: '#e6ebf0', hemiGround: '#8d8a6a', hemiI: 1.1,
+         rim: '#dfe9ff', rimI: 1.8, rimElev: 22, rimAz: 200, env: 0.35, bloomT: 3.5,
+         sky: '#d3d7d6', skyTop: '#a9b8c8', fog: '#cdd2d2', fogNear: 25, fogFar: 140, exposure: 1.0 },
+  golden: { sun: '#ffd2a1', sunI: 2.5, elev: 20, az: 55, hemiSky: '#f1dcc6', hemiGround: '#7d6a4a', hemiI: 1.0,
+            rim: '#ffe2c0', rimI: 2.0, rimElev: 16, rimAz: 215, env: 0.32, bloomT: 3.5,
+            sky: '#efd8bd', skyTop: '#9fb0c6', fog: '#e3cdb4', fogNear: 25, fogFar: 140, exposure: 1.0 },
   night: { sun: '#a9bcff', sunI: 0.7, elev: 40, az: 160, hemiSky: '#2a3552', hemiGround: '#141c14', hemiI: 0.9,
            sky: '#111826', skyTop: '#080b16', fog: '#111826', fogNear: 40, fogFar: 170, exposure: 1.25 },
 };
@@ -32,10 +41,11 @@ export function rng(seed = 1) {
 const flat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.92, metalness: 0, flatShading: true, ...extra });
 
 export class World {
-  constructor(canvas, W, H, seed = 7) {
+  constructor(canvas, W, H, seed = 7, opts = {}) {
     this.W = W; this.H = H; this.rand = rng(seed);
+    const ss = opts.supersample ?? 1;      // internal render scale (anti-aliasing for thin geometry)
     const r = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
-    r.setPixelRatio(1); r.setSize(W, H, false);
+    r.setPixelRatio(ss); r.setSize(W, H, false);
     r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap;
     r.toneMapping = THREE.NeutralToneMapping;  // keeps the muted pastels true; soft highlight roll-off r.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer = r;
@@ -48,12 +58,16 @@ export class World {
     const sc = this.sun.shadow.camera; sc.left = -9; sc.right = 9; sc.top = 9; sc.bottom = -9; sc.near = 1; sc.far = 80;
     this.sun.shadow.bias = -0.0004; this.sun.shadow.normalBias = 0.02; this.sun.shadow.radius = 2;
     this.scene.add(this.sun); this.scene.add(this.sun.target);
+    this.rim = new THREE.DirectionalLight('#ffffff', 0); this.scene.add(this.rim); this.scene.add(this.rim.target);
+    const pm = new THREE.PMREMGenerator(r);
+    this.envMap = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+    this.scene.environment = this.envMap; this.scene.environmentIntensity = 0.0;
 
     this.skyDome = this._sky(); this.scene.add(this.skyDome);
     this.scene.fog = new THREE.Fog('#c6c8c5', 18, 95);
 
-    const rt = new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType, samples: 4 });
-    this.composer = new EffectComposer(r, rt);
+    const rt = new THREE.WebGLRenderTarget(W * ss, H * ss, { type: THREE.HalfFloatType, samples: 4 });
+    this.composer = new EffectComposer(r, rt); this.composer.setPixelRatio(ss); this.composer.setSize(W, H);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     // High threshold: only emissive lights (brake lights, highlights) bloom.
     this.bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.75, 0.55, 0.92);
@@ -83,6 +97,14 @@ export class World {
     this.skyDome.material.uniforms.top.value.set(L.skyTop); this.skyDome.material.uniforms.bottom.value.set(L.sky);
     this.scene.fog.color.set(L.fog); this.scene.fog.near = L.fogNear; this.scene.fog.far = L.fogFar;
     this.renderer.toneMappingExposure = L.exposure;
+    this.scene.environmentIntensity = L.env ?? 0.0;
+    this.bloom.threshold = L.bloomT ?? 0.92;
+    if (L.rim) {
+      const re = THREE.MathUtils.degToRad(L.rimElev), ra = THREE.MathUtils.degToRad(L.rimAz);
+      this.rim.color.set(L.rim); this.rim.intensity = L.rimI;
+      this.rim.position.set(center.x + d * Math.cos(re) * Math.sin(ra), center.y + d * Math.sin(re), center.z + d * Math.cos(re) * Math.cos(ra));
+      this.rim.target.position.copy(center);
+    } else this.rim.intensity = 0;
   }
 
   // ---------- environment pieces ----------
@@ -198,7 +220,9 @@ export function drawCard(ctx, W, H, card, alpha = 1) {
   ctx.font = `700 ${smallPx}px Poppins`; const ws = ctx.measureText(small).width;
   const padX = H * 0.02, padY = H * 0.012, w = Math.max(wb, ws) + padX * 2;
   const h = bigPx * 1.15 + (small ? smallPx * 1.25 : 0) + padY * 2;
-  const x = W * (card.x ?? 0.5) - w / 2, y = H * (card.y ?? 0.2) - h / 2;
+  const cx = W * (card.x ?? 0.5), cy = H * (card.y ?? 0.2);
+  if (card.scale) { ctx.translate(cx, cy); ctx.scale(card.scale, card.scale); ctx.translate(-cx, -cy); }
+  const x = cx - w / 2, y = cy - h / 2;
   ctx.shadowColor = 'rgba(0,0,0,0.28)'; ctx.shadowBlur = H * 0.012; ctx.shadowOffsetY = H * 0.004;
   ctx.fillStyle = PALETTE.card; ctx.beginPath(); ctx.roundRect(x, y, w, h, H * 0.008); ctx.fill();
   ctx.shadowColor = 'transparent';
@@ -209,10 +233,15 @@ export function drawCard(ctx, W, H, card, alpha = 1) {
 }
 
 export function drawBadge(ctx, W, H, text) {
+  // small dark pill with a red dot: one consistent indicator for playback speed
   if (!text) return;
-  ctx.save(); ctx.font = `700 ${Math.round(H * 0.017)}px Poppins`; ctx.textAlign = 'center';
-  ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = H * 0.006;
-  ctx.fillText(text, W / 2, H * 0.095); ctx.restore();
+  ctx.save(); const px = Math.round(H * 0.0135); ctx.font = `700 ${px}px Poppins`;
+  const tw = ctx.measureText(text).width, padX = px * 0.9, dot = px * 0.36;
+  const w = tw + padX * 2 + dot * 2.6, h = px * 2.0, x = W / 2 - w / 2, y = H * 0.088 - h / 2;
+  ctx.fillStyle = 'rgba(20,22,26,0.55)'; ctx.beginPath(); ctx.roundRect(x, y, w, h, h / 2); ctx.fill();
+  ctx.fillStyle = PALETTE.red; ctx.beginPath(); ctx.arc(x + padX + dot, y + h / 2, dot, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.letterSpacing = '1px'; ctx.fillText(text, x + padX + dot * 2.6, y + h / 2 + 1); ctx.restore();
 }
 
 export function drawWordmark(ctx, W, H, text) {

@@ -14,7 +14,7 @@ from factory.simulation_engine.physics import slinky as phys
 
 SCENE = "slinky3d"
 TOP = 2.55          # world y of the top coil (m)
-GROUND = 0.10       # top of the concrete pad
+GROUND = 0.12       # top of the cast-stone platform
 BALL_X, BALL_R = 0.42, 0.045                  # reference ball dropped beside the slinky (centre of mass)
 BAR_X0, BAR_X1, BAR_Z, BAR_R = -1.2, 1.2, -0.62, 0.03   # steel bar lying on the pad
 STEEL_C = 5000.0    # m/s, bar wave speed sqrt(E/rho) for steel (E ~ 200 GPa, rho ~ 7850 kg/m^3)
@@ -144,13 +144,13 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         if t < setup0:
             tp = hook_drop.phys_time(t)
             return tp, min(1, max(0, (t - hook_drop.t0) / 0.15)), 1.0, False, \
-                f"slowed {hook_drop.slow:.0f}×" if t >= hook_drop.t0 else "", "day"
+                f"SLOW MOTION  {hook_drop.slow:.0f}×" if t >= hook_drop.t0 else "", "day"
         if t < drop1.t0:
             glow = 1.0 if t >= S("setup") + 2.6 else 0.0
             return 0.0, 0.0, glow, False, "", "day"
         if t < rew0:
             tp = drop1.phys_time(t)
-            badge = f"slowed {drop1.slowdown(t):.0f}×" if tp < t_land_phys else ""
+            badge = f"SLOW MOTION  {drop1.slow:.0f}×" if drop1.t0 <= t < drop1.t_meet_video else ""
             return tp, min(1, (t - drop1.t0) / 0.15), 1.0, False, badge, "day"
         if t < rew1:
             u = _ease((t - rew0) / (rew1 - rew0))
@@ -160,15 +160,15 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
             return 0.0, 0.0, 1.0, False, "", "day" if t < S("why2") else "sunset"
         if t < cut5:
             tp = drop2.phys_time(t)
-            badge = f"slowed {drop2.slowdown(t):.0f}×" if tp < t_land_phys else ""
+            badge = f"SLOW MOTION  {drop2.slow:.0f}×" if drop2.t0 <= t < drop2.t_meet_video else ""
             return tp, min(1, (t - drop2.t0) / 0.15), 1.0, tp < phys.t_meet(), badge, "sunset"
         if t < cut6:
             tp = drop3.phys_time(t)
-            badge = f"slowed {drop3.slowdown(t):.0f}×" if 0 < tp < t_land_phys else ""
+            badge = f"SLOW MOTION  {drop3.slow:.0f}×" if drop3.t0 <= t < drop3.t_meet_video else ""
             return tp, min(1, max(0, (t - drop3.t0) / 0.15)), 1.0, False, badge, "night"
         if t < rew2_0:
             tp = drop4.phys_time(t)
-            badge = "real speed" if drop4.t0 - 1.0 < t < drop4.t0 + 2.5 else ""
+            badge = "REAL SPEED" if drop4.t0 - 1.0 < t < drop4.t0 + 2.5 else ""
             return tp, min(1, max(0, (t - drop4.t0) / 0.05)), 1.0, False, badge, "day"
         if t < rew2_1:
             u = _ease((t - rew2_0) / (rew2_1 - rew2_0))
@@ -176,9 +176,9 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         if t < cut7:
             return 0.0, 0.0, 0.0, False, "", "day"
         if t < cut8:
-            badge = f"slowed {bar_slow:,.0f}×" if tap - 0.5 < t < t_arrive + 0.8 else ""
+            badge = f"SLOW MOTION  {bar_slow:,.0f}×" if tap - 0.5 < t < t_arrive + 0.8 else ""
             return 0.0, 0.0, 0.0, False, badge, "day"
-        return 0.0, 0.0, 0.0, False, "", "day"
+        return 0.0, 0.0, min(0.7, max(0.0, (t - cut8 - 0.8) / 1.0)), False, "", "day"
 
     def ball(t):
         if not (cut5 <= t < cut6):
@@ -197,19 +197,58 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         return pulse, round(flash, 3), round(min(0.35, strike), 4)
 
 
-    frames = {"coils": [], "clamp": [], "glow": [], "front": [], "badge": [], "vars": [], "focal": [],
+    drops = [hook_drop, drop1, drop2, drop3, drop4]
+
+    def grip(t):
+        """Authored (non-physics) gripper motion: a small anticipation squeeze, then a snap open with a
+        little overshoot. The physical release is exactly at the drop's t0, when the jaws start opening."""
+        for d in drops:
+            if d.t0 - 0.14 <= t < d.t0:
+                return -0.08 * math.sin(math.pi * (t - (d.t0 - 0.14)) / 0.14)
+        return None
+
+    def open_curve(u):          # easeOutBack over 0.16 s
+        u = min(1.0, max(0.0, u)); c = 1.9
+        return 1 + (c + 1) * (u - 1) ** 3 + c * (u - 1) ** 2
+
+    def glint(t):
+        return max([max(0.0, 1 - abs(t - d.t0 - 0.03) / 0.09) for d in drops] + [0.0])
+
+    def ref_vis(t):
+        v = 0.0
+        for d in (hook_drop, drop1, drop2):
+            a, b = d.t0 - 1.2, d.t_meet_video + 1.2
+            v = max(v, min(1.0, (t - a) / 0.3, (b - t) / 0.3))
+        return max(0.0, v)
+
+    frames = {"coils": [], "clamp": [], "glow": [], "front": [], "badge": [], "vars": [], "focal": [], "glint": [], "ref": [],
               "ball": [], "pulse": [], "flash": [], "striker": [], "focal_pt": []}
     bottom0 = coils_at(0)[0][-1]
+    contacts, prev_front, prev_t = [], 0, 0.0
     focal_y = np.zeros(n)
     for i, t in enumerate(T):
         tp, clamp, glow, show_front, badge, _ = state(t)
         ys, front = coils_at(tp)
+        if front > prev_front and tp > 0:          # new coil-to-coil contacts this frame (sound events)
+            k = front - prev_front
+            for j in range(k):
+                contacts.append((round(prev_t + (t - prev_t) * (j + 1) / (k + 1), 4), round((prev_front + j) / N, 3)))
+        prev_front, prev_t = front, t
         frames["coils"].append([round(float(v), 4) for v in ys])
+        gq = grip(t)
+        if gq is not None:
+            clamp = gq
+        elif clamp > 0:
+            d = max((d for d in drops if d.t0 <= t), key=lambda d: d.t0, default=None)
+            clamp = open_curve((t - d.t0) / 0.16) if d is not None and t - d.t0 < 0.16 else clamp
         frames["clamp"].append(round(float(clamp), 3))
+        frames["glint"].append(round(glint(t), 3))
+        frames["ref"].append(round(ref_vis(t), 3))
         frames["glow"].append(round(float(glow), 3))
         frames["front"].append(int(front) if show_front and 0 < front < N - 1 else -1)
         frames["badge"].append(badge)
-        frames["vars"].append({"bottom_mm": f"{abs(ys[-1] - bottom0) * 1000:.1f}"})
+        frames["vars"].append({"bottom_mm": f"{abs(ys[-1] - bottom0) * 1000:.1f}",
+                               "hover_s": f"{min(tp, phys.t_meet()):.2f}"})
         frames["focal"].append(N - 1)
         focal_y[i] = ys[-1]
         frames["ball"].append(ball(t))
@@ -217,7 +256,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         frames["pulse"].append(pulse); frames["flash"].append(flash); frames["striker"].append(strike)
         in_bar = cut7 <= t < cut8
         px = pulse if pulse is not None else (BAR_X1 if t >= tap else BAR_X0)
-        frames["focal_pt"].append([px, GROUND + BAR_R, BAR_Z] if in_bar else None)
+        frames["focal_pt"].append([px, GROUND + 0.03 + BAR_R, BAR_Z] if in_bar else None)
 
     # ---- shots -----------------------------------------------------------------------------
     # Measured pacing of the style reference: few hard cuts (about one every 7-12 s), each shot a
@@ -225,7 +264,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     # The camera holds still for the first second after each reveal (CAM-5).
     shots = []
 
-    def shot(start, end, keys, lighting="day", focal_fn=None, smooth=0.0, xz_fn=None):
+    def shot(start, end, keys, lighting="key", focal_fn=None, smooth=0.0, xz_fn=None):
         """keys: [(t, pos, target_y, fov)] waypoints, eased between. The look point is solved each
         frame so the focal coil sits at target_y of the frame height (focal zone 0.20-0.66)."""
         i0, i1 = int(round(start * fps)), int(round(end * fps))
@@ -273,25 +312,25 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     shot(S("why2"), cut5, [(S("why2"), [-3.0, 1.7, 4.8], 0.60, 38), (drop2.t0 + 1.0, [-2.8, 1.7, 4.5], 0.60, 38),
                            (m4 - 1.2, [-1.4, 1.0, 2.7], 0.45, 36), (m4, [-1.2, 0.8, 2.6], 0.44, 36),
                            (end4, [-1.3, 0.75, 2.7], 0.44, 36)],
-         lighting="sunset", focal_fn=front_fn, smooth=0.12)
+         lighting="golden", focal_fn=front_fn, smooth=0.12)
     # 5. Night: hanging again with a ball at the centre-of-mass height; both are released together.
     shot(cut5, cut6, [(cut5, [2.6, 1.9, 4.6], 0.58, 38), (drop3.t0, [1.9, 1.7, 4.2], 0.58, 38),
                       (drop3.t0 + 1.0, [1.9, 1.7, 4.2], 0.58, 38), (cut6, [1.7, 1.2, 3.6], 0.56, 38)],
-         lighting="night", focal_fn=hang)
+         lighting="key", focal_fn=hang)
     # 6. Day, real speed: the same drop is over in a blink; then rewind and crane along the stretch.
     shot(cut6, cut7, [(cut6, [-1.6, 1.3, 4.6], 0.60, 38), (drop4.t0, [-1.2, 1.3, 4.3], 0.60, 38),
                       (drop4.t0 + 1.0, [-1.2, 1.3, 4.3], 0.60, 38), (rew2_1, [-0.8, 1.5, 3.9], 0.60, 38),
                       (cut7, [0.9, 2.6, 3.4], 0.62, 38)], focal_fn=hang)
     # 7. Steel bar: low along the bar, following the pulse from the tapped end to the far end.
-    bar_y = GROUND + BAR_R
+    bar_y = GROUND + 0.03 + BAR_R
     fp = lambda i: frames["focal_pt"][i] or [0.0, bar_y, BAR_Z]
     shot(cut7, cut8, [(cut7, [-2.2, 0.75, 0.9], 0.52, 36), (tap, [-1.9, 0.7, 0.75], 0.52, 36),
                       (tap + 0.8, [-1.9, 0.7, 0.75], 0.52, 36), (t_arrive, [-0.2, 0.55, 0.45], 0.52, 36),
                       (cut8, [0.1, 0.6, 0.6], 0.52, 36)],
          focal_fn=lambda i: fp(i)[1], xz_fn=lambda i: (fp(i)[0], fp(i)[2]), smooth=0.15)
-    # 8. Big-picture pull-out over the whole little test site to the end.
-    shot(cut8, n / fps + 0.1, [(cut8, [2.4, 2.4, 4.0], 0.58, 38), (n / fps, [6.0, 9.5, 9.0], 0.52, 38)],
-         focal_fn=lambda i: focal_y[i])
+    # 8. Final hero: golden light, the reset slinky hanging again, a slow arc and push-in (loops to frame 0).
+    shot(cut8, n / fps + 0.1, [(cut8, [2.9, 1.7, 4.6], 0.60, 36), (n / fps, [1.7, 1.55, 4.9], 0.60, 38)],
+         lighting="golden", focal_fn=hang)
     c12 = end4
 
     for k in range(len(shots) - 1):
@@ -306,7 +345,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         {"start": E("setup") - 2.0, "end": E("setup") + 0.25, "big": "gravity = spring", "small": "on the bottom coil", "y": 0.17},
         {"start": drop1.t0 + 1.2, "end": drop1.t_meet_video - 0.1, "big": "{bottom_mm} mm", "small": "bottom moved", "y": 0.17},
         {"start": E("why1") - 2.2, "end": S("why2"), "big": "no change", "small": "in its forces", "y": 0.17},
-        {"start": drop2.t_meet_video + 0.4, "end": cut5, "big": f"{phys.t_meet():.2f} s",
+        {"start": drop2.t0 + 0.5, "end": cut5, "big": "{hover_s} s",
          "small": "bottom hovered", "y": 0.17},
         {"start": drop3.t0 + 0.6, "end": drop3.t_meet_video - 0.2, "big": "centre of mass", "small": "falls like the ball", "y": 0.17},
         {"start": drop4.t0 + 0.6, "end": rew2_0, "big": f"{phys.t_meet():.2f} s", "small": "at real speed", "y": 0.17},
@@ -321,28 +360,41 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         "drop2_meet": drop2.t_meet_video, "drop2_land": drop2.video_time(t_land_phys),
         "drop3_release": drop3.t0, "drop3_land": drop3.video_time(t_land_phys),
         "drop4_release": drop4.t0, "drop4_land": drop4.video_time(t_land_phys), "rewind2": [rew2_0, rew2_1],
-        "tap": tap, "bar_arrive": t_arrive, "bar_slow": bar_slow,
+        "tap": tap, "bar_arrive": t_arrive, "bar_slow": bar_slow, "contacts": contacts,
+        "land_speed": phys.G * t_land_phys,
+        "drop_slow": {"drop1": drop1.slow_after, "drop2": drop2.slow_after, "drop3": drop3.slow_after, "drop4": 1.0},
+        "hover_windows": [[drop1.t0 + 0.15, drop1.t_meet_video], [drop2.t0 + 0.15, drop2.t_meet_video]],
+        "cuts": [cut5, cut7],
         "reveals": [hook_drop.t0, drop1.t0, drop1.t_meet_video, drop2.t0, drop2.t_meet_video,
                     drop3.t0, drop4.t0, tap],
     }
-    return {"scene": SCENE, "W": W, "H": H, "fps": fps, "n_frames": n, "seed": 11, "top_y": TOP,
+    return {"scene": SCENE, "W": W, "H": H, "fps": fps, "n_frames": n, "seed": 11, "top_y": TOP, "supersample": 1.5,
             "bar": {"x0": BAR_X0, "x1": BAR_X1, "z": BAR_Z, "r": BAR_R},
             "shots": shots, "cards": cards, "frames": frames, "timing": timing,
             "wordmark": None}
 
 
-def sfx_events(plan: dict) -> list[tuple[float, str]]:
+def sfx_events(plan: dict) -> list:
+    """Sound events from the simulation timeline (see factory/sound_design.py)."""
     t = plan["timing"]
-    return [
-        (t["hook_release"], "pop"),
-        (t["drop1_release"], "pop"), (t["drop1_land"], "thud"),
-        (t["rewind"][0], "whoosh"),
-        (t["drop2_release"], "pop"), (t["drop2_release"] + 0.3, "rise"), (t["drop2_land"], "thud"),
-        (t["drop3_release"], "pop"), (t["drop3_land"], "thud"),
-        (t["drop4_release"], "pop"), (t["drop4_land"], "thud"),
-        (t["rewind2"][0], "whoosh"),
-        (t["tap"], "tick"), (t["bar_arrive"], "pop"),
-    ]
+    ev = []
+    for key in ("hook_release", "drop1_release", "drop2_release", "drop3_release", "drop4_release"):
+        ev.append((t[key], "latch", {"gain": 0.9}))
+    for tc, stack in t["contacts"]:
+        ev.append((tc, "coil", {"stack": stack, "speed": 0.35 + 0.65 * stack, "gain": 0.22}))
+    v = t["land_speed"]
+    for key, slow in (("drop1_land", t["drop_slow"]["drop1"]), ("drop2_land", t["drop_slow"]["drop2"]),
+                      ("drop3_land", t["drop_slow"]["drop3"]), ("drop4_land", 1.0)):
+        ev.append((t[key], "impact", {"speed": v, "slow": slow, "gain": 0.85}))
+    ev += [(t["rewind"][0], "rewind", {"gain": 0.6}), (t["rewind2"][0], "rewind", {"gain": 0.6}),
+           (t["tap"], "tink", {"gain": 0.8}), (t["bar_arrive"], "tink", {"gain": 0.25, "pan": 0.4})]
+    ev += [(c - 0.25, "swish", {"gain": 0.45}) for c in t["cuts"]]
+    return ev
+
+
+def music(plan: dict) -> dict:
+    t = plan["timing"]
+    return {"mutes": t["hover_windows"], "swells": [t["drop2_meet"]], "bpm": 96, "gain": 0.16}
 
 
 def self_checks() -> dict:

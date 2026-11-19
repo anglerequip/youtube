@@ -79,7 +79,15 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
     t0 = time.time()
     caption_engine.write_ass(tl, out / "captions.ass")
     events = [(tl.start(b.id), b.sfx) for b in sb.beats if b.sfx] + list(events)
-    video_editor.mix_sfx(out / "voice.wav", events, out / "mix.wav")
+    if sb.renderer == "three":      # designed SFX + music + mastering (factory/sound_design.py)
+        from . import sound_design
+        music_cfg = getattr(sb, "_music_cfg", None)
+        stats = sound_design.build_mix(out / "voice.wav", events, out / "mix.wav",
+                                       duration=tl.duration + 0.8, music=music_cfg)
+        (out / "audio_stats.json").write_text(json.dumps(stats))
+        log.info("[%s] audio master: %s", sb.slug, stats)
+    else:
+        video_editor.mix_sfx(out / "voice.wav", events, out / "mix.wav")
     video_editor.mux(out / "visual.mp4", out / "mix.wav", out / "captions.ass", sb.final_video)
     timings["mux_s"] = round(time.time() - t0, 1)
 
@@ -129,6 +137,7 @@ def _render_three(sb: Storyboard, tl, out: Path, previews: bool, force: bool):
     else:
         log.info("[%s] 3D render: cached", sb.slug)
     report = mod.self_checks() if hasattr(mod, "self_checks") else None
+    sb._music_cfg = mod.music(plan) if hasattr(mod, "music") else None
     return mod.sfx_events(plan), report
 
 def produce(slug: str, db: DB | None = None, provider: str | None = None, previews: bool = False,

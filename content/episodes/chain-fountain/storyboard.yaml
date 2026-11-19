@@ -1,0 +1,60 @@
+slug: chain-fountain
+title: "The Chain That Jumps Out of the Jar"
+topic: "momentum / the chain fountain: why a falling bead chain arches above its jar"
+component: custom   # physics: factory/simulation_engine/physics/chain_fountain.py (momentum + energy balance)
+renderer: three
+scene: chain3d
+hook_family: 1          # impossible-looking (attention plan)
+structure: B            # surprising result -> backwards explanation
+description: |
+  Let a bead chain pour out of a tall jar and it doesn't slide over the rim. It leaps up into an arch
+  above the jar. The reason: the pile pushes each link up as it is picked up. Simulated from the
+  momentum and energy balance of the chain.
+
+  #shorts #physics #science #chainfountain #momentum
+tags: [chain fountain, physics, momentum, science, experiment, shorts]
+voice: af_bella
+speed: 1.1
+beats:
+  - id: hook
+    text: "This chain jumps out of its jar. Nothing is pulling it up."
+    pause_after: 0.3
+  - id: setup
+    text: "Drop the end of a long bead chain over the edge, and let gravity do the rest."
+  - id: wrong
+    text: "You'd expect it to slide over the rim, like a rope."
+  - id: reality
+    text: "Instead it leaps up, and holds a steady arch above the jar."
+  - id: payoff
+    text: "And the drop sets the height. In our model, a one metre fall lifts the arch about fourteen centimetres."
+  - id: double
+    text: "Double the drop, and the arch doubles too."
+  - id: speed
+    text: "From two metres up, the chain races along at almost five metres per second."
+  - id: rehook
+    text: "So what pushes it up? Not the falling chain. The pile itself."
+  - id: links
+    text: "A bead chain is made of short, stiff links. Lift one by its end, and it tips like a tiny lever."
+  - id: push
+    text: "Its other end digs into the pile, and the pile pushes back, upward."
+  - id: rope
+    text: "A rope can't do that. It's floppy, so there's nothing to lever against the pile, and nothing throws it up."
+  - id: kick
+    text: "That push helps throw every link up, so the chain shoots above the jar before gravity turns it around. A longer fall means a faster chain, and a harder push."
+  - id: catch
+    text: "Physicists still argue about the details, like how much the beads bounce. But with no push from below, there's no fountain."
+  - id: outro
+    text: "So the chain isn't pulled out of the jar. It's pushed, one link at a time."
+    sfx: ding
+
+caveats:
+  - "Our simulation is the steady-state momentum and energy balance (after Biggins and Warner, 2014), not a link-by-link simulation. The arch height assumes a pile push of 12 percent of the chain's momentum flux; real values depend on the chain."
+  - "The exact mechanism is still discussed (link stiffness, bead bouncing); later analyses include Pantaleone (2017) and Flekkoy, Moura and Maloy (2018)."
+  - "The lever close-up is a simplified illustration of the mechanism described by Biggins and Warner."
+  - "The chain is shown slowed down so the beads can be followed."
+sources:
+  - "J. S. Biggins and M. Warner, 'Understanding the chain fountain', Proceedings of the Royal Society A 470, 20130689 (2014)."
+  - "University of Cambridge press release, 'Understanding the chain fountain' (2014)."
+  - "J. Pantaleone, 'A quantitative analysis of the chain fountain', American Journal of Physics 85, 414 (2017)."
+  - "E. G. Flekkoy, M. Moura and K. J. Maloy, 'Mechanisms of the flying chain fountain', Frontiers in Physics 6, 84 (2018)."
+  - "The phenomenon was popularised by Steve Mould's 2013 video; this episode uses none of its footage or framing."
