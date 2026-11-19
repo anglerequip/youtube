@@ -1,0 +1,51 @@
+# Recipe thresholds. Starting hypotheses from docs/research (PR #1); tune with real results.
+# Sources: SCRIPT_ENGINE_SPECIFICATION (SC-*), TEXT_AND_CAPTION_DESIGN_SYSTEM (TX-*, CP-*),
+#          MOTION_DESIGN_SYSTEM (MD-*, CAM-*), HOOK_ENGINE_SPECIFICATION (HK-*).
+script:
+  beats: [6, 10]                 # SC-1 warn
+  wpm_target: [150, 185]         # SC-2
+  wpm_warn: [140, 200]
+  beat_wpm_max: 210              # SC-3
+  sentence_words_max: 18         # SC-4
+  beat_words_max: 30             # SC-5
+  first_claim_by_s: 3.0          # SC-7 / HK-3 (fail)
+  voice_starts_by_s: 0.3         # hook spec
+  takeaway_min_s: 2.5            # SC-10 (fail)
+  final_hold_s: 0.8
+  absolutes: [always, never, every, impossible, all, "no one", instantly, "at all", "not even a little"]
+  fillers: [basically, actually, literally, really, "so yeah", "kind of", "you know"]
+  filler_max: 1
+  allow_cta: false               # SC-22 warn when false
+  cta_words: [follow, subscribe, like]
+delivery:                        # SCRIPT spec 5.1: pace -> speed multiplier and extra pause
+  brisk: {speed: 1.05, pause: 0.0}
+  calm: {speed: 1.0, pause: 0.0}
+  build: {speed: 1.03, pause: 0.0}
+  reveal: {speed: 0.95, pause: 0.5}
+  hold: {speed: 1.0, pause: 0.0}
+text:
+  max_roles_visible: 2
+  max_words_on_screen: 9
+  max_cards_visible: 1
+  card_min_dwell_s: 2.0
+  card_dwell_per_word_s: 0.3
+  caption_band: [0.69, 0.77]
+  focal_zone: [0.20, 0.66]
+captions:
+  mode: full
+  center_y: 0.73                 # from top (Blueprint)
+  max_words_per_chunk: 3
+  max_chars_per_chunk: 16
+  min_chunk_s: 0.6
+  max_cps: 17
+  clear_after_word_s: 0.15
+  hide_in_pauses_over_s: 0.4
+  font: Poppins SemiBold
+  cap_height_frac: 0.030
+motion:
+  max_event_gap_s: 3.0           # MD-1
+  max_event_gap_explain_s: 2.5   # MD-2
+  min_cut_gap_s: 1.2             # MD-5 (fail)
+  typical_cut_s: [2.5, 4.0]
+  no_cut_reveal_s: 1.5           # MD-8 (fail)
+  reveal_camera_still_s: 1.0     # CAM-5

@@ -26,6 +26,23 @@ class Beat:
     on_screen: str | None = None     # optional big text shown during this beat
     sfx: str | None = None           # optional sound cue name, played at beat start
     camera: str | None = None        # optional hint for the sim ("zoom_bottom", ...)
+    # Recipe fields (docs/research SCRIPT/MOTION specs). All optional.
+    pace: str = "calm"               # brisk | calm | build | reveal | hold
+    emphasis: list = field(default_factory=list)
+    speed: float | None = None       # per-beat multiplier on the episode speed
+    viewer_question: str | None = None
+    visual_events: list = field(default_factory=list)
+    reveal: bool = False
+    shot: str | None = None
+    focal: str | None = None
+    fidelity: str | None = None
+    extra: dict = field(default_factory=dict)
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "Beat":
+        known = {f for f in cls.__dataclass_fields__ if f != "extra"}
+        return cls(**{k: v for k, v in d.items() if k in known},
+                   extra={k: v for k, v in d.items() if k not in known})
 
 
 @dataclass
@@ -94,7 +111,7 @@ def load(path_or_slug: str | Path) -> Storyboard:
     missing = [k for k in REQUIRED if k not in data]
     if missing:
         raise ValueError(f"{p}/storyboard.yaml is missing {missing}")
-    beats = [Beat(**b) for b in data.pop("beats")]
+    beats = [Beat.from_dict(b) for b in data.pop("beats")]
     ids = [b.id for b in beats]
     if len(set(ids)) != len(ids):
         raise ValueError(f"duplicate beat ids in {p}: {ids}")

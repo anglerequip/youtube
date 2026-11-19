@@ -89,9 +89,8 @@ def _ff_path(p: Path) -> str:
 def mux(video: Path, audio: Path, ass: Path, out: Path):
     # The subtitles filter needs ':' and '\' escaped in the path (matters on Windows drive letters).
     ass_arg = _ff_path(ass)
-    # Use matplotlib's bundled DejaVu fonts so captions look identical on Windows, macOS and Linux.
-    import matplotlib
-    fonts = _ff_path(Path(matplotlib.get_data_path()) / "fonts" / "ttf")
+    # Bundled house font (Poppins, OFL) so captions look identical on Windows, macOS and Linux.
+    fonts = _ff_path(Path(__file__).resolve().parent.parent / "assets" / "fonts")
     cmd = [
         "ffmpeg", "-y", "-loglevel", "error",
         "-i", str(video), "-i", str(audio),

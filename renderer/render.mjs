@@ -72,6 +72,8 @@ if (args.stills) {
   ff.stdin.end();
   await new Promise((res, rej) => ff.on('close', c => c === 0 ? res() : rej(new Error('ffmpeg ' + c))));
   console.log(`rendered ${n} frames in ${((Date.now() - t0) / 1000).toFixed(0)}s`);
+  const meta = await page.evaluate(() => window.__meta);
+  fs.writeFileSync(args.out.replace(/\.mp4$/, '') + '.meta.json', JSON.stringify(meta));
 }
 await browser.close();
 srv.close();

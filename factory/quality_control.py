@@ -102,12 +102,12 @@ def check_captions(tl: Timeline, ass: Path, duration: float) -> list[Check]:
         starts = {round(s, 2) for s, _ in spans}
         drift = [ln.id for ln in tl.lines if min(abs(round(ln.start, 2) - s) for s in starts) > 0.02]
         out.append(Check("captions_sync", not drift, "aligned to narration" if not drift else f"drift in {drift}"))
-    m = re.search(r"Style: Cap,[^,]*,(\d+),.*,(\d+),1\s*$", text, re.M)
-    if m:
-        margin_v = int(m.group(2))
-        ok = margin_v >= SAFE_BOTTOM * 1920
-        out.append(Check("captions_safe_area", ok, f"caption baseline {margin_v}px above bottom "
-                                                   f"(needs >= {SAFE_BOTTOM * 1920:.0f}px)"))
+    ys = [int(y) for y in re.findall(r"\\pos\(\d+,(\d+)\)", text)]
+    if ys:
+        band = (0.69 * 1920, 0.77 * 1920)
+        ok = all(band[0] <= y <= band[1] for y in ys)
+        out.append(Check("captions_safe_area", ok, f"caption centre y={min(ys)}-{max(ys)}px "
+                                                   f"(band {band[0]:.0f}-{band[1]:.0f}px)"))
     return out
 
 

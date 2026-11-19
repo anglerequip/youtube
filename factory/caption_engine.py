@@ -1,50 +1,73 @@
-"""Burned-in captions, a few words at a time (the standard Shorts look).
+"""Burned-in captions in the house style (Blueprint section 6, caption spec CP-1..CP-9).
 
-Timing comes from the narration timeline. Within one line, chunks get time in proportion
-to their character count, which is close enough for 2-3 word chunks.
+Captions are built from the storyboard text the writer wrote (so "20 km/h" stays "20 km/h"),
+never from the pronunciation-normalised text sent to the voice. Word timing is estimated by
+spreading each beat's spoken duration over its words weighted by syllables, until forced
+alignment is added.
 """
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 from pathlib import Path
 
+import yaml
+
+from .configuration import settings
 from .voice_engine.narrate import Timeline
 
-MAX_WORDS = 3
-FONT = "DejaVu Sans"
-SIZE = 82
-MARGIN_V = 560  # px from the bottom of the 1920px frame; clears the Shorts UI
+W, H = 1080, 1920
 
-HEADER = f"""[Script Info]
-ScriptType: v4.00+
-PlayResX: 1080
-PlayResY: 1920
-WrapStyle: 0
-ScaledBorderAndShadow: yes
-
-[V4+ Styles]
-Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Cap,{FONT},{SIZE},&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,-1,0,0,0,100,100,0,0,1,7,3,2,80,80,{MARGIN_V},1
-
-[Events]
-Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-"""
+BREAK_BEFORE = {"and", "but", "so", "because", "or", "then", "when", "while", "until", "even", "which",
+                "that", "to", "of", "in", "on", "at", "for", "with", "from", "into", "by", "as"}
+UNITS = {"m", "s", "km", "km/h", "m/s", "m/s²", "kg", "g", "cm", "mm", "%", "mph", "°C", "°F", "K", "N", "J", "Hz", "ms"}
 
 
-def _ts(t: float) -> str:
-    cs = int(round(t * 100))
-    h, cs = divmod(cs, 360000)
-    m, cs = divmod(cs, 6000)
-    s, cs = divmod(cs, 100)
-    return f"{h}:{m:02d}:{s:02d}.{cs:02d}"
+@lru_cache(maxsize=1)
+def rules() -> dict:
+    p = settings.root / "config" / "rules.yaml"
+    return yaml.safe_load(p.read_text(encoding="utf-8"))["captions"] if p.exists() else {}
 
 
-def chunk_words(text: str, max_words: int = MAX_WORDS) -> list[str]:
-    words = text.split()
+def syllables(word: str) -> int:
+    w = re.sub(r"[^a-z]", "", word.lower())
+    if not w:
+        return max(1, len(re.sub(r"\D", "", word)))     # numbers: roughly one per digit
+    n = len(re.findall(r"[aeiouy]+", w))
+    if w.endswith("e") and not w.endswith(("le", "ee")) and n > 1:
+        n -= 1
+    return max(1, n)
+
+
+def _tokens(text: str) -> list[str]:
+    raw = text.split()
+    out: list[str] = []
+    for tok in raw:
+        bare = tok.strip(",.;:!?")
+        if out and bare in UNITS and re.search(r"\d[.,]?$", out[-1].rstrip(",.;:!?")):
+            out[-1] = f"{out[-1]} {tok}"       # never split a number from its unit
+        elif out and out[-1].lower() in ("not", "≈", "~"):
+            out[-1] = f"{out[-1]} {tok}"       # keep "not" with its verb, "≈" with its number
+        else:
+            out.append(tok)
+    return out
+
+
+def chunk(text: str, max_words: int | None = None, max_chars: int | None = None) -> list[str]:
+    r = rules()
+    max_words = max_words or r.get("max_words_per_chunk", 3)
+    max_chars = max_chars or r.get("max_chars_per_chunk", 16)
     chunks, cur = [], []
-    for w in words:
-        cur.append(w)
-        if len(cur) >= max_words or re.search(r"[.,!?;:…]$", w):
+    for tok in _tokens(text):
+        n_words = sum(len(c.split()) for c in cur)
+        cand = " ".join(cur + [tok])
+        bare = tok.lower().strip(",.;:!?")
+        if cur and (n_words + len(tok.split()) > max_words or len(cand) > max_chars
+                    or (bare in BREAK_BEFORE and n_words >= 2)):
+            chunks.append(" ".join(cur))
+            cur = []
+        cur.append(tok)
+        if re.search(r"[.,!?;:]$", tok):
             chunks.append(" ".join(cur))
             cur = []
     if cur:
@@ -52,18 +75,82 @@ def chunk_words(text: str, max_words: int = MAX_WORDS) -> list[str]:
     return chunks
 
 
-def write_ass(tl: Timeline, path: Path):
+def _display(c: str) -> str:
+    c = re.sub(r"[.,;:]+$", "", c)            # CP-8: no trailing full stops, keep "?"
+    return c.replace("{", "(").replace("}", ")")
+
+
+def timed_chunks(tl: Timeline) -> list[tuple[float, float, str]]:
+    r = rules()
+    min_s = r.get("min_chunk_s", 0.6)
+    clear = r.get("clear_after_word_s", 0.15)
     events = []
     for ln in tl.lines:
-        chunks = chunk_words(ln.text)
-        weights = [len(c) + 2 for c in chunks]
-        total = sum(weights)
-        t = ln.start
+        chunks = chunk(ln.text)
+        weights = [sum(syllables(w) for w in c.split()) for c in chunks]
+        total = sum(weights) or 1
         span = ln.end - ln.start
+        t = ln.start
+        timed = []
         for c, w in zip(chunks, weights):
             d = span * w / total
-            text = c.upper().replace("{", "(").replace("}", ")")
-            pop = r"{\fscx112\fscy112\t(0,90,\fscx100\fscy100)}"
-            events.append(f"Dialogue: 0,{_ts(t)},{_ts(t + d)},Cap,,0,0,0,,{pop}{text}")
+            timed.append([t, t + d, c])
             t += d
-    path.write_text(HEADER + "\n".join(events) + "\n", encoding="utf-8")
+        # CP-4: merge chunks shorter than the minimum into a neighbour (prefer the next one)
+        i = 0
+        while i < len(timed) and len(timed) > 1:
+            s, e, c = timed[i]
+            if e - s < min_s:
+                j = i + 1 if i + 1 < len(timed) else i - 1
+                a, b = sorted((i, j))
+                merged = [timed[a][0], timed[b][1], f"{timed[a][2]} {timed[b][2]}"]
+                timed[a:b + 1] = [merged]
+                i = max(0, a - 1)
+                continue
+            i += 1
+        for k, (s, e, c) in enumerate(timed):
+            end = e if k < len(timed) - 1 else min(e + clear, ln.end + clear)
+            events.append((s, end, _display(c)))
+    # never overlap the next caption
+    for k in range(len(events) - 1):
+        s, e, c = events[k]
+        events[k] = (s, min(e, events[k + 1][0]), c)
+    return events
+
+
+def write_ass(tl: Timeline, path: Path):
+    r = rules()
+    cy = int(r.get("center_y", 0.73) * H)
+    size = int(r.get("cap_height_frac", 0.03) * H / 0.70)   # Poppins cap height is ~0.70 em
+    header = f"""[Script Info]
+ScriptType: v4.00+
+PlayResX: {W}
+PlayResY: {H}
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Cap,Poppins SemiBold,{size},&H00FFFFFF,&H00FFFFFF,&H9A000000,&H8C000000,0,0,0,0,100,100,0,0,1,2.5,3,5,80,80,0,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+"""
+    lines = []
+    for s, e, text in timed_chunks(tl):
+        # soft shadow: blurred semi-transparent outline + offset shadow, no box (Blueprint 6)
+        tag = rf"{{\pos({W // 2},{cy})\blur5\fad(80,80)}}"
+        lines.append(f"Dialogue: 0,{_ts(s)},{_ts(e)},Cap,,0,0,0,,{tag}{text}")
+    path.write_text(header + "\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _ts(t: float) -> str:
+    cs = int(round(max(0.0, t) * 100))
+    h, cs = divmod(cs, 360000)
+    m, cs = divmod(cs, 6000)
+    s, cs = divmod(cs, 100)
+    return f"{h}:{m:02d}:{s:02d}.{cs:02d}"
+
+
+# backwards-compatible name used by older tests
+chunk_words = chunk

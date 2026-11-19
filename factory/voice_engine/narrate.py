@@ -11,7 +11,15 @@ from pathlib import Path
 import numpy as np
 import soundfile as sf
 
+from ..narration.pronounce import normalise
 from .providers import get_tts
+
+
+def _delivery() -> dict:
+    import yaml
+    from ..configuration import settings
+    p = settings.root / "config" / "rules.yaml"
+    return yaml.safe_load(p.read_text(encoding="utf-8")).get("delivery", {}) if p.exists() else {}
 
 LEAD_IN = 0.35   # silence before the first line
 TAIL = 1.2       # silence after the last line, so the video doesn't cut mid-breath
@@ -67,8 +75,12 @@ def narrate(ep, out_wav: Path, provider: str | None = None) -> Timeline:
     timed: list[TimedLine] = []
     sr_ref = None
     t = LEAD_IN
+    delivery = _delivery()
     for ln in ep.lines:
-        samples, sr = tts.synth(ln.text, voice=ep.voice, speed=ep.speed)
+        pace = delivery.get(getattr(ln, "pace", "calm") or "calm", {})
+        speed = ep.speed * (getattr(ln, "speed", None) or pace.get("speed", 1.0))
+        # The voice gets pronunciation-normalised text; captions keep the written text (ln.text).
+        samples, sr = tts.synth(normalise(ln.text), voice=ep.voice, speed=speed)
         samples = _trim(np.asarray(samples, dtype=np.float32), sr)
         if sr_ref is None:
             sr_ref = sr
@@ -78,8 +90,9 @@ def narrate(ep, out_wav: Path, provider: str | None = None) -> Timeline:
         dur = len(samples) / sr
         timed.append(TimedLine(ln.id, ln.text, round(t, 3), round(t + dur, 3)))
         chunks.append(samples)
-        chunks.append(np.zeros(int(ln.pause_after * sr), dtype=np.float32))
-        t += dur + ln.pause_after
+        pause = ln.pause_after + pace.get("pause", 0.0)
+        chunks.append(np.zeros(int(pause * sr), dtype=np.float32))
+        t += dur + pause
         print(f"  [{timed[-1].start:6.2f}-{timed[-1].end:6.2f}] {ln.id}", flush=True)
     chunks.append(np.zeros(int(TAIL * sr_ref), dtype=np.float32))
     audio = np.concatenate(chunks)

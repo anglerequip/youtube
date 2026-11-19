@@ -1,0 +1,25 @@
+# Identical test passages for the narrator audition (Magnum Opus brief, Part X).
+# Written text goes through factory/narration/pronounce.py first, exactly as in production,
+# so the "numbers" passage also tests our pronunciation layer.
+passages:
+  - id: curiosity
+    label: "Curiosity: a question with a natural build-up"
+    text: >-
+      Drop a ball and a feather on the Moon, at the same moment. Which one lands first?
+      Most people hesitate. They shouldn't.
+  - id: explanation
+    label: "Explanation: a technical mechanism, made clear"
+    text: >-
+      When the car in front brakes, you react about a second later. The car behind you reacts a second after that.
+      Each driver brakes a little harder than the last, so the slowdown grows as it travels backwards,
+      even though every single car is moving forwards.
+  - id: reveal
+    label: "Reveal: an unexpected result that needs subtle emphasis"
+    text: >-
+      None of these cars crashed. None of them broke down. And yet, every one of them stopped.
+      The traffic jam wasn't caused by anything. It was caused by everyone.
+  - id: torture
+    label: "Hard words: numbers, units, names, a parenthetical"
+    text: >-
+      At 9.81 m/s², a falling object gains about 35 km/h every second (ignoring air resistance).
+      Schrödinger, Bernoulli and Coriolis would all agree: the brachistochrone wins, by 0.2 s.

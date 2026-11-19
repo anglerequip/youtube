@@ -163,11 +163,17 @@ export class World {
   }
 
   // ---------- camera ----------
-  applyShot(shot, t) {
+  applyShot(shot, t, i = 0) {
     const u = Math.min(1, Math.max(0, (t - shot.start) / Math.max(1e-3, shot.end - shot.start)));
     const e = u * u * (3 - 2 * u) * 0.6 + u * 0.4;   // gentle ease that never fully stops
     const lerp = (a, b) => a.map((v, i) => v + (b[i] - v) * e);
     let pos, look;
+    if (shot.type === 'keys') {            // per-frame camera path computed in Python
+      const k = Math.min(Math.max(0, i - shot.i0), shot.pos.length - 1);
+      this.camera.fov = shot.fov ?? 38; this.camera.updateProjectionMatrix();
+      this.camera.position.set(...shot.pos[k]); this.camera.lookAt(...shot.look[k]);
+      return;
+    }
     if (shot.type === 'orbit') {
       const az = THREE.MathUtils.degToRad(shot.az0 + (shot.az1 - shot.az0) * e);
       const rad = shot.r0 + ((shot.r1 ?? shot.r0) - shot.r0) * e, hgt = shot.h0 + ((shot.h1 ?? shot.h0) - shot.h0) * e;
@@ -200,6 +206,13 @@ export function drawCard(ctx, W, H, card, alpha = 1) {
   ctx.font = `800 ${bigPx}px Poppins`; ctx.fillText(big, x + w / 2, y + padY);
   if (small) { ctx.font = `700 ${smallPx}px Poppins`; ctx.fillText(small, x + w / 2, y + padY + bigPx * 1.18); }
   ctx.restore();
+}
+
+export function drawBadge(ctx, W, H, text) {
+  if (!text) return;
+  ctx.save(); ctx.font = `700 ${Math.round(H * 0.017)}px Poppins`; ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = H * 0.006;
+  ctx.fillText(text, W / 2, H * 0.095); ctx.restore();
 }
 
 export function drawWordmark(ctx, W, H, text) {
