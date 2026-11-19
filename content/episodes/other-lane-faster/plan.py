@@ -49,6 +49,84 @@ def _rel_speed(R, Lr, k0, k1):
     return np.mean(out, axis=0)
 
 
+def _crossings(R, Lr, k0, k1):
+    """Per right-lane car: (other-lane cars it overtakes, other-lane cars that overtake it) in frames k0..k1.
+    Positions are loop distances; a crossing counts only near the car (|gap| < 25 m), not across the loop."""
+    L = tr.LENGTH
+    d0 = ((Lr.x[k0][None, :] % L) - (R.x[k0][:, None] % L) + L / 2) % L - L / 2
+    d1 = ((Lr.x[k1][None, :] % L) - (R.x[k1][:, None] % L) + L / 2) % L - L / 2
+    near = (np.abs(d0) < 60) & (np.abs(d1) < 60)
+    passes = ((d0 > 0) & (d1 < 0) & near).sum(axis=1)
+    passed = ((d0 < 0) & (d1 > 0) & near).sum(axis=1)
+    return passes, passed
+
+
+def _pick_ego_visible(R, Lr, w, c, v, offsets):
+    """(ego, offset) whose story is visible on screen (reviewer, round 2): during `w` (watch) it overtakes
+    several other-lane cars without braking, during `c` (crawl) and `v` (view) other-lane cars overtake it."""
+    best, arg = -1e9, (0, 0)
+    brk = _brakes(R.a)
+    for o in offsets:
+        if o + v[1] >= R.v.shape[0]:
+            break
+        pw, _ = _crossings(R, Lr, o + w[0], o + w[1])
+        _, qc = _crossings(R, Lr, o + c[0], o + c[1])
+        _, qv = _crossings(R, Lr, o + v[0], o + v[1])
+        pc, _ = _crossings(R, Lr, o + c[0], o + c[1])
+        score = 2.0 * np.minimum(pw, 4) + np.minimum(qc, 5) + 1.5 * np.minimum(qv, 2) - 3.0 * pc \
+            - 12.0 * brk[o + w[0]: o + w[1]].mean(axis=0)
+        e = int(np.argmax(score))
+        if score[e] > best:
+            best, arg = score[e], (e, o)
+    return arg
+
+
+def _jams(z, v, slow=5.0, pad=3.0, max_n=8):
+    """Stretches of the right lane where cars crawl (< `slow` m/s), as [z_front, z_back] in world z. The red
+    wash marks these jams only, moving with them (reviewer, round 2: painting the whole lane red said
+    'this lane is slow' instead of 'jams hold more cars')."""
+    idx = np.argsort(z)
+    segs = []
+    for j in idx:
+        if v[j] < slow and -260 < z[j] < 60:
+            a, b = z[j] - pad - 2.1, z[j] + pad + 2.1
+            if segs and a <= segs[-1][1] + 6.0:
+                segs[-1][1] = max(segs[-1][1], b)
+            else:
+                segs.append([a, b])
+    segs = [sg for sg in segs if sg[1] - sg[0] > 14.0]          # a jam is several cars, not one slow car
+    return [[round(a, 1), round(b, 1)] for a, b in segs[:max_n]]
+
+
+def _pick_story(R, Lr, w, c, v, offsets):
+    """One followed car, three moments of its own simulated life (hard cuts between them): `w` where its
+    lane flows and it overtakes other-lane cars without braking, `c` where it crawls in a jam while the
+    other lane passes it, `v` where cars both pass it and get passed. A single continuous window with all
+    three does not exist in this simulation (searched 2026-11-19), so the edit jumps forward in time at the
+    cuts, like any documentary. Returns (ego, [offset_w, offset_c, offset_v])."""
+    brk = _brakes(R.a)
+    n = R.x.shape[1]
+    bw, bc, bv = np.full(n, -1e9), np.full(n, -1e9), np.full(n, -1e9)
+    ow, oc, ov = np.zeros(n, int), np.zeros(n, int), np.zeros(n, int)
+    for o in offsets:
+        if o + max(w[1], c[1], v[1]) >= R.v.shape[0]:
+            break
+        pw, qw = _crossings(R, Lr, o + w[0], o + w[1])
+        sw = 2.0 * np.minimum(pw, 4) - 2.0 * qw - 12.0 * brk[o + w[0]: o + w[1]].mean(axis=0)
+        pc, qc = _crossings(R, Lr, o + c[0], o + c[1])
+        km = o + (c[0] + c[1]) // 2                     # a visible queue ahead: cars within 45 m in its own lane
+        dq = ((R.x[km][None, :] % tr.LENGTH) - (R.x[km][:, None] % tr.LENGTH)) % tr.LENGTH
+        ahead = ((dq > 0) & (dq < 45)).sum(axis=1)
+        sc = 3.0 * np.minimum(qc, 4) - 3.0 * pc - 0.6 * R.v[o + c[0]: o + c[1]].mean(axis=0) + 0.6 * np.minimum(ahead, 6)
+        pv, qv = _crossings(R, Lr, o + v[0], o + v[1])
+        sv = np.minimum(qv, 2) + np.minimum(pv, 2) + 0.5 * ((qv > 0) & (pv > 0))
+        for s_, b_, o_ in ((sw, bw, ow), (sc, bc, oc), (sv, bv, ov)):
+            better = s_ > b_
+            b_[better] = s_[better]; o_[better] = o
+    e = int(np.argmax(bw + bc + bv))
+    return e, [int(ow[e]), int(oc[e]), int(ov[e])]
+
+
 def _pick_ego(R, Lr, a, b, c, d, offsets):
     """(ego, offset): the ego passes its neighbours in window [a,b] and is passed in [c,d]."""
     best, arg = -1e9, (0, 0)
@@ -94,9 +172,12 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     ego_s = _pick_dense_ego(split_r, split_l, int(round(S("dense") * fps)), int(round(cut_eq * fps)), int(10 * fps))
     # equal scenario: ego flows during "watch" and crawls during "crawl"
     f = lambda t: int(round((t - cut_eq) * fps))
-    ego_e, off_e = _pick_ego(eq_r, eq_l, f(S("watch")), f(E("watch")), f(S("crawl")), f(E("crawl")), range(0, 5200, 60))
+    ego_e, offs = _pick_story(eq_r, eq_l, (f(S("watch")), f(E("watch"))), (f(S("crawl")), f(E("crawl"))),
+                              (f(S("view")), f(E("view"))), range(0, 5200, 15))
+    seg_off = lambda t: offs[0] if t < S("crawl") - 0.1 else offs[1] if t < S("view") - 0.1 else offs[2]
+    off_e = offs[0]
 
-    frames = {"right": [], "left": [], "rb": [], "lb": [], "ego": [], "scen": [], "scroll": [], "focal_pt": []}
+    frames = {"right": [], "left": [], "rb": [], "lb": [], "ego": [], "scen": [], "scroll": [], "focal_pt": [], "jams": []}
     L = tr.LENGTH
     brakes = {id(r): _brakes(r.a) for r in (split_r, split_l, eq_r, eq_l)}
     for i, t in enumerate(T):
@@ -105,7 +186,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
             z0 = split_r.x[0, ego_s]
         else:
             R, Lr, e = eq_r, eq_l, ego_e
-            k = min(off_e + i - int(round(cut_eq * fps)), eq_r.x.shape[0] - 1)
+            k = min(seg_off(t) + i - int(round(cut_eq * fps)), eq_r.x.shape[0] - 1)
             z0 = eq_r.x[off_e, ego_e]
         xe = R.x[k, e]
         ze = -(xe - z0)                                    # ego world z (moves along -z)
@@ -120,6 +201,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         frames["ego"].append(e)
         frames["scen"].append(0 if t < cut_eq else 1)
         frames["focal_pt"].append([LANE_X[0], 0.7, 0.0])
+        frames["jams"].append(_jams(-rel(R.x[k]), R.v[k]) if t < cut_eq else [])
 
     ego = lambda i: (LANE_X[0], 0.0, 0.0)
     # Cuts every 2.5-6 s (house style: a new angle for most beats, no shot over ~6 s)
@@ -155,17 +237,19 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         cam.shot(S("rehook") + 3.0, S("watch") - 0.1, [(S("rehook") + 3.0, [-3.0, 12.0, 18.0], [-0.3, 0.5, -6.0], 42),
                                                        (S("watch"), [-3.5, 11.0, 15.0], [-0.3, 0.5, -6.0], 42)], fps, "golden", ego),
         # 8. 3/4 tracking on the ego car (ring): it zips past the other lane
-        cam.shot(S("watch") - 0.1, S("crawl") - 0.1, [(S("watch"), [-8.0, 12.0, 16.0], [0.4, 0.3, -5.0], 44),
-                                                      (S("crawl"), [-8.5, 12.5, 14.0], [0.4, 0.3, -5.5], 44)], fps, "golden", ego),
+        cam.shot(S("watch") - 0.1, S("crawl") - 0.1, [(S("watch"), [-2.4, 9.0, 13.0], [-1.6, 0.0, -14.0], 46),
+                                                      (S("crawl"), [-2.6, 9.5, 12.0], [-1.6, 0.0, -14.5], 46)], fps, "golden", ego),
         # 9. low on the far side: now it crawls while the other lane drifts by
-        cam.shot(S("crawl") - 0.1, S("number") - 0.1, [(S("crawl"), [5.5, 5.0, 10.0], [-0.6, 0.4, -3.0], 42),
-                                                       (S("number"), [5.0, 5.4, 8.5], [-0.6, 0.4, -3.5], 42)], fps, "golden", ego),
+        cam.shot(S("crawl") - 0.1, S("number") - 0.1, [(S("crawl"), [-1.2, 15.0, 15.0], [-1.8, 0.0, -9.0], 46),
+                                                       (S("number"), [-1.0, 16.0, 14.0], [-1.8, 0.0, -10.0], 46)], fps, "golden", ego),
         # 10. big picture: both lanes from high up, waves of brake lights travelling backwards
-        cam.shot(S("number") - 0.1, S("view") - 0.1, [(S("number"), [18.0, 55.0, 40.0], [0.0, 0.0, -60.0], 40),
-                                                      (S("view"), [22.0, 70.0, 30.0], [0.0, 0.0, -80.0], 40)], fps, "golden", ego),
+        cam.shot(S("number") - 0.1, S("number") + 3.6, [(S("number"), [18.0, 55.0, 40.0], [0.0, 0.0, -60.0], 40),
+                                                        (S("number") + 3.6, [20.0, 62.0, 35.0], [0.0, 0.0, -70.0], 40)], fps, "golden", ego),
+        cam.shot(S("number") + 3.6, S("view") - 0.1, [(S("number") + 3.6, [-20.0, 45.0, 30.0], [0.0, 0.0, -50.0], 40),
+                                                      (S("view"), [-24.0, 50.0, 26.0], [0.0, 0.0, -60.0], 40)], fps, "golden", ego),
         # 11. just above and behind the ego roof: cars that pass stay in view ahead
-        cam.shot(S("view") - 0.1, S("outro") - 0.1, [(S("view"), [0.3, 3.6, 11.0], [-0.8, 0.0, -14], 46),
-                                                     (S("outro"), [0.1, 3.3, 10.0], [-0.7, 0.0, -13], 46)], fps, "golden", ego),
+        cam.shot(S("view") - 0.1, S("outro") - 0.1, [(S("view"), [-1.0, 6.5, 14.0], [-0.9, 0.0, -18], 46),
+                                                     (S("outro"), [-1.2, 6.2, 13.0], [-0.9, 0.0, -17], 46)], fps, "golden", ego),
         # 12. centreline again, low: the same road for everyone
         cam.shot(S("outro") - 0.1, S("outro") + 2.6, [(S("outro"), [0.0, 4.5, 12.0], [0.0, 1.0, -60], 38),
                                                       (S("outro") + 2.6, [0.0, 5.0, 14.0], [0.0, 1.0, -62], 38)], fps, "golden", ego),
@@ -175,7 +259,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     ])
 
     # wide shots are about the whole system: their focal point is where the camera looks
-    for k_ in (3, 4, 5, 6, 7, 8, 12, 14):
+    for k_ in (3, 4, 5, 6, 7, 8, 12, 13, 15):
         s_ = shots[k_]
         for k, lk in enumerate(s_["look"]):
             i = s_["i0"] + k
@@ -202,7 +286,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     frames["ring"] = [1 if S("watch") - 0.1 <= t < S("number") - 0.1 or (S("rehook") <= t < S("watch")) else 0 for t in T]
 
     timing = {"cut_eq": cut_eq, "reveals": [S("share") + 2.6], "cuts": [s["start"] for s in shots[1:]],
-              "ego_split": ego_s, "ego_equal": ego_e, "offset_equal": off_e}
+              "ego_split": ego_s, "ego_equal": ego_e, "offset_equal": off_e, "offsets_equal": offs}
     return {"scene": SCENE, "W": W, "H": H, "fps": fps, "n_frames": n, "seed": 5, "supersample": 1.25,
             "lanes": LANE_X, "n_right": max(split_r.x.shape[1], eq_r.x.shape[1]),
             "n_left": max(split_l.x.shape[1], eq_l.x.shape[1]),
