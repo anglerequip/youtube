@@ -22,6 +22,7 @@ _spec.loader.exec_module(base)
 
 SCENE = base.SCENE
 XR, XF, JR = 0.006, 0.045 + 0.032, 0.045      # pick-up x, falling-leg x, jar radius (renderer/scenes/chain3d.js)
+H1_RIM = 0.11 - base.PILE_H + 0.015                # arch height at which its top clears the rim (jar height 0.11 m, renderer)
 DIM_X = (XR + XF) / 2                           # the measuring line runs up the middle of the arch, between its legs
 
 
@@ -45,7 +46,11 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         if t >= t_off:
             h2 = F["h2"][i]
             F["h1"][i] = round(cf.steady(h2, a)["h1"], 5)
-            F["morph"][i] = round(a / cf.ALPHA, 4)      # no push: the path blends to the rope's drape over the rim
+            # no push: the path blends to the rope's drape over the rim. The blend must be complete before the
+            # model arch's top sinks to the jar rim, or the blended chain cuts through the glass (flicker at the rim)
+            h_full = cf.steady(h2, cf.ALPHA)["h1"]
+            u = (F["h1"][i] - H1_RIM) / max(1e-6, h_full - H1_RIM)
+            F["morph"][i] = round(cam.ease(min(1.0, max(0.0, u))), 4)
     F["alpha_pct"] = [round(100 * a, 3) for a in alpha]
     # ---- hook: open close on the arch (it fills the middle of the frame), then pull back to the old framing
     s0 = plan["shots"][0]
