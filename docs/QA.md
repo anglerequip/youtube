@@ -69,9 +69,13 @@ with `BLOCKED_REVIEW_UNAVAILABLE`. The generator never writes this file.
 Added after Caesar heard the chain fountain go "ding ding ding" every half second: 203 cues of one
 identical bell sample, each quiet enough that loudness checks never noticed. `sound.check` reads the cue
 sheet (every cue rendered and hashed, so "the same sample" is exact) and the voice / effects / music stems
-from `sound_design.stems`, the same function the mixer uses. Short cues whose samples never repeat (link
-clicks, coil clatter) count as texture, not as separate sounds; cues within 0.15 s are one event (a
-crack-crack burst at a snap is meaning, not clutter). Thresholds: `config/quality.yaml` `sound:`.
+from `sound_design.stems`, the same function the mixer uses. Cues within 0.15 s are one event (a crack-crack
+burst at a snap is meaning, not clutter). Varying the sample does not make a rhythm acceptable: round 2 of
+the chain swapped the bell for 168 varied "coil" clicks, about 3 a second, which the old logic waved through as
+"texture" and the Sound Reviewer heard as a ticking clock. Now every cue counts towards density, the
+`click_train` check catches one kind of cue going on without a pause (by name, whatever the sample), and a
+run of only four evenly spaced cues is already flagged as a metronome. Texture (short, never-identical cues)
+is only exempt from the identical-sample count. Thresholds: `config/quality.yaml` `sound:`.
 
 `sound.build_packet` writes `out/<slug>/qa/review_audio/` (cue_sheet.md, timeline.png, stats.json,
 intent.md, INSTRUCTIONS.md, schema.json, packet.json). A separate reviewer writes `critique_audio.json`

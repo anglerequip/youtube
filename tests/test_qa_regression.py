@@ -115,6 +115,13 @@ def test_traffic_v1_flicker_in_pixels():
     assert F and m["flicker_tiles"] >= 1
 
 
+def test_flicker_ignores_cars_streaming_past():
+    """Round 4 PC render, other lane at 38 s: a queue of cars sweeping through the frame was called flicker
+    (8 tiles) although every frame was clean (checked frame by frame, 2026-11-19)."""
+    F, m = frames.check_flicker(FIX / "other_lane_r4_passing_queue_37-39s.mp4", CFG, [], [], region=(0.0, 0.64))
+    assert not F, [f.message for f in F]
+
+
 def test_flicker_false_positive_control():
     """A clean clip (accepted slinky video) shows no flicker and no black regions."""
     F, m = frames.check_flicker(FIX / "slinky_control_20-24s.mp4", CFG, [], [], region=(0.0, 0.64))

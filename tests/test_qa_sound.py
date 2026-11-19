@@ -33,6 +33,23 @@ def test_chain_v1_ding_is_blocked(tmp_path):
     assert m["max_identical_total"] >= 200
 
 
+def test_chain_v2_varied_click_train_is_blocked(tmp_path):
+    """Round 2 swapped the dings for 168 varied 'coil' clicks, ~3 per second: still a ticking clock.
+    The old logic let it through as 'texture'; the Sound Reviewer caught it (2026-11-19)."""
+    old = json.loads((FIX / "chain_v2_sfx_events.json").read_text())["events"]
+    F, m = sound.check(_ctx(old, tmp_path), CFG)
+    ids = {f.id for f in _blocking(F)}
+    assert "sound.click_train.coil" in ids, [f.message for f in F]
+    assert "sound.density" in ids
+
+
+def test_four_evenly_spaced_ticks_are_flagged(tmp_path):
+    """Spaghetti round 2: four rising ticks 0.55 s apart sounded like an app chime."""
+    ev = [(5.06 + 0.55 * k, "tick", {"gain": 0.2, "pitch": 1 + 0.1 * k}) for k in range(4)]
+    F, _ = sound.check(_ctx(ev, tmp_path), CFG)
+    assert any(f.id == "sound.periodic.tick" for f in F), [f.message for f in F]
+
+
 def _current(slug):
     from factory.storyboard_engine import load
     from factory.voice_engine import narrate as voice

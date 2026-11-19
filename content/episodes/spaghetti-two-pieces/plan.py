@@ -221,6 +221,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         steady = abs(tr.rate(t + 0.05) - rate) < 1e-9 and abs(tr.rate(t - 0.05) - rate) < 1e-9
         if 0 < rate < 0.5 and name != "B" and not steady:
             badge = "SLOW MOTION"
+        elif 0 < rate < 0.5 and name != "B" and (1 / rate < 1000 or name in ("A", "F")):
+            badge = "SLOW MOTION"          # one number per idea (reviewer: 38x, 64,000x, 2,000x, 5,000x confused)
         elif 0 < rate < 0.5 and name != "B":
             f = 1 / rate
             badge = f"SLOWED {int(round(f, -int(math.floor(math.log10(f))) + 1)):,}×" if f >= 10 else "SLOW MOTION"
@@ -254,10 +256,14 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # the mechanism, slowed: from high over the bench (wood behind the stick, not the bright field), the
         # whole stick and both clamps in frame, so the first crack, the halves springing back and the second
         # crack are all visible (reviewer, round 1: the arc stayed whole on screen, half of it off frame)
-        cam.shot(cut_slow, crack_v + 5.2, [(cut_slow, K(0.0, 1.30, 0.50), K(0.0, 0.845, 0.0), 40),
-                                           (crack_v + 5.2, K(0.02, 1.28, 0.48), K(0.0, 0.845, 0.0), 40)], fps, "key"),
-        cam.shot(crack_v + 5.2, S("burst") - 0.1, [(crack_v + 5.2, K(-0.10, 1.24, 0.42), K(-0.04, 0.845, 0.0), 38),
-                                                   (S("burst"), K(-0.11, 1.24, 0.40), K(-0.04, 0.845, 0.0), 38)], fps, "key"),
+        cam.shot(cut_slow, crack_v + 1.2, [(cut_slow, K(0.0, 1.30, 0.50), K(0.0, 0.845, 0.0), 40),
+                                           (crack_v + 1.2, K(0.02, 1.28, 0.48), K(0.0, 0.845, 0.0), 40)], fps, "key"),
+        # round 3: close on the crack, ~8 cm of stick across the frame, so the red wave racing out of the
+        # crack along both halves is big on a phone (reviewer: the stick was 2-3 px wide in the wide shot)
+        cam.shot(crack_v + 1.2, crack_v + 5.6, [(crack_v + 1.2, K(-0.006, 0.99, 0.17), K(-0.008, 0.882, 0.0), 34),
+                                                (crack_v + 5.6, K(-0.012, 0.995, 0.16), K(-0.012, 0.882, 0.0), 34)], fps, "key"),
+        cam.shot(crack_v + 5.6, S("burst") - 0.1, [(crack_v + 5.6, K(-0.07, 1.0, 0.18), K(-0.014, 0.878, 0.0), 34),
+                                                   (S("burst"), K(-0.075, 1.005, 0.17), K(-0.016, 0.878, 0.0), 34)], fps, "key"),
         cam.shot(S("burst") - 0.1, cut_rehook, [(S("burst"), K(0.10, 1.26, 0.44), K(0.03, 0.845, 0.0), 38),
                                                 (cut_rehook, K(0.09, 1.27, 0.43), K(0.03, 0.845, 0.0), 38)], fps, "key"),
         cam.shot(cut_rehook, cut_hist, [(cut_rehook, K(0.2, 1.18, 0.42), K(0.0, 0.77, 0.0), 34),
@@ -310,11 +316,13 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     events = []
     for (name, run_, track, v0, v1) in [("A", plain, A, 0, cut_wrong), ("C", plain, C, cut_slow, cut_rehook),
                                         ("F", twisted, F_, cut_reveal, cut_why), ("G", twisted, G_, cut_why, S("catch") - 0.1)] + \
-                                       [("D", tr.run, tr, v0, v1) for v0, v1, tr in mont]:
-        for (tc, s) in run_.cracks:
+                                       [("D", tr.run, tr, v0, v1) for j, (v0, v1, tr) in enumerate(mont) if j in (0, len(mont) - 1)]:
+        # montage: one crack per try, and only the first and last try (round 3, Sound Reviewer: triple clicks
+        # every 2 s sounded like a metronome)
+        for (tc, s) in (run_.cracks if name != "D" else sorted(run_.cracks)[:1]):
             tv = _video_time(track, tc, v0, v1, fps)
             if tv is not None:
-                events.append([round(tv, 3), "latch", {"gain": 0.9 if tc == run_.t_break else 0.7, "pan": (s / sp.STICK - 0.5) * 0.8,
+                events.append([round(tv, 3), "latch", {"gain": 0.65 if tc == run_.t_break else 0.5, "pan": (s / sp.STICK - 0.5) * 0.8,
                                                         "seed": len(events) + 11}])   # never the same crack twice
         for fr in (run_.fragments if name != "D" else []):      # montage: cracks only (it was a wall of tinks)
             land = next((tt for (tt, c, a) in fr.track if c[1] < sp.RADIUS + 0.003 and tt > fr.t0 + 0.01), None)
@@ -325,9 +333,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                                                             "pitch": 0.85 + 0.1 * (len(events) % 4), "ring": 0.35}])
     events.append([round(cut_wrong + 0.02, 3), "rewind", {"gain": 0.5}])
     events.append([round(cut_why - 0.3, 3), "rewind", {"gain": 0.35}])
-    events += [[round(c, 3), "tick", {"gain": 0.35, "pitch": 1.0 + 0.12 * j, "ring": 0.4, "seed": 40 + j}]
-               for j, c in enumerate(count_hl)]        # counting the pieces: one step up per piece
-    events.append([round(break_v + 0.05, 3), "ding", {"gain": 0.5}])
+    # (round 3, Sound Reviewer: four rising counting ticks sounded like an app chime, and a held ding under
+    # "Now it breaks cleanly in two" competed with the line; the pieces are counted visually, the crack is the cue)
     timing = {"crack_v": crack_v, "second_v": second_v, "break_v": break_v, "slow2": slow2,
               "cuts": [s_["start"] for s_ in shots[1:]], "reveals": [break_v], "events": events,
               "mutes": [[second_v - 3.0, second_v - 0.05], [tw_end - 0.2, break_v - 0.05]], "swells": [second_v, break_v]}

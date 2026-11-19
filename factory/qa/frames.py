@@ -106,11 +106,14 @@ def check_flicker(path: Path, cfg: dict, cuts: list[float], events: list[float],
     info = probe(path)
     fps = info["fps"]
     W, H, T = 360, 640, c["flicker_tile"] // 2      # tiles of 24 px on the 360-wide copy
-    means = []
+    means, moves, prev = [], [], None
     for fr in frames(path, W, H, gray=True):
         a = fr.astype(np.float32)
         hh, ww = (H // T) * T, (W // T) * T
         means.append(a[:hh, :ww].reshape(hh // T, T, ww // T, T).mean(axis=(1, 3)))
+        if prev is not None:             # per-tile pixel change: high all the time when things move through it
+            moves.append(np.abs(a - prev)[:hh, :ww].reshape(hh // T, T, ww // T, T).mean(axis=(1, 3)))
+        prev = a
     if len(means) < 5:
         return [], {}
     M = np.stack(means)                                           # (frames, rows, cols)
@@ -118,6 +121,15 @@ def check_flicker(path: Path, cfg: dict, cuts: list[float], events: list[float],
     ramp = np.abs(M[2:] - M[:-2])                                  # genuine motion changes the neighbours too
     mad = np.median(np.abs(d), axis=0) + 0.5
     spike = (np.abs(d) > np.maximum(c["flicker_min_delta"], c["flicker_z"] * mad)) & (ramp < 0.5 * np.abs(d))
+    # moving content: a tile whose pixels change a lot in most nearby frames (cars streaming past a fast
+    # camera) produces brightness wobble without any defect (PC render, other lane round 4, 38 s: a queue of
+    # cars sweeping through the tile). Flicker on static content changes the pixels only on the spike frames.
+    Dm = np.stack(moves)                                          # (frames-1, rows, cols); Dm[k] = |f[k+1]-f[k]|
+    busy = np.zeros_like(spike)
+    for k in range(len(d)):
+        lo, hi = max(0, k - 4), min(len(Dm), k + 6)
+        busy[k] = np.median(Dm[lo:hi], axis=0) > c.get("flicker_motion_ratio", 0.85) * np.abs(d[k])
+    spike &= ~busy
     # ignore frames near cuts and declared events (flashes, cracks, reveals)
     ok = np.ones(len(d), bool)
     for t in list(cuts) + list(events):

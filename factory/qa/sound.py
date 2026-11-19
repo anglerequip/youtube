@@ -9,7 +9,8 @@ Two parts, like the picture QA:
 
 What "annoying" is measured as (thresholds in config/quality.yaml, sound:):
   repetition   the same identical sample again and again (hash of the rendered cue), per window
-  density      audible cues per second in any window (texture cues, short and never identical, excluded)
+  density      cues per second in any window (every cue counts, texture too)
+  click train  one kind of cue going on without a pause (varied samples do not help)
   periodicity  a metronome: many same-name cues at near-constant spacing
   masking      sound effects loud against the voice while she speaks
   startle      a cue louder than the voice's own peaks
@@ -95,7 +96,6 @@ def check(ctx, cfg) -> tuple[list[Finding], dict]:
         by_sample[q["sample"]].append(q)
     for q in cues:
         q["texture"] = q["dur_s"] <= tex_dur and len(by_sample[q["sample"]]) == 1
-    audible = [q for q in cues if not q["texture"]]
 
     # 1. identical-sample repetition (the "ding ding ding")
     W = c.get("repeat_window_s", 5.0)
@@ -118,8 +118,11 @@ def check(ctx, cfg) -> tuple[list[Finding], dict]:
                              f"{med:.2f} s): a listener hears one sound on repeat",
                              t=float(t0), evidence={"top": [list(w[:3]) + [round(w[3], 2)] for w in worst[:5]]},
                              repair="use fewer cues, vary the sample (seed, pitch, length) and only mark events that matter"))
-    # 2. density of audible cues (cues within 0.15 s of each other are one event: a crack-crack burst)
-    ts = _merge(sorted(q["t"] for q in audible), c.get("burst_s", 0.15))
+    # 2. density of all cues (cues within 0.15 s of each other are one event: a crack-crack burst). Texture
+    # cues count too: round 2 of the chain fountain hid 168 varied "coil" clicks (3 per second) from this check
+    # by calling them texture, and the Sound Reviewer heard a ticking clock.
+    allc = sorted(q["t"] for q in cues)
+    ts = _merge(allc, c.get("burst_s", 0.15))
     Wd = c.get("density_window_s", 5.0)
     if len(ts):
         dens = max(np.sum((ts >= t0) & (ts < t0 + Wd)) for t0 in ts) / Wd
@@ -130,21 +133,48 @@ def check(ctx, cfg) -> tuple[list[Finding], dict]:
             F.append(Finding("sound.density", "sound", sev, "BLOCKED_AUDIO" if sev <= 1 else None,
                              f"{dens:.1f} sound effects per second around {t0:.1f}s: constant effects stop meaning anything",
                              t=t0, repair="keep one cue per physical event that the viewer should notice"))
-    # 3. metronome: many same-name audible cues at near-constant spacing
+    # 3. click train: one kind of cue (by name, whatever its sample) going on and on without a real pause.
+    #    Varying the sample does not help: the ear hears the rhythm, not the waveform.
     by_name = defaultdict(list)
-    for q in audible:
+    for q in cues:
         by_name[q["name"]].append(q["t"])
+    gap, longest = c.get("train_gap_s", 1.2), (0.0, 0, "", 0.0)
+    for name, tt in by_name.items():
+        tt = list(_merge(sorted(tt), c.get("burst_s", 0.15)))
+        i0 = 0
+        for i in range(1, len(tt) + 1):
+            if i == len(tt) or tt[i] - tt[i - 1] > gap:
+                dur, cnt = tt[i - 1] - tt[i0], i - i0
+                if cnt >= 6 and dur > longest[0]:
+                    longest = (dur, cnt, name, tt[i0])
+                i0 = i
+    m["longest_click_train_s"] = round(longest[0], 1)
+    if longest[0] >= c.get("train_warn_s", 5.0):
+        dur, cnt, name, t0 = longest
+        sev = 1 if dur >= c.get("train_block_s", 10.0) else 2
+        F.append(Finding(f"sound.click_train.{name}", "sound", sev, "BLOCKED_AUDIO" if sev <= 1 else None,
+                         f"'{name}' plays {cnt} times in {dur:.1f} s from {t0:.1f}s with no pause over {gap:.1f} s "
+                         f"(about {cnt / max(dur, 1e-6):.1f} per second): it reads as a ticking clock, even with varied samples",
+                         t=float(t0), repair="mark only the moments that matter; let silence or the music carry the rest"))
+    # 4. metronome: same-name cues at near-constant spacing (a short even run already sounds mechanical)
     for name, tt in by_name.items():
         tt = list(_merge(sorted(tt), c.get("burst_s", 0.15)))
         d = np.diff(tt)
-        k = c.get("periodic_min_run", 8)
-        for i in range(0, max(0, len(d) - k + 1)):
-            seg = d[i:i + k]
-            if seg.mean() < c.get("periodic_max_interval_s", 1.5) and seg.std() / (seg.mean() + 1e-9) < c.get("periodic_cv", 0.35):
-                F.append(Finding(f"sound.periodic.{name}", "sound", 2, None,
-                                 f"'{name}' ticks like a metronome ({k + 1} cues about every {seg.mean():.2f} s from {sorted(tt)[i]:.1f}s)",
-                                 t=float(sorted(tt)[i]), repair="break the rhythm or drop most of these cues"))
+        hit = None
+        for k, cv, sev in ((c.get("periodic_min_run", 8), c.get("periodic_cv", 0.35), 1),
+                           (c.get("periodic_short_run", 3), c.get("periodic_short_cv", 0.12), 2)):
+            for i in range(0, max(0, len(d) - k + 1)):
+                seg = d[i:i + k]
+                if seg.mean() < c.get("periodic_max_interval_s", 2.5) and seg.std() / (seg.mean() + 1e-9) < cv:
+                    hit = (k, seg.mean(), tt[i], sev)
+                    break
+            if hit:
                 break
+        if hit:
+            k, mean, t0, sev = hit
+            F.append(Finding(f"sound.periodic.{name}", "sound", sev, "BLOCKED_AUDIO" if sev <= 1 else None,
+                             f"'{name}' ticks like a metronome ({k + 1} cues about every {mean:.2f} s from {t0:.1f}s)",
+                             t=float(t0), repair="break the rhythm or drop most of these cues"))
     # 4-6. stems: masking, startle, music balance
     st = _stems(ctx)
     if st is None:

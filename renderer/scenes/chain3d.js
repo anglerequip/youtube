@@ -102,13 +102,16 @@ export function build(world, plan) {
   add(S, rbox(3.2, 0.06, 2.6, 0.01), MAT.concrete('#bdb6a3'), 0, -0.027, 0);   // patio slab, top 3 mm above the
   // grass so the two surfaces never share a depth (z-fighting; found by factory/qa inspect: geometry.coplanar)
 
-  // telescoping stand: heavy base, outer tube, inner (sliding) tube, wooden platform
+  // telescoping stand: heavy base, outer tube, inner (sliding) tube, and a wooden shelf board reaching out to
+  // the jar. The pole stands well back (SX) so the falling chain and the floor heap clear the base and the
+  // board (picture review 2026-11-19: the chain passed through the board, the heap through the base)
+  const SX = -0.3;
   const steel = MAT.brushedSteel(), dark = MAT.darkSteel();
-  add(S, new THREE.CylinderGeometry(0.17, 0.19, 0.035, 40), dark, 0, 0.0175, -0.02);
-  const outer = add(S, new THREE.CylinderGeometry(0.022, 0.022, 0.9, 24), steel, 0, 0.45 + 0.035, -0.02);
-  const collar = add(S, new THREE.CylinderGeometry(0.03, 0.03, 0.03, 24), dark, 0, 0.935, -0.02);
-  const inner = add(S, new THREE.CylinderGeometry(0.016, 0.016, 1, 24), steel, 0, 0, -0.02);
-  const plat = add(S, rbox(0.16, 0.022, 0.16, 0.006), new THREE.MeshStandardMaterial({ color: '#a8835a', roughness: 0.7 }), 0, 0, 0);
+  add(S, new THREE.CylinderGeometry(0.17, 0.19, 0.035, 40), dark, SX, 0.0175, -0.02);
+  const outer = add(S, new THREE.CylinderGeometry(0.022, 0.022, 0.9, 24), steel, SX, 0.45 + 0.035, -0.02);
+  const collar = add(S, new THREE.CylinderGeometry(0.03, 0.03, 0.03, 24), dark, SX, 0.935, -0.02);
+  const inner = add(S, new THREE.CylinderGeometry(0.016, 0.016, 1, 24), steel, SX, 0, -0.02);
+  const plat = add(S, rbox(0.39, 0.022, 0.16, 0.006), new THREE.MeshStandardMaterial({ color: '#a8835a', roughness: 0.7 }), 0, 0, 0);
 
   // glass jar (cheap glass: thin transparent shell + rim highlight, no transmission pass)
   const jar = new THREE.Group(); S.add(jar);
@@ -170,7 +173,7 @@ export function build(world, plan) {
       const h2 = F.h2[k], h1 = F.h1[k];
       const pileY = h2, standTop = pileY - plan.pile_h - 0.011;       // jar base on platform top
       const jarBase = standTop + 0.011;
-      plat.position.set(0, standTop, 0);
+      plat.position.set(-0.145, standTop, 0);      // board spans x -0.34..0.05; jar radius 0.045
       inner.scale.y = Math.max(0.05, standTop - 0.9); inner.position.y = 0.9 + inner.scale.y / 2;
       jar.position.set(0, jarBase, 0);
       const p = { xr: 0.006, xf: JR + 0.032, pile: pileY, top: pileY + h1, floor: 0.004, rim: jarBase + JH };
