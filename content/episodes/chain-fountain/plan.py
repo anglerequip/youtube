@@ -45,11 +45,23 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     # that" played over the fountain. The arch now drops before each line and returns only after it.
     nopush1 = E("catch") + 1.0
     rope0, rope1 = cut_macro1, S("kick") + 0.7      # starts at the cut out of the macro (the macro path must not move)
+    # macro (round 10 review: "the tip loops back and forth"): ONE link, one clear lift-tip-push, timed to the
+    # words. u is the link's phase as in chain3d.js (0-0.45 lift and tip, 0.45-0.85 the pile pushes back).
+    BEAD_JS = 0.0046
+    tip0, tip1 = at("links", "Lift one") - 0.1, at("links", "tips") + 0.5
+    push0, push1 = at("push", "digs") - 0.1, E("push") - 0.2
+
+    def lever_u(t):
+        if t < tip1:
+            return 0.45 * cam.ease(max(0.0, (t - tip0) / (tip1 - tip0)))
+        return 0.45 + 0.4 * cam.ease(min(1.0, max(0.0, (t - push0) / (push1 - push0))))
+    macro_slow = round((push1 - tip0) / (0.85 * BEAD_JS / cf.steady(2.0)["v"]), -3)   # screen time / real time
     dist = 0.0
+    d_macro0 = None
     for i, t in enumerate(T):
         h2 = h2_at(t); st = cf.steady(h2)
         macro = cut_macro0 <= t < cut_macro1
-        slow = 1500.0 if macro else 4.0       # macro: one link-lift every ~1.5 s (round 7: at 3,000x the pose "barely moved")
+        slow = 4.0
         if S("wrong") - 0.1 <= t < morph_t0:
             m = 0.0
         elif morph_t0 <= t < morph_t0 + 0.8:
@@ -64,13 +76,18 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         frames["morph"].append(round(m, 4))
         frames["rope"].append(0.0)        # round 6: the ghost rope over a running fountain muddled it; the chain itself goes rope-like
         frames["bracket"].append(0.0)
-        dist += st["v"] / slow / fps
+        if macro:
+            if d_macro0 is None:
+                d_macro0 = dist - (dist % BEAD_JS)          # start the macro at the beginning of a link
+            dist = d_macro0 + BEAD_JS * lever_u(t)
+        else:
+            dist += st["v"] / slow / fps
         frames["dist"].append(round(dist, 6))
         frames["heap"].append(round(0.25 + 0.65 * t / (n / fps), 4))
         frames["sway"].append(0.0015 if not macro else 0.0)
         frames["lever"].append({"glow": 1.0 if t >= S("push") - 0.1 else 0.0} if macro else None)
         if macro:
-            b = "SLOWED 1,500× · SIMPLIFIED"
+            b = f"SLOWED {macro_slow:,.0f}× · SIMPLIFIED"
         elif S("wrong") - 0.1 <= t < morph_t0:
             b = "IF IT ACTED LIKE A ROPE"
         # round 7 review: the badge came up ~0.5 s before the chain actually fell, so text and picture
@@ -128,8 +145,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         cam.shot(S("kick") - 0.1, S("kick") + 4.3, [(S("kick") - 0.1, K(0.3, 0.3, 0.45), K(0.03, 0.19, 0.0), 32),
                                                     (S("kick") + 4.3, K(0.36, 0.32, 0.55), K(0.03, 0.2, 0.0), 32)], fps, "golden", pile),
         # round 9 review: the top-down flattened the arch during "shoots above the jar"; high 3/4 instead
-        cam.shot(S("kick") + 4.3, S("catch") - 0.1, [(S("kick") + 4.3, K(-0.3, 0.42, 0.62), K(0.03, 0.18, 0.0), 34),
-                                                     (S("catch") - 0.1, K(-0.24, 0.45, 0.66), K(0.03, 0.18, 0.0), 34)], fps, "golden", pile),
+        # round 10: 12 s of near-identical fountain shots. A low shot from beside the jar, looking up at the
+        # arch standing over the rim ("shoots above the jar")
+        cam.shot(S("kick") + 4.3, S("catch") - 0.1, [(S("kick") + 4.3, K(0.2, 0.03, 0.34), K(0.04, 0.2, 0.0), 42),
+                                                     (S("catch") - 0.1, K(0.16, 0.035, 0.31), K(0.04, 0.21, 0.0), 42)], fps, "golden", pile),
         cam.shot(S("catch") - 0.1, S("catch") + 3.4, [(S("catch") - 0.1, K(-0.42, 0.3, 0.6), K(0.04, 0.1, 0.0), 32),
                                                       (S("catch") + 3.4, K(-0.36, 0.32, 0.64), K(0.04, 0.1, 0.0), 32)], fps, "golden", pile),
         cam.shot(S("catch") + 3.4, S("outro") - 0.1, [(S("catch") + 3.4, K(0.08, 0.16, 0.34), K(0.03, 0.09, 0.0), 30),
@@ -161,25 +180,16 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     for i, t in enumerate(T):           # the height bracket while the arch heights are on screen
         frames["bracket"][i] = round(max(0.0, min(1.0, (t - (show1 - 0.4)) / 0.3, (S("rehook") - 0.2 - t) / 0.3)), 3)
     events = [(round(morph_t0 - 0.6, 3), "rise", {"gain": 0.3}),     # round 9: peak on "leaps", not after
-              (round(S("double") + 0.15, 3), "swish", {"gain": 0.22, "seed": 31})]
+              (round(S("double") - 0.25, 3), "swish", {"gain": 0.22, "seed": 31})]
     # in the macro (slowed 1,500x): one soft tick as the first link lifts, one as the lever bites the pile
-    # round 8 sound review: the first tick landed ~2 s before the link visibly tipped. Each tick now sits on
-    # the frame where a link finishes tipping (chain3d.js: u = (dist % BEAD) / BEAD reaches 0.45).
-    BEAD_JS = 0.0046
-
-    def tip_after(t0):
-        for i in range(int(t0 * fps), n - 1):
-            u0, u1 = (frames["dist"][i] % BEAD_JS) / BEAD_JS, (frames["dist"][i + 1] % BEAD_JS) / BEAD_JS
-            if u0 < 0.45 <= u1:
-                return (i + 1) / fps
-        return t0
-    events += [(round(tip_after(cut_macro0 + 0.3), 3), "tick", {"gain": 0.16, "seed": 60, "pitch": 0.95, "ring": 0.25}),
-               (round(tip_after(S("push")), 3), "tick", {"gain": 0.2, "seed": 63, "pitch": 0.82, "ring": 0.4})]
+    # macro ticks on the words (round 10 sound review: put the second on "digs", quieter)
+    events += [(round(at("links", "tips") + 0.2, 3), "tick", {"gain": 0.14, "seed": 60, "pitch": 0.95, "ring": 0.25}),
+               (round(at("push", "digs") + 0.15, 3), "tick", {"gain": 0.15, "seed": 63, "pitch": 0.82, "ring": 0.4})]
     timing = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [morph_t0], "events": events,
               "mutes": [[S("wrong") - 0.1, morph_t0 - 0.05]], "swells": [morph_t0]}
     facts = {"drop_1m": 1.0, "drop_2m": 2.0, "arch_1m_cm": a1["h1"] * 100, "arch_2m_cm": a2["h1"] * 100,
              "arch_ratio_2m_1m": a2["h1"] / a1["h1"], "speed_2m": a2["v"], "alpha": cf.ALPHA,
-             "slow_factors": [4, 1500],
+             "slow_factors": [4, macro_slow],
              "events": {
                  "arch_1m": {"t": show1, "observe": "arch_cm", "expect": a1["h1"] * 100, "tol": 0.03},
                  "arch_2m": {"t": show2, "observe": "arch_cm", "expect": a2["h1"] * 100, "tol": 0.03}}}
