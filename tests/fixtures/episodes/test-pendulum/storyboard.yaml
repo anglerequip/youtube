@@ -1,0 +1,16 @@
+# Tiny episode used by the end-to-end test. Not a real video.
+title: "Test pendulum for the pipeline"
+topic: "test / pendulum"
+description: "Integration-test fixture: a small pendulum to exercise every production step."
+tags: [test, pendulum, physics]
+caveats: ["test fixture"]
+sources: ["none: test fixture"]
+beats:
+  - id: one
+    text: "A pendulum swings back and forth."
+    sfx: pop
+  - id: two
+    text: "Its period depends on length, not on mass."
+    on_screen: "T = 2π√(L/g)"
+  - id: three
+    text: "That is the whole test."

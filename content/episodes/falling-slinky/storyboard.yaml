@@ -1,0 +1,45 @@
+slug: falling-slinky
+title: "Drop a Slinky and the Bottom Just... Floats"
+topic: "physics / waves: falling slinky"
+component: custom   # bespoke sim.py (mass-spring chain); reusable components live in factory/simulation_engine
+description: |
+  Let go of a hanging slinky and the bottom stays exactly where it is, until the collapse reaches it.
+  The bottom can't "know" the top was released: that news has to travel down the spring as a wave.
+
+  Simulated with 80 coils, real gravity and real spring forces. No CGI tricks.
+
+  #shorts #physics #science #slinky
+tags: [physics, slinky, science, counterintuitive, waves, simulation, shorts]
+voice: am_michael
+speed: 1.05
+beats:
+  - id: hook
+    text: "If you drop a hanging slinky, the bottom doesn't fall. Not even a little."
+    pause_after: 0.35
+  - id: setup
+    text: "Here it is, hanging still. Gravity pulls the bottom coil down, and the spring pulls it back up. Perfectly balanced."
+  - id: release
+    text: "Now let go of the top, and watch the bottom."
+    pause_after: 0.1
+  - id: hover
+    text: "The top races down. The bottom just hangs there, in midair."
+    pause_after: 0.6
+  - id: why1
+    text: "That's because the bottom has no idea anything happened. Its forces haven't changed."
+  - id: why2
+    text: "The news that the top was released has to travel down the spring, coil by coil."
+  - id: land
+    text: "Only when that collapse reaches the bottom does it finally start to fall."
+    pause_after: 0.4
+  - id: outro
+    text: "Even a toy has a speed limit for information. Follow for more physics that breaks your intuition."
+    sfx: ding
+
+caveats:
+  - "The model treats the slinky as 80 point masses joined by ideal springs, ignoring air drag and coil twisting."
+  - "The hover time depends on the slinky: about 0.26 s for this one (1 m of stretch). Big plastic slinkies hover longer."
+  - "The bottom is not perfectly frozen in a real slinky: it moves by a millimetre or so before the collapse arrives."
+sources:
+  - "R. Cross and M. Wheatland, 'Modeling a falling slinky', American Journal of Physics 80, 1051 (2012)"
+  - "M. G. Calkin, 'Motion of a falling spring', American Journal of Physics 61, 261 (1993)"
+  - "Centre-of-mass check: an ideal slinky's hover time is sqrt(2L/3g), since its centre of mass sits L/3 above the bottom and falls freely"
