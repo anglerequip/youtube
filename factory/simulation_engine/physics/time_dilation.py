@@ -64,6 +64,11 @@ def gps_range_error_km_per_day() -> float:
     return gps_net_us_per_day() * 1e-6 * C / 1000
 
 
+def gps_gravity_range_km_per_day() -> float:
+    """Drift times c if only the gravitational part (the narrated 45 µs/day) were left uncorrected."""
+    return _gps_parts()[0] * 1e-6 * C / 1000
+
+
 def facts() -> dict:
     grav, vel, net = _gps_parts()
     return {
@@ -76,6 +81,7 @@ def facts() -> dict:
         "per_day_ps": head_ahead(DAY) * 1e12,
         "gps_grav_us": grav, "gps_vel_us": vel, "gps_net_us": net,
         "gps_km_per_day": gps_range_error_km_per_day(),
+        "gps_grav_km_per_day": gps_gravity_range_km_per_day(),
     }
 
 

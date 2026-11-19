@@ -80,11 +80,23 @@ function figure() {
 // toy GPS satellite: gold body, two blue solar wings, a dish
 function satellite() {
   const g = new THREE.Group();
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.2, 3.0), MAT.anodised('#c9a24a')));
-  const pm = new THREE.MeshStandardMaterial({ color: '#2f4f86', roughness: 0.35, metalness: 0.4 });
+  // gold-foil body: a faceted box with a darker band and a silver top deck
+  const foil = new THREE.MeshStandardMaterial({ color: '#d4a63c', roughness: 0.35, metalness: 0.75, flatShading: true });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.25, 3.0, 8), foil); body.rotation.x = Math.PI / 2; g.add(body);
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(1.28, 1.28, 0.5, 8), flat('#6b5a2e')); band.rotation.x = Math.PI / 2; g.add(band);
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 0.2), MAT.brushedSteel()); deck.position.z = 1.6; g.add(deck);
+  for (const [x, y] of [[0.5, 0.5], [-0.5, 0.4], [0.2, -0.6]]) {   // antenna rods
+    const a = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.6, 6), MAT.brushedSteel()); a.rotation.x = Math.PI / 2; a.position.set(x, y, 2.4); g.add(a);
+  }
+  // solar wings: blue cells in a grid with silver frames
+  const pm = new THREE.MeshStandardMaterial({ color: '#2f4f86', roughness: 0.3, metalness: 0.5, emissive: '#1c2f55', emissiveIntensity: 0.25 });
+  const frame = MAT.brushedSteel();
   for (const s of [-1, 1]) {
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.15, 0.15), MAT.brushedSteel()); arm.position.x = s * 1.8; g.add(arm);
-    const p = new THREE.Mesh(new THREE.BoxGeometry(5.0, 2.0, 0.08), pm); p.position.x = s * 4.9; g.add(p);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.15, 0.15), frame); arm.position.x = s * 1.9; g.add(arm);
+    for (let c = 0; c < 3; c++) {
+      const p = new THREE.Mesh(new THREE.BoxGeometry(1.55, 2.0, 0.08), pm); p.position.x = s * (3.4 + c * 1.65); g.add(p);
+      const fr = new THREE.Mesh(new THREE.BoxGeometry(1.65, 2.1, 0.05), frame); fr.position.set(s * (3.4 + c * 1.65), 0, -0.03); g.add(fr);
+    }
   }
   const dish = new THREE.Mesh(new THREE.ConeGeometry(0.9, 0.5, 16, 1, true), MAT.ceramic()); dish.position.y = -1.4; dish.rotation.x = Math.PI; g.add(dish);
   return g;
@@ -93,7 +105,7 @@ function satellite() {
 export function build(world, plan) {
   const S = world.scene, F = plan.frames, L = plan.layout;
   world.camera.far = 500; world.camera.updateProjectionMatrix();
-  world.ground(900); world.hills(12, 160); world.hills(14, 260);
+  world.ground(2400); world.hills(12, 160); world.hills(14, 260);
 
   // ---- the figure on a small round patio, and the clock post beside it
   const patio = new THREE.Mesh(new THREE.CylinderGeometry(1.7, 1.75, 0.06, 40), MAT.concrete('#a89684'));
@@ -191,6 +203,7 @@ export function build(world, plan) {
       trueRing.visible = pin.visible;
       sat.position.set(rx + L.sat[0] - L.road_x, L.sat[1], cz + L.sat[2]);
       sat.rotation.set(0.15, 0.3 + t * 0.02, 0.08);
+      sat.visible = t < plan.timing.day[0] - 0.4;           // not in the map-pin shot (round 1: a cropped fragment)
       // the sun's shadow box follows the subject of each shot, sized to it
       if (shot !== lastShot) {
         lastShot = shot;

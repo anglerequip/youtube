@@ -24,7 +24,7 @@ SCENE = "clocks3d"
 FIG = [0.0, 0.0, 0.0]
 POST_X = 0.62
 HEAD_CLK = [POST_X, 1.62, 0.16]
-FEET_CLK = [POST_X, 0.17, 0.16]
+FEET_CLK = [POST_X, 0.27, 0.16]            # clear of the patio (picture review, round 1)
 TOWER = [-12.0, 0.0, -14.0]
 TOWER_YS = [2.0, 9.0, 16.0, 23.0]
 LAB = [7.0, 0.0, -4.0]                 # between the two tables
@@ -32,7 +32,9 @@ TABLE_DX = 0.48
 TABLE_TOP = 0.76
 ROAD_X = 18.0
 SAT = [ROAD_X - 4.0, 19.0, -34.0]       # relative to the car (x absolute), toy scale
-EXAG = 0.30                            # exaggerated visual rate difference for the 1.55 m head-feet gap
+EXAG = 0.5                             # exaggerated: the feet clock runs at half the head clock's rate
+SPEEDUP = 8.0                          # exaggerated clocks also run fast, so the gap is visible within seconds
+HEAD_LEAD = 9.0                        # the head clock starts ahead (frame 0 already shows the difference)
 
 
 def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
@@ -54,7 +56,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
 
     frames = {k: [] for k in ("head", "feet", "tower", "lab", "lift", "car_z", "pin", "years", "ns", "hours",
                               "err_km", "badge", "focal_pt", "warm")}
-    head = feet = 0.0
+    head, feet = HEAD_LEAD, 0.0
     tower = [0.0] * 4
     lab = [0.0, 0.0]
     car_z = 20.0
@@ -66,7 +68,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
             head += rate * 60 * dt; feet += rate * 60 * dt          # minute hands spin; difference far too small to draw
         else:
             k = 1.0 if exag_on(t) else 0.0
-            head += dt; feet += dt * (1 - EXAG * k)
+            head += dt * (SPEEDUP if k else 1.0); feet += dt * ((1 - EXAG) * SPEEDUP if k else 1.0)
         frames["head"].append(round(head, 4)); frames["feet"].append(round(feet, 4))
         # mast clocks (why beat): exaggerated, rate rises with height
         for j, y in enumerate(TOWER_YS):
@@ -87,7 +89,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         u_day = min(1.0, max(0.0, (t - day0) / (day1 - day0)))
         hrs = 24 * u_day
         frames["hours"].append(round(hrs, 3))
-        frames["err_km"].append(round(f["gps_km_per_day"] * hrs / 24, 4))
+        frames["err_km"].append(round(f["gps_grav_km_per_day"] * hrs / 24, 4))   # the narrated 45 µs/day x c
         # car on the road (drives towards -z), the map pin drifts ahead of it (not to scale)
         car_z -= dt * 11.0
         frames["car_z"].append(round(car_z, 3))
@@ -157,8 +159,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
          "small": "GPS clocks, from gravity alone", "y": 0.17},
     ]
     events = [
-        (round(lift1 - 0.05, 3), "thud", {"gain": 0.25, "speed": 0.7}),          # the jack stops: table up 33 cm
-        (round(S("gps") - 0.35, 3), "swish", {"gain": 0.22, "seed": 17}),         # crane up to the sky
+        (round(lift1 - 0.05, 3), "tick", {"gain": 0.14, "seed": 41, "pitch": 0.9, "ring": 0.3}),   # the jack settles (soft, round 1 sound review)
     ]
     timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [lift0, life0, day0], "events": events,
                "mutes": [], "swells": [life0], "lifetime": [life0, life1], "day": [day0, day1], "lift": [lift0, lift1]}

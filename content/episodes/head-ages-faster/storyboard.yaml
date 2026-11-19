@@ -53,7 +53,7 @@ caveats:
   - "The effect is real but tiny: about 1.1e-16 per metre of height near Earth's surface (g*h/c^2). Nobody can feel it."
   - "The half-a-millionth-of-a-second figure assumes standing upright (head about 1.7 m above the feet) for 80 years. Real people lie down for about a third of their lives, so the true difference is smaller."
   - "The NIST 2010 result was (4.1 ± 1.6) × 10^-17 for 33 cm, consistent with the predicted 3.6 × 10^-17 within its uncertainty; 'almost exactly' means within the error bar, not to many digits."
-  - "GPS: the gravitational part is about +45 microseconds per day; the satellites' orbital speed takes off about 7, so the net correction is about 38 microseconds per day. The 'kilometres per day' figure is the textbook estimate of uncorrected clock drift times the speed of light (about 11 km per day)."
+  - "GPS: the gravitational part is about +45 microseconds per day; the satellites' orbital speed takes off about 7, so the net correction is about 38 microseconds per day. The map-error counter is the narrated gravitational 45 µs/day times the speed of light (about 14 km per day); with the velocity part included the textbook figure is about 11 km per day. Real receiver errors depend on satellite geometry."
   - "On screen the slowdown is exaggerated by many orders of magnitude so it can be seen; the counters show the real values."
 sources:
   - "C. W. Chou, D. B. Hume, T. Rosenband and D. J. Wineland, 'Optical Clocks and Relativity', Science 329, 1630-1633 (2010). doi:10.1126/science.1192720"
@@ -83,8 +83,8 @@ claims:
      evidence: {quality: 1, source: "Chou et al. 2010"}}
   - {id: gps_grav, beat: gps, unit: "µs", sim: gps_grav_us, scope: typical,
      evidence: {quality: 1, source: "Ashby, Living Rev. Relativ. 6, 1 (2003): gravitational frequency shift of GPS clocks vs the geoid ≈ +45.7 µs/day (velocity -7.1, net +38.6)"}}
-  - {id: gps_drift, card: "11.6 km", unit: km, sim: gps_km_per_day, scope: model, tolerance: 0.05,
-     evidence: {quality: 2, source: "Ashby 2003: net 38.6 µs/day x speed of light = 11.6 km of range per day if uncorrected (the usual textbook estimate; real receiver errors depend on geometry)"}}
+  - {id: gps_drift, card: "13.7 km", unit: km, sim: gps_grav_km_per_day, scope: model, tolerance: 0.05,
+     evidence: {quality: 2, source: "Ashby 2003: the gravitational 45.8 µs/day x speed of light = 13.7 km of range per day if that part were left uncorrected (net with the velocity part: 38.6 µs/day, 11.6 km); real receiver errors depend on geometry"}}
 
 absolute_ok:
   - {beat: why, word: every, why: "the gravitational redshift is universal (equivalence principle): it applies to every clock, tested with many clock types"}
@@ -194,4 +194,3 @@ retention:
       show: [drift+0.1, end]
   cues:
     - {at: "hud:ahead.settle", sfx: lock, gain: 0.26}
-    - {at: "hud:error.settle", sfx: lock, gain: 0.26}
