@@ -12,7 +12,7 @@ E our hypothesis). Tier D and E items are hypotheses to test, never rules.
 | RESEARCH_REPORT_01_COMPETITOR_INTELLIGENCE.md | planned | Competitor dataset and matched comparisons |
 | [VISUAL_STORYTELLING_RESEARCH.md](VISUAL_STORYTELLING_RESEARCH.md), [MOTION_DESIGN_SYSTEM.md](MOTION_DESIGN_SYSTEM.md) | v1, 2026-11-19 (rev 2 after competitor micro-analysis) | Visual-event strategy |
 | [TEXT_AND_CAPTION_DESIGN_SYSTEM.md](TEXT_AND_CAPTION_DESIGN_SYSTEM.md) | v1, 2026-11-19 | Text layout and timing rules |
-| TOPIC_INTELLIGENCE_SYSTEM.md + backlog | planned | Topic scoring and 100 sourced ideas |
+| [TOPIC_INTELLIGENCE_SYSTEM.md](TOPIC_INTELLIGENCE_SYSTEM.md), [TOPIC_BACKLOG.md](TOPIC_BACKLOG.md), [topic_backlog.yaml](topic_backlog.yaml) | v1, 2026-11-19 | Topic scoring, similarity gate, series, 121 sourced ideas |
 
 The house art style lives in the Visual Blueprint in the repo `CLAUDE.md` (Caesar's choice). Where
 research points somewhere different from the blueprint, these documents say so and propose a test;

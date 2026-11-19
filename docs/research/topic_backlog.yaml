@@ -1,0 +1,4274 @@
+version: 1
+created: '2026-11-19'
+weights:
+  familiarity: 1.0
+  curiosity: 1.5
+  clarity: 1.0
+  visual: 1.5
+  reliability: 1.0
+  ease: 1.0
+  originality: 1.0
+  sources: 0.5
+  feasibility: 1.0
+  series: 0.5
+  breadth: 1.0
+score_keys:
+- familiarity
+- curiosity
+- clarity
+- visual
+- reliability
+- ease
+- originality
+- sources
+- feasibility
+- series
+- breadth
+note: Scores are Tier E judgements to prioritise exploration, not predictions of performance. Sources are standard
+  references cited from knowledge; each must be opened and checked when the idea moves to RESEARCHED.
+ideas:
+- id: Z005
+  working_title: Small changes in speed, big changes in energy
+  topic_family: scale
+  scientific_question: Why is crashing at 80 km/h so much worse than at 50?
+  explanation: 'Kinetic energy grows with speed squared: 80 km/h carries about 2.6 times the energy of 50.'
+  misconception: Energy grows in proportion to speed.
+  key_visual_moment: Two cars hitting barriers with energy bars
+  candidate_hooks:
+  - comparison
+  - scale_shift
+  structure: D
+  component: projectile
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 5
+    series: 5
+    breadth: 5
+  opportunity: 97
+  sources:
+  - Kinetic energy E = ½mv²; e.g. OpenStax University Physics Vol. 1
+  originality_note: Pairs with T008, road safety series.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: R002
+  working_title: Distance covered while you blink
+  topic_family: reaction
+  scientific_question: How far does a car travel before the driver even starts braking?
+  explanation: At 100 km/h a car covers about 28 metres every second of reaction time, before braking begins.
+  misconception: Braking starts when you see danger.
+  key_visual_moment: Car moving with 'thinking distance' band before brake lights
+  candidate_hooks:
+  - scale_shift
+  - comparison
+  structure: D
+  component: projectile
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 5
+    series: 5
+    breadth: 5
+  opportunity: 97
+  sources:
+  - Green 2000, Transportation Human Factors 2(3), 195-216
+  originality_note: Road safety; links traffic series.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: T008
+  working_title: Ten km/h faster, much harder hit
+  topic_family: traffic
+  scientific_question: If you'd stop just in time at 50 km/h, how fast do you hit at 60?
+  explanation: Braking distance grows with speed squared and reaction distance adds on, so with typical reaction
+    time and braking, at 60 km/h you are still doing over 40 km/h where the 50 km/h car stopped.
+  misconception: A bit faster means a bit worse.
+  key_visual_moment: Two cars braking side by side; slower car stops at the line, faster one passes it at speed
+  candidate_hooks:
+  - comparison
+  - prediction_challenge
+  - scale_shift
+  structure: D
+  component: projectile
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 4
+    originality: 5
+    sources: 5
+    feasibility: 5
+    series: 5
+    breadth: 5
+  opportunity: 95
+  sources:
+  - Kloeden et al. 1997, Travelling speed and the risk of crash involvement, CR 172, Australian Federal Office of
+    Road Safety
+  - 'Standard kinematics: d = v t_r + v^2 / (2a)'
+  originality_note: Rarely shown as a simulation; strong road-safety value. Compute with stated reaction time and
+    deceleration.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: T003
+  working_title: The tap that stops car thirty
+  topic_family: traffic
+  scientific_question: Why does a light brake tap become a full stop thirty cars back?
+  explanation: Each follower reacts late and brakes a little harder, so the disturbance grows as it travels upstream
+    (string instability).
+  misconception: A small tap fades out behind you.
+  key_visual_moment: Brake glow growing brighter as it travels back along a highway
+  candidate_hooks:
+  - causal_chain
+  - prediction_challenge
+  - hidden_cause
+  structure: E
+  component: traffic_lane
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 5
+    series: 5
+    breadth: 5
+  opportunity: 93
+  sources:
+  - Treiber & Kesting 2013, Traffic Flow Dynamics (Springer), chapter on string stability
+  - Bando et al. 1995, Physical Review E 51, 1035
+  originality_note: 'Fresh angle: string instability as a growing chain.'
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: S005
+  working_title: The ten-car ripple from a lane change
+  topic_family: small_actions
+  scientific_question: How does one lane change slow a whole lane?
+  explanation: A car cutting in forces the follower to brake, starting a small wave behind it.
+  misconception: A lane change only affects the car behind.
+  key_visual_moment: Cut-in car highlighted, brake wave travelling back
+  candidate_hooks:
+  - causal_chain
+  - ordinary_mystery
+  structure: E
+  component: traffic_lane
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 5
+    series: 5
+    breadth: 5
+  opportunity: 93
+  sources:
+  - Treiber & Kesting 2013, Traffic Flow Dynamics (Springer), lane-changing models (MOBIL)
+  originality_note: Directly from the reference channel's top comments (cut-ins); proven audience interest.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: G003
+  working_title: Astronauts are not weightless
+  topic_family: gravity
+  scientific_question: Is there gravity on the space station?
+  explanation: At 400 km gravity is still about 90% of surface strength; astronauts float because they are falling
+    around Earth.
+  misconception: There's no gravity in space.
+  key_visual_moment: ISS orbit with gravity strength label 0.9 g
+  candidate_hooks:
+  - mistaken_assumption
+  - paradox
+  structure: F
+  component: orbit
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 93
+  sources:
+  - NASA, 'What is microgravity?' (nasa.gov)
+  - Inverse-square law
+  originality_note: Strong misconception topic.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: H001
+  working_title: Metal feels colder than wood at the same temperature
+  topic_family: heat
+  scientific_question: Why does a metal bench feel colder than a wooden one in the same air?
+  explanation: Both are the same temperature; metal pulls heat from your skin much faster, so your skin surface
+    cools more.
+  misconception: Metal is colder.
+  key_visual_moment: Two hands on two surfaces, heat-flow arrows, skin temperature dropping faster on metal
+  candidate_hooks:
+  - mistaken_assumption
+  - comparison
+  structure: D
+  component: heat_1d
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 93
+  sources:
+  - Incropera & DeWitt, Fundamentals of Heat and Mass Transfer, contact temperature and thermal effusivity
+  originality_note: Familiar and simulatable.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: W001
+  working_title: The stadium wave rule
+  topic_family: waves
+  scientific_question: How does a stadium wave start and which way does it go?
+  explanation: Mexican waves behave like waves in an excitable medium, need about 25 people to start, and usually
+    run clockwise.
+  misconception: Waves just happen randomly.
+  key_visual_moment: Stadium crowd sim launching a wave
+  candidate_hooks:
+  - impossible_result
+  - visual_experiment
+  structure: E
+  component: agents
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 5
+    series: 5
+    breadth: 5
+  opportunity: 93
+  sources:
+  - Farkas, Helbing & Vicsek 2002, Nature 419, 131-132
+  originality_note: Fun, familiar, little coverage.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: Z002
+  working_title: An ant can't die from a fall
+  topic_family: scale
+  scientific_question: Why can a mouse survive a fall that would kill a horse?
+  explanation: Air drag scales with area and weight with volume, so small animals reach low terminal speeds.
+  misconception: Falls are equally dangerous for everyone.
+  key_visual_moment: Mouse, human and horse falling with terminal speed labels
+  candidate_hooks:
+  - scale_shift
+  - comparison
+  structure: C
+  component: projectile
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 93
+  sources:
+  - Haldane 1926, 'On Being the Right Size'
+  originality_note: Pairs with Z001.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: R001
+  working_title: Catch the ruler
+  topic_family: reaction
+  scientific_question: How far does a ruler fall before you catch it?
+  explanation: With a typical reaction time of about 0.2 s, a dropped ruler falls about 20 cm (d = ½gt²).
+  misconception: Reactions are instant.
+  key_visual_moment: Ruler falling, distance marks, reaction-time label
+  candidate_hooks:
+  - prediction_challenge
+  - question_answered_by_simulation
+  structure: D
+  component: projectile
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 93
+  sources:
+  - Kinematics d = ½ g t²
+  - Green 2000, Transportation Human Factors 2(3), 195-216 (perception-brake times)
+  originality_note: Viewer can try it, interactive.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: C002
+  working_title: Hitting an identical car is not double
+  topic_family: collisions
+  scientific_question: Is a head-on crash with an identical car at 50 km/h like hitting a wall at 100?
+  explanation: 'It''s like hitting a rigid wall at 50: each car stops in the same way it would against the wall.'
+  misconception: Speeds add, so it's twice as bad.
+  key_visual_moment: Two cars meeting, mirror wall overlay
+  candidate_hooks:
+  - mistaken_assumption
+  - comparison
+  structure: F
+  component: rigid_body
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 93
+  sources:
+  - Momentum conservation; OpenStax University Physics Vol. 1, Collisions
+  originality_note: Strong misconception.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: C004
+  working_title: The helium balloon goes forward
+  topic_family: collisions
+  scientific_question: In an accelerating car, which way does a helium balloon move?
+  explanation: The air is pushed to the back, creating a pressure gradient that pushes the balloon forward.
+  misconception: It swings backward like everything else.
+  key_visual_moment: Car accelerating, passengers lean back, balloon leans forward
+  candidate_hooks:
+  - prediction_challenge
+  - impossible_result
+  structure: D
+  component: diagram
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 93
+  sources:
+  - Buoyancy in an accelerating frame; e.g. Halliday, Resnick & Walker, Fundamentals of Physics
+  originality_note: Great prediction hook.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: C005
+  working_title: Toast lands butter side down
+  topic_family: collisions
+  scientific_question: Is toast really more likely to land butter-side down?
+  explanation: Falling from table height, toast has time to rotate about half a turn, so it usually lands butter-side
+    down.
+  misconception: It's just bad luck and selective memory.
+  key_visual_moment: Toast tipping off the table and half-rotating
+  candidate_hooks:
+  - prediction_challenge
+  - hidden_cause
+  structure: D
+  component: rigid_body
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 93
+  sources:
+  - Matthews 1995, European Journal of Physics 16, 172-176
+  originality_note: Familiar, simple sim.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: D001
+  working_title: The ice cube that doesn't raise the glass
+  topic_family: demos
+  scientific_question: When floating ice melts, does the drink overflow?
+  explanation: Floating ice displaces exactly its melted volume, so the level stays the same (for fresh water in
+    fresh water).
+  misconception: Melting ice raises the level.
+  key_visual_moment: Full glass, ice melting, level line unchanged
+  candidate_hooks:
+  - prediction_challenge
+  - mistaken_assumption
+  structure: D
+  component: diagram
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 93
+  sources:
+  - Archimedes' principle; OpenStax University Physics Vol. 1, Buoyancy
+  originality_note: Classic, relevant to sea-ice myths (with caveat on land ice).
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: N001
+  working_title: Seasons aren't about distance
+  topic_family: misconceptions
+  scientific_question: Is summer hot because Earth is closer to the Sun?
+  explanation: Earth is closest to the Sun in early January; seasons come from the tilt changing sunlight angle
+    and day length.
+  misconception: Summer = closer to the Sun.
+  key_visual_moment: Earth orbit with tilt, sunlight spreading on surface
+  candidate_hooks:
+  - mistaken_assumption
+  - paradox
+  structure: F
+  component: orbit
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 93
+  sources:
+  - NASA Space Place, 'What causes the seasons?' (spaceplace.nasa.gov)
+  originality_note: Strong misconception.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: N002
+  working_title: The Moon's phases aren't Earth's shadow
+  topic_family: misconceptions
+  scientific_question: Is a crescent Moon caused by Earth's shadow?
+  explanation: Phases come from seeing different portions of the Moon's sunlit half; Earth's shadow only appears
+    in lunar eclipses.
+  misconception: Earth's shadow makes the phases.
+  key_visual_moment: Sun-Earth-Moon top view with viewer's perspective inset
+  candidate_hooks:
+  - mistaken_assumption
+  - paradox
+  structure: F
+  component: orbit
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 93
+  sources:
+  - NASA Science, Moon phases (science.nasa.gov/moon/moon-phases)
+  originality_note: Common misconception.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: J005
+  working_title: Traffic lights you can ride
+  topic_family: hidden_maths
+  scientific_question: Why can you sometimes drive through a whole series of green lights?
+  explanation: Signals timed as a 'green wave' turn green at the travel speed of a platoon; above or below that
+    speed you hit reds.
+  misconception: Lights are random.
+  key_visual_moment: Space-time diagram with green bands and a car riding them
+  candidate_hooks:
+  - comparison
+  - question_answered_by_simulation
+  structure: C
+  component: traffic_lane
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 5
+    series: 5
+    breadth: 5
+  opportunity: 93
+  sources:
+  - Gartner, Little & Gabbay 1975, Transportation Science 9(4) (MAXBAND)
+  - Federal Highway Administration, Traffic Signal Timing Manual (FHWA-HOP-08-024)
+  originality_note: Traffic series; strong visual.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: T012
+  working_title: The phantom ghost brake
+  topic_family: traffic
+  scientific_question: Why does the traffic in front of you slow down at the same spot every day?
+  explanation: Bottlenecks like slight uphills or merges trigger waves at fixed spots, then waves travel upstream
+    from them.
+  misconception: A slowdown means something's happened.
+  key_visual_moment: Highway with a gentle hill, waves spawning at the same point
+  candidate_hooks:
+  - hidden_cause
+  - ordinary_mystery
+  structure: C
+  component: traffic_lane
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 5
+    series: 5
+    breadth: 5
+  opportunity: 93
+  sources:
+  - Treiber & Kesting 2013, Traffic Flow Dynamics (Springer), bottlenecks
+  originality_note: Traffic series.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: T001
+  working_title: The jam with no cause
+  topic_family: traffic
+  scientific_question: How can a jam form on an empty ring road with no accident?
+  explanation: Above a critical density, drivers' delayed reactions amplify small speed fluctuations into a stop-and-go
+    wave.
+  misconception: Jams need a cause ahead (accident, merge, lights).
+  key_visual_moment: Ring of cars with one red cluster forming from nothing
+  candidate_hooks:
+  - impossible_result
+  - causal_chain
+  - reverse_explanation
+  structure: E
+  component: traffic_ring
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 5
+    breadth: 5
+  opportunity: 91
+  sources:
+  - Sugiyama et al. 2008, New Journal of Physics 10, 033001
+  - Bando et al. 1995, Physical Review E 51, 1035
+  originality_note: Same premise as the reference channel's hit Short; use a different framing (one tap, followed
+    backward) and our own sim.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: S003
+  working_title: Ball stack super bounce
+  topic_family: small_actions
+  scientific_question: Why does a tennis ball on a basketball fly much higher than either could alone?
+  explanation: Momentum and energy pass from the heavy ball to the light one, so the top ball can rebound with several
+    times its drop speed.
+  misconception: Bounce height can't exceed drop height.
+  key_visual_moment: Two balls dropped together; top one shoots off-screen
+  candidate_hooks:
+  - impossible_result
+  - prediction_challenge
+  structure: D
+  component: projectile
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 4
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 91
+  sources:
+  - Cross 2007, American Journal of Physics 75, 1009-1016
+  originality_note: Well known; our sim adds a third ball and energy bar.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: E005
+  working_title: Square wheels, smooth ride
+  topic_family: engineering
+  scientific_question: Can a square wheel roll smoothly?
+  explanation: On a road of inverted catenary bumps, a square wheel's centre stays level.
+  misconception: Wheels must be round.
+  key_visual_moment: Square-wheeled cart rolling smoothly over bumps
+  candidate_hooks:
+  - impossible_result
+  - constraint
+  structure: B
+  component: rigid_body
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 91
+  sources:
+  - Hall & Wagon 1992, Mathematics Magazine 65, 283-301
+  originality_note: Surprising visual, simple sim.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: G004
+  working_title: Fall through the Earth in 42 minutes
+  topic_family: gravity
+  scientific_question: How long would it take to fall through a tunnel through the Earth?
+  explanation: In a uniform Earth every straight tunnel takes about 42 minutes; with the real density profile about
+    38.
+  misconception: Longer tunnels take longer.
+  key_visual_moment: Earth cross-section, objects falling through different tunnels arriving together
+  candidate_hooks:
+  - constraint
+  - impossible_result
+  structure: G
+  component: orbit
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 91
+  sources:
+  - Cooper 1966, American Journal of Physics 34, 68-70
+  - Klotz 2015, American Journal of Physics 83, 231-237
+  originality_note: 'Strong visual: all chords same time.'
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: O005
+  working_title: The pool is deeper than it looks
+  topic_family: optics
+  scientific_question: Why does a swimming pool look shallower than it is?
+  explanation: Light bending at the surface makes the bottom appear at about three quarters of its real depth.
+  misconception: What you see is where it is.
+  key_visual_moment: Ray diagram from eye to pool floor with apparent vs real depth
+  candidate_hooks:
+  - mistaken_assumption
+  - hidden_cause
+  structure: C
+  component: optics_rays
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 91
+  sources:
+  - OpenStax University Physics Vol. 3, Refraction
+  originality_note: Safety angle; simple.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: W005
+  working_title: The sonic boom never stops
+  topic_family: waves
+  scientific_question: Is a sonic boom a single bang when a plane breaks the sound barrier?
+  explanation: A supersonic aircraft drags a continuous shock cone; the bang is heard wherever the cone passes,
+    for as long as it flies supersonic.
+  misconception: The boom happens once, at the moment of breaking.
+  key_visual_moment: Plane with expanding circles forming a cone sweeping over people
+  candidate_hooks:
+  - mistaken_assumption
+  - impossible_result
+  structure: F
+  component: wave_2d
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 91
+  sources:
+  - NASA Armstrong fact sheet on sonic booms (nasa.gov)
+  originality_note: Strong misconception.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: Z001
+  working_title: Why giants can't exist
+  topic_family: scale
+  scientific_question: Why can't you scale an animal up ten times?
+  explanation: Weight grows with volume (×1000) but bone strength with cross-section (×100), so a giant's legs would
+    break (square-cube law).
+  misconception: Bigger is stronger.
+  key_visual_moment: Scaled skeleton with stress bar going red
+  candidate_hooks:
+  - scale_shift
+  - mistaken_assumption
+  structure: C
+  component: diagram
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 91
+  sources:
+  - Galileo 1638, Two New Sciences
+  - Haldane 1926, 'On Being the Right Size'
+  originality_note: Classic; good scale series.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: R004
+  working_title: The two-second gap at speed
+  topic_family: reaction
+  scientific_question: Why is a following gap measured in seconds, not metres?
+  explanation: A time gap scales with speed automatically, giving the same reaction margin at any speed.
+  misconception: A fixed distance is fine.
+  key_visual_moment: Two cars with metre gap vs second gap at two speeds
+  candidate_hooks:
+  - comparison
+  - counterintuitive_mechanism
+  structure: C
+  component: traffic_lane
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 4
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 91
+  sources:
+  - UK Highway Code, rule 126 (two-second rule)
+  originality_note: Reference channel made a Short on 2 s gaps; low originality, combine with T003.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: M010
+  working_title: Feather and hammer
+  topic_family: mechanics
+  scientific_question: Does a hammer fall faster than a feather without air?
+  explanation: In a vacuum all objects fall with the same acceleration; Apollo 15 showed it on the Moon.
+  misconception: Heavier things fall faster.
+  key_visual_moment: Two objects dropped with and without air
+  candidate_hooks:
+  - prediction_challenge
+  - mistaken_assumption
+  structure: D
+  component: projectile
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 3
+    breadth: 3
+  opportunity: 90
+  sources:
+  - NASA, Apollo 15 Hammer and Feather Drop (nssdc.gsfc.nasa.gov)
+  originality_note: Widely known; use as a short with a new twist (air density slider).
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: T009
+  working_title: The yellow light trap
+  topic_family: traffic
+  scientific_question: Is there a place where you can neither stop nor get through on amber?
+  explanation: If the amber phase is too short for the approach speed, a 'dilemma zone' exists where stopping and
+    proceeding are both impossible within the rules.
+  misconception: There is always a safe choice at a yellow light.
+  key_visual_moment: Road with a red band showing positions where neither option works
+  candidate_hooks:
+  - constraint
+  - prediction_challenge
+  - counterintuitive_mechanism
+  structure: D
+  component: projectile
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 5
+    sources: 5
+    feasibility: 5
+    series: 4
+    breadth: 4
+  opportunity: 89
+  sources:
+  - Gazis, Herman & Maradudin 1960, Operations Research 8, 112-132
+  originality_note: Classic paper, almost no Shorts coverage.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: H002
+  working_title: Milk now or milk later?
+  topic_family: heat
+  scientific_question: Should you add milk to your coffee straight away or just before drinking to keep it hottest?
+  explanation: Hot coffee loses heat faster than warm coffee, so adding milk early slows the loss; adding at the
+    end leaves it cooler (Newton's law of cooling).
+  misconception: It makes no difference when you add it.
+  key_visual_moment: Two cups with thermometers over ten minutes
+  candidate_hooks:
+  - prediction_challenge
+  - comparison
+  structure: D
+  component: heat_1d
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 4
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 89
+  sources:
+  - Newton's law of cooling; e.g. Incropera & DeWitt, Fundamentals of Heat and Mass Transfer
+  originality_note: Everyday decision; needs stated assumptions.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: P005
+  working_title: Your friends are more popular than you
+  topic_family: maths
+  scientific_question: Why do most people's friends have more friends than they do?
+  explanation: Popular people appear in many friend lists, so the average friend is more connected than the average
+    person (the friendship paradox).
+  misconception: You're just unpopular.
+  key_visual_moment: Network graph highlighting popular nodes counted many times
+  candidate_hooks:
+  - hidden_cause
+  - paradox
+  structure: C
+  component: probability_mc
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 4
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 89
+  sources:
+  - Feld 1991, American Journal of Sociology 96(6), 1464-1477
+  originality_note: Relatable, little coverage.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: P007
+  working_title: The bus is always late for you
+  topic_family: maths
+  scientific_question: Why is your wait for a bus longer than half the gap between buses?
+  explanation: You are more likely to arrive during a long gap than a short one (the inspection paradox).
+  misconception: Average wait is half the average gap.
+  key_visual_moment: Timeline with uneven bus gaps and random arrivals
+  candidate_hooks:
+  - ordinary_mystery
+  - hidden_cause
+  structure: C
+  component: probability_mc
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 4
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 89
+  sources:
+  - Feller 1971, An Introduction to Probability Theory and Its Applications Vol. II (Wiley)
+  originality_note: Very relatable; rare.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: Q002
+  working_title: The elevator always goes the wrong way
+  topic_family: familiar
+  scientific_question: Why does the first lift to arrive usually go the wrong way for you?
+  explanation: If you're on a low floor, most of the lift's journey time is spent above you, so it's more often
+    coming down (Gamow-Stern paradox).
+  misconception: Lifts are random 50-50.
+  key_visual_moment: Building with lift position histogram
+  candidate_hooks:
+  - ordinary_mystery
+  - hidden_cause
+  structure: C
+  component: probability_mc
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 4
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 89
+  sources:
+  - Gamow & Stern 1958, Puzzle-Math (Viking)
+  - Knuth 1969, Journal of Recreational Mathematics 2, 131-137
+  originality_note: Relatable, rare.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: T011
+  working_title: Why roundabouts flow
+  topic_family: traffic
+  scientific_question: Why can roundabouts move more cars than traffic lights?
+  explanation: At low to moderate volumes vehicles enter in gaps without waiting for a phase, cutting delay and
+    conflict points.
+  misconception: Lights are always more efficient.
+  key_visual_moment: Intersection with lights vs roundabout, cars-through counter
+  candidate_hooks:
+  - comparison
+  - counterintuitive_mechanism
+  structure: C
+  component: traffic_lane
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 5
+    series: 5
+    breadth: 5
+  opportunity: 89
+  sources:
+  - 'FHWA 2000, Roundabouts: An Informational Guide (FHWA-RD-00-067)'
+  originality_note: Traffic series; comments ask for it; caveat on high volumes.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: T002
+  working_title: One calm car fixes the jam
+  topic_family: traffic
+  scientific_question: Can a single driver who keeps a steady speed dissolve a traffic wave?
+  explanation: A car that leaves a larger gap absorbs speed fluctuations instead of passing them on; a field experiment
+    with one automated car damped stop-and-go waves on a ring.
+  misconception: Only removing cars or adding lanes reduces jams.
+  key_visual_moment: 'Two stacked rings: one jammed, one flowing because of one blue car'
+  candidate_hooks:
+  - comparison
+  - counterintuitive_mechanism
+  - escalating_variable
+  structure: C
+  component: traffic_ring
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 4
+    clarity: 4
+    visual: 4
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 5
+    series: 5
+    breadth: 5
+  opportunity: 88
+  sources:
+  - Stern et al. 2018, Transportation Research Part C 89, 205-221
+  originality_note: Reference channel touched this in its hit Short's ending; make it the full topic with its own
+    experiment.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: S002
+  working_title: Dominoes that grow
+  topic_family: small_actions
+  scientific_question: How far can a chain of growing dominoes go?
+  explanation: Each domino can topple one about one and a half times bigger, so the size grows exponentially along
+    the chain.
+  misconception: A domino can only knock over one its own size.
+  key_visual_moment: Dominoes growing from fingernail to building size
+  candidate_hooks:
+  - causal_chain
+  - scale_shift
+  structure: E
+  component: rigid_body
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 5
+    series: 4
+    breadth: 4
+  opportunity: 88
+  sources:
+  - Whitehead 1983, American Journal of Physics 51, 182
+  originality_note: Real demos exist; sim with scale bar is ours.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: G002
+  working_title: Throw it hard enough and it never lands
+  topic_family: gravity
+  scientific_question: How fast must you throw a ball to put it in orbit?
+  explanation: At about 7.9 km/s near the surface (ignoring air), the ground curves away as fast as the ball falls.
+  misconception: Orbiting objects have escaped gravity.
+  key_visual_moment: 'Newton''s cannon: shots landing farther until one circles'
+  candidate_hooks:
+  - escalating_variable
+  - constraint
+  structure: G
+  component: orbit
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 88
+  sources:
+  - Newton, A Treatise of the System of the World (1728), cannon figure
+  originality_note: Classic; pairs with G003.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: F004
+  working_title: The boat, the anchor and the lake
+  topic_family: fluids
+  scientific_question: If you drop an anchor from a boat into a lake, does the water level rise or fall?
+  explanation: Afloat, the anchor displaces its weight in water; sunk, only its volume, which is smaller, so the
+    level falls slightly.
+  misconception: The level rises when things go into water.
+  key_visual_moment: Lake with level gauge, anchor drops, gauge dips
+  candidate_hooks:
+  - prediction_challenge
+  - mistaken_assumption
+  structure: D
+  component: diagram
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 88
+  sources:
+  - Archimedes' principle; e.g. OpenStax University Physics Vol. 1, Buoyancy
+  originality_note: Classic puzzle; strong prediction hook.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: O003
+  working_title: Mirrors don't flip left and right
+  topic_family: optics
+  scientific_question: Why does a mirror swap left and right but not up and down?
+  explanation: 'It doesn''t swap either: it reverses front and back; we interpret it as a left-right swap because
+    we imagine turning around.'
+  misconception: Mirrors flip left-right.
+  key_visual_moment: Arrow pointing into mirror reversing front-back
+  candidate_hooks:
+  - mistaken_assumption
+  - paradox
+  structure: F
+  component: diagram
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 88
+  sources:
+  - Gregory 1997, Mirrors in Mind (W.H. Freeman)
+  originality_note: Classic puzzle.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: X002
+  working_title: Electricity crawls
+  topic_family: em
+  scientific_question: How fast do electrons move in a wire when you flip a switch?
+  explanation: Electrons drift at fractions of a millimetre per second; the signal travels near light speed because
+    the field moves, not the electrons.
+  misconception: Electrons zip through the wire at light speed.
+  key_visual_moment: Wire with slow electrons and a fast field front
+  candidate_hooks:
+  - mistaken_assumption
+  - paradox
+  structure: F
+  component: diagram
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 88
+  sources:
+  - OpenStax University Physics Vol. 2, Current and drift velocity
+  originality_note: Strong misconception.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: X003
+  working_title: Birds on a power line
+  topic_family: em
+  scientific_question: Why don't birds on a high-voltage line get shocked?
+  explanation: Current needs a potential difference; both feet are at the same voltage, so almost no current flows
+    through the bird.
+  misconception: High voltage always shocks.
+  key_visual_moment: Bird on wire with equal voltage labels at both feet
+  candidate_hooks:
+  - ordinary_mystery
+  - hidden_cause
+  structure: C
+  component: circuit
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 88
+  sources:
+  - OpenStax University Physics Vol. 2, Electric potential
+  originality_note: Familiar.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: W002
+  working_title: Why sirens change pitch
+  topic_family: waves
+  scientific_question: Why does an ambulance siren drop in pitch as it passes?
+  explanation: Waves bunch up in front of a moving source and spread out behind, so you hear higher then lower frequencies.
+  misconception: The driver changes the siren.
+  key_visual_moment: Circular wavefronts bunching ahead of a moving car
+  candidate_hooks:
+  - ordinary_mystery
+  - visual_experiment
+  structure: C
+  component: wave_2d
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 88
+  sources:
+  - OpenStax University Physics Vol. 1, Doppler effect
+  originality_note: Common; distinct ripple sim.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: Q004
+  working_title: Pull the tablecloth fast
+  topic_family: familiar
+  scientific_question: Why do the dishes stay put when you yank the tablecloth?
+  explanation: Friction acts for only a fraction of a second, so the dishes gain very little momentum (impulse =
+    force × time).
+  misconception: They should fly off.
+  key_visual_moment: Cloth pulled fast vs slow, dish movement
+  candidate_hooks:
+  - prediction_challenge
+  - comparison
+  structure: D
+  component: rigid_body
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 88
+  sources:
+  - Impulse-momentum theorem; OpenStax University Physics Vol. 1
+  originality_note: Classic demo.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: E006
+  working_title: Why triangles hold up bridges
+  topic_family: engineering
+  scientific_question: Why are bridges built from triangles?
+  explanation: A triangle can't change shape without changing a side length; a square can fold flat.
+  misconception: Thicker beams are what make bridges strong.
+  key_visual_moment: Square frame collapses, triangle frame holds
+  candidate_hooks:
+  - prediction_challenge
+  - comparison
+  structure: D
+  component: mass_spring
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 3
+    breadth: 3
+  opportunity: 87
+  sources:
+  - 'Any statics text, e.g. Hibbeler, Engineering Mechanics: Statics'
+  originality_note: Basic but visual; series 'Hidden Rules'.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: P009
+  working_title: Seven shuffles
+  topic_family: maths
+  scientific_question: How many riffle shuffles make a deck random?
+  explanation: About seven riffle shuffles bring a 52-card deck close to random; fewer leave detectable order.
+  misconception: Two or three shuffles are enough.
+  key_visual_moment: Deck order heatmap getting noisier per shuffle
+  candidate_hooks:
+  - escalating_variable
+  - prediction_challenge
+  structure: G
+  component: probability_mc
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 87
+  sources:
+  - Bayer & Diaconis 1992, Annals of Applied Probability 2(2), 294-313
+  originality_note: Familiar, rare in Shorts.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: T004
+  working_title: Jams drive backward
+  topic_family: traffic
+  scientific_question: Why does a traffic jam move backward while every car moves forward?
+  explanation: Cars leave the front of the jam and join at the back, so the jam's position moves upstream at roughly
+    15-20 km/h on motorways.
+  misconception: A jam is a fixed blockage.
+  key_visual_moment: 'Top-down: shaded jam region sliding backward while cars move forward through it'
+  candidate_hooks:
+  - paradox
+  - impossible_result
+  - comparison
+  structure: C
+  component: traffic_lane
+  production_complexity: medium
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 5
+    visual: 3
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 5
+    breadth: 5
+  opportunity: 86
+  sources:
+  - Treiber & Kesting 2013, Traffic Flow Dynamics (Springer)
+  - Sugiyama et al. 2008, New Journal of Physics 10, 033001
+  originality_note: The reference Short used this as one beat; here it is the whole idea, shown with a space-time
+    trail.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: E002
+  working_title: The bridge that made people walk in step
+  topic_family: engineering
+  scientific_question: Why did London's Millennium Bridge sway on opening day?
+  explanation: Small sways made walkers adjust their stride, which pushed the sway further, a crowd feedback loop.
+  misconception: Bridges sway because they're weak.
+  key_visual_moment: Bridge deck with pedestrians gradually syncing and sway growing
+  candidate_hooks:
+  - causal_chain
+  - impossible_result
+  structure: E
+  component: agents
+  production_complexity: medium
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 86
+  sources:
+  - Strogatz et al. 2005, Nature 438, 43-44
+  originality_note: Good synchrony story.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: G001
+  working_title: To catch up, slow down
+  topic_family: gravity
+  scientific_question: How do you catch up with a spacecraft ahead of you in orbit?
+  explanation: Firing backward drops you to a lower, faster orbit, so slowing down makes you overtake.
+  misconception: To catch up you speed up.
+  key_visual_moment: Two orbits, chaser brakes and laps the target
+  candidate_hooks:
+  - mistaken_assumption
+  - prediction_challenge
+  - paradox
+  structure: D
+  component: orbit
+  production_complexity: medium
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 86
+  sources:
+  - Kleppner & Kolenkow, An Introduction to Mechanics, orbital motion
+  - NASA, Basics of Space Flight (science.nasa.gov/learn/basics-of-space-flight)
+  originality_note: Counterintuitive and simulatable.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: B002
+  working_title: Why spaghetti won't break in two
+  topic_family: structures
+  scientific_question: Why does dry spaghetti snap into three or more pieces?
+  explanation: The first break sends a bending wave along the stick that causes more breaks; twisting first lets
+    it break in two.
+  misconception: Bend it and it snaps in half.
+  key_visual_moment: Spaghetti bending, snapping, wave causing second break
+  candidate_hooks:
+  - impossible_result
+  - prediction_challenge
+  structure: D
+  component: mass_spring
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 86
+  sources:
+  - Audoly & Neukirch 2005, Physical Review Letters 95, 095505
+  - Heisser et al. 2018, Proceedings of the National Academy of Sciences 115, 8665-8670
+  originality_note: Kitchen familiarity, strong visual.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: A002
+  working_title: Big nuts rise to the top
+  topic_family: emergence
+  scientific_question: Why do the biggest nuts end up on top when you shake the jar?
+  explanation: Shaking lets small grains fall into gaps under big ones, and convection rolls lift the big ones up
+    (Brazil nut effect).
+  misconception: Heavy things sink.
+  key_visual_moment: Shaken granular box, large particle rising
+  candidate_hooks:
+  - impossible_result
+  - prediction_challenge
+  structure: E
+  component: granular
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 86
+  sources:
+  - Rosato, Strandburg, Prinz & Swendsen 1987, Physical Review Letters 58, 1038-1040
+  originality_note: Familiar cereal-box experience.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: A003
+  working_title: Three rules make a flock
+  topic_family: emergence
+  scientific_question: How do starlings flock without a leader?
+  explanation: Each bird follows three local rules (separation, alignment, cohesion), and flock-wide patterns emerge.
+  misconception: Someone must lead.
+  key_visual_moment: Boids forming swirling flock
+  candidate_hooks:
+  - impossible_result
+  - question_answered_by_simulation
+  structure: G
+  component: agents
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 86
+  sources:
+  - Reynolds 1987, Computer Graphics 21(4), 25-34 (SIGGRAPH)
+  originality_note: Common sim; frame around one rule change.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: Q001
+  working_title: Why lines move slower when you pick one
+  topic_family: familiar
+  scientific_question: Is one shared queue faster than separate queues?
+  explanation: With one line feeding all tills, nobody waits behind a slow customer, so average and worst-case waits
+    drop.
+  misconception: Separate lines are just as fast.
+  key_visual_moment: 'Two shops: separate queues vs single snake, wait-time bars'
+  candidate_hooks:
+  - comparison
+  - ordinary_mystery
+  structure: C
+  component: probability_mc
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 5
+    series: 4
+    breadth: 4
+  opportunity: 86
+  sources:
+  - Larson 1987, Operations Research 35(6), 895-905
+  - Kendall 1953, Annals of Mathematical Statistics 24, 338-354
+  originality_note: Everyday, strong.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: T006
+  working_title: Why the other lane looks faster
+  topic_family: traffic
+  scientific_question: Why does the next lane always seem to be moving faster?
+  explanation: You spend more time being overtaken while you are slow, so you see more cars pass you than you pass,
+    even when lanes move at the same average speed.
+  misconception: The other lane really is faster.
+  key_visual_moment: Two lanes with equal average speed, counter showing 'cars passing me' vs 'cars I pass'
+  candidate_hooks:
+  - mistaken_assumption
+  - ordinary_mystery
+  - comparison
+  structure: C
+  component: traffic_lane
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 5
+    series: 4
+    breadth: 4
+  opportunity: 85
+  sources:
+  - Redelmeier & Tibshirani 1999, Nature 401, 35
+  originality_note: Strong familiarity, little coverage with simulation.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: M008
+  working_title: Clocks that sync by themselves
+  topic_family: mechanics
+  scientific_question: Why do metronomes on a shared board end up ticking together?
+  explanation: The board moves slightly with each swing, coupling the metronomes until they lock in phase.
+  misconception: Independent clocks drift apart.
+  key_visual_moment: Five metronomes, random start, locking together
+  candidate_hooks:
+  - impossible_result
+  - countdown
+  - escalating_variable
+  structure: E
+  component: pendulum
+  production_complexity: medium
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 85
+  sources:
+  - Pantaleone 2002, American Journal of Physics 70, 992-1000
+  - Bennett et al. 2002, Proceedings of the Royal Society A 458, 563-579
+  originality_note: Viral real demo exists; our sim shows the coupling.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: F003
+  working_title: The thin tube that bursts the barrel
+  topic_family: fluids
+  scientific_question: Can a thin column of water exert as much pressure as a whole lake?
+  explanation: Pressure depends only on depth, not on how much water is above, so a tall thin tube can push as hard
+    as a deep lake.
+  misconception: More water means more pressure.
+  key_visual_moment: Narrow tall tube and wide tank with same pressure gauge reading
+  candidate_hooks:
+  - prediction_challenge
+  - paradox
+  structure: D
+  component: diagram
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 3
+    breadth: 3
+  opportunity: 85
+  sources:
+  - OpenStax University Physics Vol. 1, Fluid mechanics (pressure and depth)
+  originality_note: Hydrostatic paradox; easy sim.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: O004
+  working_title: The lifeguard knows Snell's law
+  topic_family: optics
+  scientific_question: Why does light bend when it enters water?
+  explanation: Light takes the path of least time, like a lifeguard running on sand then swimming, which bends at
+    the boundary.
+  misconception: Light always travels in straight lines.
+  key_visual_moment: Lifeguard path vs light ray overlaid
+  candidate_hooks:
+  - comparison
+  - counterintuitive_mechanism
+  structure: C
+  component: optics_rays
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 3
+    breadth: 3
+  opportunity: 85
+  sources:
+  - Feynman, Leighton & Sands, The Feynman Lectures on Physics Vol. I, ch. 26
+  originality_note: Nice analogy; shared by some creators.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: X001
+  working_title: The magnet that won't fall
+  topic_family: em
+  scientific_question: Why does a magnet fall in slow motion through a copper pipe?
+  explanation: The falling magnet induces currents in the pipe that create a magnetic field opposing its motion
+    (Lenz's law).
+  misconception: Copper isn't magnetic, so nothing should happen.
+  key_visual_moment: Magnet dropping in pipe vs outside, current loops shown
+  candidate_hooks:
+  - impossible_result
+  - prediction_challenge
+  structure: D
+  component: diagram
+  production_complexity: medium
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 85
+  sources:
+  - MacLatchy, Backman & Bogan 1993, American Journal of Physics 61, 1096
+  originality_note: Known demo; sim shows hidden currents.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: W003
+  working_title: Sound that cancels sound
+  topic_family: waves
+  scientific_question: How can adding sound make silence?
+  explanation: Two waves meeting crest to trough cancel; noise-cancelling headphones add an inverted copy of outside
+    noise.
+  misconception: Adding sound makes it louder.
+  key_visual_moment: Two waves summing to flat line
+  candidate_hooks:
+  - mistaken_assumption
+  - comparison
+  structure: C
+  component: wave_1d
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 85
+  sources:
+  - OpenStax University Physics Vol. 1, Interference
+  originality_note: Common; short version.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: B004
+  working_title: The wobbly table fix
+  topic_family: structures
+  scientific_question: Can you always stop a wobbly table by rotating it?
+  explanation: On ground that is continuous and not too steep, rotating a square table always finds a position where
+    all four legs touch.
+  misconception: You need a folded napkin.
+  key_visual_moment: Table rotating on bumpy ground until all legs touch
+  candidate_hooks:
+  - impossible_result
+  - question_answered_by_simulation
+  structure: B
+  component: rigid_body
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 85
+  sources:
+  - Baritompa, Löwen, Polster & Ross 2007, Mathematical Intelligencer 29(2), 49-58 (arXiv math/0511490)
+  originality_note: Practical, delightful.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: A004
+  working_title: Ants find the shortest path
+  topic_family: emergence
+  scientific_question: How do ants find the shortest route without a map?
+  explanation: Ants on shorter paths return sooner, so pheromone builds faster there and attracts more ants.
+  misconception: Ants measure the path.
+  key_visual_moment: Ant colony with two bridges, short one turning dark
+  candidate_hooks:
+  - impossible_result
+  - question_answered_by_simulation
+  structure: E
+  component: agents
+  production_complexity: medium
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 85
+  sources:
+  - Goss, Aron, Deneubourg & Pasteels 1989, Naturwissenschaften 76, 579-581
+  originality_note: Nice sim.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: N004
+  working_title: Things in motion don't need a push
+  topic_family: misconceptions
+  scientific_question: Does a moving object need a force to keep moving?
+  explanation: Without friction an object keeps moving forever; forces change motion, they don't sustain it (Newton's
+    first law).
+  misconception: Motion needs a constant push.
+  key_visual_moment: Puck sliding on decreasing-friction surfaces, last one never stops
+  candidate_hooks:
+  - mistaken_assumption
+  - constraint
+  structure: D
+  component: projectile
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 3
+    breadth: 3
+  opportunity: 85
+  sources:
+  - Muller, Bewes, Sharma & Reimann 2008, Journal of Computer Assisted Learning 24(2), 144-155 (this misconception)
+  - Newton's first law
+  originality_note: The core misconception in Muller's study; strong fit.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: N005
+  working_title: A ball thrown up has no force pushing it up
+  topic_family: misconceptions
+  scientific_question: What forces act on a ball at the top of its throw?
+  explanation: 'Only gravity (and air): the ''force of the throw'' ends when it leaves your hand.'
+  misconception: There's an upward force while it rises.
+  key_visual_moment: Ball arc with force arrows (only down)
+  candidate_hooks:
+  - mistaken_assumption
+  - prediction_challenge
+  structure: D
+  component: projectile
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 3
+    breadth: 3
+  opportunity: 85
+  sources:
+  - Halloun & Hestenes 1985, American Journal of Physics 53, 1056-1065
+  originality_note: Documented misconception.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: M003
+  working_title: Pull the spool the other way
+  topic_family: mechanics
+  scientific_question: Which way does a spool roll when you pull its thread?
+  explanation: Depending on the thread angle, the torque about the contact point can make the spool roll toward
+    you or away from you.
+  misconception: It always rolls toward the pull.
+  key_visual_moment: Spool on table, thread at two angles, opposite rolling
+  candidate_hooks:
+  - prediction_challenge
+  - comparison
+  - escalating_variable
+  structure: D
+  component: rigid_body
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 5
+    series: 4
+    breadth: 4
+  opportunity: 84
+  sources:
+  - Kleppner & Kolenkow, An Introduction to Mechanics (Cambridge UP), rolling and torque about contact point
+  originality_note: Classic demo; good prediction hook.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: M011
+  working_title: Fastest isn't straightest
+  topic_family: mechanics
+  scientific_question: 'Which ramp gets a ball down first: straight or curved?'
+  explanation: A curve that drops steeply first (a cycloid) wins because the ball gains speed early.
+  misconception: The shortest path is fastest.
+  key_visual_moment: Three ramps race; cycloid wins
+  candidate_hooks:
+  - prediction_challenge
+  - comparison
+  structure: D
+  component: projectile
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 3
+    series: 2
+    breadth: 2
+  opportunity: 84
+  sources:
+  - Johann Bernoulli 1696 brachistochrone problem; any classical mechanics text (e.g. Goldstein, Classical Mechanics)
+  originality_note: Very popular topic elsewhere; low originality unless new framing.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: M012
+  working_title: Hollow vs solid race
+  topic_family: mechanics
+  scientific_question: 'Which rolls downhill faster: a hollow pipe or a solid rod of the same mass?'
+  explanation: More of the hollow pipe's mass is far from its axis, so more energy goes into spinning and it rolls
+    slower.
+  misconception: Same mass, same speed.
+  key_visual_moment: Two cylinders racing down a ramp
+  candidate_hooks:
+  - prediction_challenge
+  - comparison
+  structure: D
+  component: rigid_body
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 4
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 3
+    breadth: 3
+  opportunity: 84
+  sources:
+  - OpenStax University Physics Vol. 1, Rolling motion
+  originality_note: Classic; a 'prediction' staple.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: E003
+  working_title: Hang a chain, flip it, get an arch
+  topic_family: engineering
+  scientific_question: Why do the strongest arches follow the shape of a hanging chain?
+  explanation: A hanging chain carries only tension; flipped, the same shape carries only compression, so no bending.
+  misconception: Arches are round semicircles for strength.
+  key_visual_moment: Hanging chain flips into a standing arch, forces as arrows
+  candidate_hooks:
+  - reverse_explanation
+  - comparison
+  structure: B
+  component: mass_spring
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 5
+    sources: 4
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 84
+  sources:
+  - Heyman 1995, The Stone Skeleton (Cambridge UP)
+  - Hooke 1676, 'as hangs the flexible line, so but inverted will stand the rigid arch'
+  originality_note: Visual and elegant.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: F007
+  working_title: Your drain doesn't care about the hemisphere
+  topic_family: fluids
+  scientific_question: Does water drain clockwise in one hemisphere and anticlockwise in the other?
+  explanation: The Coriolis effect is far too weak for a sink; basin shape and leftover motion decide, except in
+    carefully controlled experiments.
+  misconception: Hemisphere sets the drain direction.
+  key_visual_moment: Two sinks in different hemispheres swirling the same way
+  candidate_hooks:
+  - mistaken_assumption
+  - paradox
+  structure: F
+  component: diagram
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 84
+  sources:
+  - Shapiro 1962, Nature 196, 1080-1081
+  originality_note: Classic myth.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: H003
+  working_title: Why big animals keep warm
+  topic_family: heat
+  scientific_question: Why do whales stay warm in cold water while shrews must eat constantly?
+  explanation: Heat loss scales with surface area, heat production with volume, so big bodies lose relatively less
+    heat.
+  misconception: Size doesn't matter for warmth.
+  key_visual_moment: Cubes of growing size with surface/volume label
+  candidate_hooks:
+  - scale_shift
+  - comparison
+  structure: C
+  component: diagram
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 4
+    visual: 3
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 84
+  sources:
+  - Haldane 1926, 'On Being the Right Size' (Possible Worlds)
+  originality_note: Pairs with scale topics.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: H004
+  working_title: The thermos keeps cold too
+  topic_family: heat
+  scientific_question: How does a thermos know whether to keep things hot or cold?
+  explanation: 'It doesn''t: it slows all heat flow (vacuum stops conduction and convection, silvering cuts radiation).'
+  misconception: It actively heats or cools.
+  key_visual_moment: Hot and cold flasks with tiny heat-flow arrows
+  candidate_hooks:
+  - ordinary_mystery
+  - hidden_cause
+  structure: C
+  component: heat_1d
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 4
+    clarity: 4
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 84
+  sources:
+  - Incropera & DeWitt, Fundamentals of Heat and Mass Transfer, radiation and insulation
+  originality_note: Simple; good short.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: O002
+  working_title: Every rainbow is a circle
+  topic_family: optics
+  scientific_question: Why is a rainbow always the same size, wherever you stand?
+  explanation: Each raindrop sends light back at about 42 degrees from the antisolar point, so the bow is a circle
+    centred on your shadow.
+  misconception: A rainbow is an object at a place.
+  key_visual_moment: Rays through drops building a 42 degree cone around the viewer
+  candidate_hooks:
+  - impossible_result
+  - paradox
+  structure: C
+  component: optics_rays
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 4
+    clarity: 4
+    visual: 4
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 84
+  sources:
+  - Nussenzveig 1977, Scientific American 236(4), 116-127
+  originality_note: Good visual.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: B001
+  working_title: How far can a stack lean
+  topic_family: structures
+  scientific_question: How far can you make a stack of blocks overhang a table edge?
+  explanation: With smart stacking the overhang grows without limit, slowly (harmonic stacking), and faster with
+    clever counterweights.
+  misconception: You can't overhang more than one block.
+  key_visual_moment: Blocks stacking past the table edge with overhang ruler
+  candidate_hooks:
+  - impossible_result
+  - escalating_variable
+  structure: G
+  component: rigid_body
+  production_complexity: medium
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 84
+  sources:
+  - Paterson & Zwick 2009, American Mathematical Monthly 116(1), 19-44
+  originality_note: Surprising and visual.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: B003
+  working_title: Why beams are shaped like an I
+  topic_family: structures
+  scientific_question: Why are steel beams shaped like an I instead of a solid block?
+  explanation: Bending resistance comes mostly from material far from the centre, so an I-shape is nearly as stiff
+    with much less steel.
+  misconception: Solid is strongest.
+  key_visual_moment: Solid and I-beam bending under load, stress colours
+  candidate_hooks:
+  - comparison
+  - hidden_cause
+  structure: C
+  component: diagram
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 4
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 3
+    breadth: 3
+  opportunity: 84
+  sources:
+  - 'Any structures text, e.g. Gordon, Structures: or Why Things Don''t Fall Down (Penguin)'
+  originality_note: Engineering basics.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: T005
+  working_title: Zip merging is not rude
+  topic_family: traffic
+  scientific_question: Is it faster to merge early or use both lanes until the end?
+  explanation: Using both lanes to the merge point and alternating shortens the queue and evens out lane speeds
+    when traffic is heavy.
+  misconception: Merging late is cheating and slows everyone.
+  key_visual_moment: 'Two lane-drop sims side by side: early-merge queue twice as long'
+  candidate_hooks:
+  - comparison
+  - mistaken_assumption
+  - prediction_challenge
+  structure: F
+  component: traffic_lane
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 4
+    clarity: 4
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 3
+    feasibility: 5
+    series: 4
+    breadth: 4
+  opportunity: 83
+  sources:
+  - Minnesota Department of Transportation, Zipper merge guidance (dot.state.mn.us/zippermerge)
+  - Treiber & Kesting 2013, Traffic Flow Dynamics (Springer)
+  originality_note: Popular topic in news, rarely simulated; check claims about throughput carefully.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: M009
+  working_title: Two pendulums, one tiny difference
+  topic_family: mechanics
+  scientific_question: Why do two double pendulums released almost identically end up completely different?
+  explanation: 'The double pendulum is chaotic: differences grow exponentially, so a millimetre becomes a different
+    path within seconds.'
+  misconception: Same start, same result.
+  key_visual_moment: Two overlaid double pendulums diverging
+  candidate_hooks:
+  - causal_chain
+  - comparison
+  - scale_shift
+  structure: E
+  component: pendulum
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 4
+    ease: 5
+    originality: 4
+    sources: 5
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 83
+  sources:
+  - Shinbrot et al. 1992, American Journal of Physics 60, 491-499
+  originality_note: Common visual; differentiate with divergence-meter.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: W004
+  working_title: Sand finds the silent lines
+  topic_family: waves
+  scientific_question: Why does sand on a vibrating plate form patterns?
+  explanation: The plate vibrates in standing-wave modes; sand bounces off moving parts and collects on the still
+    nodal lines (Chladni figures).
+  misconception: Sand piles up where shaking is strongest.
+  key_visual_moment: Plate eigenmode with sand gathering on node lines
+  candidate_hooks:
+  - impossible_result
+  - escalating_variable
+  structure: G
+  component: wave_2d
+  production_complexity: medium
+  scores:
+    familiarity: 3
+    curiosity: 5
+    clarity: 5
+    visual: 5
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 3
+    breadth: 3
+  opportunity: 83
+  sources:
+  - Chladni 1787, Entdeckungen über die Theorie des Klanges
+  originality_note: Beautiful; sim feasible via plate modes.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: F006
+  working_title: Water drops that float on heat
+  topic_family: fluids
+  scientific_question: Why does water skitter on a very hot pan instead of boiling away?
+  explanation: Above the Leidenfrost point a vapour layer insulates the drop and levitates it, so it lasts longer
+    on a hotter pan.
+  misconception: Hotter pan, faster evaporation.
+  key_visual_moment: Drop lifetime vs pan temperature graph with a jump
+  candidate_hooks:
+  - impossible_result
+  - escalating_variable
+  structure: G
+  component: diagram
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 3
+    sources: 3
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 82
+  sources:
+  - Quéré 2013, Annual Review of Fluid Mechanics 45, 197-215
+  originality_note: Familiar kitchen experience.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: H005
+  working_title: The wet-bulb limit
+  topic_family: heat
+  scientific_question: Why can humid 35 °C heat be deadly when dry 45 °C can be survived?
+  explanation: Sweat cools by evaporating; in very humid air evaporation stops, so the body can't shed heat above
+    a wet-bulb temperature near 35 °C.
+  misconception: Temperature alone decides danger.
+  key_visual_moment: Body with sweat evaporation rate falling as humidity rises
+  candidate_hooks:
+  - hidden_cause
+  - constraint
+  structure: C
+  component: diagram
+  production_complexity: medium
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 82
+  sources:
+  - Sherwood & Huber 2010, Proceedings of the National Academy of Sciences 107, 9552-9555
+  originality_note: Serious, current; careful caveats (recent work suggests lower limits).
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: O001
+  working_title: Why sunsets are red
+  topic_family: optics
+  scientific_question: Why is the sky blue at noon and red at sunset?
+  explanation: Air scatters blue light more; at sunset light travels through much more air, so blue is scattered
+    away before it reaches you.
+  misconception: The sky reflects the ocean.
+  key_visual_moment: Sun rays through atmosphere layers, blue photons scattering off
+  candidate_hooks:
+  - ordinary_mystery
+  - comparison
+  structure: C
+  component: optics_rays
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 82
+  sources:
+  - Any optics text, e.g. Hecht, Optics, Rayleigh scattering
+  originality_note: Common; needs a distinctive sim (photon Monte Carlo).
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: X005
+  working_title: Two bulbs, dimmer together
+  topic_family: em
+  scientific_question: Why do two bulbs in series glow dimmer than one?
+  explanation: Each bulb gets part of the voltage and the current drops, so power per bulb falls by about a factor
+    of four for identical resistive bulbs.
+  misconception: Two bulbs give twice the light.
+  key_visual_moment: One bulb vs two in series vs parallel, brightness bars
+  candidate_hooks:
+  - prediction_challenge
+  - comparison
+  structure: D
+  component: circuit
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 4
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 82
+  sources:
+  - OpenStax University Physics Vol. 2, Resistors in series and parallel
+  originality_note: Basic; prediction hook works.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: P003
+  working_title: Dropping needles to find π
+  topic_family: maths
+  scientific_question: How can dropping needles on a floor calculate π?
+  explanation: The chance a needle crosses a line depends on π, so counting crossings estimates it (Buffon's needle).
+  misconception: π only comes from circles.
+  key_visual_moment: Needles falling, π estimate converging
+  candidate_hooks:
+  - impossible_result
+  - escalating_variable
+  structure: G
+  component: probability_mc
+  production_complexity: small
+  scores:
+    familiarity: 3
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 82
+  sources:
+  - Buffon 1777, Essai d'arithmétique morale
+  originality_note: Covered elsewhere; nice visual.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: Z003
+  working_title: The last minute of the jar
+  topic_family: scale
+  scientific_question: If bacteria double every minute and fill a jar in an hour, when is it half full?
+  explanation: 'At 59 minutes: exponential growth means the jar looks nearly empty until the very end.'
+  misconception: Halfway in time, halfway full.
+  key_visual_moment: Jar filling slowly then suddenly
+  candidate_hooks:
+  - prediction_challenge
+  - countdown
+  structure: D
+  component: diagram
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 4
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 82
+  sources:
+  - Bartlett 1978, American Journal of Physics 46, 876-888
+  originality_note: Classic; good timer visual.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: Z004
+  working_title: Fold paper to the Moon
+  topic_family: scale
+  scientific_question: How many folds of paper would reach the Moon?
+  explanation: Each fold doubles the thickness, so about 42 folds of 0.1 mm paper exceed the Moon's distance (in
+    principle).
+  misconception: It would take millions of folds.
+  key_visual_moment: Paper stack doubling past mountains, clouds, Moon
+  candidate_hooks:
+  - prediction_challenge
+  - scale_shift
+  structure: G
+  component: diagram
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 2
+    series: 2
+    breadth: 2
+  opportunity: 82
+  sources:
+  - 'Exponential arithmetic: 0.1 mm × 2^42 ≈ 440,000 km'
+  originality_note: Heavily covered; low originality.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: D003
+  working_title: Cereal clumps together
+  topic_family: demos
+  scientific_question: Why do the last Cheerios in the bowl stick together and to the edges?
+  explanation: Floating objects bend the liquid surface; they slide 'downhill' on each other's dents (the Cheerios
+    effect).
+  misconception: Something sticky makes them clump.
+  key_visual_moment: Floating rings drifting together with surface curvature shown
+  candidate_hooks:
+  - impossible_result
+  - hidden_cause
+  structure: C
+  component: diagram
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 3
+    sources: 3
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 82
+  sources:
+  - Vella & Mahadevan 2005, American Journal of Physics 73, 817-825
+  originality_note: Breakfast familiarity.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: N003
+  working_title: Heat rises? Hot air rises
+  topic_family: misconceptions
+  scientific_question: Does heat rise?
+  explanation: Hot air rises because it's less dense; heat itself flows in all directions, including down (radiation,
+    conduction).
+  misconception: Heat rises.
+  key_visual_moment: Heater radiating heat downward and sideways, hot air plume rising
+  candidate_hooks:
+  - mistaken_assumption
+  - paradox
+  structure: F
+  component: heat_1d
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 4
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 82
+  sources:
+  - Incropera & DeWitt, Fundamentals of Heat and Mass Transfer
+  originality_note: Simple.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: J001
+  working_title: Why the express lane isn't faster
+  topic_family: hidden_maths
+  scientific_question: Do express checkout lanes actually save time?
+  explanation: Per-customer overhead (greeting, payment) dominates, so a few items more or less matters less than
+    the number of people ahead.
+  misconception: Fewer items always means faster.
+  key_visual_moment: Queues with people and item bars, timer
+  candidate_hooks:
+  - comparison
+  - mistaken_assumption
+  structure: C
+  component: probability_mc
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 82
+  sources:
+  - Queueing theory basics; Larson 1987, Operations Research 35(6), 895-905
+  originality_note: Needs our own stated model; fun.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: J003
+  working_title: Why a 52-card shuffle is unique
+  topic_family: hidden_maths
+  scientific_question: Has any shuffled deck order ever existed before?
+  explanation: 52! ≈ 8 × 10^67 orders, so a well-shuffled deck is almost certainly in an order never seen before.
+  misconception: Card orders must repeat.
+  key_visual_moment: Number 52! scaled against atoms, stars
+  candidate_hooks:
+  - scale_shift
+  - impossible_result
+  structure: C
+  component: diagram
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 2
+    series: 2
+    breadth: 2
+  opportunity: 82
+  sources:
+  - Combinatorics; 52! = 8.07 × 10^67
+  originality_note: Heavily covered; low originality.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: J004
+  working_title: The birthday surprise
+  topic_family: hidden_maths
+  scientific_question: How many people for a 50% chance of a shared birthday?
+  explanation: '23: the number of pairs grows fast (253 pairs for 23 people).'
+  misconception: You'd need 183 people.
+  key_visual_moment: Room filling, pair lines multiplying, probability meter
+  candidate_hooks:
+  - prediction_challenge
+  - mistaken_assumption
+  structure: D
+  component: probability_mc
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 2
+    series: 2
+    breadth: 2
+  opportunity: 82
+  sources:
+  - Any probability text, e.g. Feller 1968, An Introduction to Probability Theory and Its Applications Vol. I
+  originality_note: Heavily covered.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: M007
+  working_title: Same swing time, any swing size
+  topic_family: mechanics
+  scientific_question: Why does a pendulum take the same time for small and medium swings?
+  explanation: For small angles the restoring force is proportional to displacement, so period doesn't depend on
+    amplitude (or mass).
+  misconception: Bigger swings take longer.
+  key_visual_moment: Two pendulums, one swinging wide, ticking in sync
+  candidate_hooks:
+  - prediction_challenge
+  - comparison
+  structure: D
+  component: pendulum
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 3
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 80
+  sources:
+  - Any introductory mechanics text, e.g. OpenStax University Physics Vol. 1, Oscillations
+  originality_note: Simple; good for series 'Physics You Can See'; caveat at large amplitude.
+  flags:
+  - needs_research
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: G005
+  working_title: Why there are two tides
+  topic_family: gravity
+  scientific_question: Why does the sea bulge on the side facing away from the Moon too?
+  explanation: Tides come from the difference in the Moon's pull across Earth, which stretches the oceans on both
+    sides.
+  misconception: The Moon pulls the water toward it, so one bulge.
+  key_visual_moment: Earth with stretch arrows, two bulges
+  candidate_hooks:
+  - mistaken_assumption
+  - paradox
+  structure: F
+  component: diagram
+  production_complexity: medium
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 3
+    series: 4
+    breadth: 4
+  opportunity: 80
+  sources:
+  - NOAA Tides and Currents, Tides tutorial (oceanservice.noaa.gov/education/tutorial_tides)
+  originality_note: Common confusion.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: P002
+  working_title: Lost in 3D
+  topic_family: maths
+  scientific_question: Will a random walker always find its way home?
+  explanation: In one or two dimensions a random walk returns to its start with certainty; in three it has only
+    about a one-in-three chance of ever returning.
+  misconception: Wandering long enough always brings you back.
+  key_visual_moment: 2D walker returning, 3D walker drifting off
+  candidate_hooks:
+  - paradox
+  - constraint
+  structure: G
+  component: probability_mc
+  production_complexity: medium
+  scores:
+    familiarity: 3
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 80
+  sources:
+  - Pólya 1921, Mathematische Annalen 84, 149-160
+  originality_note: Novel for Shorts.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: P006
+  working_title: Both groups improve, the total gets worse
+  topic_family: maths
+  scientific_question: How can a treatment work better in every group and worse overall?
+  explanation: When group sizes differ, combining data can reverse a trend (Simpson's paradox).
+  misconception: If every part improves, the whole improves.
+  key_visual_moment: Two coloured groups with upward lines combining into a downward line
+  candidate_hooks:
+  - paradox
+  - comparison
+  structure: F
+  component: probability_mc
+  production_complexity: small
+  scores:
+    familiarity: 3
+    curiosity: 4
+    clarity: 4
+    visual: 4
+    reliability: 4
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 3
+    breadth: 3
+  opportunity: 80
+  sources:
+  - Bickel, Hammel & O'Connell 1975, Science 187, 398-404
+  originality_note: Good stats topic.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: P008
+  working_title: The 37 percent rule
+  topic_family: maths
+  scientific_question: When should you stop looking and choose?
+  explanation: To maximise the chance of picking the best of n options seen in order, reject the first 37% and then
+    take the next one better than all of them.
+  misconception: Look at everything before deciding.
+  key_visual_moment: Candidates passing, threshold line at 37%
+  candidate_hooks:
+  - constraint
+  - question_answered_by_simulation
+  structure: G
+  component: probability_mc
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 4
+    visual: 4
+    reliability: 4
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 80
+  sources:
+  - Ferguson 1989, Statistical Science 4(3), 282-289
+  originality_note: Popular; framing matters.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: D002
+  working_title: Spinning wheel that won't fall
+  topic_family: demos
+  scientific_question: Why doesn't a spinning bicycle wheel fall when held at one end?
+  explanation: The torque from gravity changes the direction of the angular momentum, making the wheel precess sideways
+    instead of falling.
+  misconception: Unsupported things fall.
+  key_visual_moment: Wheel on a string precessing, angular momentum arrow
+  candidate_hooks:
+  - impossible_result
+  - paradox
+  structure: B
+  component: rigid_body
+  production_complexity: medium
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 80
+  sources:
+  - Kleppner & Kolenkow, An Introduction to Mechanics, gyroscopic motion
+  originality_note: Common demo; sim shows vectors.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: M002
+  working_title: The disk that speeds up as it stops
+  topic_family: mechanics
+  scientific_question: Why does a spinning coin's sound get faster just before it stops?
+  explanation: As the coin tilts flatter, its contact point circles faster, so the whirring rises in pitch toward
+    a finite-time end.
+  misconception: Things slow down as they lose energy.
+  key_visual_moment: Coin on table, contact point traced, frequency label climbing
+  candidate_hooks:
+  - impossible_result
+  - countdown
+  - escalating_variable
+  structure: B
+  component: rigid_body
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 4
+    ease: 4
+    originality: 3
+    sources: 3
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 79
+  sources:
+  - Moffatt 2000, Nature 404, 833-834
+  originality_note: Familiar sound, little coverage.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: E001
+  working_title: Tacoma Narrows wasn't resonance
+  topic_family: engineering
+  scientific_question: Did wind 'resonance' really destroy the Tacoma Narrows Bridge?
+  explanation: The collapse was self-excited aeroelastic flutter, not forcing at a natural frequency; textbooks
+    long told it wrong.
+  misconception: It shook apart by resonance like a wine glass.
+  key_visual_moment: Bridge deck twisting with growing amplitude
+  candidate_hooks:
+  - mistaken_assumption
+  - paradox
+  structure: F
+  component: wave_1d
+  production_complexity: medium
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 4
+    series: 3
+    breadth: 3
+  opportunity: 79
+  sources:
+  - Billah & Scanlan 1991, American Journal of Physics 59, 118-124
+  originality_note: Strong misconception topic; footage must be our own render, not the archive film.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: A001
+  working_title: Slower exit, faster escape
+  topic_family: emergence
+  scientific_question: How can a pillar in front of an exit help crowds escape faster?
+  explanation: In panic models, pushing creates arches that block the door; a well-placed column breaks the arches.
+  misconception: Obstacles always slow evacuation.
+  key_visual_moment: Crowd at door with and without pillar, exit counter
+  candidate_hooks:
+  - counterintuitive_mechanism
+  - comparison
+  structure: C
+  component: agents
+  production_complexity: medium
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 3
+    sources: 3
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 79
+  sources:
+  - Helbing, Farkas & Vicsek 2000, Nature 407, 487-490
+  originality_note: 'Counterintuitive; caveat: models, not certainty.'
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: D004
+  working_title: Shoelaces fail suddenly
+  topic_family: demos
+  scientific_question: Why do shoelaces stay tied, then come undone all at once?
+  explanation: Repeated foot impacts loosen the knot while swinging laces pull the free ends; once slip starts it
+    runs away in seconds.
+  misconception: Laces slowly loosen.
+  key_visual_moment: 'Knot model: slow loosening then runaway'
+  candidate_hooks:
+  - hidden_cause
+  - countdown
+  structure: C
+  component: diagram
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 4
+    ease: 4
+    originality: 3
+    sources: 3
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 79
+  sources:
+  - Daily-Diamond, Gregg & O'Reilly 2017, Proceedings of the Royal Society A 473, 20160770
+  originality_note: Very relatable.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: D005
+  working_title: Ketchup won't move, then floods
+  topic_family: demos
+  scientific_question: Why does ketchup refuse to come out, then gush?
+  explanation: 'Ketchup is shear-thinning: its viscosity drops sharply once it starts moving.'
+  misconception: It's just thick.
+  key_visual_moment: Viscosity bar plummeting as the bottle is shaken
+  candidate_hooks:
+  - ordinary_mystery
+  - hidden_cause
+  structure: C
+  component: fluid_2d
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 4
+    ease: 4
+    originality: 3
+    sources: 3
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 79
+  sources:
+  - Barnes, Hutton & Walters 1989, An Introduction to Rheology (Elsevier)
+  originality_note: Familiar; sim simplified.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: M005
+  working_title: The chain that jumps out of the jar
+  topic_family: mechanics
+  scientific_question: Why does a bead chain rise above the jar as it pours out?
+  explanation: The chain links act like rods that kick off the pile, giving an upward force at the pickup point.
+  misconception: Gravity should just pull it over the rim.
+  key_visual_moment: Chain fountain arcing above the jar
+  candidate_hooks:
+  - impossible_result
+  - hidden_cause
+  - question_answered_by_simulation
+  structure: B
+  component: mass_spring
+  production_complexity: medium
+  scores:
+    familiarity: 3
+    curiosity: 5
+    clarity: 5
+    visual: 4
+    reliability: 4
+    ease: 3
+    originality: 3
+    sources: 3
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 78
+  sources:
+  - Biggins & Warner 2014, Proceedings of the Royal Society A 470, 20130689
+  originality_note: Well-known demo but sims are rare.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: E004
+  working_title: One small change, double the load
+  topic_family: engineering
+  scientific_question: How did a tiny design change make the Hyatt Regency walkways fail?
+  explanation: Splitting one long rod into two shorter rods doubled the load on one nut connection.
+  misconception: Collapses need big mistakes.
+  key_visual_moment: Two hanger diagrams, force arrows doubling at one nut
+  candidate_hooks:
+  - hidden_cause
+  - comparison
+  structure: C
+  component: diagram
+  production_complexity: small
+  scores:
+    familiarity: 3
+    curiosity: 3
+    clarity: 5
+    visual: 3
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 4
+    series: 3
+    breadth: 3
+  opportunity: 78
+  sources:
+  - Marshall et al. 1982, Investigation of the Kansas City Hyatt Regency walkways collapse, NBS Building Science
+    Series 143
+  originality_note: Sensitive (114 deaths); respectful tone, statics only.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: P010
+  working_title: The first digit is usually 1
+  topic_family: maths
+  scientific_question: Why do so many real-world numbers start with 1?
+  explanation: 'Quantities spread across scales follow Benford''s law: about 30% start with 1 and under 5% with
+    9.'
+  misconception: All first digits are equally likely.
+  key_visual_moment: Bar chart of first digits filling from real data
+  candidate_hooks:
+  - mistaken_assumption
+  - counterintuitive_mechanism
+  structure: C
+  component: probability_mc
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 4
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 5
+    sources: 5
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 78
+  sources:
+  - Benford 1938, Proceedings of the American Philosophical Society 78, 551-572
+  - Hill 1995, Statistical Science 10(4), 354-363
+  originality_note: Covered elsewhere; needs a dataset with licence.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: M006
+  working_title: The tennis racket flip
+  topic_family: mechanics
+  scientific_question: Why does a racket flip over when you spin it around its middle axis?
+  explanation: Rotation about the intermediate principal axis is unstable, so any tiny error grows into a half-turn
+    flip (the Dzhanibekov effect).
+  misconception: A clean spin stays clean.
+  key_visual_moment: Spinning T-handle flipping periodically
+  candidate_hooks:
+  - impossible_result
+  - paradox
+  - visual_experiment
+  structure: B
+  component: rigid_body
+  production_complexity: medium
+  scores:
+    familiarity: 3
+    curiosity: 5
+    clarity: 5
+    visual: 3
+    reliability: 4
+    ease: 4
+    originality: 3
+    sources: 3
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 77
+  sources:
+  - Ashbaugh, Chicone & Cushman 1991, Journal of Dynamics and Differential Equations 3, 67-85
+  originality_note: Moderate coverage; ours with axis colours.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: F001
+  working_title: Lift isn't about equal timing
+  topic_family: fluids
+  scientific_question: Why do the 'equal transit time' explanations of wing lift fail?
+  explanation: Air over the top arrives at the trailing edge earlier, not at the same time; lift comes from the
+    wing turning the airflow down.
+  misconception: Air over the top must meet the bottom air at the back.
+  key_visual_moment: Streamline sim with timed particles, top ones arriving first
+  candidate_hooks:
+  - mistaken_assumption
+  - paradox
+  structure: F
+  component: fluid_2d
+  production_complexity: large
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 5
+    ease: 4
+    originality: 3
+    sources: 3
+    feasibility: 3
+    series: 4
+    breadth: 4
+  opportunity: 77
+  sources:
+  - Babinsky 2003, Physics Education 38, 497-503
+  originality_note: Classic misconception; 2D flow sim is non-trivial.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: F005
+  working_title: Vortex street
+  topic_family: fluids
+  scientific_question: Why does a flag flutter even in a steady wind?
+  explanation: Flow behind an obstacle sheds alternating vortices, a Kármán vortex street, that push it side to
+    side.
+  misconception: Steady wind gives steady force.
+  key_visual_moment: 2D flow past a cylinder with alternating swirls
+  candidate_hooks:
+  - impossible_result
+  - visual_experiment
+  structure: C
+  component: fluid_2d
+  production_complexity: large
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 5
+    visual: 3
+    reliability: 4
+    ease: 4
+    originality: 3
+    sources: 3
+    feasibility: 3
+    series: 4
+    breadth: 4
+  opportunity: 77
+  sources:
+  - Any fluid mechanics text, e.g. Kundu & Cohen, Fluid Mechanics, vortex shedding
+  originality_note: Beautiful visual; LBM sim feasible.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: P001
+  working_title: Switching doors
+  topic_family: maths
+  scientific_question: Should you switch doors in the Monty Hall problem?
+  explanation: Switching wins two thirds of the time because the host's choice gives information.
+  misconception: It's 50-50 once two doors are left.
+  key_visual_moment: 10,000 simulated games with win counters
+  candidate_hooks:
+  - prediction_challenge
+  - mistaken_assumption
+  structure: D
+  component: probability_mc
+  production_complexity: small
+  scores:
+    familiarity: 5
+    curiosity: 4
+    clarity: 3
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 2
+    series: 2
+    breadth: 2
+  opportunity: 77
+  sources:
+  - Selvin 1975, The American Statistician 29(1), 67
+  originality_note: Heavily covered; only with a new visual.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: P004
+  working_title: Two losing games that win
+  topic_family: maths
+  scientific_question: Can alternating two losing gambling games make money?
+  explanation: 'Parrondo''s paradox: certain games that each lose on their own can win when alternated, because
+    one changes the state the other depends on.'
+  misconception: Losing plus losing is losing.
+  key_visual_moment: Two descending capital lines and one alternating line rising
+  candidate_hooks:
+  - paradox
+  - comparison
+  structure: D
+  component: probability_mc
+  production_complexity: medium
+  scores:
+    familiarity: 3
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 3
+    sources: 3
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 77
+  sources:
+  - Harmer & Abbott 1999, Nature 402, 864
+  originality_note: 'Surprising; caveat: not a casino strategy.'
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: C001
+  working_title: Why only one ball swings out
+  topic_family: collisions
+  scientific_question: Why does Newton's cradle send out exactly one ball?
+  explanation: Momentum and energy conservation together, plus the tiny gaps and how the impulse travels through
+    the balls, select one-ball-out.
+  misconception: Any number could come out.
+  key_visual_moment: Cradle with impulse travelling through balls
+  candidate_hooks:
+  - prediction_challenge
+  - hidden_cause
+  structure: C
+  component: rigid_body
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 4
+    clarity: 4
+    visual: 4
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 77
+  sources:
+  - Hutzler et al. 2004, American Journal of Physics 72, 1508-1516
+  originality_note: Classic; real cradles aren't ideal, a good caveat.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: A005
+  working_title: Four rules, infinite patterns
+  topic_family: emergence
+  scientific_question: How do a few simple rules make gliders and guns?
+  explanation: Conway's Game of Life shows complex moving structures emerging from four rules on a grid.
+  misconception: Complex behaviour needs complex rules.
+  key_visual_moment: Glider gun firing
+  candidate_hooks:
+  - impossible_result
+  - question_answered_by_simulation
+  structure: G
+  component: agents
+  production_complexity: small
+  scores:
+    familiarity: 3
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 2
+    series: 2
+    breadth: 2
+  opportunity: 77
+  sources:
+  - Gardner 1970, Scientific American 223(4), 120-123
+  originality_note: Very common; low originality.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: J002
+  working_title: Parking your car where it's cheapest
+  topic_family: hidden_maths
+  scientific_question: Why do drivers circle for parking when a garage is free nearby?
+  explanation: Search behaviour and pricing create a queue on the street; models show cruising grows sharply near
+    full occupancy.
+  misconception: Circling is just impatience.
+  key_visual_moment: Street occupancy bar near 100% and cruising cars multiplying
+  candidate_hooks:
+  - hidden_cause
+  - escalating_variable
+  structure: C
+  component: agents
+  production_complexity: medium
+  scores:
+    familiarity: 4
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 4
+    ease: 4
+    originality: 3
+    sources: 3
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 77
+  sources:
+  - Shoup 2006, Transport Policy 13(6), 479-486 'Cruising for parking'
+  originality_note: Urban relatable.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: M004
+  working_title: The cat that turns without spinning
+  topic_family: mechanics
+  scientific_question: How does a falling cat land on its feet without pushing on anything?
+  explanation: By bending and twisting its two halves in opposite directions, total angular momentum stays zero
+    while orientation changes.
+  misconception: You can't rotate in midair without something to push.
+  key_visual_moment: Two-cylinder model rotating halves, net turn 180 degrees
+  candidate_hooks:
+  - paradox
+  - mistaken_assumption
+  - impossible_result
+  structure: B
+  component: rigid_body
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 4
+    clarity: 4
+    visual: 3
+    reliability: 4
+    ease: 4
+    originality: 3
+    sources: 3
+    feasibility: 4
+    series: 4
+    breadth: 4
+  opportunity: 76
+  sources:
+  - Kane & Scher 1969, International Journal of Solids and Structures 5, 663-670
+  originality_note: Popular topic; a two-cylinder sim is our distinct visual.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: M001
+  working_title: The bike that steers itself
+  topic_family: mechanics
+  scientific_question: How does a riderless bicycle stay upright?
+  explanation: A moving bike steers into its fall automatically; experiments show this can work even without gyroscopic
+    or trail effects.
+  misconception: Gyroscopic wheels keep bikes up.
+  key_visual_moment: Riderless bike rolling, wobbling, then straightening
+  candidate_hooks:
+  - impossible_result
+  - mistaken_assumption
+  - question_answered_by_simulation
+  structure: B
+  component: rigid_body
+  production_complexity: large
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 5
+    visual: 2
+    reliability: 4
+    ease: 4
+    originality: 2
+    sources: 3
+    feasibility: 3
+    series: 4
+    breadth: 4
+  opportunity: 75
+  sources:
+  - Kooijman et al. 2011, Science 332, 339-342
+  originality_note: Rarely explained correctly; sim is hard (Whipple model) but well documented.
+  flags:
+  - low_originality
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: S004
+  working_title: Sandpile avalanches of every size
+  topic_family: small_actions
+  scientific_question: Why do grains added one at a time cause avalanches of all sizes?
+  explanation: A sandpile organises itself to a critical slope where one grain can trigger anything from nothing
+    to a huge slide.
+  misconception: Each grain causes a similar small effect.
+  key_visual_moment: Grid sandpile, avalanches flashing in different sizes
+  candidate_hooks:
+  - causal_chain
+  - escalating_variable
+  structure: G
+  component: agents
+  production_complexity: medium
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 4
+    visual: 3
+    reliability: 4
+    ease: 4
+    originality: 4
+    sources: 3
+    feasibility: 4
+    series: 3
+    breadth: 4
+  opportunity: 75
+  sources:
+  - Bak, Tang & Wiesenfeld 1987, Physical Review Letters 59, 381-384
+  originality_note: Niche; strong visual.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: G006
+  working_title: Slingshot speed boost
+  topic_family: gravity
+  scientific_question: How does a spacecraft gain speed by passing a planet?
+  explanation: In the Sun's frame the spacecraft borrows some of the planet's orbital momentum during the flyby.
+  misconception: Gravity pulls you in and back out, so no net gain.
+  key_visual_moment: Flyby path with speed readout jumping
+  candidate_hooks:
+  - hidden_cause
+  - impossible_result
+  structure: C
+  component: orbit
+  production_complexity: medium
+  scores:
+    familiarity: 3
+    curiosity: 4
+    clarity: 4
+    visual: 4
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 75
+  sources:
+  - NASA JPL, Basics of Space Flight, gravity assist chapter
+  originality_note: Moderately covered.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: C003
+  working_title: Counting collisions makes π
+  topic_family: collisions
+  scientific_question: Can bouncing blocks calculate π?
+  explanation: With a mass ratio of 100^n, the number of collisions spells the digits of π.
+  misconception: Collisions have nothing to do with circles.
+  key_visual_moment: Blocks colliding with a counter reaching 314
+  candidate_hooks:
+  - impossible_result
+  - escalating_variable
+  structure: G
+  component: rigid_body
+  production_complexity: small
+  scores:
+    familiarity: 3
+    curiosity: 4
+    clarity: 5
+    visual: 4
+    reliability: 5
+    ease: 5
+    originality: 5
+    sources: 5
+    feasibility: 2
+    series: 1
+    breadth: 1
+  opportunity: 75
+  sources:
+  - Galperin 2003, Regular and Chaotic Dynamics 8(4), 375-394
+  originality_note: Famous via another channel; very low originality.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: Q003
+  working_title: Why hot water sometimes sounds louder before boiling
+  topic_family: familiar
+  scientific_question: Why is a kettle noisiest just before it boils?
+  explanation: Bubbles form at the hot bottom and collapse in cooler water above, making noise; once all the water
+    is hot they rise without collapsing.
+  misconception: Boiling is the loudest part.
+  key_visual_moment: Bubbles forming and collapsing, then rising freely
+  candidate_hooks:
+  - hidden_cause
+  - countdown
+  structure: C
+  component: diagram
+  production_complexity: medium
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 4
+    ease: 4
+    originality: 3
+    sources: 3
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 75
+  sources:
+  - Aljishi & Tatarkiewicz 1991, American Journal of Physics 59, 628-632 (to verify)
+  originality_note: Familiar sound; source to verify.
+  flags:
+  - source_to_verify
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: T010
+  working_title: More lanes, same traffic
+  topic_family: traffic
+  scientific_question: Why doesn't widening a highway fix congestion for long?
+  explanation: Extra capacity attracts extra driving roughly in proportion (induced demand), so travel times recover
+    toward the old level.
+  misconception: More lanes permanently cure jams.
+  key_visual_moment: Highway widens, cars spawn until speed returns
+  candidate_hooks:
+  - counterintuitive_mechanism
+  - mistaken_assumption
+  - reverse_explanation
+  structure: C
+  component: agents
+  production_complexity: large
+  scores:
+    familiarity: 5
+    curiosity: 4
+    clarity: 4
+    visual: 2
+    reliability: 4
+    ease: 5
+    originality: 3
+    sources: 3
+    feasibility: 3
+    series: 4
+    breadth: 4
+  opportunity: 74
+  sources:
+  - Duranton & Turner 2011, American Economic Review 101(6), 2616-2652
+  originality_note: Economics, harder to simulate honestly; frame as a model, not a prediction.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: Q005
+  working_title: Why the wobbly shopping trolley wheel flutters
+  topic_family: familiar
+  scientific_question: Why do shopping trolley wheels shimmy at speed?
+  explanation: Castor wheels can enter a self-excited oscillation (shimmy) above a critical speed.
+  misconception: It's just a broken wheel.
+  key_visual_moment: Castor wheel oscillating above a speed threshold
+  candidate_hooks:
+  - hidden_cause
+  - escalating_variable
+  structure: G
+  component: rigid_body
+  production_complexity: large
+  scores:
+    familiarity: 5
+    curiosity: 5
+    clarity: 4
+    visual: 3
+    reliability: 4
+    ease: 3
+    originality: 3
+    sources: 3
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 73
+  sources:
+  - Pacejka 2006, Tyre and Vehicle Dynamics (Butterworth-Heinemann), shimmy chapter
+  originality_note: Relatable; sim harder.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: T007
+  working_title: Closing a road speeds traffic up
+  topic_family: traffic
+  scientific_question: Can removing a road make everyone's trip faster?
+  explanation: When drivers each choose their own fastest route, a shortcut can make the overall equilibrium slower
+    (Braess's paradox).
+  misconception: More roads always means less traffic.
+  key_visual_moment: Network of two routes; adding a link turns all routes red
+  candidate_hooks:
+  - paradox
+  - mistaken_assumption
+  - comparison
+  structure: F
+  component: agents
+  production_complexity: large
+  scores:
+    familiarity: 3
+    curiosity: 4
+    clarity: 4
+    visual: 3
+    reliability: 4
+    ease: 5
+    originality: 3
+    sources: 3
+    feasibility: 4
+    series: 3
+    breadth: 3
+  opportunity: 72
+  sources:
+  - Braess 1968, Unternehmensforschung 12, 258-268
+  - Youn, Gastner & Jeong 2008, Physical Review Letters 101, 128701
+  originality_note: Reference channel made a long-form on this; low originality, needs a distinct visual.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: S001
+  working_title: The butterfly in the weather
+  topic_family: small_actions
+  scientific_question: How can a tiny change make weather unpredictable?
+  explanation: Lorenz found that rounding a number in a weather model changed the forecast completely, because the
+    equations are chaotic.
+  misconception: Small causes have small effects.
+  key_visual_moment: Two Lorenz trajectories, one rounded, splitting apart
+  candidate_hooks:
+  - causal_chain
+  - paradox
+  - comparison
+  structure: E
+  component: diagram
+  production_complexity: small
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 4
+    visual: 3
+    reliability: 5
+    ease: 4
+    originality: 4
+    sources: 4
+    feasibility: 3
+    series: 2
+    breadth: 2
+  opportunity: 72
+  sources:
+  - Lorenz 1963, Journal of the Atmospheric Sciences 20, 130-141
+  originality_note: Familiar phrase; differentiate with the rounding story.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: X004
+  working_title: You can't levitate a magnet (without a trick)
+  topic_family: em
+  scientific_question: Why can't you float one magnet above another?
+  explanation: 'Earnshaw''s theorem: static magnetic fields alone can''t trap a magnet stably; spinning (the Levitron)
+    gets around it.'
+  misconception: Strong enough magnets will float.
+  key_visual_moment: Magnet sliding off a potential saddle; spinning top stable
+  candidate_hooks:
+  - mistaken_assumption
+  - constraint
+  structure: F
+  component: diagram
+  production_complexity: medium
+  scores:
+    familiarity: 3
+    curiosity: 4
+    clarity: 4
+    visual: 3
+    reliability: 4
+    ease: 4
+    originality: 3
+    sources: 3
+    feasibility: 3
+    series: 4
+    breadth: 4
+  opportunity: 71
+  sources:
+  - Earnshaw 1842, Transactions of the Cambridge Philosophical Society 7, 97-112
+  - Berry 1996, Proceedings of the Royal Society A 452, 1207-1220
+  originality_note: Niche but surprising.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: F002
+  working_title: Hourglass speed doesn't depend on sand height
+  topic_family: fluids
+  scientific_question: Does an hourglass run faster when it's full?
+  explanation: Grains form force chains that carry the weight to the walls, so flow rate depends on the opening,
+    not on height (Beverloo's law).
+  misconception: More sand on top pushes it through faster.
+  key_visual_moment: Two hourglasses, one full one nearly empty, same flow counter
+  candidate_hooks:
+  - prediction_challenge
+  - comparison
+  structure: D
+  component: granular
+  production_complexity: large
+  scores:
+    familiarity: 4
+    curiosity: 4
+    clarity: 4
+    visual: 3
+    reliability: 4
+    ease: 4
+    originality: 3
+    sources: 3
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 70
+  sources:
+  - Beverloo, Leniger & van de Velde 1961, Chemical Engineering Science 15, 260-269
+  originality_note: Surprising; granular sim heavy, use a simplified model.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
+- id: R003
+  working_title: Batters can't watch the ball
+  topic_family: reaction
+  scientific_question: Can a batter keep their eye on a fastball all the way?
+  explanation: The ball's angular speed near the plate exceeds what eye tracking can follow; batters predict where
+    it will be.
+  misconception: Great hitters watch the ball onto the bat.
+  key_visual_moment: Eye-angle graph exceeding tracking limit at the plate
+  candidate_hooks:
+  - mistaken_assumption
+  - paradox
+  structure: F
+  component: diagram
+  production_complexity: medium
+  scores:
+    familiarity: 3
+    curiosity: 4
+    clarity: 4
+    visual: 3
+    reliability: 4
+    ease: 4
+    originality: 3
+    sources: 3
+    feasibility: 3
+    series: 3
+    breadth: 3
+  opportunity: 68
+  sources:
+  - Bahill & LaRitz 1984, American Scientist 72, 249-253
+  originality_note: Sports angle; US audience.
+  flags: []
+  status: IDEA
+  source_check: cited from knowledge; open each source before RESEARCHED
+  experiment_tags: []
+  performance: null
