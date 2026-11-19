@@ -47,13 +47,13 @@ beats:
   - id: gps
     text: "Too small to matter? GPS satellites fly so high that their clocks run fast by about thirty-eight microseconds a day, mostly from this effect."
   - id: drift
-    text: "Ignore that, and GPS distances would be off by kilometres in a single day."
+    text: "Ignore that, and every GPS distance would drift by kilometres in a single day."
 
 caveats:
   - "The effect is real but tiny: about 1.1e-16 per metre of height near Earth's surface (g*h/c^2). Nobody can feel it."
   - "The half-a-millionth-of-a-second figure assumes standing upright (head about 1.7 m above the feet) for 80 years. Real people lie down for about a third of their lives, so the true difference is smaller."
   - "The NIST 2010 result was (4.1 ± 1.6) × 10^-17 for 33 cm, consistent with the predicted 3.6 × 10^-17 within its uncertainty; 'almost exactly' means within the error bar, not to many digits."
-  - "GPS: the gravitational part is about +45 microseconds per day; the satellites' orbital speed takes off about 7, so the net correction is about 38 microseconds per day. The counter shows the net 38.6 µs/day times the speed of light: about 11.6 km of distance (pseudorange) drift per day if uncorrected. How much of that reaches a position fix depends on the receiver solution, which absorbs a clock offset common to all satellites."
+  - "GPS: the gravitational part is about +45.8 microseconds per day; the satellites' orbital speed takes off about 7.2, so the net is about 38.6 microseconds per day. The counter shows the net 38.6 µs/day times the speed of light: about 11.6 km of distance (pseudorange) drift per day if uncorrected. How much of that reaches a position fix depends on the receiver solution, which absorbs a clock offset common to all satellites."
   - "On screen the slowdown is exaggerated by many orders of magnitude so it can be seen; the counters show the real values."
 sources:
   - "C. W. Chou, D. B. Hume, T. Rosenband and D. J. Wineland, 'Optical Clocks and Relativity', Science 329, 1630-1633 (2010). doi:10.1126/science.1192720"
@@ -83,15 +83,16 @@ claims:
      evidence: {quality: 1, source: "Chou et al. 2010"}}
   - {id: gps_net, beat: gps, unit: "µs", sim: gps_net_us, scope: typical,
      evidence: {quality: 1, source: "Ashby, Living Rev. Relativ. 6, 1 (2003): GPS clocks vs the geoid: gravity +45.7 µs/day, velocity -7.1, net +38.6 µs/day ('mostly from this effect')"}}
-  - {id: gps_grav_card, card: "gravity +46", unit: count, sim: gps_grav_us, scope: typical, tolerance: 0.05,
+  - {id: gps_grav_card, card: "gravity +45.8", unit: count, sim: gps_grav_us, scope: typical, tolerance: 0.01,
      evidence: {quality: 1, source: "Ashby 2003: +45.7 µs/day gravitational"}}
-  - {id: gps_vel_card, card: "speed −7", unit: count, value: 7.2, scope: typical, tolerance: 0.1,
+  - {id: gps_vel_card, card: "speed −7.2", unit: count, sim: gps_vel_abs, scope: typical, tolerance: 0.01,
      evidence: {quality: 1, source: "Ashby 2003: -7.1 µs/day from orbital speed; our circular-orbit value -7.2"}}
   - {id: gps_drift, card: "11.6 km", unit: km, sim: gps_km_per_day, scope: model, tolerance: 0.05,
      evidence: {quality: 2, source: "Ashby 2003: net 38.6 µs/day x speed of light = 11.6 km of pseudorange drift per day if uncorrected; real position errors depend on how the receiver solution absorbs a common clock offset"}}
 
 absolute_ok:
   - {beat: why, word: every, why: "the gravitational redshift is universal (equivalence principle): it applies to every clock, tested with many clock types"}
+  - {beat: drift, word: every, why: "every GPS satellite clock carries the same relativistic rate offset, so every uncorrected satellite range (pseudorange) drifts; the caveat notes how much reaches a position fix"}
   - {beat: proof, word: exactly, why: "qualified as 'almost exactly'; measured (4.1 ± 1.6)e-17 vs predicted 3.6e-17, agreement within the error bar"}
 
 entities:
@@ -109,17 +110,17 @@ entities:
     type: support
     category: C
     importance: secondary
-    visual_contract: {must_read_as: "a tall mast with four clocks; higher clocks pulse faster (EXAGGERATED)"}
+    visual_contract: {must_read_as: "a tall mast with four clocks and their readouts; higher clocks run visibly faster (EXAGGERATED)"}
   - id: atomic_clocks
     type: hero_object
     category: C
     importance: primary
-    visual_contract: {must_read_as: "two white instrument boxes with a glowing ion window on two tables; the left table rises 33 cm"}
+    visual_contract: {must_read_as: "two grey lab instruments with a glass chamber, a glowing ion and a dark digital display, on two tables; the left table rises 33 cm"}
   - id: car
     type: hero_object
     category: C
     importance: primary
-    visual_contract: {must_read_as: "one chunky estate car driving on a straight road, a white ring under it and a red map pin sliding away ahead"}
+    visual_contract: {must_read_as: "one chunky estate car driving on a straight road with a white ring under it; the camera pulls up while a day passes"}
   - id: satellite
     type: support
     category: C
@@ -163,8 +164,8 @@ retention:
       to: lab_high
       value: {frames: lift, scale: 100}
       format: "{v:.0f} cm"
-      show: [proof@raised+0.2, proof.end]
-      claims: [{claim: lift_hud, at: proof.end-0.3}]
+      show: [proof@raised+0.2, proof@And-0.2]
+      claims: [{claim: lift_hud, at: proof@And-0.4}]
     - id: years                    # the time-lapse: 80 years pass
       type: counter
       label: standing for
@@ -183,7 +184,7 @@ retention:
       claims: [{claim: lifetime_ns, at: lifetime.end+0.3}]
     - id: error                    # uncorrected GPS: the map error over one day
       type: counter
-      label: distance error
+      label: range error
       value: {frames: err_km}
       format: "{v:.1f} km"
       at: [0.63, 0.2]
@@ -193,7 +194,7 @@ retention:
       type: counter
       label: uncorrected for
       value: {frames: hours}
-      format: "{v:.0f} hours"
+      format: "{v:.0f} h"
       at: [0.27, 0.2]
       show: [drift+0.1, end]
   cues:

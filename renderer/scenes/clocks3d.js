@@ -53,7 +53,7 @@ function makeClock(r, opts = {}) {
 }
 
 // A small dark display plate with a label and a value (canvas texture), e.g. "HEAD 0:17.2".
-function readout(label, w = 0.34, h = 0.13) {
+function readout(label, w = 0.34, h = 0.13, dark = false) {
   const c = document.createElement('canvas'); c.width = 512; c.height = 196; const g = c.getContext('2d');
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
@@ -61,9 +61,9 @@ function readout(label, w = 0.34, h = 0.13) {
   m.setText = v => {
     if (v === last) return; last = v;
     g.clearRect(0, 0, 512, 196);
-    g.fillStyle = '#e5e2d6'; g.beginPath(); g.roundRect(4, 4, 504, 188, 30); g.fill();
-    g.fillStyle = '#6d675c'; g.font = '700 50px Poppins'; g.textAlign = 'center'; g.textBaseline = 'top'; g.fillText(label, 256, 14);
-    g.fillStyle = '#c92a2e'; g.font = '800 86px Poppins'; g.fillText(v ?? '', 256, 70);
+    g.fillStyle = dark ? '#1b1f24' : '#e5e2d6'; g.beginPath(); g.roundRect(4, 4, 504, 188, dark ? 14 : 30); g.fill();
+    g.fillStyle = dark ? '#9aa3ab' : '#6d675c'; g.font = '700 50px Poppins'; g.textAlign = 'center'; g.textBaseline = 'top'; g.fillText(label, 256, 14);
+    g.fillStyle = dark ? '#ff6a5c' : '#c92a2e'; g.font = '800 86px Poppins'; g.fillText(v ?? '', 256, 70);
     tex.needsUpdate = true;
   };
   return m;
@@ -101,16 +101,16 @@ function figure() {
 function satellite() {
   const g = new THREE.Group();
   // gold-foil body: a faceted box with a darker band and a silver top deck
-  const foil = new THREE.MeshStandardMaterial({ color: '#d4a63c', roughness: 0.35, metalness: 0.75, flatShading: true });
+  const foil = new THREE.MeshStandardMaterial({ color: '#c99a3a', roughness: 0.7, metalness: 0.2, flatShading: true });
   const body = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.25, 3.0, 8), foil); body.rotation.x = Math.PI / 2; g.add(body);
   const band = new THREE.Mesh(new THREE.CylinderGeometry(1.28, 1.28, 0.5, 8), flat('#6b5a2e')); band.rotation.x = Math.PI / 2; g.add(band);
-  const deck = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 0.2), MAT.brushedSteel()); deck.position.z = 1.6; g.add(deck);
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 0.2), flat('#a9aeb3', { roughness: 0.8 })); deck.position.z = 1.6; g.add(deck);
   for (const [x, y] of [[0.5, 0.5], [-0.5, 0.4], [0.2, -0.6]]) {   // antenna rods
-    const a = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.6, 6), MAT.brushedSteel()); a.rotation.x = Math.PI / 2; a.position.set(x, y, 2.4); g.add(a);
+    const a = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.6, 6), flat('#a9aeb3', { roughness: 0.8 })); a.rotation.x = Math.PI / 2; a.position.set(x, y, -2.3); g.add(a);
   }
   // solar wings: blue cells in a grid with silver frames
-  const pm = new THREE.MeshStandardMaterial({ color: '#2f4f86', roughness: 0.3, metalness: 0.5, emissive: '#1c2f55', emissiveIntensity: 0.25 });
-  const frame = MAT.brushedSteel();
+  const pm = new THREE.MeshStandardMaterial({ color: '#2f4f86', roughness: 0.6, metalness: 0.2, emissive: '#1c2f55', emissiveIntensity: 0.25 });
+  const frame = flat('#a9aeb3', { roughness: 0.8 });
   for (const s of [-1, 1]) {
     const arm = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.15, 0.15), frame); arm.position.x = s * 1.9; g.add(arm);
     for (let c = 0; c < 3; c++) {
@@ -146,8 +146,9 @@ export function build(world, plan) {
   const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.45, mastH, 8), MAT.concrete('#beb7a4'));
   mast.position.set(tx, mastH / 2, tz); mast.castShadow = mast.receiveShadow = true; S.add(mast);
   const towerClks = L.tower_ys.map(y => { const c = makeClock(1.3); c.position.set(tx, y, tz + 0.6); S.add(c); return c; });
+  const towerRds = L.tower_ys.map((y, j) => { const r = readout(['LOW', 'MIDDLE', 'HIGH', 'TOP'][j], 0.5, 0.19); r.scale.setScalar(6.5); r.position.set(tx + 3.6, y, tz + 0.7); S.add(r); return r; });
   const base = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.5, 0.3, 16), MAT.concrete('#a89684')); base.position.set(tx, 0.15, tz); base.receiveShadow = true; S.add(base);
-  const towerSet = [mast, base, ...towerClks];
+  const towerSet = [mast, base, ...towerClks, ...towerRds];
 
   // ---- the two atomic clocks on wooden tables; the left table can jack up
   const [lx, , lz] = L.lab;
@@ -163,19 +164,19 @@ export function build(world, plan) {
     // a low grey base unit with a big digital time display on its front, a clear glass vacuum chamber on top
     // with the single glowing ion inside, and a red laser beam crossing the chamber
     const box = new THREE.Group();
-    const shell = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.2, 0.36), MAT.brushedSteel()); shell.position.y = 0.1; box.add(shell);
+    const shell = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.24, 0.36), flat('#8f959b', { roughness: 0.75, metalness: 0.1, flatShading: false })); shell.position.y = 0.12; box.add(shell);
     const ch = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.2, 20, 1, true),
-      new THREE.MeshPhysicalMaterial({ color: '#dfe8ef', roughness: 0.05, transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false }));
-    ch.position.set(0, 0.31, 0); box.add(ch);
-    for (const y of [0.205, 0.415]) { const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.02, 20), MAT.darkSteel()); cap.position.set(0, y, 0); box.add(cap); }
-    const ion = new THREE.Mesh(new THREE.SphereGeometry(0.016, 12, 10), MAT.emissive('#8f7cff', 4)); ion.position.set(0, 0.31, 0); box.add(ion);
-    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.5, 6), MAT.emissive('#ff3b30', 3)); beam.rotation.z = Math.PI / 2; beam.position.set(0, 0.31, 0); box.add(beam);
+      new THREE.MeshStandardMaterial({ color: '#c9d6e0', roughness: 0.45, metalness: 0, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false }));
+    ch.position.set(0, 0.35, 0); box.add(ch);
+    for (const y of [0.245, 0.455]) { const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.02, 20), flat('#3b3f45', { roughness: 0.6, metalness: 0.1 })); cap.position.set(0, y, 0); box.add(cap); }
+    const ion = new THREE.Mesh(new THREE.SphereGeometry(0.016, 12, 10), MAT.emissive('#8f7cff', 4)); ion.position.set(0, 0.35, 0); box.add(ion);
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.5, 6), MAT.emissive('#ff3b30', 1.6)); beam.rotation.z = Math.PI / 2; beam.position.set(0, 0.35, 0); box.add(beam);
     const ringM = new THREE.MeshBasicMaterial({ color: '#b9adff', transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
-    const ring = new THREE.Mesh(new THREE.RingGeometry(0.03, 0.036, 32), ringM); ring.position.set(0, 0.31, 0.0); box.add(ring);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.03, 0.036, 32), ringM); ring.position.set(0, 0.35, 0.0); box.add(ring);
     box.position.y = L.table_top; tg.add(box);
     S.add(shadowed(tg)); ring.castShadow = false; ch.castShadow = false; beam.castShadow = false;
-    const rd = readout(s < 0 ? 'LIFTED' : 'STAYS', 0.5, 0.19);
-    rd.position.set(0, 0.1, 0.185); box.add(rd);           // the display is the front panel
+    const rd = readout(s < 0 ? 'LIFTED' : 'STAYS', 0.46, 0.176, true);
+    rd.position.set(0, 0.12, 0.182); box.add(rd);           // the display is the front panel
     tables.push({ g: tg, top, legs, box, rd }); clocksA.push({ ion, ring, ringM });
   }
   const labSet = tables.map(t => t.g);
@@ -242,21 +243,22 @@ export function build(world, plan) {
       headClk.set(F.head[k], F.head[p], F.warm[k]);
       feetClk.set(F.feet[k], F.feet[p], F.warm[k] * 0.8);
       towerClks.forEach((c, j) => c.set(F.tower[k][j], F.tower[p][j], 0));
+      towerRds.forEach((r, j) => r.setText(`${Math.floor(F.tower[k][j] / 60)}:${(F.tower[k][j] % 60).toFixed(1).padStart(4, '0')}`));
       // atomic clocks: the left table rises by frames.lift (legs stretch: a jack under the top)
       const lift = F.lift[k];
       const tl = tables[0];
       tl.top.position.y = L.table_top - 0.025 + lift; tl.box.position.y = L.table_top + lift;
       for (const tb of tables) for (const leg of tb.legs) { const h = tb.top.position.y; leg.scale.y = h; leg.position.y = h / 2; }
-      clocksA.forEach((c, j) => { const fr = F.lab[k][j] % 1; c.ring.scale.setScalar(1 + 1.3 * fr); c.ringM.opacity = 0.9 * (1 - fr) ** 2; c.ion.material.emissiveIntensity = 2 + 3 * (1 - fr) ** 4; });
+      clocksA.forEach((c, j) => { const fr = F.lab[k][j] % 1; c.ring.scale.setScalar(1 + 1.3 * fr); c.ringM.opacity = 0.9 * (1 - fr) ** 2; c.ion.material.emissiveIntensity = 1.2 + 1.4 * (1 - fr) ** 4; });
       // the hero car drives towards -z in the right-hand lane; oncoming cars in the other lane
       const cz = F.car_z[k];
       hero.position.set(rx - 1.8, 0, cz); trueRing.position.set(rx - 1.8, 0.05, cz);
       others.forEach((c, j) => c.position.set(rx + 1.8, 0, -80 - 70 * j - 330 + 11.0 * t));
       const off = F.pin[k];
       pin.position.set(rx - 1.8 + off * 0.12, 0, cz - 8 - off);
-      pin.visible = t >= plan.timing.day[0] - 0.4;
+      pin.visible = false;
       hero.visible = set === 'road'; for (const o of others) o.visible = set === 'road';
-      trueRing.visible = pin.visible;
+      trueRing.visible = set === 'road' && t >= plan.timing.day[0] - 0.4;
       sat.position.set(rx + L.sat[0] - L.road_x + F.sat_dx[k], L.sat[1], cz + L.sat[2]);
       sat.rotation.set(0.15, 0.3 + t * 0.02, 0.08);
       satRd.position.set(sat.position.x, sat.position.y - 5.6, sat.position.z + 2);
