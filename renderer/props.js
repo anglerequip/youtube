@@ -33,12 +33,14 @@ export function car(color, kind = 'hatch', roofRack = false) {
   // brake glow on the road behind the car
   const glowMat = new THREE.MeshBasicMaterial({ color: '#ff2a1f', transparent: true, opacity: 0, depthWrite: false,
     blending: THREE.AdditiveBlending, map: radialTexture() });
-  const glow = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.2), glowMat); glow.rotation.x = -Math.PI / 2; glow.position.set(0, 0.03, L / 2 + 0.9);
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 1.3), glowMat); glow.rotation.x = -Math.PI / 2; glow.position.set(0, 0.03, L / 2 + 0.55);
   g.add(glow);
   if (roofRack) for (const x of [-0.6, 0.6]) {
     const bar = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, cabinL * 0.9), flat('#2a2a2c')); bar.position.set(x, 1.42, cabinZ); g.add(bar);
   }
-  g.setBrake = b => { tailMat.emissiveIntensity = 0.15 + 5.5 * b; glowMat.opacity = 0.55 * b; };
+  // picture review (other lane, round 8): at 5.5x the lit tail lights tone-mapped to pale pink while the glow
+  // read as a red puddle; a lower, saturated emission keeps them red, the glow is tighter under the bumper
+  g.setBrake = b => { tailMat.emissiveIntensity = 0.15 + 2.4 * b; glowMat.opacity = 0.42 * b; };
   return shadow(g);
 }
 
