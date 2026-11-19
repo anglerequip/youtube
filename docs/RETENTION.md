@@ -30,7 +30,7 @@ storyboard.yaml ──► plan.py build_plan()  ──► retention.apply()  ─
 | `payoff`, `payoff.end` | start / end of a beat |
 | `payoff+0.4`, `catch.end-0.2` | offsets |
 | `double@doubles` | when the word "doubles" is spoken in beat `double` (same estimate the captions use; `word#2` for the 2nd match) |
-| `hud:<id>.appear / .hide / .settle / .cross / .answer / .step<k>` | HUD events |
+| `hud:<id>.appear / .hide / .settle / .cross / .answer / .zero / .step<k>` | HUD events |
 | `end` | end of the video |
 
 `show:` takes a beat id (whole beat) or `[from, to]`; a bare beat id as `to` means "until that beat ends".
@@ -50,6 +50,8 @@ claim at that moment.
 | `callout` | pointing at where the physics happens | anchor, label | ring + leader line, tracks the 3D point |
 | `question` | the episode's open loop | text, ask, answer, answer_text | "?" chip until the answer, then a ✓ answer chip for `hold_s` |
 | `progress` | a sequence of experiments (1 m, 2 m, no push) | items: [{label, at}] | current step highlighted |
+| `timer` | counting down to a real physical moment, or a slowed clock | `mode: down` + `target` (time expression), or `mode: up` + `rate` | fires `hud:<id>.zero`; format `m:ss.ss` or `x.xx s`. Only for a moment the physics really has |
+| `arrow` | the force at the moment the narration names it | anchor, `dir` [x,y,z], `length_m`, label | red (Blueprint accent), tracks the 3D anchor, projected QA like callouts |
 
 Anchors: plan.py exports `hud_anchors(plan) -> {name: [[x, y, z] per frame]}` in world metres.
 Placement slots, the platform-safe area, the caption band, limits and colours are in `config/retention.yaml`.
@@ -110,3 +112,11 @@ measuring line, the open question chip, a tracked "pile pushes up" callout in th
 experiment (meter 12 % → 0 % → 12 %) where the arch collapses into a rope-like drape and comes back for the
 loop. Its plan.py reuses `../chain-fountain/plan.py` and adds only anchors, the push series and a tighter
 opening shot.
+
+## A/B tests worth running
+
+The toolkit's flags make one-variable comparisons cheap: hook framing, live HUD vs static cards,
+the on-screen counterfactual, the question chip, `auto_accents`, `caption_emphasis`. The test table,
+metrics and how to record results are in `docs/research/competitor-shorts-2026-11.md` section F.2.
+No technique here is promised to raise views by any amount; the research shows correlations in 25
+videos, not causes.
