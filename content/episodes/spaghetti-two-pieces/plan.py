@@ -212,6 +212,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         if name == "B" and t > cut_wrong + rew + 0.4:
             pts, th = sp.arc_points(plain.kappa_now(tre), np.array([plain.s_flaw]))
             ring = [round(float(pts[0, 0]), 5), round(float(pts[0, 1]), 5), round(min(1.0, (t - cut_wrong - rew - 0.4) / 0.25), 2), round(float(th[0]), 4)]
+        if name == "C" and crack_v <= t < crack_v + 3.0:    # mark where it broke while the halves spring back
+            pts, th = sp.arc_points(plain.kappa_now(tb), np.array([plain.s_flaw]))
+            ring = [round(float(pts[0, 0]), 5), round(float(pts[0, 1]), 5),
+                    round(min(1.0, (t - crack_v) / 0.25, (crack_v + 3.0 - t) / 0.3), 2), round(float(th[0]), 4)]
         frames["ring"].append(ring)
         badge = ""
         steady = abs(tr.rate(t + 0.05) - rate) < 1e-9 and abs(tr.rate(t - 0.05) - rate) < 1e-9
@@ -229,6 +233,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
             badge = f"TRY {j + 2} · {mont[j][2].run.n_pieces} PIECES" if done else f"TRY {j + 2}"
         if name == "E":
             badge = "AUDOLY & NEUKIRCH, 2005" if t < S("history") + 2.6 else "IG NOBEL PRIZE, 2006"
+        if name == "G" and badge.startswith("SLOWED"):
+            badge = "REPLAY · " + badge                # the twisted snap again, slower (reviewer: looked like a new stick)
         if name == "F" and tw_start <= t < tw_end:
             badge = "TWIST: ≈ 1 TURN"          # narration: "almost a full turn"
         frames["badge"].append(badge)
@@ -243,14 +249,17 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                                               (cut_wrong, K(0.16, 1.27, 0.50), K(0.0, 0.76, 0.0), 32)], fps, "key"),
         # rewind: start wide enough to see the pieces on the bench fly back together, then push in
         cam.shot(cut_wrong, cut_slow, [(cut_wrong, K(0.06, 0.95, 0.42), K(0.0, 0.80, 0.0), 34),
-                                       (cut_wrong + 1.6, K(0.07, 0.88, 0.24), K(-0.005, 0.87, 0.0), 32),
+                                       (cut_wrong + 1.6, K(0.05, 0.98, 0.46), K(0.0, 0.82, 0.0), 36),
                                        (cut_slow, K(0.035, 0.88, 0.19), K(-0.005, 0.878, 0.0), 32)], fps, "key"),
-        cam.shot(cut_slow, crack_v + 5.2, [(cut_slow, K(0.0, 0.88, 0.27), K(-0.01, 0.86, 0.0), 34),
-                                           (crack_v + 5.2, K(-0.03, 0.88, 0.25), K(-0.03, 0.86, 0.0), 34)], fps, "key"),
-        cam.shot(crack_v + 5.2, S("burst") - 0.1, [(crack_v + 5.2, K(-0.03, 0.9, 0.36), K(-0.05, 0.85, 0.0), 34),
-                                                   (S("burst"), K(-0.045, 0.9, 0.345), K(-0.05, 0.85, 0.0), 34)], fps, "key"),
-        cam.shot(S("burst") - 0.1, cut_rehook, [(S("burst"), K(0.12, 1.0, 0.4), K(-0.02, 0.84, 0.0), 34),
-                                                (cut_rehook, K(0.09, 1.0, 0.38), K(-0.02, 0.84, 0.0), 34)], fps, "key"),
+        # the mechanism, slowed: from high over the bench (wood behind the stick, not the bright field), the
+        # whole stick and both clamps in frame, so the first crack, the halves springing back and the second
+        # crack are all visible (reviewer, round 1: the arc stayed whole on screen, half of it off frame)
+        cam.shot(cut_slow, crack_v + 5.2, [(cut_slow, K(0.0, 1.30, 0.50), K(0.0, 0.845, 0.0), 40),
+                                           (crack_v + 5.2, K(0.02, 1.28, 0.48), K(0.0, 0.845, 0.0), 40)], fps, "key"),
+        cam.shot(crack_v + 5.2, S("burst") - 0.1, [(crack_v + 5.2, K(-0.10, 1.24, 0.42), K(-0.04, 0.845, 0.0), 38),
+                                                   (S("burst"), K(-0.11, 1.24, 0.40), K(-0.04, 0.845, 0.0), 38)], fps, "key"),
+        cam.shot(S("burst") - 0.1, cut_rehook, [(S("burst"), K(0.10, 1.26, 0.44), K(0.03, 0.845, 0.0), 38),
+                                                (cut_rehook, K(0.09, 1.27, 0.43), K(0.03, 0.845, 0.0), 38)], fps, "key"),
         cam.shot(cut_rehook, cut_hist, [(cut_rehook, K(0.2, 1.18, 0.42), K(0.0, 0.77, 0.0), 34),
                                         (cut_hist, K(0.26, 1.2, 0.36), K(0.0, 0.77, 0.0), 34)], fps, "key"),
         cam.shot(cut_hist, cut_reveal, [(cut_hist, K(0.55, 1.08, 0.78), K(0.0, 0.79, -0.02), 30),
@@ -323,7 +332,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
               "cuts": [s_["start"] for s_ in shots[1:]], "reveals": [break_v], "events": events,
               "mutes": [[second_v - 3.0, second_v - 0.05], [tw_end - 0.2, break_v - 0.05]], "swells": [second_v, break_v]}
     # facts: the simulated values every spoken or shown number is checked against (factory/qa/science.py)
-    slowed = sorted({int(b.split()[1].replace(",", "").rstrip("×")) for b in frames["badge"] if b.startswith("SLOWED ")})
+    slowed = sorted({int(b.split("SLOWED ")[1].replace(",", "").rstrip("×")) for b in frames["badge"] if "SLOWED " in b})
     facts = {"plain_pieces": plain.n_pieces, "twisted_pieces": twisted.n_pieces,
              "untwisted_min_pieces": min([plain.n_pieces] + [r.n_pieces for r in extra]),
              "montage_pieces": [r.n_pieces for r in extra[:3]], "twist_turns": 1.0, "slow_factors": slowed,
