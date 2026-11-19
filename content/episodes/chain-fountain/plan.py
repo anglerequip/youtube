@@ -32,7 +32,17 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
 
     cut_macro0, cut_macro1 = S("links") - 0.1, S("rope") - 0.1
     morph_t0 = S("reality") + 0.35
-    frames = {k: [] for k in ("h2", "h1", "morph", "rope", "dist", "heap", "sway", "lever", "badge", "focal_pt")}
+    frames = {k: [] for k in ("h2", "h1", "morph", "rope", "dist", "heap", "sway", "lever", "badge", "focal_pt", "bracket")}
+
+    def at(bid, phrase):
+        """Approximate time a phrase is spoken: its character position within the beat's narration."""
+        txt = next(ln.text for ln in tl.lines if ln.id == bid).replace("*", "")
+        return S(bid) + (E(bid) - S(bid)) * max(txt.find(phrase), 0) / max(len(txt), 1)
+    # "with no push from below, there's no fountain": show it (picture review, round 5: the line played over
+    # a working fountain). The chain drops back to sliding over the rim, as in the opening "rope" guess.
+    nopush0 = at("catch", "But with no push") - 0.2
+    nopush1 = E("catch") + 0.2
+    rope0, rope1 = S("rope") - 0.1, S("kick") - 0.1
     dist = 0.0
     for i, t in enumerate(T):
         h2 = h2_at(t); st = cf.steady(h2)
@@ -42,11 +52,16 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
             m = 0.0
         elif morph_t0 <= t < morph_t0 + 1.1:
             m = cam.ease((t - morph_t0) / 1.1)
+        elif rope0 <= t < rope1:          # the rope beat: the chain behaves like a rope (no push, no arch)
+            m = 1.0 - min(cam.ease((t - rope0) / 0.9), cam.ease((rope1 - t) / 0.9))
+        elif nopush0 <= t < nopush1:
+            m = 1.0 - min(cam.ease((t - nopush0) / 0.9), cam.ease((nopush1 - t) / 0.9))
         else:
             m = 1.0
         frames["h2"].append(round(h2, 5)); frames["h1"].append(round(st["h1"] * m, 5))
         frames["morph"].append(round(m, 4))
-        frames["rope"].append(1.0 if S("rope") - 0.1 <= t < S("kick") - 0.1 else 0.0)
+        frames["rope"].append(0.0)        # round 6: the ghost rope over a running fountain muddled it; the chain itself goes rope-like
+        frames["bracket"].append(0.0)
         dist += st["v"] / slow / fps
         frames["dist"].append(round(dist, 6))
         frames["heap"].append(round(0.25 + 0.65 * t / (n / fps), 4))
@@ -55,9 +70,11 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         if macro:
             b = "SLOWED 3,000× · SIMPLIFIED"
         elif S("wrong") - 0.1 <= t < morph_t0:
-            b = "IF IT WERE A ROPE"
-        elif S("rope") - 0.1 <= t < S("kick") - 0.1:
-            b = "WHITE: A ROPE"
+            b = "IF IT ACTED LIKE A ROPE"
+        elif rope0 <= t < rope1:
+            b = "IF IT ACTED LIKE A ROPE"
+        elif nopush0 <= t < nopush1:
+            b = "WITHOUT THE PILE'S PUSH"
         else:
             b = "SLOWED 4×"
         frames["badge"].append(b)
@@ -76,8 +93,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         cam.shot(S("double") - 0.1, S("rehook") - 0.1, [(S("double") - 0.1, K(0.42, 0.1, 0.85), K(0.04, 0.1, 0.0), 32),
                                                         (S("speed"), K(0.5, 0.16, 1.0), K(0.04, 0.15, 0.0), 32),
                                                         (S("rehook") - 0.1, K(0.45, 0.18, 0.9), K(0.04, 0.16, 0.0), 32)], fps, "key", pile),
-        cam.shot(S("rehook") - 0.1, S("rehook") + 3.3, [(S("rehook") - 0.1, K(-0.35, 0.16, 0.55), K(0.04, 0.1, 0.0), 32),
-                                                        (S("rehook") + 3.3, K(-0.3, 0.17, 0.5), K(0.04, 0.1, 0.0), 32)], fps, "key", pile),
+        cam.shot(S("rehook") - 0.1, S("rehook") + 3.3, [(S("rehook") - 0.1, K(-0.35, 0.2, 0.6), K(0.04, 0.17, 0.0), 32),
+                                                        (S("rehook") + 3.3, K(-0.3, 0.21, 0.55), K(0.04, 0.17, 0.0), 32)], fps, "key", pile),
         cam.shot(S("rehook") + 3.3, cut_macro0, [(S("rehook") + 3.3, K(0.2, 0.2, 0.32), K(0.03, 0.12, 0.0), 32),
                                                  (cut_macro0, K(0.07, 0.05, 0.12), K(0.01, 0.0, 0.0), 32)], fps, "key", pile),
         cam.shot(cut_macro0, S("push") - 0.1, [(cut_macro0, K(0.017, 0.02, 0.036), K(0.009, 0.003, 0.0), 40),
@@ -86,8 +103,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                                                (cut_macro1, K(0.002, 0.013, 0.038), K(0.010, 0.002, 0.0), 40)], fps, "key", pile),
         cam.shot(cut_macro1, S("kick") - 0.1, [(cut_macro1, K(0.05, 0.1, 0.38), K(0.03, 0.06, 0.0), 32),
                                                (S("kick") - 0.1, K(0.03, 0.11, 0.35), K(0.03, 0.06, 0.0), 32)], fps, "key", pile),
-        cam.shot(S("kick") - 0.1, S("kick") + 4.3, [(S("kick") - 0.1, K(0.12, 0.03, 0.22), K(0.01, 0.03, 0.0), 32),
-                                                    (S("kick") + 4.3, K(0.3, 0.12, 0.5), K(0.03, 0.08, 0.0), 32)], fps, "golden", pile),
+        cam.shot(S("kick") - 0.1, S("kick") + 4.3, [(S("kick") - 0.1, K(0.3, 0.3, 0.45), K(0.03, 0.19, 0.0), 32),
+                                                    (S("kick") + 4.3, K(0.36, 0.32, 0.55), K(0.03, 0.2, 0.0), 32)], fps, "golden", pile),
         cam.shot(S("kick") + 4.3, S("catch") - 0.1, [(S("kick") + 4.3, K(0.0, 0.5, 0.7), K(0.03, 0.2, 0.0), 34),
                                                      (S("catch") - 0.1, K(-0.05, 0.55, 0.75), K(0.03, 0.22, 0.0), 34)], fps, "golden", pile),
         cam.shot(S("catch") - 0.1, S("catch") + 3.4, [(S("catch") - 0.1, K(-0.5, 0.1, 0.8), K(0.04, 0.07, 0.0), 32),
@@ -128,7 +145,9 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     # Sound: only the moments that matter (Caesar, 2026-11-19: "ding ding ding"; round 2 swapped the dings
     # for ~3 varied clicks per second and the Sound Reviewer still heard a ticking clock). The running chain is
     # carried by the music; effects mark the leap, the higher drop and the lever moment, nothing else.
-    events = [(round(morph_t0, 3), "rise", {"gain": 0.4}),
+    for i, t in enumerate(T):           # the height bracket while the arch heights are on screen
+        frames["bracket"][i] = round(max(0.0, min(1.0, (t - (show1 - 0.4)) / 0.3, (S("rehook") - 0.2 - t) / 0.3)), 3)
+    events = [(round(morph_t0, 3), "rise", {"gain": 0.3}),
               (round(S("double") + 0.15, 3), "swish", {"gain": 0.22, "seed": 31})]
     # in the macro (slowed 3,000x): one soft tick as the first link lifts, one as the lever bites the pile
     events += [(round(cut_macro0 + 0.6, 3), "tick", {"gain": 0.16, "seed": 60, "pitch": 0.95, "ring": 0.25}),

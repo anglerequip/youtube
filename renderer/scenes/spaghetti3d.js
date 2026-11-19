@@ -61,7 +61,7 @@ function setTube(m, xs, ys, zs, phase, glow, hl) {
       P[v] = xs[i] + ox * RAD; P[v + 1] = ys[i] + oy * RAD + BENCH_Y; P[v + 2] = zs + oz * RAD;
       N[v] = ox; N[v + 1] = oy; N[v + 2] = oz;
       const d = Math.cos(a - phase[i]);   // stripe: a narrow band around the surface angle `phase`
-      const st = d > 0.86 ? 1 : 0;
+      const st = d > 0.72 ? 1 : 0;      // a wider stripe: the twist must read on a phone (round 5)
       cTmp.copy(PASTA).lerp(PASTA_DARK, 0.35 * (1 - (ca * 0.5 + 0.5)));
       if (st) cTmp.copy(STRIPE);
       C[v] = cTmp.r; C[v + 1] = cTmp.g; C[v + 2] = cTmp.b;
@@ -130,7 +130,10 @@ export function build(world, plan) {
   const postR = add(S, new THREE.CylinderGeometry(0.005, 0.005, 1, 12), steel, 0, 0, -0.035);
   const armL = add(S, rbox(0.012, 0.012, 0.04, 0.003), steel, 0, 0, -0.018);
   const armR = add(S, rbox(0.012, 0.012, 0.04, 0.003), steel, 0, 0, -0.018);
-  for (const x of [-0.16, 0.16]) add(S, rbox(0.05, 0.008, 0.05, 0.003), MAT.brushedSteel(), x, BENCH_Y + 0.004, -0.035);   // were black slabs
+  // foot plates follow their posts (picture review, round 5: fixed plates looked detached from the moving posts)
+  const footM = new THREE.MeshStandardMaterial({ color: '#8d9197', metalness: 0.5, roughness: 0.6 });   // matte: no glare
+  const footL = add(S, rbox(0.04, 0.006, 0.04, 0.002), footM, -0.16, BENCH_Y + 0.003, -0.035);
+  const footR = add(S, rbox(0.04, 0.006, 0.04, 0.002), footM, 0.16, BENCH_Y + 0.003, -0.035);
 
   const tubes = Array.from({ length: POOL }, () => { const m = pastaTube(); S.add(m); return m; });
   const flash = haloSprite('#fff1dc', 0.035, 0); S.add(flash);
@@ -151,14 +154,15 @@ export function build(world, plan) {
         setTube(tubes[p], pc.x, pc.y, pc.z ?? 0, phase, pc.e, pc.h);
       }
       const G = F.grips[k];
-      [[gl, G[0], postL, armL, 0], [gr, G[1], postR, armR, G[2]]].forEach(([g, q, post, arm, roll], side) => {
+      [[gl, G[0], postL, armL, 0, footL], [gr, G[1], postR, armR, G[2], footR]].forEach(([g, q, post, arm, roll, foot], side) => {
         g.position.set(q[0], q[1] + BENCH_Y, 0);
         g.rotation.z = q[2];
         g.userData.roll.rotation.x = roll;
         const top = q[1] + BENCH_Y, h = top - BENCH_Y;
         post.scale.y = h; post.position.set(q[0], BENCH_Y + h / 2, -0.035);
         arm.position.set(q[0], top, -0.018);
-        g.visible = post.visible = arm.visible = !F.nogrip || !F.nogrip[k];
+        foot.position.set(q[0], BENCH_Y + 0.003, -0.035);
+        g.visible = post.visible = arm.visible = foot.visible = !F.nogrip || !F.nogrip[k];
       });
       const fl = F.flash[k];
       flash.material.opacity = fl ? 0.95 * fl[2] : 0; flash2.material.opacity = fl ? 0.5 * fl[2] : 0;

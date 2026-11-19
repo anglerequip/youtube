@@ -175,6 +175,15 @@ def check(ctx, cfg) -> tuple[list[Finding], dict]:
             F.append(Finding(f"sound.periodic.{name}", "sound", sev, "BLOCKED_AUDIO" if sev <= 1 else None,
                              f"'{name}' ticks like a metronome ({k + 1} cues about every {mean:.2f} s from {t0:.1f}s)",
                              t=float(t0), repair="break the rhythm or drop most of these cues"))
+    # 5. doubled trigger: two ringing cues of one kind a few tens of ms apart read as a glitch, not a burst
+    #    (round 5, Sound Reviewer: two tinks 60 ms apart at 29.5 s, missed by every check above)
+    ring = sorted((q["t"], q["name"]) for q in cues if q["name"] in c.get("ringing_cues", ["tink", "ding", "tick", "rise"]))
+    for (t1, n1), (t2, n2) in zip(ring, ring[1:]):
+        if n1 == n2 and 0.02 <= t2 - t1 < c.get("double_trigger_s", 0.25):
+            F.append(Finding(f"sound.double_trigger.{n1}", "sound", 2, None,
+                             f"two '{n1}' cues {1000 * (t2 - t1):.0f} ms apart at {t1:.2f}s: sounds like a doubled trigger",
+                             t=float(t1), repair="keep one of them"))
+            break
     # 4-6. stems: masking, startle, music balance
     st = _stems(ctx)
     if st is None:

@@ -139,7 +139,9 @@ def test_spaghetti_cards_never_cover_the_pieces(tmp_path):
     old_plan = json.loads(json.dumps(plan))
     for c in old_plan["cards"]:
         if c["big"].endswith("pieces") and "twisted" in c["small"]:
-            c["y"], c["start"] = 0.2, ev - 0.6 + 0.6       # as shipped: y 0.2, right at the break
+            # as shipped in v1 the card sat right on the pieces (y 0.2 in that close shot). The round 6 wide shot
+            # puts the broken ends at ~0.36 of the frame height, so the "card on the pieces" case is now y 0.37
+            c["y"], c["start"] = 0.37, ev
     old = _inspect("spaghetti3d", old_plan, times, tmp_path)
     assert _blockers(old, "recognition.card_covers_hero")
     assert not _blockers(new, "recognition.card_covers_hero")

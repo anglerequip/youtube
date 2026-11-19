@@ -225,19 +225,20 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # 1. chase cam behind the ego car, the other lane rolling past
         cam.shot(0.0, S("setup") - 0.1, [(0.0, [-1.2, 3.0, 13.0], [-0.4, 0.8, -20], 40),
                                          (S("setup"), [-1.0, 3.15, 13.8], [-0.4, 0.8, -21], 40)], fps, "key", ego),
-        # 2. low beside the road: both lanes stretch ahead, the ego car in front of us
-        cam.shot(S("setup") - 0.1, S("setup") + 3.0, [(S("setup"), [6.5, 1.7, 7.0], [-1.0, 0.8, -26], 40),
-                                                      (S("setup") + 3.0, [6.3, 1.85, 5.0], [-1.0, 0.8, -27], 40)], fps, "key", ego),
+        # 2. low over the shoulder of the ego car, looking across at the next lane as it slides past
+        # (picture review, round 4: the fence shot did not show the other lane moving)
+        cam.shot(S("setup") - 0.1, S("setup") + 3.0, [(S("setup"), [0.6, 4.2, 9.0], [-3.2, 0.5, -12], 42),
+                                                      (S("setup") + 3.0, [0.5, 4.3, 8.5], [-3.2, 0.5, -13], 42)], fps, "key", ego),
         # 2b. high behind the ego car, looking forward along its queue (round 4: the old look-back shot
         # mirrored the lanes and made the car seem to change lanes)
         cam.shot(S("setup") + 3.0, S("dense") - 0.1, [(S("setup") + 3.0, [3.2, 7.0, 13.0], [0.6, 0.6, -22.0], 42),
                                                       (S("dense"), [3.0, 7.6, 12.0], [0.6, 0.6, -24.0], 42)], fps, "key", ego),
         # 3. crane up to a 3/4 aerial: the slow lane is packed, the fast lane spread out
         cam.shot(S("dense") - 0.1, S("gaps") - 0.1, [(S("dense"), [5.0, 8.0, 16.0], [-1.8, 0.0, -30], 42),
-                                                     (S("gaps"), [7.0, 26.0, 30.0], [-1.8, 0.0, -65], 42)], fps, "key", ego),
+                                                     (S("gaps"), [6.0, 15.0, 22.0], [-1.8, 0.0, -42], 42)], fps, "key", ego),
         # 4. 3/4 aerial from the other side: the gaps in the fast lane
-        cam.shot(S("gaps") - 0.1, S("gaps") + 3.0, [(S("gaps"), [-16.0, 30.0, 28.0], [-1.8, 0.0, -70], 40),
-                                                    (S("gaps") + 3.0, [-14.5, 34.0, 31.0], [-1.8, 0.0, -79], 40)], fps, "key", ego),
+        cam.shot(S("gaps") - 0.1, S("gaps") + 3.0, [(S("gaps"), [-11.0, 16.0, 12.0], [-1.0, 0.0, -30], 42),
+                                                    (S("gaps") + 3.0, [-10.5, 17.0, 10.0], [-1.0, 0.0, -34], 42)], fps, "key", ego),
         # 4b. lower along the fast lane: long empty gaps between its cars
         cam.shot(S("gaps") + 3.0, S("share") - 0.05, [(S("gaps") + 3.0, [-5.5, 6.0, 10.0], [-1.8, 0.5, -60], 40),
                                                       (S("share"), [-5.0, 6.5, 12.0], [-1.8, 0.5, -66], 40)], fps, "key", ego),

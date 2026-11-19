@@ -149,6 +149,14 @@ export function build(world, plan) {
   const ropeMat = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.0, depthWrite: false, toneMapped: false });
   let ropeMesh = null;
 
+  // height bracket: a thin white bar from the pile top to the arch top, with end ticks (picture review,
+  // round 5: "the arch doubles" needs a scale on screen; measured from the pile, as the narration says)
+  const brM = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, toneMapped: false });
+  const bracket = new THREE.Group(); S.add(bracket);
+  const brBar = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), brM), brT1 = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), brM),
+    brT2 = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), brM);
+  bracket.add(brBar, brT1, brT2); bracket.visible = false;
+
   // macro lever: one link (two beads + rod) being lifted; glow at the far end = the pile's push
   const lever = new THREE.Group(); S.add(lever);
   const linkM = new THREE.MeshStandardMaterial({ color: '#b9bdc2', metalness: 0.85, roughness: 0.3 });
@@ -168,7 +176,7 @@ export function build(world, plan) {
   let travelled = 0;
   return {
     lightCenter: new THREE.Vector3(0, 0.8, 0),
-    update(i) {
+    update(i, t, shot) {
       const k = Math.min(i, F.h2.length - 1);
       const h2 = F.h2[k], h1 = F.h1[k];
       const pileY = h2, standTop = pileY - plan.pile_h - 0.011;       // jar base on platform top
@@ -221,6 +229,19 @@ export function build(world, plan) {
         }
         ropeMat.opacity = 0.55 * ro; ropeMesh.visible = true;
       } else if (ropeMesh) ropeMesh.visible = false;
+      // height bracket beside the rising leg, scaled so it reads at any camera distance
+      const bv = F.bracket ? F.bracket[k] : 0;
+      bracket.visible = bv > 0.01 && h1 > 0.005;
+      if (bracket.visible) {
+        const jj = shot && shot.pos ? Math.min(Math.max(0, i - (shot.i0 ?? 0)), shot.pos.length - 1) : -1;
+        const cp = jj >= 0 ? new THREE.Vector3(...shot.pos[jj]) : new THREE.Vector3(0.3, pileY + 0.1, 0.5);
+        const d = cp.distanceTo(new THREE.Vector3(0, pileY + h1 / 2, 0)), w = Math.max(0.0012, d * 0.004);
+        const bx = -0.03, y0 = pileY, y1 = pileY + h1, z = 0.02;
+        brBar.scale.set(w, h1, w); brBar.position.set(bx, (y0 + y1) / 2, z);
+        brT1.scale.set(6 * w, w, w); brT1.position.set(bx, y0, z);
+        brT2.scale.set(6 * w, w, w); brT2.position.set(bx, y1, z);
+        brM.opacity = 0.9 * bv;
+      }
       // macro lever
       const lv = F.lever ? F.lever[k] : null;
       lever.visible = !!lv;

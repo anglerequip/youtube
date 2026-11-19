@@ -94,3 +94,10 @@ def test_sound_critique_required_and_bound_to_video(tmp_path):
     (d / "critique_audio.json").write_text(json.dumps({**good, "video_sha256": "0" * 64}))
     F, c = sound.read(ctx, vid)
     assert c is None and F[0].id == "review.audio_stale"
+
+
+def test_doubled_tink_is_flagged(tmp_path):
+    """Spaghetti round 2: two tinks 60 ms apart sounded like a doubled trigger (Sound Reviewer)."""
+    ev = [(29.47, "tink", {"gain": 0.3, "seed": 1}), (29.53, "tink", {"gain": 0.3, "seed": 2})]
+    F, _ = sound.check(_ctx(ev, tmp_path), CFG)
+    assert any(f.id == "sound.double_trigger.tink" for f in F), [f.message for f in F]

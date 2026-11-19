@@ -275,10 +275,12 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # both clamps in frame while one of them turns the stick (reviewer: the twist must be seen)
         cam.shot(tw_start - 0.2, tw_end, [(tw_start - 0.2, TW_POS, TW_LOOK, 38),
                                           (tw_end, TW_POS2, TW_LOOK, 38)], fps, "key"),
-        cam.shot(tw_end, cut_why, [(tw_end, K(0.0, 0.88, 0.42), K(0.0, 0.83, 0.0), 34),
-                                   (cut_why, K(0.0, 0.885, 0.38), K(0.0, 0.83, 0.0), 34)], fps, "key"),
-        cam.shot(cut_why, S("catch") - 0.1, [(cut_why, K(0.045, 0.868, 0.19), K(0.0, 0.856, 0.0), 34),
-                                             (S("catch") - 0.1, K(0.0, 0.87, 0.165), K(0.0, 0.856, 0.0), 34)], fps, "key"),
+        # the clean two-piece break: the same wide 3/4 overhead as the four-piece break, both clamps and both
+        # ends in frame (picture review, round 5: the tight table-height shot hid them)
+        cam.shot(tw_end, cut_why, [(tw_end, K(0.06, 1.32, 0.68), K(0.0, 0.80, 0.0), 34),
+                                   (cut_why, K(0.02, 1.34, 0.70), K(0.0, 0.80, 0.0), 34)], fps, "key"),
+        cam.shot(cut_why, S("catch") - 0.1, [(cut_why, K(0.10, 0.97, 0.30), K(0.0, 0.84, 0.0), 34),
+                                             (S("catch") - 0.1, K(0.06, 0.97, 0.28), K(0.0, 0.84, 0.0), 34)], fps, "key"),
         cam.shot(S("catch") - 0.1, cut_outro, [(S("catch") - 0.1, K(0.3, 1.04, 0.5), K(0.0, 0.8, 0.0), 32),
                                                (cut_outro, K(0.25, 1.07, 0.45), K(0.0, 0.8, 0.0), 32)], fps, "key"),
         cam.shot(cut_outro, cut_outro + 3.2, [(cut_outro, K(0.5, 1.02, 0.66), K(0.0, 0.81, 0.0), 34),
@@ -307,7 +309,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         {"start": count_hl[3] + 0.3, "end": cut_wrong - 0.1, "big": f"{plain.n_pieces} pieces", "small": "from one snap", "y": 0.2},
         # the halves fly up to y~0.24 after the break: this card sits higher, after the badge clears, so it
         # never covers the gap between the two pieces (factory/qa inspect: recognition.card_covers_hero)
-        {"start": max(break_v + 0.6, badge_clear(break_v)), "end": cut_why - 0.1, "big": f"{twisted.n_pieces} pieces",
+        {"start": max(break_v + 0.6, badge_clear(break_v + 1.3)), "end": cut_why - 0.1, "big": f"{twisted.n_pieces} pieces",
          "small": "twisted first", "y": 0.125},
         {"start": S("catch") + 0.4, "end": S("catch") + 2.6, "big": "≈ 270°", "small": "model (25 cm stick)", "y": 0.16},
         {"start": S("catch") + 2.8, "end": cut_outro - 0.1, "big": "≈ 360°", "small": "in the lab", "y": 0.16},
@@ -332,9 +334,23 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                     events.append([round(tv, 3), "tink", {"gain": 0.3, "seed": len(events) + 101,
                                                             "pitch": 0.85 + 0.1 * (len(events) % 4), "ring": 0.35}])
     events.append([round(cut_wrong + 0.02, 3), "rewind", {"gain": 0.5}])
-    events.append([round(cut_why - 0.3, 3), "rewind", {"gain": 0.35}])
+    # (round 5, Sound Reviewer: a second rewind whoosh at the replay landed mid-sentence: dropped)
     # (round 3, Sound Reviewer: four rising counting ticks sounded like an app chime, and a held ding under
     # "Now it breaks cleanly in two" competed with the line; the pieces are counted visually, the crack is the cue)
+    # tidy (round 5, Sound Reviewer): no two ringing cues within 0.3 s (a doubled trigger), no ringing tink
+    # in the 0.6 s before a line starts, montage cracks quieter (they sat under the Feynman anecdote)
+    starts = [ln.start for ln in tl.lines]
+    events.sort(key=lambda e: e[0])
+    kept, last_ring = [], -9.0
+    for e in events:
+        if e[1] == "tink":
+            if e[0] - last_ring < 0.3 or any(0 <= st_ - e[0] < 0.6 for st_ in starts):
+                continue
+            last_ring = e[0]
+        if e[1] == "latch" and cut_rehook <= e[0] < cut_hist:
+            e[2]["gain"] = 0.3
+        kept.append(e)
+    events = kept
     timing = {"crack_v": crack_v, "second_v": second_v, "break_v": break_v, "slow2": slow2,
               "cuts": [s_["start"] for s_ in shots[1:]], "reveals": [break_v], "events": events,
               "mutes": [[second_v - 3.0, second_v - 0.05], [tw_end - 0.2, break_v - 0.05]], "swells": [second_v, break_v]}
@@ -346,7 +362,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
              "events": {
                  # data-level check: the pieces drawn on screen at these times must equal the simulated count
                  "snap_plain": {"t": count_hl[3] + 0.3, "observe": "pieces", "expect": plain.n_pieces},
-                 "snap_twisted": {"t": max(break_v + 0.6, badge_clear(break_v)), "observe": "pieces", "expect": twisted.n_pieces}}}
+                 "snap_twisted": {"t": max(break_v + 0.6, badge_clear(break_v + 1.3)), "observe": "pieces", "expect": twisted.n_pieces}}}
     for j, (v0, v1, tr) in enumerate(mont):
         facts["events"][f"snap_try{j + 2}"] = {"t": v1 - 0.2, "observe": "pieces", "expect": tr.run.n_pieces}
     return {"scene": SCENE, "W": W, "H": H, "fps": fps, "n_frames": n, "seed": 9, "supersample": 1.0,
