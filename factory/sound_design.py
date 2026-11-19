@@ -106,10 +106,13 @@ def impact(speed=2.5, seed=3, slow=1.0):
     return _norm(y, 0.55 + 0.4 * s)
 
 
-def tink(seed=5):
+def tink(seed=5, pitch=1.0, ring=1.0):
+    """Small metal tink. Vary `seed`/`pitch` between uses: one identical bell sample repeated over and
+    over is the most annoying sound we have made (chain fountain, 2026-11-19)."""
     rng = np.random.default_rng(seed)
-    f0 = 1180
-    y = _modes([f0, f0 * 2.756, f0 * 5.404, f0 * 8.933], [1.0, 0.55, 0.3, 0.12], [0.9, 0.5, 0.25, 0.12], 1.4, rng, 0.002)
+    f0 = 1180 * pitch
+    y = _modes([f0, f0 * 2.756, f0 * 5.404, f0 * 8.933], [1.0, 0.55, 0.3, 0.12],
+               [0.9 * ring, 0.5 * ring, 0.25 * ring, 0.12 * ring], 1.4 * max(0.2, ring), rng, 0.002)
     m = int(0.004 * SR); y[:m] += _hp(rng.standard_normal(m), 4000) * 0.6
     return _norm(y, 0.7)
 
@@ -278,9 +281,24 @@ def _voice_chain(v):
     return v * 10 ** (-(over * (1 - 1 / 3)) / 20)
 
 
-def build_mix(voice_wav: Path, events: list, out_wav: Path, duration: float | None = None,
-              music: dict | None = None, sfx_gain: float = 0.5) -> dict:
-    """Mix voice + designed SFX + music and master. `events`: (t, name) or (t, name, params)."""
+def render_cue(name: str, p: dict, t: float) -> np.ndarray:
+    """The exact samples one cue contributes (before its gain), as build_mix places them."""
+    if name == "coil":
+        return coil(p.get("stack", 0.0), p.get("speed", 1.0), seed=int(t * 1000) % 9973)
+    fn = ONE_SHOTS.get(name)
+    if fn is None:
+        raise ValueError(f"unknown sound {name!r}")
+    kw = {k: p[k] for k in ("speed", "slow") if k in p and name in ("impact", "thud")}
+    kw.update({k: p[k] for k in ("seed",) if k in p and name in ("tink", "tick", "latch", "pop", "swish")})
+    if name in ("tink", "tick"):
+        kw.update({k: p[k] for k in ("pitch", "ring") if k in p})
+    return fn(**kw)
+
+
+def stems(voice_wav: Path, events: list, duration: float | None = None, music: dict | None = None,
+          sfx_gain: float = 0.5) -> dict:
+    """voice / sfx / music stems exactly as they are summed into the mix (factory/qa/sound.py measures
+    these: repetition, density, masking of the voice, music balance)."""
     v, sr = sf.read(voice_wav, dtype="float64")
     if v.ndim > 1:
         v = v.mean(axis=1)
@@ -290,32 +308,32 @@ def build_mix(voice_wav: Path, events: list, out_wav: Path, duration: float | No
     n = int(duration * SR)
     v = np.pad(v, (0, max(0, n - len(v))))[:n]
     v = _voice_chain(v)
-    mix = np.zeros((n, 2))
-    mix[:, 0] += v; mix[:, 1] += v
     fx = np.zeros((n, 2))
     for ev in events:
         t, name = ev[0], ev[1]
         p = dict(ev[2]) if len(ev) > 2 and ev[2] else {}
-        if name == "coil":
-            y = coil(p.get("stack", 0.0), p.get("speed", 1.0), seed=int(t * 1000) % 9973)
-            _place(fx, t, y, p.get("gain", 0.35), pan=p.get("pan", 0.0))
-            continue
-        fn = ONE_SHOTS.get(name)
-        if fn is None:
-            raise ValueError(f"unknown sound {name!r}")
-        kw = {k: p[k] for k in ("speed", "slow") if k in p and name in ("impact", "thud")}
-        _place(fx, t, fn(**kw), p.get("gain", 1.0), pan=p.get("pan", 0.0))
-    mix += fx * sfx_gain
+        _place(fx, t, render_cue(name, p, t), p.get("gain", 0.35 if name == "coil" else 1.0), pan=p.get("pan", 0.0))
+    fx *= sfx_gain
+    bed = np.zeros((n, 2))
     if music is not False:
         mcfg = music or {}
-        bed = music_bed(duration, mcfg.get("mutes", []), mcfg.get("bpm", 96), swell_at=mcfg.get("swells", []))
+        b = music_bed(duration, mcfg.get("mutes", []), mcfg.get("bpm", 96), swell_at=mcfg.get("swells", []))
         # sidechain ducking under the voice (fast attack, slow release)
         env = np.abs(v)
-        att, rel = np.exp(-1 / (0.01 * SR)), np.exp(-1 / (0.35 * SR))
+        rel = np.exp(-1 / (0.35 * SR))
         e = signal.lfilter([1 - rel], [1, -rel], env)
         e = e / (np.percentile(e, 99) or 1)
         duck = 1 - 0.65 * np.clip(e, 0, 1)
-        mix += bed * (mcfg.get("gain", 0.16) * duck)[:, None]
+        bed = b * (mcfg.get("gain", 0.16) * duck)[:, None]
+    return {"voice": v, "fx": fx, "bed": bed, "sr": SR, "duration": duration}
+
+
+def build_mix(voice_wav: Path, events: list, out_wav: Path, duration: float | None = None,
+              music: dict | None = None, sfx_gain: float = 0.5) -> dict:
+    """Mix voice + designed SFX + music and master. `events`: (t, name) or (t, name, params)."""
+    st = stems(voice_wav, events, duration, music, sfx_gain)
+    mix = st["fx"] + st["bed"]
+    mix[:, 0] += st["voice"]; mix[:, 1] += st["voice"]
     tmp = out_wav.with_suffix(".premaster.wav")
     sf.write(tmp, (mix / max(1.0, np.max(np.abs(mix)))).astype(np.float32), SR)
     stats = master(tmp, out_wav)

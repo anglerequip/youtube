@@ -116,17 +116,22 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         {"start": S("speed") + 0.8, "end": S("rehook") - 0.15, "big": f"≈ {a2['v']:.1f} m/s", "small": "chain speed", "y": 0.17},
     ]
     events = [(round(morph_t0, 3), "rise", {"gain": 0.4})]
+    # Chain clatter. It used to be a bell-like 'tink' (one identical sample, 1.4 s ring) every 0.18-0.38 s
+    # for the whole video: Caesar heard "ding ding ding" (2026-11-19). Now: short dry link clicks
+    # ('coil', a new random sample each time, 40 ms), quiet, only while the chain is visibly running,
+    # and kept off the narration's words (factory/qa/sound.py checks repetition, density, masking).
     t = 0.3
-    while t < n / fps - 0.5:                       # light chain clatter (not in the macro, it is slowed 1000x)
+    while t < n / fps - 0.5:
         if not (cut_macro0 <= t < cut_macro1):
-            events.append((round(t, 3), "tink", {"gain": 0.06 + 0.05 * rng.random(), "pan": float(rng.uniform(-0.3, 0.3))}))
-        t += 0.18 + 0.2 * rng.random()
-    # in the macro: a soft tick each time a link is lifted off the pile
+            events.append((round(t, 3), "coil", {"gain": 0.10 + 0.06 * rng.random(), "speed": 0.5,
+                                                 "stack": float(rng.random()), "pan": float(rng.uniform(-0.3, 0.3))}))
+        t += 0.22 + 0.25 * rng.random()
+    # in the macro (slowed 1000x): a soft, varied tick each time a link is lifted off the pile
     cyc = 0.0046 / (cf.steady(2.0)["v"] / 1000.0)
-    t = cut_macro0 + 0.4
-    while t < cut_macro1:
-        events.append((round(t, 3), "tick", {"gain": 0.25}))
-        t += cyc
+    t, j = cut_macro0 + 0.4, 0
+    while t < cut_macro1 and j < 4:          # the first few links only: the idea is clear, then let it breathe
+        events.append((round(t, 3), "tick", {"gain": 0.18, "seed": 60 + j, "pitch": 0.9 + 0.08 * (j % 3), "ring": 0.25}))
+        t += cyc * (0.85 + 0.3 * rng.random()); j += 1
     timing = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [morph_t0], "events": events,
               "mutes": [[S("wrong") - 0.1, morph_t0 - 0.05]], "swells": [morph_t0]}
     facts = {"drop_1m": 1.0, "drop_2m": 2.0, "arch_1m_cm": a1["h1"] * 100, "arch_2m_cm": a2["h1"] * 100,

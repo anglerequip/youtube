@@ -47,3 +47,22 @@ rubric:                      # factory/qa/gate.py: 0-5 per category, weighted
     design_and_style: 0.10
     hook_and_retention: 0.05
   primary: [scientific_accuracy, cross_modal_consistency, visual_clarity, geometry_and_render]
+
+sound:                        # factory/qa/sound.py (the sound team; proxies, nothing listens)
+  texture_max_dur_s: 0.08            # shorter, never-identical cues (coil clatter) count as texture
+  repeat_window_s: 5.0
+  repeat_warn: 4                     # identical sample this many times within the window -> high
+  repeat_block: 8                    # ...or this many -> blocks
+  repeat_total_warn: 12
+  repeat_total_block: 30
+  density_window_s: 5.0
+  density_warn: 1.0                  # audible cues per second
+  density_block: 2.0
+  periodic_min_run: 8
+  periodic_max_interval_s: 1.5
+  periodic_cv: 0.35
+  masking_db: -12.0                  # effects within this of the voice (50 ms frames, while speaking)
+  masking_warn: 0.05
+  masking_block: 0.15
+  music_max_db: -12.0
+  startle_db: 0.0

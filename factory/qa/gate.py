@@ -32,7 +32,7 @@ def category(fid: str) -> str:
         return "hook_and_retention"
     if fid.startswith(("pacing.", "spec.too", "spec.beat")):
         return "pacing_and_attention"
-    if fid.startswith("audio."):
+    if fid.startswith(("audio.", "sound.")):
         return "audio"
     if fid.startswith("review."):
         return "design_and_style"

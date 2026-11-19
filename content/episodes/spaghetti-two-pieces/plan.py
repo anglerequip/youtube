@@ -305,16 +305,19 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         for (tc, s) in run_.cracks:
             tv = _video_time(track, tc, v0, v1, fps)
             if tv is not None:
-                events.append([round(tv, 3), "latch", {"gain": 0.9 if tc == run_.t_break else 0.7, "pan": (s / sp.STICK - 0.5) * 0.8}])
-        for fr in run_.fragments:
+                events.append([round(tv, 3), "latch", {"gain": 0.9 if tc == run_.t_break else 0.7, "pan": (s / sp.STICK - 0.5) * 0.8,
+                                                        "seed": len(events) + 11}])   # never the same crack twice
+        for fr in (run_.fragments if name != "D" else []):      # montage: cracks only (it was a wall of tinks)
             land = next((tt for (tt, c, a) in fr.track if c[1] < sp.RADIUS + 0.003 and tt > fr.t0 + 0.01), None)
             if land is not None:
                 tv = _video_time(track, land, v0, v1, fps)
                 if tv is not None:
-                    events.append([round(tv, 3), "tink", {"gain": 0.35}])
+                    events.append([round(tv, 3), "tink", {"gain": 0.3, "seed": len(events) + 101,
+                                                            "pitch": 0.85 + 0.1 * (len(events) % 4), "ring": 0.35}])
     events.append([round(cut_wrong + 0.02, 3), "rewind", {"gain": 0.5}])
     events.append([round(cut_why - 0.3, 3), "rewind", {"gain": 0.35}])
-    events += [[round(c, 3), "tick", {"gain": 0.4}] for c in count_hl]
+    events += [[round(c, 3), "tick", {"gain": 0.35, "pitch": 1.0 + 0.12 * j, "ring": 0.4, "seed": 40 + j}]
+               for j, c in enumerate(count_hl)]        # counting the pieces: one step up per piece
     events.append([round(break_v + 0.05, 3), "ding", {"gain": 0.5}])
     timing = {"crack_v": crack_v, "second_v": second_v, "break_v": break_v, "slow2": slow2,
               "cuts": [s_["start"] for s_ in shots[1:]], "reveals": [break_v], "events": events,
