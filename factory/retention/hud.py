@@ -12,6 +12,9 @@ Widget types (see docs/RETENTION.md for when each one is justified):
   callout    a label pinned to a moving 3D point (ring + leader line), optionally with a live value
   question   the episode's open question, pinned until the beat that answers it, then a short "answered" state
   progress   which step of an experiment sequence we are on (e.g. 1 m, 2 m, no push)
+  arrow      a force / velocity arrow on a tracked 3D point (world direction; length can follow a value)
+  timer      a clock: counting down to a real event (`target`), or the real elapsed time of a slowed
+             shot (`mode: up`, `rate` = real seconds per video second, e.g. 0.25 when slowed 4x)
 
 Events produced for cues and QA:  hud:<id>.appear, .hide, .settle (value within 2% of where it ends up),
 .cross (meter threshold), .answer (question), .step<k> (progress).
@@ -20,8 +23,8 @@ from __future__ import annotations
 
 from . import timing
 
-TYPES = ("counter", "meter", "dimension", "callout", "question", "progress")
-NUMERIC = ("counter", "meter", "dimension", "callout")
+TYPES = ("counter", "meter", "dimension", "callout", "arrow", "timer", "question", "progress")
+NUMERIC = ("counter", "meter", "dimension", "callout", "arrow")
 
 
 class HudError(ValueError):
@@ -125,7 +128,7 @@ def compile_hud(spec: list, plan: dict, tl, cfg: dict) -> dict:
         out.update(i0=i0, i1=i1, t0=round(t0, 3), t1=round(t1, 3))
         events[f"hud:{wid}.appear"], events[f"hud:{wid}.hide"] = t0, t1
         # ---- placement
-        if typ in ("counter", "meter", "question", "progress"):
+        if typ in ("counter", "meter", "question", "progress", "timer"):
             at = w.get("at") or slots.get(w.get("slot", "top_left"))
             if at is None:
                 raise HudError(f"widget {wid}: unknown slot {w.get('slot')!r} (slots: {sorted(slots)})")
@@ -133,6 +136,15 @@ def compile_hud(spec: list, plan: dict, tl, cfg: dict) -> dict:
         if typ == "callout":
             out["anchor"] = w.get("anchor"); out["offset"] = list(w.get("offset", [0.14, -0.07]))
             used_anchors.add(out["anchor"])
+        if typ == "arrow":
+            out["anchor"] = w.get("anchor"); used_anchors.add(out["anchor"])
+            d = [float(x) for x in w.get("dir", [0, 1, 0])]
+            nrm = sum(x * x for x in d) ** 0.5 or 1.0
+            out["dir"] = [x / nrm for x in d]
+            out["length"] = float(w.get("length_m", 0.02))
+            out["color"] = w.get("color")
+            if w.get("offset"):
+                out["offset"] = list(w["offset"])
         if typ == "dimension":
             out["from"], out["to"] = w.get("from"), w.get("to")
             out["side"] = float(w.get("side", 0.05))       # label offset from the line (frame widths)
@@ -165,8 +177,23 @@ def compile_hud(spec: list, plan: dict, tl, cfg: dict) -> dict:
                             events[f"hud:{wid}.cross"] = (i0 + k) / fps
                             out["threshold"]["i_cross"] = i0 + k
                             break
-        elif typ in NUMERIC and typ != "callout":
+        elif typ in NUMERIC and typ not in ("callout", "arrow"):
             raise HudError(f"widget {wid}: a {typ} needs a value")
+        if typ == "timer":
+            mode, rate = w.get("mode", "down"), float(w.get("rate", 1.0))
+            if mode == "down":
+                tgt = timing.resolve(w.get("target"), tl, events, duration)
+                if tgt <= t0:
+                    raise HudError(f"timer {wid}: target ({tgt:.2f}s) must come after it appears ({t0:.2f}s)")
+                secs = [max(0.0, (tgt - i / fps) * rate) for i in range(i0, i1)]
+                events[f"hud:{wid}.zero"] = tgt
+            elif mode == "up":
+                secs = [(i - i0) / fps * rate for i in range(i0, i1)]
+            else:
+                raise HudError(f"timer {wid}: mode must be down or up")
+            out["texts"] = [f"{int(x // 60)}:{x % 60:05.2f}" if w.get("clock", True) else f"{x:.2f} s" for x in secs]
+            out["values"] = [round(x, 4) for x in secs]
+            out["pulse"] = [0.0] * len(secs)
         if typ == "progress":
             items = w.get("items") or []
             if not items:
@@ -204,7 +231,7 @@ def tick_events(hud: dict, cfg: dict, fps: int) -> list:
             continue
         spec = spec if isinstance(spec, dict) else {}
         gap = 1.0 / float(spec.get("max_rate_hz", tk.get("max_rate_hz", 5.0)))
-        max_n = int(spec.get("max", 8))
+        max_n = int(spec.get("max", tk.get("max", 3)))
         name, gain = spec.get("sfx", tk.get("sfx", "blip")), float(spec.get("gain", tk.get("gain", 0.12)))
         vals = w["values"]
         lo, hi = min(vals), max(vals)
@@ -248,6 +275,10 @@ def approx_rect(w: dict, i: int, W: int = 1080, H: int = 1920) -> tuple[float, f
         txt = max(len(w.get("text", "")), len(w.get("answer_text", "")) + 2)
         wd = (txt * 0.58 * 0.021 * H + 0.06 * H) / W
         return cx - wd / 2, cy - 0.022, cx + wd / 2, cy + 0.022
+    if w["type"] == "timer":
+        s = text_at(w, min(max(i, w["i0"]), w["i1"] - 1)) or ""
+        wd = (max(len(s) * 0.6 * 0.034 * H, len(w.get("label", "")) * 0.58 * 0.017 * H) + 0.04 * H) / W
+        return cx - wd / 2, cy - 0.04, cx + wd / 2, cy + 0.04
     if w["type"] == "progress":
         wd = (sum(len(s) for s in w["items"]) * 0.58 * 0.016 * H + len(w["items"]) * 0.05 * H) / W
         return cx - wd / 2, cy - 0.02, cx + wd / 2, cy + 0.02

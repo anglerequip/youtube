@@ -130,7 +130,6 @@ retention:
       format: "{v:.1f} m"
       slot: top_left
       show: [payoff+2.0, speed+0.7]
-      ticks: {max: 6}
       claims: [{claim: drop_1m, at: payoff+3.0}, {claim: drop_2m, at: speed}]
     - id: arch1                    # the hero measurement, drawn on the world beside the jar (close shot)
       type: dimension
@@ -158,11 +157,13 @@ retention:
       answer_text: "the pile"
       at: [0.45, 0.135]
       accent: true
-    - id: push_point               # where the push happens, tracked in the macro
-      type: callout
+    - id: push_point               # the force itself, on the point where the link presses into the pile
+      type: arrow
       label: pile pushes up
       anchor: push_point
-      offset: [0.14, -0.15]
+      dir: [0, 1, 0]
+      length_m: 0.0035
+      offset: [0.13, -0.03]
       show: [push+0.2, push.end]
     - id: push                     # the no-push experiment: the model's pile push drops to zero, then returns
       type: meter

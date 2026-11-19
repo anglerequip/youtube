@@ -36,18 +36,19 @@ def _card_rect(card, W=1080, Hh=1920):
 def _label_rect(w, plan, hud, i, W, Hh):
     """Approximate screen box of a tracked widget's label (mirrors renderer/hud.js placement)."""
     cam = project.camera_at(plan, i)
-    if cam is None or w["type"] not in ("callout", "dimension"):
+    if cam is None or w["type"] not in ("callout", "dimension", "arrow"):
         return None
     A = hud["anchors"]
-    names = [w["anchor"]] if w["type"] == "callout" else [w["from"], w["to"]]
+    names = [w["from"], w["to"]] if w["type"] == "dimension" else [w["anchor"]]
     pts = [project.to_screen(A[a][min(i, len(A[a]) - 1)], cam, W, Hh) for a in names]
     if any(p is None for p in pts):
         return None
     txt = H.text_at(w, i) or ""
     wd = (max(len(txt) * 0.6 * 0.034 * Hh, len(w.get("label", "")) * 0.58 * 0.017 * Hh) + 0.04 * Hh) / W
     hh = (0.034 * 1.12 + (0.017 * 1.25 if w.get("label") else 0) + 0.022) if txt else 0.042
-    if w["type"] == "callout":
-        cx, cy = pts[0][0] + w["offset"][0], pts[0][1] + w["offset"][1]
+    if w["type"] in ("callout", "arrow"):
+        off = w.get("offset") or [0.03, -0.06]
+        cx, cy = pts[0][0] + off[0], pts[0][1] + off[1]
     else:
         (ax, ay), (bx, by) = pts[0][:2], pts[1][:2]
         cx, cy = (ax + bx) / 2 + (w.get("side", 0.05)) + 0.06, (ay + by) / 2
@@ -127,8 +128,8 @@ def check(ctx, rcfg: dict) -> tuple[list[Finding], dict]:
                                      t=max(card["start"], w["t0"]), repair="move the widget to another slot or drop the card"))
                     break
         # ---- tracked overlays: anchors on screen, readable size, out of the caption band
-        if w["type"] in ("callout", "dimension"):
-            names = [w["anchor"]] if w["type"] == "callout" else [w["from"], w["to"]]
+        if w["type"] in ("callout", "dimension", "arrow"):
+            names = [w["from"], w["to"]] if w["type"] == "dimension" else [w["anchor"]]
             on, tot, small, in_band, unknown = 0, 0, 0, 0, 0
             for i in range(w["i0"], w["i1"], 3):
                 cam = project.camera_at(plan, i)
@@ -144,7 +145,7 @@ def check(ctx, rcfg: dict) -> tuple[list[Finding], dict]:
                     on += 1
                     if w["type"] == "dimension" and abs(pts[0][1] - pts[1][1]) + abs(pts[0][0] - pts[1][0]) < 0.04:
                         small += 1
-                    lab_y = pts[0][1] + (w.get("offset", [0, -0.07])[1] if w["type"] == "callout" else 0)
+                    lab_y = pts[0][1] + ((w.get("offset") or [0, -0.06])[1] if w["type"] != "dimension" else 0)
                     if w["type"] == "dimension":
                         lab_y = (pts[0][1] + pts[1][1]) / 2
                     if band[0] <= lab_y <= band[1]:

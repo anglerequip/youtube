@@ -42,8 +42,10 @@ style:                    # Blueprint 7: off-white card + one strong colour
   line: "#ffffff"
 
 ticks:                    # counter ticks (sound): rate-limited, varied, routed through factory/qa/sound.py
+  # keep them rare: 4+ evenly spaced cues of one name is a 'metronome' to the sound QA (sound.periodic, click_train)
   sfx: blip
-  max_rate_hz: 5.0
+  max: 3
+  max_rate_hz: 4.0
   gain: 0.12
 
 accents:                  # used by auto_accents and by `cue: accent`

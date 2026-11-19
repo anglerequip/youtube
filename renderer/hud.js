@@ -103,6 +103,31 @@ const DRAW = {
     if (w.texts) valueCard(ctx, W, H, lx, ly, w.label, w.texts[k], w.style, 1 + 0.05 * (w.pulse ? w.pulse[k] : 0));
     else textPill(ctx, lx, ly, w.label, w.style, H, w.style.ink, null);
   },
+  timer(ctx, W, H, w, i, k) {
+    valueCard(ctx, W, H, w.at[0] * W, w.at[1] * H, w.label, w.texts[k], w.style, 1);
+  },
+  arrow(ctx, W, H, w, i, k, cam, A, alpha) {
+    const pa = A[w.anchor]; if (!pa) return;
+    const P = pa[Math.min(i, pa.length - 1)];
+    const grow = Math.min(1, (i - w.i0) / 8), vmax = w.values ? Math.max(...w.values.map(Math.abs)) || 1 : 1;
+    const L = w.length * grow * (w.values ? Math.abs(w.values[k]) / vmax : 1);
+    const a = project(cam, P, W, H), b = project(cam, [P[0] + w.dir[0] * L, P[1] + w.dir[1] * L, P[2] + w.dir[2] * L], W, H);
+    if (!a || !b) return;
+    const dx = b[0] - a[0], dy = b[1] - a[1], d = Math.hypot(dx, dy); if (d < 6) return;
+    const ux = dx / d, uy = dy / d, head = Math.min(d * 0.4, H * 0.022), wid = Math.max(4, H * 0.0045);
+    const col = w.color || w.style.accent;
+    ctx.save(); ctx.globalAlpha *= alpha; ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = H * 0.004;
+    ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = wid; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0] - ux * head * 0.8, b[1] - uy * head * 0.8); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(b[0], b[1]); ctx.lineTo(b[0] - ux * head - uy * head * 0.55, b[1] - uy * head + ux * head * 0.55);
+    ctx.lineTo(b[0] - ux * head + uy * head * 0.55, b[1] - uy * head - ux * head * 0.55); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    if (w.label) {
+      const lx = b[0] + (w.offset ? w.offset[0] * W : W * 0.03), ly = b[1] + (w.offset ? w.offset[1] * H : -H * 0.02);
+      if (w.texts) valueCard(ctx, W, H, lx, ly, w.label, w.texts[k], w.style, 1);
+      else textPill(ctx, lx, ly, w.label, w.style, H, w.style.accent, null);
+    }
+  },
   question(ctx, W, H, w, i) {
     const answered = i >= w.i_answer && w.answer_text, st = w.style;
     const u = answered ? Math.min(1, (i - w.i_answer) / 8) : 1, s = answered ? 0.92 + 0.08 * u : 1;

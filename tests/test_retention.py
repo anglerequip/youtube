@@ -229,3 +229,25 @@ def test_new_sounds_render():
         y = sd.render_cue(name, p, 1.0)
         assert 0.01 < len(y) / sd.SR < 2.0 and abs(y).max() <= 1.0
     assert len(sd.render_cue("rise", {"dur": 0.8}, 0)) == int(0.8 * sd.SR)
+
+
+def test_timer_counts_down_to_a_real_event_and_up_in_real_time():
+    plan, tl = _plan(), _tl()
+    h = hud.compile_hud([
+        {"id": "t", "type": "timer", "label": "release in", "target": "double", "show": ["hook", "double"]},
+        {"id": "r", "type": "timer", "label": "real time", "mode": "up", "rate": 0.25, "slot": "top_right",
+         "show": ["double", "outro"], "clock": False},
+    ], plan, tl, CFG)
+    t, r = h["widgets"]
+    assert t["texts"][0] == "0:02.97" and t["values"][-1] < 0.05
+    assert h["events"]["hud:t.zero"] == 3.3
+    assert r["texts"][0] == "0.00 s" and r["values"][-1] == pytest.approx((9.0 - 3.3 - 1 / 30) * 0.25, abs=0.01)
+    with pytest.raises(hud.HudError):
+        hud.compile_hud([{"id": "x", "type": "timer", "target": "hook", "show": ["double", "outro"]}], plan, tl, CFG)
+
+
+def test_arrow_is_normalised_and_tracked():
+    plan = _plan()
+    h = hud.compile_hud([{"id": "f", "type": "arrow", "anchor": "a", "dir": [0, 2, 0], "label": "push", "show": "double"}],
+                        plan, _tl(), CFG)
+    assert h["widgets"][0]["dir"] == [0.0, 1.0, 0.0] and "a" in h["anchors"]
