@@ -190,3 +190,17 @@ def test_telegram_reply_edits_caption_and_voids_old_button(env):
 def test_production_never_imports_publishing():
     src = (ROOT / "factory" / "production.py").read_text()
     assert "publishing" not in src.replace("Publishing is a separate workflow", "")
+
+
+def test_cli_post_refuses_a_hash_caesar_did_not_see(tmp_path, video):
+    import os
+    import sys
+    env = dict(os.environ, CONTENT_DIR=str(FIXTURE.parent), OUT_DIR=str(tmp_path / "out"),
+               DATA_DIR=str(tmp_path / "data"), MIN_SECONDS="3")
+    run = lambda *a: subprocess.run([sys.executable, "-m", "factory", *a], cwd=ROOT, env=env,
+                                    capture_output=True, text=True)
+    assert run("package", "test-pendulum", "--video", str(video)).returncode == 0
+    r = run("post", "test-pendulum", "youtube", "--hash", "deadbeef", "--by", "test")
+    assert r.returncode == 2 and "NOT APPROVED" in r.stdout
+    r = run("posts", "test-pendulum")
+    assert "POSTED" not in r.stdout and "APPROVED" not in r.stdout

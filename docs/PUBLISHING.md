@@ -1,7 +1,12 @@
 # Publishing: package, approve in Telegram, post
 
-Status 2026-11-19: package generation, Telegram review and the three uploaders are built and tested
-with fakes. Real posting needs the one-time account setup below.
+Status 2026-11-19: package generation, approval and the three uploaders are built and tested with
+fakes. Real posting needs the one-time account setup below.
+
+**Approval channel (Caesar, 2026-11-19): the project chat.** For each platform, Claude posts a card
+with the platform's text, the cover and the package hash, and two options: Post and Skip. When Caesar
+taps Post, Claude runs `python -m factory post <slug> <platform> --hash <hash> --by "Caesar via project
+chat"` on the PC. The Telegram bot below still works, but it's optional and isn't set up.
 
 ## How it works
 
@@ -68,7 +73,7 @@ description, sources and tags. Every number in the copy or on the cover must als
 Everything goes in `D:\CounterPhysical\youtube\.env` (git-ignored) or `D:\CounterPhysical\youtube\data\`.
 Check progress any time with `python -m factory publish-check` (it posts nothing).
 
-### 1. Telegram bot (5 minutes)
+### 1. Telegram bot (optional, not used by default)
 1. In Telegram, open @BotFather, send `/newbot`, pick a name. Copy the token into `.env` as
    `TELEGRAM_BOT_TOKEN=...`.
 2. Send your new bot any message, then open `https://api.telegram.org/bot<token>/getUpdates` in a
