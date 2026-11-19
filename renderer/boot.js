@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { World, drawCard, drawWordmark, drawBadge } from './world.js';
 import { inspectFrame, staticChecks } from './inspect.js';
+import { drawHud } from './hud.js';
 
 export async function boot(sceneName, plan) {
   await document.fonts.load('800 40px Poppins'); await document.fonts.load('700 40px Poppins');
@@ -50,6 +51,7 @@ export async function boot(sceneName, plan) {
       const fill = s => (s ?? '').replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
       drawCard(ctx, W, H, { ...card, big: fill(card.big), small: fill(card.small) }, a);
     }
+    if (plan.hud) drawHud(ctx, W, H, plan.hud, i, world.camera);   // retention toolkit (factory/retention)
     if (plan.frames && plan.frames.badge) drawBadge(ctx, W, H, plan.frames.badge[Math.min(i, plan.frames.badge.length - 1)]);
     if (plan.wordmark) drawWordmark(ctx, W, H, plan.wordmark);
     return out.toDataURL('image/jpeg', quality);

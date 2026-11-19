@@ -154,7 +154,29 @@ def ding():
     return _norm(y, 0.45)
 
 
-ONE_SHOTS = {"latch": latch, "pop": latch, "impact": impact, "thud": impact, "tink": tink, "tick": tink,
+def blip(seed=13, pitch=1.0):
+    """Soft UI blip for a HUD number update: a short, rounded sine pair, no metallic ring.
+    `pitch` follows the value (a rising counter is heard rising); `seed` varies each instance slightly."""
+    rng = np.random.default_rng(seed)
+    n = int(0.07 * SR); t = _t(n)
+    f = 880 * pitch * (1 + rng.uniform(-0.015, 0.015))
+    y = (np.sin(2 * np.pi * f * t) + 0.35 * np.sin(2 * np.pi * 2 * f * t)) * _env(n, 0.002, 0.018)
+    return _norm(_lp(y, 6000), 0.5)
+
+
+def lock(seed=17, pitch=1.0):
+    """A value landing on its target: low soft thump plus a short two-note confirmation (no bell tail)."""
+    rng = np.random.default_rng(seed)
+    n = int(0.32 * SR); t = _t(n)
+    thump = np.sin(2 * np.pi * (90 * pitch) * t * (1 + 0.6 * np.exp(-t / 0.02))) * _env(n, 0.002, 0.07)
+    y = 0.8 * thump
+    for k, (t0, f) in enumerate([(0.0, 660), (0.06, 990)]):
+        i = int(t0 * SR); m = int(0.12 * SR); tt = _t(m)
+        y[i:i + m] += 0.35 * np.sin(2 * np.pi * f * pitch * (1 + rng.uniform(-0.01, 0.01)) * tt) * _env(m, 0.003, 0.035)
+    return _norm(_lp(y, 7000), 0.8)
+
+
+ONE_SHOTS = {"blip": blip, "lock": lock, "latch": latch, "pop": latch, "impact": impact, "thud": impact, "tink": tink, "tick": tink,
              "swish": swish, "whoosh": rewind, "rewind": rewind, "rise": rise, "ding": ding}
 
 
@@ -292,6 +314,10 @@ def render_cue(name: str, p: dict, t: float) -> np.ndarray:
     kw.update({k: p[k] for k in ("seed",) if k in p and name in ("tink", "tick", "latch", "pop", "swish")})
     if name in ("tink", "tick"):
         kw.update({k: p[k] for k in ("pitch", "ring") if k in p})
+    if name in ("blip", "lock"):
+        kw.update({k: p[k] for k in ("pitch", "seed") if k in p})
+    if name in ("rise", "swish") and "dur" in p:
+        kw["dur"] = float(p["dur"])
     return fn(**kw)
 
 
