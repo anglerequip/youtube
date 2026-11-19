@@ -72,6 +72,26 @@ export function build(world, plan) {
   const bottomGlow = world.glowRing(R + 0.002, 0.009, '#ff2a1f', 4.0);
   const frontRing = world.glowRing(R + 0.03, 0.006, '#fff6e8', 3.0);
 
+  // reference ball (falls beside the slinky at its centre-of-mass height)
+  const ball = new THREE.Mesh(new THREE.IcosahedronGeometry(0.045, 2),
+    new THREE.MeshStandardMaterial({ color: '#e5e2d6', emissive: '#fff1dc', emissiveIntensity: 0.35, roughness: 0.5, flatShading: true }));
+  ball.castShadow = true; S.add(ball);
+  const string = world.box(0.006, 1, 0.006, '#2b2d31', 0, 0, 0);   // holds the ball until release
+
+  // steel bar lying on the pad, a striker block, and the travelling compression pulse
+  const bar = plan.bar || { x0: -1.2, x1: 1.2, z: -0.62, r: 0.03 };
+  const barMesh = new THREE.Mesh(new THREE.CylinderGeometry(bar.r, bar.r, bar.x1 - bar.x0, 12),
+    new THREE.MeshStandardMaterial({ color: PALETTE.metal, metalness: 0.6, roughness: 0.35 }));
+  barMesh.rotation.z = Math.PI / 2; barMesh.position.set((bar.x0 + bar.x1) / 2, 0.1 + bar.r, bar.z);
+  barMesh.castShadow = true; barMesh.receiveShadow = true; S.add(barMesh);
+  const striker = world.box(0.09, 0.09, 0.09, '#3a3d42', bar.x0 - 0.05, 0.1 + 0.045, bar.z);
+  const pulse = new THREE.Mesh(new THREE.TorusGeometry(bar.r + 0.006, 0.006, 8, 32),
+    new THREE.MeshStandardMaterial({ color: '#fff6e8', emissive: '#fff6e8', emissiveIntensity: 3.5 }));
+  pulse.rotation.y = Math.PI / 2; S.add(pulse);
+  const flash = new THREE.Mesh(new THREE.CircleGeometry(bar.r * 1.05, 16),
+    new THREE.MeshStandardMaterial({ color: '#fff6e8', emissive: '#fff6e8', emissiveIntensity: 0, transparent: true }));
+  flash.rotation.y = Math.PI / 2; flash.position.set(bar.x1 + 0.002, 0.1 + bar.r, bar.z); S.add(flash);
+
   return {
     lightCenter: new THREE.Vector3(0, 1, 0),
     update(i) {
@@ -84,8 +104,20 @@ export function build(world, plan) {
       bottomGlow.material.emissiveIntensity = 4.0 * F.glow[k];
       const fi = F.front[k];
       frontRing.visible = fi >= 0; if (fi >= 0) frontRing.position.y = ys[fi];
+      const b = F.ball ? F.ball[k] : null;
+      ball.visible = !!b; if (b) ball.position.set(...b);
+      string.visible = !!b && open < 0.5;
+      if (string.visible) { const top = postH + 0.02, bot = b[1] + 0.045; string.scale.y = top - bot; string.position.set(b[0], (top + bot) / 2, 0); }
+      const px = F.pulse ? F.pulse[k] : null;
+      pulse.visible = px !== null && px !== undefined; if (pulse.visible) pulse.position.set(px, 0.1 + bar.r, bar.z);
+      const fl = F.flash ? F.flash[k] : 0;
+      flash.material.emissiveIntensity = 4 * fl; flash.visible = fl > 0;
+      if (F.striker) striker.position.x = bar.x0 - 0.05 - F.striker[k];
     },
-    focal(i) { const k = Math.min(i, F.coils.length - 1); return new THREE.Vector3(0, F.coils[k][N - 1], 0); },
+    focal(i) {
+      const k = Math.min(i, F.coils.length - 1);
+      if (F.focal_pt && F.focal_pt[k]) return new THREE.Vector3(...F.focal_pt[k]);
+      const c = F.focal ? F.focal[k] : N - 1; return new THREE.Vector3(0, F.coils[k][c], 0); },
     vars(i) { const k = Math.min(i, F.coils.length - 1); return F.vars ? F.vars[k] : {}; },
   };
 }

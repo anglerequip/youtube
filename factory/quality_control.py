@@ -15,6 +15,7 @@ from pathlib import Path
 
 import numpy as np
 import soundfile as sf
+import yaml
 
 from .configuration import settings
 from .storyboard_engine import Storyboard, all_storyboards
@@ -148,8 +149,10 @@ def check_similarity(sb: Storyboard, threshold: float = 0.6) -> list[Check]:
     """Flag scripts that are too close to another episode (duplicate topics or recycled templates)."""
     mine = sb.full_text().lower()
     worst, who = 0.0, None
+    remake_of = sb.extra.get("remake_of")
     for other in all_storyboards():
-        if other.slug == sb.slug:
+        # a declared remake (same script, new visuals) is compared with everything except its original
+        if other.slug in (sb.slug, remake_of) or other.extra.get("remake_of") == sb.slug:
             continue
         r = SequenceMatcher(None, mine, other.full_text().lower()).ratio()
         if r > worst:
@@ -177,6 +180,35 @@ def check_science(sb: Storyboard, sim_report: dict | None) -> list[Check]:
     return out
 
 
+def check_motion(sb: Storyboard, out_dir: Path) -> list[Check]:
+    """Recipe motion/framing rules from the 3D renderer's metadata (MD-5, MD-8, TX-6)."""
+    plan_p, meta_p = out_dir / "plan.json", out_dir / "visual.meta.json"
+    if not plan_p.exists():
+        return []
+    rules = yaml.safe_load((settings.root / "config" / "rules.yaml").read_text(encoding="utf-8"))
+    mo, tx = rules["motion"], rules["text"]
+    plan = json.loads(plan_p.read_text())
+    cuts = [s["start"] for s in plan["shots"][1:]]
+    gaps = [b - a for a, b in zip([0.0] + cuts, cuts)]
+    out = [Check("cut_spacing", min(gaps, default=99) >= mo["min_cut_gap_s"],
+                 f"shortest shot {min(gaps, default=0):.2f}s (min {mo['min_cut_gap_s']}s)")]
+    lo, hi = mo["typical_cut_s"]
+    long_ = [f"{g:.1f}" for g in gaps if g > hi + 1.0]
+    out.append(Check("cut_rhythm", not long_, f"{len(cuts)} cuts; shots over {hi + 1:.0f}s: {long_ or 'none'}", "warn"))
+    reveals = plan.get("timing", {}).get("reveals", [])
+    bad = [f"cut {c:.2f}s after reveal {r:.2f}s" for r in reveals for c in cuts if 0 < c - r < mo["no_cut_reveal_s"]]
+    out.append(Check("no_cut_in_reveal", not bad, "; ".join(bad) or f"{len(reveals)} reveals clear"))
+    if meta_p.exists():
+        meta = json.loads(meta_p.read_text())
+        zlo, zhi = tx["focal_zone"]
+        ys = [m["y"] for m in meta.values()]
+        outside = sum(1 for y in ys if not zlo <= y <= zhi)
+        frac = outside / max(1, len(ys))
+        out.append(Check("focal_in_zone", frac <= 0.05,
+                         f"focal object outside {zlo:.2f}-{zhi:.2f} of frame height in {frac:.1%} of frames"))
+    return out
+
+
 def run_all(sb: Storyboard, sim_report: dict | None = None) -> tuple[bool, list[Check]]:
     out_dir = sb.out_dir
     video = sb.final_video
@@ -188,6 +220,7 @@ def run_all(sb: Storyboard, sim_report: dict | None = None) -> tuple[bool, list[
         checks += check_audio(out_dir / "mix.wav")
         checks += check_captions(Timeline.load(out_dir / "timeline.json"), out_dir / "captions.ass", duration)
         checks += check_frames(video, duration)
+    checks += check_motion(sb, out_dir)
     checks += check_metadata(sb)
     checks += check_similarity(sb)
     checks += check_assets(sb)

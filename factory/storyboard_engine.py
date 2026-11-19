@@ -88,6 +88,18 @@ class Storyboard:
     def full_text(self) -> str:
         return " ".join(b.text for b in self.beats)
 
+    @property
+    def renderer(self) -> str:
+        return self.extra.get("renderer", "matplotlib")
+
+    def load_module(self, filename: str):
+        f = self.path / filename
+        name = f"episode_{self.slug.replace('-', '_')}_{f.stem}"
+        spec = importlib.util.spec_from_file_location(name, f)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
     def load_sim_class(self):
         sim_file = self.path / "sim.py"
         name = f"episode_sim_{self.slug.replace('-', '_')}"

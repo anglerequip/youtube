@@ -101,7 +101,9 @@ def timed_chunks(tl: Timeline) -> list[tuple[float, float, str]]:
         while i < len(timed) and len(timed) > 1:
             s, e, c = timed[i]
             if e - s < min_s:
-                j = i + 1 if i + 1 < len(timed) else i - 1
+                # prefer the next chunk, but never glue the end of a sentence onto the next sentence
+                ends_sentence = re.search(r"[.!?]$", c) is not None
+                j = i + 1 if i + 1 < len(timed) and not (ends_sentence and i > 0) else i - 1
                 a, b = sorted((i, j))
                 merged = [timed[a][0], timed[b][1], f"{timed[a][2]} {timed[b][2]}"]
                 timed[a:b + 1] = [merged]

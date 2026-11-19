@@ -1,0 +1,64 @@
+slug: falling-slinky-3d
+title: "Drop a Slinky and the Bottom Just... Floats"
+topic: "physics / waves: falling slinky"
+component: custom   # physics: factory/simulation_engine/physics/slinky.py
+renderer: three     # 3D diorama (Visual Blueprint); plan.py turns physics + timeline into a render plan
+scene: slinky3d     # renderer/scenes/slinky3d.js
+remake_of: falling-slinky   # same script as the 2D version, new art style and cutting
+description: |
+  Let go of a hanging slinky and the bottom stays exactly where it is, until the collapse reaches it.
+  The bottom can't "know" the top was released: that news has to travel down the spring as a wave.
+
+  Simulated with 80 coils, real gravity and real spring forces, then rendered as a 3D model.
+
+  #shorts #physics #science #slinky
+tags: [physics, slinky, science, counterintuitive, waves, simulation, shorts]
+voice: am_michael
+speed: 1.05
+beats:
+  - id: hook
+    text: "If you drop a hanging slinky, the bottom doesn't fall. Not even a little."
+    pause_after: 0.35
+  - id: setup
+    text: "Here it is, hanging still. Gravity pulls the bottom coil down, and the spring pulls it back up. Perfectly balanced."
+  - id: release
+    text: "Now let go of the top, and watch the bottom."
+    pause_after: 0.1
+  - id: hover
+    text: "The top races down. The bottom just hangs there, in midair."
+    pause_after: 0.6
+  - id: why1
+    text: "That's because the bottom has no idea anything happened. Its forces haven't changed."
+  - id: why2
+    text: "The news that the top was released has to travel down the spring, coil by coil."
+  - id: land
+    text: "Only when that collapse reaches the bottom does it finally start to fall."
+    pause_after: 0.4
+  - id: com
+    text: "Here's the hidden rule. The slinky's centre of mass falls exactly like a dropped ball, right from the start."
+  - id: top
+    text: "So the top has to fall faster than gravity, to make up for the bottom standing still."
+  - id: time
+    text: "The bottom only moves once the top catches up. For this slinky, that takes about a quarter of a second."
+    pause_after: 0.4
+  - id: longer
+    text: "A longer, stretchier slinky hangs further down, so its bottom hovers even longer."
+  - id: rod
+    text: "Even a steel bar works like this. Tap one end, and the far end waits for a wave moving at about five kilometres per second."
+    pause_after: 0.4
+  - id: outro
+    text: "Even a toy has a speed limit for information. Follow for more physics that breaks your intuition."
+    sfx: ding
+
+caveats:
+  - "The model treats the slinky as 80 point masses joined by ideal springs, ignoring air drag and coil twisting."
+  - "The hover time depends on the slinky: about 0.26 s for this one (1 m of stretch). Big plastic slinkies hover longer."
+  - "The centre of mass falls freely because the only external force on the released slinky is gravity (air drag ignored)."
+  - "Hover time for an ideal slinky is sqrt(2L/3g), where L is how far it stretches when hanging, so a slinky that stretches four times as far hovers twice as long."
+  - "Steel bar: a tap launches a compression wave at the bar speed sqrt(E/rho), about 5,000 m/s for steel (E about 200 GPa, density about 7,850 kg/m^3). Exact values vary with the alloy."
+  - "The bottom is not perfectly frozen in a real slinky: it moves by a millimetre or so before the collapse arrives."
+sources:
+  - "R. Cross and M. Wheatland, 'Modeling a falling slinky', American Journal of Physics 80, 1051 (2012)"
+  - "M. G. Calkin, 'Motion of a falling spring', American Journal of Physics 61, 261 (1993)"
+  - "Bar wave speed sqrt(E/rho): L. E. Kinsler et al., Fundamentals of Acoustics, 4th ed. (Wiley, 2000), chapter 3"
+  - "Centre-of-mass check: an ideal slinky's hover time is sqrt(2L/3g), since its centre of mass sits L/3 above the bottom and falls freely"

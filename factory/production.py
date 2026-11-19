@@ -65,8 +65,29 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
     timings["voice_s"] = round(time.time() - t0, 1)
     if tl.duration > settings.max_seconds:
         raise ValueError(f"narration is {tl.duration:.1f}s; limit is {settings.max_seconds:.0f}s. Trim the script.")
+    if tl.duration + 0.8 < settings.min_seconds:
+        raise ValueError(f"narration is {tl.duration:.1f}s; every video must be at least {settings.min_seconds:.0f}s. "
+                         "Extend the script with real content (not filler).")
 
     t0 = time.time()
+    if sb.renderer == "three":
+        events, sim_report = _render_three(sb, tl, out, previews, force)
+    else:
+        events, sim_report = _render_matplotlib(sb, tl, out, previews, force)
+    timings["render_s"] = round(time.time() - t0, 1)
+
+    t0 = time.time()
+    caption_engine.write_ass(tl, out / "captions.ass")
+    events = [(tl.start(b.id), b.sfx) for b in sb.beats if b.sfx] + list(events)
+    video_editor.mix_sfx(out / "voice.wav", events, out / "mix.wav")
+    video_editor.mux(out / "visual.mp4", out / "mix.wav", out / "captions.ass", sb.final_video)
+    timings["mux_s"] = round(time.time() - t0, 1)
+
+    return {"video": sb.final_video, "duration": tl.duration, "timings": timings, "sim_report": sim_report,
+            "sfx": events}
+
+
+def _render_matplotlib(sb: Storyboard, tl, out: Path, previews: bool, force: bool):
     Sim = sb.load_sim_class()
     sim_src = (sb.path / "sim.py").read_text(encoding="utf-8")
     base_src = (Path(simulation_engine.__file__).parent / "base.py").read_text(encoding="utf-8")
@@ -80,20 +101,35 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
     else:
         log.info("[%s] simulation: cached", sb.slug)
         scene.setup()
-    timings["render_s"] = round(time.time() - t0, 1)
+    return list(scene.sfx_events()), (Sim.self_checks() if hasattr(Sim, "self_checks") else None)
 
-    t0 = time.time()
-    caption_engine.write_ass(tl, out / "captions.ass")
-    events = [(tl.start(b.id), b.sfx) for b in sb.beats if b.sfx]
-    events += list(scene.sfx_events())
-    video_editor.mix_sfx(out / "voice.wav", events, out / "mix.wav")
-    video_editor.mux(out / "visual.mp4", out / "mix.wav", out / "captions.ass", sb.final_video)
-    timings["mux_s"] = round(time.time() - t0, 1)
 
-    sim_report = Sim.self_checks() if hasattr(Sim, "self_checks") else None
-    return {"video": sb.final_video, "duration": tl.duration, "timings": timings, "sim_report": sim_report,
-            "sfx": events}
+RENDERER_DIR = Path(__file__).resolve().parent.parent / "renderer"
 
+
+def _render_three(sb: Storyboard, tl, out: Path, previews: bool, force: bool):
+    """3D diorama renderer (renderer/, three.js in headless Chromium). plan.py builds the per-frame plan."""
+    import subprocess
+    mod = sb.load_module("plan.py")
+    plan = mod.build_plan(tl, fps=settings.fps)
+    scene = sb.extra.get("scene") or plan["scene"]
+    plan_json = json.dumps(plan, separators=(",", ":"))
+    (out / "plan.json").write_text(plan_json)
+    srcs = sorted(p for p in RENDERER_DIR.rglob("*") if p.suffix in (".js", ".mjs", ".html")
+                  and "node_modules" not in p.parts)
+    skey = _key(plan_json, [p.read_text(encoding="utf-8") for p in srcs])
+    node = ["node", str(RENDERER_DIR / "render.mjs"), "--scene", scene, "--plan", str(out / "plan.json")]
+    if previews:
+        stills = ",".join(f"{t:.1f}" for t in [x * 2.5 for x in range(int(tl.duration / 2.5) + 1)])
+        subprocess.run(node + ["--stills", stills, "--stills-dir", str(out / "previews")], check=True)
+    if force or not _cached(out, "visual.mp4", skey):
+        log.info("[%s] 3D render (%d frames)", sb.slug, plan["n_frames"])
+        subprocess.run(node + ["--out", str(out / "visual.mp4")], check=True)
+        _mark(out, "visual.mp4", skey)
+    else:
+        log.info("[%s] 3D render: cached", sb.slug)
+    report = mod.self_checks() if hasattr(mod, "self_checks") else None
+    return mod.sfx_events(plan), report
 
 def produce(slug: str, db: DB | None = None, provider: str | None = None, previews: bool = False,
             force: bool = False) -> dict:

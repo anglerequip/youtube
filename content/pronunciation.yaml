@@ -9,6 +9,9 @@
 # are re-synthesised (voice steps are cached per line).
 
 terms:
+  midair: "mid air"          # Caesar: say it as two words, not one
+  mid-air: "mid air"
+  Midair: "Mid air"
   Schrödinger: "SHROH-ding-er"
   Schrodinger: "SHROH-ding-er"
   Coriolis: "kor-ee-OH-liss"
@@ -38,6 +41,7 @@ terms:
 units:
   "m/s²": ["metre per second squared", "metres per second squared"]
   "m/s^2": ["metre per second squared", "metres per second squared"]
+  "km/s": ["kilometre per second", "kilometres per second"]
   "m/s": ["metre per second", "metres per second"]
   "km/h": ["kilometre per hour", "kilometres per hour"]
   "mph": ["mile per hour", "miles per hour"]

@@ -170,7 +170,7 @@ export class World {
     let pos, look;
     if (shot.type === 'keys') {            // per-frame camera path computed in Python
       const k = Math.min(Math.max(0, i - shot.i0), shot.pos.length - 1);
-      this.camera.fov = shot.fov ?? 38; this.camera.updateProjectionMatrix();
+      this.camera.fov = shot.fovs ? shot.fovs[k] : (shot.fov ?? 38); this.camera.updateProjectionMatrix();
       this.camera.position.set(...shot.pos[k]); this.camera.lookAt(...shot.look[k]);
       return;
     }

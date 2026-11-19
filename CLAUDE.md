@@ -11,7 +11,7 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
 2. Research it. Put real, checkable sources and honest caveats in the storyboard. Never invent data
    or overstate a result to make it more dramatic.
 3. Create `content/episodes/<slug>/storyboard.yaml` (copy the structure of `falling-slinky`):
-   - 6-9 beats, 25-45 s total narration. Beat 1 is the hook: a surprising claim in under 3 s.
+   - 8-14 beats, 61-75 s total (hard rule: every video must be longer than 60 s; QC rejects anything shorter). Extend with real content, never filler. Beat 1 is the hook: a surprising claim in under 3 s.
    - Short spoken sentences; spell numbers the way they should be read.
    - `on_screen` for an occasional key phrase or equation, `sfx` (whoosh, thud, pop, tick, rise, ding).
 4. Create `sim.py` with `class Sim(Scene)`. Sync to beats with `self.tl.start("<beat id>")`.
