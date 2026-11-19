@@ -31,7 +31,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         return 2.0 - cam.ease((t - S("outro")) / (n / fps - S("outro") - 0.4))
 
     cut_macro0, cut_macro1 = S("links") - 0.1, S("rope") - 0.1
-    morph_t0 = S("reality") + 0.35
+    morph_t0 = S("reality") - 0.25    # round 8 review: the leap must be under way on "Instead", not 1.5 s later
     frames = {k: [] for k in ("h2", "h1", "morph", "rope", "dist", "heap", "sway", "lever", "badge", "focal_pt", "bracket")}
 
     def at(bid, phrase):
@@ -41,8 +41,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     # "with no push from below, there's no fountain": show it (picture review, round 5: the line played over
     # a working fountain). The chain drops back to sliding over the rim, as in the opening "rope" guess.
     nopush0 = at("catch", "But with no push") - 0.2
-    nopush1 = E("catch") + 0.2
-    rope0, rope1 = S("rope") - 0.1, S("kick") - 0.1
+    # round 8 review: "there's no fountain" was still on screen as the arch came back, and "A rope can't do
+    # that" played over the fountain. The arch now drops before each line and returns only after it.
+    nopush1 = E("catch") + 1.0
+    rope0, rope1 = cut_macro1, S("kick") + 0.7      # starts at the cut out of the macro (the macro path must not move)
     dist = 0.0
     for i, t in enumerate(T):
         h2 = h2_at(t); st = cf.steady(h2)
@@ -50,10 +52,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         slow = 1500.0 if macro else 4.0       # macro: one link-lift every ~1.5 s (round 7: at 3,000x the pose "barely moved")
         if S("wrong") - 0.1 <= t < morph_t0:
             m = 0.0
-        elif morph_t0 <= t < morph_t0 + 1.1:
-            m = cam.ease((t - morph_t0) / 1.1)
+        elif morph_t0 <= t < morph_t0 + 0.8:
+            m = cam.ease((t - morph_t0) / 0.8)
         elif rope0 <= t < rope1:          # the rope beat: the chain behaves like a rope (no push, no arch)
-            m = 1.0 - min(cam.ease((t - rope0) / 0.9), cam.ease((rope1 - t) / 0.9))
+            m = 1.0 - min(cam.ease((t - rope0) / 0.6), cam.ease((rope1 - t) / 0.9))
         elif nopush0 <= t < nopush1:
             m = 1.0 - min(cam.ease((t - nopush0) / 0.9), cam.ease((nopush1 - t) / 0.9))
         else:
@@ -99,10 +101,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                                                         (S("rehook") + 3.3, K(-0.3, 0.21, 0.55), K(0.04, 0.17, 0.0), 32)], fps, "key", pile),
         cam.shot(S("rehook") + 3.3, cut_macro0, [(S("rehook") + 3.3, K(0.2, 0.2, 0.32), K(0.03, 0.12, 0.0), 32),
                                                  (cut_macro0, K(0.07, 0.05, 0.12), K(0.01, 0.0, 0.0), 32)], fps, "key", pile),
-        cam.shot(cut_macro0, S("push") - 0.1, [(cut_macro0, K(0.017, 0.02, 0.036), K(0.009, 0.003, 0.0), 40),
-                                               (S("push"), K(0.015, 0.019, 0.035), K(0.009, 0.003, 0.0), 40)], fps, "key", pile),
-        cam.shot(S("push") - 0.1, cut_macro1, [(S("push"), K(0.004, 0.012, 0.04), K(0.010, 0.002, 0.0), 40),
-                                               (cut_macro1, K(0.002, 0.013, 0.038), K(0.010, 0.002, 0.0), 40)], fps, "key", pile),
+        cam.shot(cut_macro0, S("push") - 0.1, [(cut_macro0, K(0.017, 0.028, 0.036), K(0.009, 0.002, 0.0), 40),
+                                               (S("push"), K(0.015, 0.027, 0.035), K(0.009, 0.002, 0.0), 40)], fps, "key", pile),
+        cam.shot(S("push") - 0.1, cut_macro1, [(S("push"), K(0.004, 0.019, 0.04), K(0.010, 0.002, 0.0), 40),
+                                               (cut_macro1, K(0.002, 0.02, 0.038), K(0.010, 0.002, 0.0), 40)], fps, "key", pile),
         cam.shot(cut_macro1, S("kick") - 0.1, [(cut_macro1, K(0.05, 0.1, 0.38), K(0.03, 0.06, 0.0), 32),
                                                (S("kick") - 0.1, K(0.03, 0.11, 0.35), K(0.03, 0.06, 0.0), 32)], fps, "key", pile),
         cam.shot(S("kick") - 0.1, S("kick") + 4.3, [(S("kick") - 0.1, K(0.3, 0.3, 0.45), K(0.03, 0.19, 0.0), 32),
@@ -152,8 +154,18 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     events = [(round(morph_t0, 3), "rise", {"gain": 0.3}),
               (round(S("double") + 0.15, 3), "swish", {"gain": 0.22, "seed": 31})]
     # in the macro (slowed 1,500x): one soft tick as the first link lifts, one as the lever bites the pile
-    events += [(round(cut_macro0 + 0.6, 3), "tick", {"gain": 0.16, "seed": 60, "pitch": 0.95, "ring": 0.25}),
-               (round(S("push") + 0.25, 3), "tick", {"gain": 0.2, "seed": 63, "pitch": 0.82, "ring": 0.4})]
+    # round 8 sound review: the first tick landed ~2 s before the link visibly tipped. Each tick now sits on
+    # the frame where a link finishes tipping (chain3d.js: u = (dist % BEAD) / BEAD reaches 0.45).
+    BEAD_JS = 0.0046
+
+    def tip_after(t0):
+        for i in range(int(t0 * fps), n - 1):
+            u0, u1 = (frames["dist"][i] % BEAD_JS) / BEAD_JS, (frames["dist"][i + 1] % BEAD_JS) / BEAD_JS
+            if u0 < 0.45 <= u1:
+                return (i + 1) / fps
+        return t0
+    events += [(round(tip_after(cut_macro0 + 0.3), 3), "tick", {"gain": 0.16, "seed": 60, "pitch": 0.95, "ring": 0.25}),
+               (round(tip_after(S("push")), 3), "tick", {"gain": 0.2, "seed": 63, "pitch": 0.82, "ring": 0.4})]
     timing = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [morph_t0], "events": events,
               "mutes": [[S("wrong") - 0.1, morph_t0 - 0.05]], "swells": [morph_t0]}
     facts = {"drop_1m": 1.0, "drop_2m": 2.0, "arch_1m_cm": a1["h1"] * 100, "arch_2m_cm": a2["h1"] * 100,

@@ -274,7 +274,9 @@ export function build(world, plan) {
       // macro lever
       const lv = F.lever ? F.lever[k] : null;
       lever.visible = !!lv;
-      pile.visible = pileL.visible = !lv; pileTop.visible = coil.visible = coilL.visible = !!lv;
+      // round 8 review: the plate + tidy spiral read as a placeholder; the macro now shows the same loose
+      // heap as the jar (pitch 0.0062 since round 7, so it reads as coils, not the round-6 lattice)
+      pileTop.visible = coil.visible = coilL.visible = false;
       if (lv) {
         // one cycle per link: lift by its end and tip (0-45%), then the pile pushes the far end back up
         // (45-85%: red arrow + glow, the pushed end visibly kicked up), then hand over to the next link
@@ -295,13 +297,14 @@ export function build(world, plan) {
           flatRods[j].quaternion.setFromUnitVectors(_up, B.clone().sub(A).normalize());
         }
         const g = (u > 0.4 ? Math.sin(Math.PI * Math.min(1, (u - 0.4) / 0.5)) : 0) * lv.glow;
-        arrow.visible = g > 0.05;
+        const ga = lv.glow * (0.65 + 0.35 * g);      // held for the whole "pushes back" line (round 8 review)
+        arrow.visible = ga > 0.05;
         if (arrow.visible) {           // stands on the pile surface right beside the pushed bead, pointing up
-          const L = (0.6 + 0.4 * g) * 2.4 * BEAD, base = pileY - BR, len = L - 0.0026;
+          const L = (0.75 + 0.25 * g) * 2.4 * BEAD, base = pileY - BR, len = L - 0.0026;
           const ax = xr2 + 1.6 * BR, az = 0.0028;
           shaft.scale.set(1, len, 1); shaft.position.set(ax, base + len / 2, az);
           headA.position.set(ax, base + len + 0.0013, az);
-          arrowM.emissiveIntensity = 2.5 * g;
+          arrowM.emissiveIntensity = 2.5 * ga;
         }
         push.position.set(xr2, yr2 - BR * 0.6, 0.0005); push.material.opacity = 0.75 * g;
         pushDot.position.set(xr2, yr2 - BR * 0.9, 0); pushDot.visible = g > 0.05; pushDot.material.emissiveIntensity = 6 * g;
