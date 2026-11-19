@@ -52,11 +52,31 @@ function makeClock(r, opts = {}) {
   return g;
 }
 
+// A small dark display plate with a label and a value (canvas texture), e.g. "HEAD 0:17.2".
+function readout(label, w = 0.34, h = 0.13) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 196; const g = c.getContext('2d');
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
+  let last = null;
+  m.setText = v => {
+    if (v === last) return; last = v;
+    g.clearRect(0, 0, 512, 196);
+    g.fillStyle = '#e5e2d6'; g.beginPath(); g.roundRect(4, 4, 504, 188, 30); g.fill();
+    g.fillStyle = '#6d675c'; g.font = '700 50px Poppins'; g.textAlign = 'center'; g.textBaseline = 'top'; g.fillText(label, 256, 14);
+    g.fillStyle = '#c92a2e'; g.font = '800 86px Poppins'; g.fillText(v ?? '', 256, 70);
+    tex.needsUpdate = true;
+  };
+  return m;
+}
+
 // Faceless wooden toy figure (artist's mannequin), 1.75 m tall, facing +z.
 function figure() {
   const g = new THREE.Group(), w = MAT.wood('#c9a77c'), j = flat('#a8865e');
   const cap = (r, len, x, y, z, rx = 0, rz = 0, m = w) => {
-    const c = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 4, 10), m); c.position.set(x, y, z); c.rotation.set(rx, 0, rz); g.add(c); return c;
+    const c = new THREE.Group(); c.position.set(x, y, z); c.rotation.set(rx, 0, rz);
+    c.add(new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 12, 1, true), m));
+    for (const e of [-1, 1]) { const cap = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), m); cap.position.y = e * len / 2; c.add(cap); }
+    g.add(c); return c;
   };
   const ball = (r, x, y, z, m = j) => { const b = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), m); b.position.set(x, y, z); g.add(b); return b; };
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.105, 18, 14), w); head.scale.set(0.9, 1.15, 0.95); head.position.y = 1.62; g.add(head);
@@ -95,7 +115,6 @@ function satellite() {
     const arm = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.15, 0.15), frame); arm.position.x = s * 1.9; g.add(arm);
     for (let c = 0; c < 3; c++) {
       const p = new THREE.Mesh(new THREE.BoxGeometry(1.55, 2.0, 0.08), pm); p.position.x = s * (3.4 + c * 1.65); g.add(p);
-      const fr = new THREE.Mesh(new THREE.BoxGeometry(1.65, 2.1, 0.05), frame); fr.position.set(s * (3.4 + c * 1.65), 0, -0.03); g.add(fr);
     }
   }
   const dish = new THREE.Mesh(new THREE.ConeGeometry(0.9, 0.5, 16, 1, true), MAT.ceramic()); dish.position.y = -1.4; dish.rotation.x = Math.PI; g.add(dish);
@@ -115,13 +134,20 @@ export function build(world, plan) {
   post.position.set(L.post_x, 0.9, 0.05); post.castShadow = post.receiveShadow = true; S.add(post);
   const headClk = makeClock(0.13, { halo: '#ffc58a' }); headClk.position.set(...L.head_clk); S.add(headClk);
   const feetClk = makeClock(0.13, { halo: '#a9c4ff' }); feetClk.position.set(...L.feet_clk); S.add(feetClk);
+  const headRd = readout('HEAD', 0.48, 0.18), feetRd = readout('FEET', 0.48, 0.18);
+  headRd.position.set(L.head_clk[0] + 0.42, L.head_clk[1], L.head_clk[2] + 0.02);
+  feetRd.position.set(L.feet_clk[0] + 0.42, L.feet_clk[1], L.feet_clk[2] + 0.02);
+  S.add(headRd, feetRd);
+  const figSet = [patio, fig, post, headClk, feetClk];
 
   // ---- the mast with four clocks
   const [tx, , tz] = L.tower;
-  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.45, 25, 8), MAT.concrete('#beb7a4'));
-  mast.position.set(tx, 12.5, tz); mast.castShadow = mast.receiveShadow = true; S.add(mast);
+  const mastH = L.tower_ys[L.tower_ys.length - 1] + 2;
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.45, mastH, 8), MAT.concrete('#beb7a4'));
+  mast.position.set(tx, mastH / 2, tz); mast.castShadow = mast.receiveShadow = true; S.add(mast);
   const towerClks = L.tower_ys.map(y => { const c = makeClock(1.3); c.position.set(tx, y, tz + 0.6); S.add(c); return c; });
   const base = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.5, 0.3, 16), MAT.concrete('#a89684')); base.position.set(tx, 0.15, tz); base.receiveShadow = true; S.add(base);
+  const towerSet = [mast, base, ...towerClks];
 
   // ---- the two atomic clocks on wooden tables; the left table can jack up
   const [lx, , lz] = L.lab;
@@ -141,8 +167,11 @@ export function build(world, plan) {
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.075, 0.085, 32), ringM); ring.position.set(0, 0.16, 0.176); box.add(ring);
     box.position.y = L.table_top; tg.add(box);
     S.add(shadowed(tg)); ring.castShadow = false;
-    tables.push({ g: tg, top, legs, box }); clocksA.push({ ion, ring, ringM });
+    const rd = readout(s < 0 ? 'LIFTED' : 'STAYS', 0.5, 0.19);
+    rd.position.set(0, 0.36, 0.0); box.add(rd);
+    tables.push({ g: tg, top, legs, box, rd }); clocksA.push({ ion, ring, ringM });
   }
+  const labSet = tables.map(t => t.g);
 
   // ---- road, car, map pin and the satellite
   const rx = L.road_x, len = 900, zc = -350;
@@ -166,6 +195,8 @@ export function build(world, plan) {
   pinRing.rotation.x = -Math.PI / 2; pinRing.position.y = 0.06; pin.add(pinRing);
   shadowed(pin); pinRing.castShadow = false; S.add(pin);
   const sat = satellite(); sat.scale.setScalar(1.9); S.add(sat);
+  const satClk = makeClock(0.75); satClk.position.set(0, 0, 1.75); sat.add(satClk);
+  const roadSet = [hero, trueRing, pin, sat, ...others];
 
   // ---- sparse trees and a couple of props, clear of the sets and the road
   const clear = (x, z) => Math.hypot(x, z) < 6 || Math.hypot(x - tx, z - tz) < 5 || Math.hypot(x - lx, z - lz) < 4 || Math.abs(x - rx) < 8;
@@ -184,6 +215,15 @@ export function build(world, plan) {
     groundY: 0,
     update(i, t, shot) {
       const k = Math.min(i, F.head.length - 1), p = Math.max(0, k - 1);
+      const set = F.set[k];
+      for (const o of figSet) o.visible = set === 'fig';
+      for (const o of towerSet) o.visible = set === 'tower';
+      for (const o of labSet) o.visible = set === 'lab';
+      const ro = F.readout[k];
+      headRd.visible = feetRd.visible = set === 'fig' && !!ro;
+      if (ro) { headRd.setText(ro[0]); feetRd.setText(ro[1]); }
+      tables.forEach((tb, j) => tb.rd.setText(F.lab_readout[k][j]));
+      satClk.set(t * 3.0, (t - 1 / plan.fps) * 3.0, 0);
       headClk.set(F.head[k], F.head[p], F.warm[k]);
       feetClk.set(F.feet[k], F.feet[p], F.warm[k] * 0.8);
       towerClks.forEach((c, j) => c.set(F.tower[k][j], F.tower[p][j], 0));
@@ -200,10 +240,11 @@ export function build(world, plan) {
       const off = F.pin[k];
       pin.position.set(rx - 1.8 + off * 0.12, 0, cz - 8 - off);
       pin.visible = t >= plan.timing.day[0] - 0.4;
+      hero.visible = set === 'road'; for (const o of others) o.visible = set === 'road';
       trueRing.visible = pin.visible;
-      sat.position.set(rx + L.sat[0] - L.road_x, L.sat[1], cz + L.sat[2]);
+      sat.position.set(rx + L.sat[0] - L.road_x + F.sat_dx[k], L.sat[1], cz + L.sat[2]);
       sat.rotation.set(0.15, 0.3 + t * 0.02, 0.08);
-      sat.visible = t < plan.timing.day[0] - 0.4;           // not in the map-pin shot (round 1: a cropped fragment)
+      sat.visible = set === 'road' && t < plan.timing.day[0] - 0.4;           // not in the map-pin shot (round 1: a cropped fragment)
       // the sun's shadow box follows the subject of each shot, sized to it
       if (shot !== lastShot) {
         lastShot = shot;

@@ -193,4 +193,4 @@ retention:
       at: [0.27, 0.2]
       show: [drift+0.1, end]
   cues:
-    - {at: "hud:ahead.settle", sfx: lock, gain: 0.26}
+    - {at: "lifetime.end+0.15", sfx: lock, gain: 0.16}     # after the last word of the payoff line (round 2 sound review)

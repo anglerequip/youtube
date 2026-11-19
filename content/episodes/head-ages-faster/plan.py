@@ -26,12 +26,12 @@ POST_X = 0.62
 HEAD_CLK = [POST_X, 1.62, 0.16]
 FEET_CLK = [POST_X, 0.27, 0.16]            # clear of the patio (picture review, round 1)
 TOWER = [-12.0, 0.0, -14.0]
-TOWER_YS = [2.0, 9.0, 16.0, 23.0]
+TOWER_YS = [2.0, 7.0, 12.0, 17.0]          # mast is 19 m (round 2: all four clocks clear of badge and captions)
 LAB = [7.0, 0.0, -4.0]                 # between the two tables
 TABLE_DX = 0.48
 TABLE_TOP = 0.76
 ROAD_X = 18.0
-SAT = [ROAD_X - 4.0, 19.0, -34.0]       # relative to the car (x absolute), toy scale
+SAT = [ROAD_X - 1.0, 19.0, -34.0]       # relative to the car (x absolute), toy scale
 EXAG = 0.5                             # exaggerated: the feet clock runs at half the head clock's rate
 SPEEDUP = 8.0                          # exaggerated clocks also run fast, so the gap is visible within seconds
 HEAD_LEAD = 9.0                        # the head clock starts ahead (frame 0 already shows the difference)
@@ -48,6 +48,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
 
     # ---- moments, all from the narration
     lift0, lift1 = at("proof", "raised"), at("proof", "raised") + 1.4          # the table jacks up 33 cm
+    close_nist = at("proof", "And") - 0.15                                     # cut to the two readouts
     life0 = S("lifetime") + 0.4                                                # time-lapse: 0 -> 80 years
     life1 = max(life0 + 3.0, E("lifetime") - 0.3)
     day0 = S("drift") + 0.2                                                    # uncorrected GPS: 0 -> 24 hours
@@ -55,7 +56,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     exag_on = lambda t: (t < S("why")) or (S("feet") <= t < E("small"))        # figure clocks exaggerated
 
     frames = {k: [] for k in ("head", "feet", "tower", "lab", "lift", "car_z", "pin", "years", "ns", "hours",
-                              "err_km", "badge", "focal_pt", "warm")}
+                              "err_km", "badge", "focal_pt", "warm", "set", "readout", "lab_readout", "sat_dx")}
     head, feet = HEAD_LEAD, 0.0
     tower = [0.0] * 4
     lab = [0.0, 0.0]
@@ -77,8 +78,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # lab clocks: equal until the lift, then the raised one pulses faster (exaggerated)
         lift = 0.33 * cam.ease((t - lift0) / (lift1 - lift0)) if t >= lift0 else 0.0
         frames["lift"].append(round(lift, 4))
-        lab[0] += dt * 1.1
-        lab[1] += dt * 1.1 * (1 + 1.1 * lift)
+        lab[0] += dt * 1.1 * (1 + 1.1 * lift)       # [0] is the LIFTED clock (left table): it runs faster
+        lab[1] += dt * 1.1
         frames["lab"].append([round(v, 4) for v in lab])
         # time-lapse counters (real values)
         u_life = min(1.0, max(0.0, (t - life0) / (life1 - life0)))
@@ -109,6 +110,11 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         else:
             b = ""
         frames["badge"].append(b)
+        # in-world readouts beside each pair of clocks (round 2 review: the gap must be readable at phone size)
+        mmss = lambda x: f"{int(x // 60)}:{x % 60:04.1f}"
+        frames["readout"].append([mmss(head), mmss(feet)] if exag_on(t) else None)
+        frames["lab_readout"].append([mmss(lab[0]), mmss(lab[1])])
+        frames["sat_dx"].append(round(-3.0 + 2.2 * cam.ease((t - S("gps")) / max(1.0, E("gps") - S("gps"))), 3))
 
     # ---- shots (each beat its own angle; every shot moves a little)
     K = lambda *a: list(a)
@@ -117,31 +123,39 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     lx, _, lz = LAB
     car = lambda i: (ROAD_X - 1.8, 0.0, frames["car_z"][min(i, n - 1)])
     shots = cam.chain([
-        # hook: already moving, low and close, the figure and both clocks fill the middle third
-        cam.shot(0.0, S("why") - 0.1, [(0.0, K(1.9, 1.05, 3.1), K(0.3, 0.9, 0.0), 40),
-                                       (S("why") - 0.1, K(1.55, 1.0, 2.55), K(0.32, 0.9, 0.0), 40)], fps, "key"),
-        # why: the mast, looking up its clocks; slow crane up
-        cam.shot(S("why") - 0.1, S("feet") - 0.1, [(S("why") - 0.1, K(tx + 9.0, 3.5, tz + 27.0), K(tx, 12.6, tz), 46),
-                                                   (S("feet") - 0.1, K(tx + 7.5, 5.0, tz + 25.0), K(tx, 12.8, tz), 46)], fps, "key"),
-        # feet: crane down the figure from head clock to feet clock
-        cam.shot(S("feet") - 0.1, S("small") - 0.1, [(S("feet") - 0.1, K(2.1, 1.7, 3.7), K(0.6, 1.15, 0.0), 40),
-                                                     (S("small") - 0.1, K(2.0, 0.95, 3.4), K(0.62, 0.8, 0.0), 40)], fps, "key"),
-        # small: close and low on the feet clock
-        cam.shot(S("small") - 0.1, S("proof") - 0.1, [(S("small") - 0.1, K(1.25, 0.32, 1.25), K(POST_X - 0.1, 0.3, 0.1), 38),
-                                                      (S("proof") - 0.1, K(1.1, 0.3, 1.05), K(POST_X - 0.1, 0.28, 0.1), 38)], fps, "golden"),
-        # proof: the two atomic clocks; one table jacks up 33 cm
-        cam.shot(S("proof") - 0.1, S("lifetime") - 0.1, [(S("proof") - 0.1, K(lx + 1.1, 1.65, lz + 4.8), K(lx - 0.1, 1.05, lz), 44),
-                                                         (S("lifetime") - 0.1, K(lx + 0.6, 1.55, lz + 4.4), K(lx - 0.15, 1.1, lz), 44)], fps, "key"),
+        # hook: already moving; the whole figure and both clocks (with their readouts) above the caption band
+        cam.shot(0.0, S("why") - 0.1, [(0.0, K(2.3, 1.55, 4.6), K(0.3, 0.62, 0.0), 40),
+                                       (S("why") - 0.1, K(1.95, 1.5, 4.1), K(0.32, 0.64, 0.0), 40)], fps, "key"),
+        # why: the mast, looking up its four clocks; slow crane up
+        cam.shot(S("why") - 0.1, S("feet") - 0.1, [(S("why") - 0.1, K(tx + 9.0, 4.0, tz + 34.0), K(tx, 6.6, tz), 46),
+                                                   (S("feet") - 0.1, K(tx + 7.5, 4.6, tz + 33.0), K(tx, 7.0, tz), 46)], fps, "key"),
+        # feet: crane down the figure from head clock to feet clock, measuring line beside the post
+        cam.shot(S("feet") - 0.1, S("small") - 0.1, [(S("feet") - 0.1, K(2.6, 1.85, 5.0), K(0.7, 0.85, 0.0), 40),
+                                                     (S("small") - 0.1, K(2.6, 1.3, 4.9), K(0.8, 0.72, 0.0), 40)], fps, "key"),
+        # small: low from the side of the post, both clocks and their readouts stacked
+        cam.shot(S("small") - 0.1, S("proof") - 0.1, [(S("small") - 0.1, K(2.7, 1.0, 2.7), K(POST_X, 0.98, 0.1), 44),
+                                                      (S("proof") - 0.1, K(2.55, 0.95, 2.9), K(POST_X, 1.0, 0.1), 44)], fps, "golden"),
+        # proof 1: both atomic clocks on their tables; one table jacks up 33 cm
+        cam.shot(S("proof") - 0.1, close_nist, [(S("proof") - 0.1, K(lx + 2.6, 2.4, lz + 4.0), K(lx - 0.1, 1.0, lz), 44),
+                                                (close_nist, K(lx + 2.2, 2.2, lz + 3.7), K(lx - 0.15, 1.05, lz), 44)], fps, "key"),
+        # proof 2: close on the two readouts, the raised one counting faster
+        cam.shot(close_nist, S("lifetime") - 0.1, [(close_nist, K(lx - 0.1, 1.2, lz + 4.4), K(lx - 0.05, 1.15, lz), 40),
+                                                   (S("lifetime") - 0.1, K(lx - 0.1, 1.22, lz + 4.1), K(lx - 0.05, 1.17, lz), 40)], fps, "key"),
         # lifetime: wide 3/4 on the figure while 80 years pass
-        cam.shot(S("lifetime") - 0.1, S("gps") - 0.1, [(S("lifetime") - 0.1, K(-2.4, 2.1, 3.6), K(0.2, 0.85, 0.0), 40),
-                                                       (S("gps") - 0.1, K(-1.6, 1.8, 3.9), K(0.25, 0.85, 0.0), 40)], fps, "golden"),
-        # gps: from behind the car, crane up to the satellite overhead
-        cam.shot(S("gps") - 0.1, S("drift") - 0.1, [(S("gps") - 0.1, K(-1.4, 3.0, 14.0), K(0.0, 5.0, -20.0), 50),
-                                                    (S("drift") - 0.1, K(-1.4, 3.2, 13.0), K(-1.0, 14.0, -30.0), 50)], fps, "key", car),
+        cam.shot(S("lifetime") - 0.1, S("gps") - 0.1, [(S("lifetime") - 0.1, K(-2.6, 1.9, 4.6), K(0.2, 0.75, 0.0), 40),
+                                                       (S("gps") - 0.1, K(-1.8, 1.7, 4.8), K(0.25, 0.75, 0.0), 40)], fps, "golden"),
+        # gps: from behind the car, crane up to the satellite (centred, drifting) and its clock
+        cam.shot(S("gps") - 0.1, S("drift") - 0.1, [(S("gps") - 0.1, K(-1.4, 3.0, 14.0), K(-1.5, 6.0, -20.0), 50),
+                                                    (S("drift") - 0.1, K(-1.4, 3.2, 13.0), K(-2.0, 14.0, -30.0), 50)], fps, "key", car),
         # drift: high 3/4 aerial over the road, the map pin slides away from the car
         cam.shot(S("drift") - 0.1, n / fps + 0.05, [(S("drift") - 0.1, K(7.0, 13.0, 16.0), K(0.0, 0.0, -14.0), 44),
                                                     (n / fps, K(8.0, 17.0, 19.0), K(0.5, 0.0, -24.0), 44)], fps, "key", car),
     ])
+    # which set is on screen (the scene hides the others: round 2, cropped stray objects at the frame edges)
+    for i, t in enumerate(T):
+        frames["set"].append("tower" if S("why") - 0.1 <= t < S("feet") - 0.1 else
+                             "lab" if S("proof") - 0.1 <= t < S("lifetime") - 0.1 else
+                             "road" if t >= S("gps") - 0.1 else "fig")
     for s_ in shots:
         for k, lk in enumerate(s_["look"]):
             i = s_["i0"] + k
@@ -158,11 +172,9 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         {"start": at("gps", "forty-five"), "end": S("drift") - 0.1, "big": "≈ +45 µs a day",
          "small": "GPS clocks, from gravity alone", "y": 0.17},
     ]
-    events = [
-        (round(lift1 - 0.05, 3), "tick", {"gain": 0.14, "seed": 41, "pitch": 0.9, "ring": 0.3}),   # the jack settles (soft, round 1 sound review)
-    ]
+    events = [(round(lift0 + 0.1, 3), "rise", {"gain": 0.16})]          # the table starts to climb
     timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [lift0, life0, day0], "events": events,
-               "mutes": [], "swells": [life0], "lifetime": [life0, life1], "day": [day0, day1], "lift": [lift0, lift1]}
+               "mutes": [], "swells": [life0], "close_nist": close_nist, "lifetime": [life0, life1], "day": [day0, day1], "lift": [lift0, lift1]}
     facts = dict(f)
     facts.update({"nist_cm": 33.0, "slow_factors": [],
                   "events": {"lift_33cm": {"t": lift1 + 0.1, "observe": "lift_cm", "expect": 33.0, "tol": 0.01},
@@ -191,8 +203,8 @@ def hud_anchors(plan: dict) -> dict:
     lx, _, lz = LAB
     top = TABLE_TOP + 0.32
     return {
-        "head_mark": [[POST_X + 0.32, 1.72, 0.1]] * n,
-        "feet_mark": [[POST_X + 0.32, 0.06, 0.1]] * n,
+        "head_mark": [[POST_X + 0.75, 1.72, 0.1]] * n,
+        "feet_mark": [[POST_X + 0.75, 0.06, 0.1]] * n,
         "lab_low": [[lx - TABLE_DX + 0.3, top, lz + 0.32]] * n,
         "lab_high": [[lx - TABLE_DX + 0.3, round(top + F["lift"][i], 4), lz + 0.32] for i in range(n)],
     }
