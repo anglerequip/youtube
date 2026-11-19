@@ -33,12 +33,17 @@ to beat ids).
 | MD-1 | Max gap between meaningful visual events (any type) | 3.0 s | warn | VS-Q1, R2-F10 (B/E) |
 | MD-2 | Max gap between meaningful events in a `why`/explanation beat | 2.5 s | warn | R2-F21 (D) |
 | MD-3 | Max length of a shot with no type 3-5 events (camera drift only) | 4.0 s | warn | VS-Q2 (E) |
-| MD-4 | Max shot length with continuous type 3-5 events | 10 s | warn | VS-Q2 (E) |
-| MD-5 | Hard-cut interval between camera angles | 2.5-4 s typical (Blueprint); min 1.2 s between any two cuts | min is fail, typical is guidance | Blueprint; VS-Q4 |
+| MD-4 | Max shot length with continuous type 3-5 events | 13 s | warn | VS-Q2 (E) |
+| MD-5 | Hard-cut interval between camera angles | 7-12 s typical, cut on a change of scene, scale or time of day (measured on the reference Short: 5 cuts in 60.5 s, R1 section 5); min 1.2 s between any two cuts | min is fail, typical is guidance | R1 (D); VS-Q4. Conflicts with Blueprint "2.5-4 s", see note below |
 | MD-6 | Hard cut lands within ±2 frames of a physical event on the focal object when one exists in the window ±0.5 s | prefer | guidance | R2-F12 (C) |
 | MD-7 | After a cut, the focal object is visible within 0.3 s, and its screen position moves < 25% of frame height, or it carries the highlight ring | required | warn | VS-Q4/Q7 |
 | MD-8 | No hard cut during the reveal window (`reveal: true` beat, first 1.5 s) | required | fail | VS-Q3 |
 | MD-9 | Opening frame in motion, no title card or logo sting | required | fail | Blueprint section 8, HK-1 |
+
+**Blueprint conflict (MD-5).** CLAUDE.md says cuts every 2.5-4 s. Frame analysis of the reference
+Short (R1 section 5) found shots of 7-12 s with continuous eased camera moves and frequent on-screen
+events inside each shot. MD-1/MD-2 keep the viewer's visual events frequent; MD-5 no longer asks for
+frequent cuts. Caesar decides whether to update the Blueprint text. Experiment V1 tests both.
 
 "Meaningful" excludes idle motion: tree sway, ambient traffic not involved in the explanation,
 camera drift under 2% of frame per second.

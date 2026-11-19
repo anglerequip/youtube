@@ -27,8 +27,9 @@ separately.
 
 - **Evidence.** In 25-30 s adverts, each extra second of scene length lowered attentional synchrony
   by ~5%; median scene 2.1 s (IQR 1.5-3 s); cuts helped most where scenes were long, with diminishing
-  returns (Wals et al. 2026, R2-F10, Tier B). The reference Short cuts every ~2.5-4 s (Blueprint,
-  Tier D). Its weakest stretch was an 11 s fixed shot (R2-F21, Tier D).
+  returns (Wals et al. 2026, R2-F10, Tier B). Measured frame by frame, the reference Short has only 5 hard
+  cuts in 60.5 s (shots 7-12 s) and keeps attention with continuous camera moves and on-screen events
+  inside each shot (R1 section 5, Tier D); the Blueprint's "2.5-4 s" overstates its cut rate.
 - **Uncertainty.** Wals measured cuts, not the other four types, and found no scenes under 1 s.
   Synchrony is not comprehension.
 - **Working answer.** Something meaningful (any of types 1-5) about every 1.5-3 s; a hard cut is not
