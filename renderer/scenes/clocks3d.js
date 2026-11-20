@@ -70,7 +70,7 @@ function readout(label, w = 0.34, h = 0.13, dark = false) {
 }
 
 // Faceless wooden toy figure (artist's mannequin), 1.75 m tall, facing +z.
-function figure() {
+export function figure() {
   const g = new THREE.Group(), w = MAT.wood('#c9a77c'), j = flat('#a8865e');
   const cap = (r, len, x, y, z, rx = 0, rz = 0, m = w) => {
     const c = new THREE.Group(); c.position.set(x, y, z); c.rotation.set(rx, 0, rz);
