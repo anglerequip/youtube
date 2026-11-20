@@ -260,7 +260,13 @@ function jar(S, L, T) {
 
 export function build(world, plan) {
   const S = world.scene, F = plan.frames, L = plan.layout, Tm = plan.timing, T = L.top;
-  world.ground(1200); world.hills(12, 140);
+  world.ground(1200);
+  const nBefore = S.children.length; world.hills(12, 140);
+  // keep the hills off the chase road (x = road_x): a hill straddling it swallows the camera
+  for (const h of S.children.slice(nBefore)) {
+    const dx = h.position.x - plan.layout.road_x;
+    if (Math.abs(dx) < 60) h.position.x = plan.layout.road_x + (dx < 0 ? -60 : 60);
+  }
   // ---- house set (night)
   const H = L.house;
   const hs = house(S);
@@ -359,7 +365,7 @@ export function build(world, plan) {
         look(wiz, { talk: tw, blink: F.blink_w[k], headYaw: 0.3, t });
         cop.pose({ talk: tc, blink: F.blink_c[k], hold: 0.55, headYaw: -0.2 });
       } else if (set === 'stop') {
-        look(wiz, { talk: tw, blink: F.blink_w[k], headYaw: tc > 0.05 ? 0.3 : 0.0, point: shot === plan.shots[13] ? 0.6 : 0, t });
+        look(wiz, { talk: tw, blink: F.blink_w[k], headYaw: tc > 0.05 ? 0.3 : 0.0, wave: shot === plan.shots[13] ? 0.3 : 0, t });
         look(nyx, { talk: tn, blink: F.blink_n[k], headYaw: 0.25, t });
         const bite = F.bite[k];
         const holdUp = shot === plan.shots[11] ? 0.7 : 0.75 + 0.25 * bite;

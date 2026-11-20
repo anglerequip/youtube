@@ -126,6 +126,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     t_faces2 = round(S("faces") + 0.45 * (E("faces") - S("faces")), 3)
     t_tribo2 = round(S("tribo") + 0.5 * (E("tribo") - S("tribo")), 3)
     z_car = lambda t: -40.0 - SPEED * (t - t_run)       # their car, driving towards -z
+    road_subject = lambda i: [0.0, 0.0, z_car(i / fps)]  # road shots ride along with the cars (no easing lag)
     shots = cam.chain([
         # hook: night, Nyx in the front yard, the police car's lights sweeping the house; slow push in
         cam.shot(0.0, S("rule") - 0.1, [(0.0, K(hx + 0.75, 1.62, hz + 3.6), K(hx + 0.6, 1.3, hz - 0.4), 46),
@@ -155,11 +156,13 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         cam.shot(t_faces2, S("run") - 0.1, [(t_faces2, K(kx + 0.42, TOP + 0.2, kz + 0.4), K(kx + 0.5, TOP + 0.14, kz + 0.1), 34),
                                             (S("run") - 0.1, K(kx + 0.6, TOP + 0.21, kz + 0.38), K(kx + 0.5, TOP + 0.14, kz + 0.1), 34)], fps, "golden"),
         # run + habit: chase cam behind the police car, their little car ahead, sunset
-        {**cam.shot(t_run, S("pull") - 0.1, [(t_run, K(ROAD_X + 1.9, 3.2, z_car(t_run) + 24.0), K(ROAD_X + 1.8, 0.9, z_car(t_run) - 2), 40),
-                                             (S("pull") - 0.1, K(ROAD_X + 1.9, 3.0, z_car(S("pull") - 0.1) + 22.5), K(ROAD_X + 1.8, 0.9, z_car(S("pull") - 0.1) - 2), 40)], fps, "sunset")},
-        # pull: low, ahead of the police car, looking back at its lights
-        cam.shot(S("pull") - 0.1, S("candy") - 0.1, [(S("pull") - 0.1, K(ROAD_X + 0.6, 1.1, z_car(S("pull") - 0.1) + 5.0), K(ROAD_X + 1.8, 1.0, z_car(S("pull") - 0.1) + 12.0), 40),
-                                                     (S("candy") - 0.1, K(ROAD_X + 0.6, 1.1, z_car(S("candy") - 0.1) + 5.0), K(ROAD_X + 1.8, 1.0, z_car(S("candy") - 0.1) + 12.0), 40)], fps, "sunset"),
+        cam.shot(t_run, S("pull") - 0.1, [(t_run, K(ROAD_X + 1.9, 3.2, 24.0), K(ROAD_X + 1.8, 0.9, -2), 40),
+                                          (S("pull") - 0.1, K(ROAD_X + 1.9, 3.0, 22.5), K(ROAD_X + 1.8, 0.9, -2), 40)], fps, "sunset",
+                 subject=road_subject),
+        # pull: low, ahead of the police car, looking back at its lights (moves with the cars)
+        cam.shot(S("pull") - 0.1, S("candy") - 0.1, [(S("pull") - 0.1, K(ROAD_X + 0.6, 1.1, 5.0), K(ROAD_X + 1.8, 1.0, 12.0), 40),
+                                                     (S("candy") - 0.1, K(ROAD_X + 0.6, 1.1, 5.4), K(ROAD_X + 1.8, 1.0, 12.0), 40)], fps, "sunset",
+                 subject=road_subject),
         # candy + told: roadside at night, the cop holds up one pink stick in his torch beam
         cam.shot(S("candy") - 0.1, S("spark") - 0.1, [(S("candy") - 0.1, K(cx_ - 4.8, 1.65, cz_ - 0.8), K(cx_ + 0.3, 1.25, cz_ - 0.95), 40),
                                                       (S("spark") - 0.1, K(cx_ - 4.3, 1.62, cz_ - 0.9), K(cx_ + 0.3, 1.25, cz_ - 0.95), 40)], fps, "night"),
