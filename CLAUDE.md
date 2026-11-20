@@ -210,3 +210,17 @@ Every new or edited model uses at least these segment counts. Prefer more on any
   existing character, celebrity or actor.
 - Check render time after raising detail: a full 3D render must still finish in a reasonable time on Caesar's PC.
 
+
+## Autopilot efficiency (Caesar, 2026-11-20, via the project coordinator)
+
+These rules keep the hands-free pipeline cheap. They don't override the rules above.
+
+1. **Reusable scene sets.** Build a small library (bedroom, street/traffic, kitchen, lab, outdoors) and
+   have each new episode swap props and camera rather than model from scratch. A new set is added only
+   when no existing one fits.
+2. **One AI review round by default.** A second round runs only if round one scores under 3.0. The
+   two-round maximum still applies, and after round two the verdict is `deliver`.
+3. **Model per step.** Use the strongest model for scripts, fact checks and scene building. Use a
+   cheaper model (Sonnet or Haiku) for routine work: packaging, topic-ledger checks, QA summaries.
+4. **Fewer chat messages.** Post to the project chat only for a result, a blocker or a question that
+   needs Caesar. Routine progress goes on the checklist.
