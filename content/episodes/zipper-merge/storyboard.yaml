@@ -1,0 +1,146 @@
+slug: zipper-merge
+title: "The Driver Who 'Cuts In' Is Doing It Right"
+topic: "the zipper (late) merge at a lane closure: in heavy, slow traffic, using both lanes to the merge point and taking turns makes the queue shorter (Minnesota and Wisconsin DOT)"
+component: custom   # traffic queue model; the scene is renderer/scenes/zipper3d.js
+renderer: three
+scene: zipper3d
+hook_family: 2          # a familiar annoyance with the opposite answer
+structure: D            # duo: outrage -> he's right -> one long queue -> zipper -> 40% -> honest twist: not faster -> when not -> payoff
+voice_clips: content/episodes/zipper-merge/voice
+max_inner_pause_s: 0.3
+speakers: {wizard: zYcjlYFOd3taleS0gkk3, woman: 0ggs85h7hrWz8ExXnsBc}
+description: |
+  The driver who stays in the closing lane right to the end and then merges? In heavy, slow traffic,
+  that's what road agencies ask everyone to do. Merging early squeezes all the cars into one long queue
+  next to an empty lane. Using both lanes and taking turns at the merge point (a zipper merge) can make
+  the backup up to 40 percent shorter. Honest catch: Minnesota's transport department says it doesn't
+  change your time through the work zone. It makes the queue shorter, evens out the two lanes and cuts
+  risky lane-jumping. In light traffic, merge early.
+
+  Sources: Minnesota DOT, "Late merge ... the Zipper System"; Wisconsin DOT, Zipper merge.
+
+  #shorts #traffic #driving #science
+tags: [traffic, zipper merge, late merge, driving, road works, queue, science, shorts]
+voice: elevenlabs-duo
+speed: 1.0
+story:
+  core_idea: "In heavy traffic, the zipper merge makes the queue shorter, though not your trip faster."
+  fascination: "the driver everyone hates is following the official advice"
+  steps: 3            # early merge = one long queue; both lanes + turns; queue up to 40% shorter
+  buildup: medium
+  extras: [twist, context]     # it does not get you through faster; and only in heavy traffic
+  payoff: payoff
+  cut:
+    - "capacity increases from US state studies: figures vary and we could not check a primary source"
+    - "crash statistics: the agencies give only qualitative safety claims"
+    - "laws in other countries (e.g. Germany's Reissverschlussverfahren): true, but a tangent"
+end_hold_s: 1.6
+beats:
+  - id: hook
+    speaker: wizard
+    text: "That guy drove right to the end of the closed lane and *cut in*. Rude, right?"
+    pause_after: 0.25
+  - id: correct
+    speaker: woman
+    text: "Actually... in heavy traffic, he's doing it *right*."
+    pause_after: 0.2
+  - id: what
+    speaker: wizard
+    text: "What?!"
+    pause_after: 0.15
+  - id: early
+    speaker: woman
+    text: "If everyone squeezes over early, you get one *long* queue... right next to an empty lane."
+    pause_after: 0.2
+  - id: zipper
+    speaker: woman
+    text: "Use both lanes all the way to the merge. Then take turns, one from each side. Like a *zipper*."
+    pause_after: 0.2
+  - id: thatsit
+    speaker: wizard
+    text: "That's it? That actually helps?"
+    pause_after: 0.15
+  - id: forty
+    speaker: woman
+    text: "Road agencies say the backup gets up to *forty* percent shorter."
+    pause_after: 0.2
+  - id: faster
+    speaker: wizard
+    text: "So I get home faster!"
+    pause_after: 0.15
+  - id: honest
+    speaker: woman
+    text: "Honestly? Not really. Minnesota's road department says your time through stays about the same."
+    pause_after: 0.2
+  - id: why
+    speaker: woman
+    text: "But the queue is shorter, both lanes move at the same speed, and there's less risky lane jumping. On an empty road, though? Merge early."
+    pause_after: 0.2
+  - id: payoff
+    speaker: wizard
+    text: "So the guy I honked at... was following the *rules*."
+    pause_after: 0.0
+
+caveats:
+  - "Backup length: Wisconsin DOT says traffic backups can be reduced by as much as 40%; Minnesota DOT says 'up to 50% (40% is common)'. Neither page cites a study, so we use the more conservative 'up to forty percent'."
+  - "Travel time: Minnesota DOT states the zipper system has no effect on travel time through the work zone; the benefits are a shorter queue, similar speeds in both lanes, fewer lane changes and less road rage."
+  - "When: both agencies say the zipper applies when traffic is heavy and slow; at highway speeds with no backup, merge as soon as it is safe. Rules differ between countries and states; follow local signs."
+  - "The road, cars and queues are our own 3D illustration of the agencies' description, not a measurement. The wizard and the woman are original 3D characters."
+sources:
+  - "Minnesota Department of Transportation, 'LATE MERGE ... the ZIPPER SYSTEM' (work zone guidance, 2008), dot.state.mn.us/trafficeng/workzone/doc/When-latemerge-zipper.pdf"
+  - "Wisconsin Department of Transportation, 'Zipper merge', wisconsindot.gov/Pages/safety/safety-eng/ZipperMerge.aspx (accessed 2026-11-20)"
+
+claims:
+  - {id: backup_cut, beat: forty, unit: percent, value: 40, scope: history,
+     evidence: {quality: 3, source: "Wisconsin DOT: backups reduced as much as 40%; Minnesota DOT: up to 50%, 40% common"}}
+
+absolute_ok:
+  - {word: "everyone", beat: early, why: "a hypothetical: if all drivers merge early"}
+
+entities:
+  - id: wizard_car
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "a cream boxy hatchback with the wizard (hat visible) at the wheel, in the queue at a lane closure"}
+  - id: wizard
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the wizard presenter (hat, beard) in the driver's seat, then standing on the verge"}
+  - id: woman
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the young woman presenter (long black hair with a fringe, black outfit) standing on the grass verge by the road works, explaining"}
+  - id: queues
+    type: support
+    category: B
+    importance: secondary
+    visual_contract: {must_read_as: "first one long single-lane queue beside an empty closing lane; then two shorter queues side by side merging alternately at orange cones"}
+  - id: roadworks
+    type: support
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "orange cones, a 'lane closed' sign and a small digger closing the right lane"}
+  - id: road
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "a straight two-lane highway in warm daylight with verges, fence posts and low-poly trees; no holes"}
+
+hero: queues
+
+publish:
+  cover_at_s: 1.0
+  cover_headline: "He's doing it right"
+  cover_label: {big: "up to 40%", small: "shorter queue"}
+  hashtags: [traffic, driving, zippermerge, science]
+  tagline: "traffic science that breaks your intuition."
+  youtube:
+    title: "The Driver Who 'Cuts In' Is Doing It Right (Zipper Merge)"
+    description: |
+      The driver who stays in the closing lane to the end and then merges? In heavy, slow traffic, that's exactly what road agencies ask for. Using both lanes and taking turns at the merge point can make the backup up to 40% shorter.
+
+      Honest catch: Minnesota's transport department says it won't get you through the road works faster. It makes the queue shorter, evens out both lanes and cuts risky lane-jumping. In light traffic, merge early.
+  how_made: "How it's made: original 3D characters and scenes, animated by us. The voices are AI voices (ElevenLabs)."

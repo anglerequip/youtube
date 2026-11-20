@@ -1,0 +1,149 @@
+slug: dog-drinking
+title: "Your Dog Doesn't Scoop Water"
+topic: "how dogs really drink: the tongue curls backwards, slaps the water, pulls up a column and the jaw bites it off (Gart et al. 2015)"
+component: custom   # fluid mechanics of lapping; the scene is renderer/scenes/dogdrink3d.js
+renderer: three
+scene: dogdrink3d
+hook_family: 2          # a familiar moment with an explanation nobody has seen
+structure: D            # duo: messy dog -> it isn't scooping -> column and bite -> why the mess -> cats -> payoff
+voice_clips: content/episodes/dog-drinking/voice   # duo voiced with ElevenLabs (wizard zYcjlYFOd3taleS0gkk3, woman 0ggs85h7hrWz8ExXnsBc)
+max_inner_pause_s: 0.3
+speakers: {wizard: zYcjlYFOd3taleS0gkk3, woman: 0ggs85h7hrWz8ExXnsBc}
+description: |
+  Your dog doesn't scoop water with its tongue. It curls the tongue backwards, slaps the surface,
+  yanks it up so fast that a column of water follows, then bites the top of that column off.
+  Researchers filmed 19 dogs to work it out. Cats touch the surface gently; dogs hit it hard, and the
+  leftover water in the curled tongue is the mess on your floor.
+
+  Sources: Gart, Socha, Vlachos & Jung, PNAS 2015; Virginia Tech news release, 15 Dec 2015.
+
+  #shorts #dogs #science #physics
+tags: [dogs, dog behavior, how dogs drink, fluid dynamics, physics, science, shorts]
+voice: elevenlabs-duo
+speed: 1.0
+story:
+  core_idea: "A dog drinks by flicking up a column of water and biting it, not by scooping."
+  fascination: "the tongue curls the 'wrong' way, backwards, and the water is caught in mid-air"
+  steps: 3            # backwards curl; fast pull makes a column; the jaw bites the column
+  buildup: low
+  extras: [twist]     # cats do the same trick, gently
+  payoff: payoff
+  cut:
+    - "tongue acceleration in g: the only figure we could check is an outside expert's estimate, not the paper's"
+    - "dog size vs lapping speed: real result in the paper, but we could not verify the numbers from the full text"
+    - "wolves and wild canids drinking: no source"
+end_hold_s: 1.6
+beats:
+  - id: hook
+    speaker: wizard
+    text: "My dog drinks like a *tornado*. Water everywhere. Why?"
+    pause_after: 0.25
+  - id: scoop
+    speaker: woman
+    text: "Because he's not scooping. Watch the tongue... it curls *backwards*."
+    pause_after: 0.2
+  - id: how
+    speaker: wizard
+    text: "Backwards? Then how does any water get in?"
+    pause_after: 0.15
+  - id: column
+    speaker: woman
+    text: "He slaps the surface and yanks his tongue up, *fast*. The water clings to it and shoots up in a column."
+    pause_after: 0.2
+  - id: bite
+    speaker: woman
+    text: "Then... *snap*. He bites the top of the column before it falls back down."
+    pause_after: 0.2
+  - id: midair
+    speaker: wizard
+    text: "So he catches water. In mid-air?"
+    pause_after: 0.15
+  - id: filmed
+    speaker: woman
+    text: "Every single lap. Scientists filmed nineteen dogs in slow motion to see it."
+    pause_after: 0.2
+  - id: mess
+    speaker: wizard
+    text: "And the mess on my floor?"
+    pause_after: 0.15
+  - id: ladle
+    speaker: woman
+    text: "Leftovers. The curled tongue carries a little ladle of water, and that gets flung out the sides."
+    pause_after: 0.2
+  - id: cats
+    speaker: wizard
+    text: "Then why are cats so *neat*?"
+    pause_after: 0.15
+  - id: gentle
+    speaker: woman
+    text: "Same trick, gentler. A cat barely touches the surface. A dog has to hit it *hard*."
+    pause_after: 0.2
+  - id: payoff
+    speaker: wizard
+    text: "So he's not messy. He's... *fast*."
+    pause_after: 0.0
+
+caveats:
+  - "Mechanism: high-speed footage of 19 pet dogs (13 filmed at owners' homes, 6 on campus) showed the tongue curling ventrally (backwards, toward the lower jaw), plunging in, then accelerating up to pull a water column; the dog bites down to capture it (Gart et al. 2015; Virginia Tech release). The release says dogs do not use the tongue to actively scoop water; some water stays in the curled tongue and is tossed aside."
+  - "'Same trick, gentler' for cats: cats lightly touch the surface with the tongue tip and use the column too (earlier imaging by Jung and colleagues); the release contrasts cats' steady inertia with dogs' unsteady, faster acceleration. The cats line simplifies that comparison."
+  - "We give no acceleration number: the only figure in the sources we could read ('2 to 4 g') is an outside researcher's comment, not a value from the paper."
+  - "The slow-motion tongue, column and droplets in the video are our own 3D illustration of the published mechanism, not footage. The wizard, the woman and the dog are original 3D characters."
+sources:
+  - "S. Gart, J. J. Socha, P. P. Vlachos and S. Jung, 'Dogs lap using acceleration-driven open pumping', Proceedings of the National Academy of Sciences (December 2015)."
+  - "Virginia Tech News, 'Engineers discover precise mechanism underlies the sloppy way dogs raise water into their mouths', 15 Dec 2015, news.vt.edu/articles/2015/12/121515-engineering-dogresearch.html"
+
+claims:
+  - {id: dogs_filmed, beat: filmed, unit: count, value: 19, scope: history,
+     evidence: {quality: 2, source: "Virginia Tech release 2015: 19 dogs of various sizes and breeds filmed"}}
+
+absolute_ok:
+  - {word: "every", beat: filmed, why: "each lap uses the same column-and-bite mechanism in the study"}
+  - {word: "everywhere", beat: hook, why: "the wizard's own exaggeration about his kitchen floor"}
+
+entities:
+  - id: dog
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "a mid-size dog with floppy ears at a water bowl, tongue visibly curled backwards under the chin, a column of water rising to the mouth"}
+  - id: wizard
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the wizard presenter (hat, beard) standing in the kitchen, watching his dog drink"}
+  - id: woman
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the young woman presenter (long black hair with a fringe, black outfit) kneeling by the bowl, explaining"}
+  - id: water
+    type: support
+    category: B
+    importance: secondary
+    visual_contract: {must_read_as: "clear blue water in a steel bowl; a narrow column pulled up by the tongue; droplets flung sideways onto a tiled floor"}
+  - id: cat
+    type: support
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "a cat at a second bowl touching the surface with only the tongue tip, a thin column rising, no splash"}
+  - id: kitchen
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "a cosy cut-away kitchen in daylight, tiled floor with a few water puddles; no holes"}
+
+hero: dog
+
+publish:
+  cover_at_s: 1.0
+  cover_headline: "Your dog drinks backwards"
+  cover_label: {big: "backwards", small: "tongue curl"}
+  hashtags: [dogs, science, physics, slowmotion]
+  tagline: "animal science that breaks your intuition."
+  youtube:
+    title: "Your Dog Doesn't Scoop Water (Slow Motion Explained)"
+    description: |
+      Your dog doesn't scoop water with its tongue. It curls it backwards, slaps the surface, yanks it up so fast that a column of water follows, and bites the top off. Researchers filmed 19 dogs to work it out.
+
+      The mess? Leftover water in the curled tongue gets flung out the sides. Cats use the same column trick, just gently.
+  how_made: "How it's made: original 3D characters and scenes, animated by us. The voices are AI voices (ElevenLabs)."

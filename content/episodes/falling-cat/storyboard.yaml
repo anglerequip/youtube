@@ -1,0 +1,151 @@
+slug: falling-cat
+title: "How a Falling Cat Flips With Nothing to Push On"
+topic: "the cat righting reflex: a falling cat turns over with zero total spin by twisting its front and back halves against each other (Kane & Scher 1969)"
+component: custom   # rotation with zero angular momentum; the scene is renderer/scenes/fallingcat3d.js
+renderer: three
+scene: fallingcat3d
+hook_family: 1          # an impossible-looking event
+structure: D            # duo: paradox -> no spin allowed -> the bend -> tuck/extend -> swap -> history -> kittens -> payoff
+voice_clips: content/episodes/falling-cat/voice
+max_inner_pause_s: 0.3
+speakers: {wizard: zYcjlYFOd3taleS0gkk3, woman: 0ggs85h7hrWz8ExXnsBc}
+description: |
+  A cat that slips off a shelf upside down has nothing to push against, and physics says a body falling
+  with no spin can't start spinning on its own. The cat doesn't. It bends in the middle and turns its
+  front and back halves in opposite directions, tucking and stretching its legs so the halves cancel out.
+  Total spin stays zero, and the cat still ends up feet down.
+
+  Sources: Kane & Scher 1969 (Int. J. Solids and Structures); Marey 1894 photographs; Gbur, Falling Felines and Fundamental Physics (2019).
+
+  #shorts #cats #physics #science
+tags: [cats, cat physics, righting reflex, angular momentum, physics, science, shorts]
+voice: elevenlabs-duo
+speed: 1.0
+story:
+  core_idea: "A falling cat turns over without ever spinning: its two halves twist against each other."
+  fascination: "it looks like it breaks conservation of angular momentum, and it doesn't"
+  steps: 4            # no net spin allowed; bend in the middle; tuck front / stretch back; swap
+  buildup: medium
+  extras: [history]
+  payoff: payoff
+  cut:
+    - "high-rise syndrome: the famous '7 storeys' study has a strong survivorship-bias problem; leave it out"
+    - "terminal velocity of a cat: the sources disagree (about 97 vs 120 km/h)"
+    - "astronauts and divers using the same trick: true but a tangent"
+    - "the tail: helps a little, tailless cats can still right themselves; too much for one beat"
+end_hold_s: 1.6
+beats:
+  - id: hook
+    speaker: wizard
+    text: "A cat falling upside down has *nothing* to push on. So how does it flip over?"
+    pause_after: 0.25
+  - id: nospin
+    speaker: woman
+    text: "Physics says a falling body with no spin can't start spinning on its own. And the cat... doesn't."
+    pause_after: 0.2
+  - id: seen
+    speaker: wizard
+    text: "But I've *seen* it turn over!"
+    pause_after: 0.15
+  - id: bend
+    speaker: woman
+    text: "It *twists*. It bends in the middle, so its front and back halves can turn separately."
+    pause_after: 0.2
+  - id: tuck
+    speaker: woman
+    text: "Front legs tucked in, back legs out. The front half turns a lot... the back half barely turns the other way."
+    pause_after: 0.2
+  - id: swap
+    speaker: woman
+    text: "Then it switches. Arms out, hind legs in... and the hips roll round to match."
+    pause_after: 0.2
+  - id: cancel
+    speaker: wizard
+    text: "So the two halves cancel out?"
+    pause_after: 0.15
+  - id: zero
+    speaker: woman
+    text: "Exactly. The total spin stays at *zero*, and the cat still lands feet down."
+    pause_after: 0.2
+  - id: who
+    speaker: wizard
+    text: "Who worked that out?"
+    pause_after: 0.15
+  - id: history
+    speaker: woman
+    text: "A French scientist photographed it in eighteen ninety-four. Engineers finally explained it with maths in nineteen sixty-nine."
+    pause_after: 0.2
+  - id: kittens
+    speaker: woman
+    text: "And kittens start doing it at just three to four weeks old."
+    pause_after: 0.2
+  - id: payoff
+    speaker: wizard
+    text: "So a kitten knows more physics than *me*."
+    pause_after: 0.0
+
+caveats:
+  - "Zero spin: a cat dropped with no initial rotation has zero angular momentum and keeps it in free fall; it reorients by changing shape, not by acquiring net spin. Marey (1894) concluded from his photographs that the cat had no initial rotation and that air resistance played no role (summarised in the Falling cat problem literature)."
+  - "The bend-and-twist model (two body halves that cannot twist about the spine, rotating about different axes) is Kane & Scher 1969. Real cats combine this with leg tuck/extend moves that change each half's moment of inertia; the tail helps a little but tailless cats can still right themselves."
+  - "'Front half turns a lot, back half barely': one common illustration gives roughly 90 degrees vs 10 degrees; we keep it qualitative because exact angles vary from cat to cat."
+  - "Age: the reflex begins to appear at about 3-4 weeks and is perfected at about 6-9 weeks (Sechzer et al. 1984, as cited in reviews)."
+  - "No cat was dropped for this video. The falling cat is an original 3D animation of the published model, slowed down; it slips off a shelf onto a cushion. Cats can still be badly hurt in falls."
+sources:
+  - "T. R. Kane and M. P. Scher, 'A dynamical explanation of the falling cat phenomenon', International Journal of Solids and Structures 5(7), 663-670 (1969). doi:10.1016/0020-7683(69)90086-9"
+  - "E.-J. Marey, 'Des mouvements que certains animaux exécutent pour retomber sur leurs pieds lorsqu'ils sont précipités d'un lieu élevé', Comptes Rendus 119, 714-717 (1894)."
+  - "G. J. Gbur, Falling Felines and Fundamental Physics, Yale University Press (2019)."
+  - "J. A. Sechzer et al., 'Development and maturation of postural reflexes in normal kittens', Experimental Neurology 86(3), 493-505 (1984)."
+
+claims:
+  - {id: marey_year, beat: history, unit: year, value: 1894, scope: history,
+     evidence: {quality: 1, source: "Marey 1894, Comptes Rendus 119: chronophotographs of a falling cat"}}
+  - {id: kane_year, beat: history, unit: year, value: 1969, scope: history,
+     evidence: {quality: 1, source: "Kane & Scher 1969, Int. J. Solids Struct. 5: two-cylinder model"}}
+  - {id: kitten_weeks, beat: kittens, unit: weeks, value: [3, 4], scope: history,
+     evidence: {quality: 2, source: "Sechzer et al. 1984: righting reflex appears at 3-4 weeks"}}
+
+absolute_ok:
+  - {word: "nothing", beat: hook, why: "in free fall there is no surface to push against; air resistance plays no role (Marey 1894)"}
+
+entities:
+  - id: cat
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "a ginger tabby cat in slow-motion free fall, first upside down, visibly bent at the waist, front legs tucked while back legs stretch, then the reverse, landing feet-first on a cushion"}
+  - id: wizard
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the wizard presenter (hat, beard) in a living room, astonished, watching the cat"}
+  - id: woman
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the young woman presenter (long black hair with a fringe, black outfit) explaining, sometimes beside a frozen mid-air cat"}
+  - id: halves
+    type: support
+    category: B
+    importance: secondary
+    visual_contract: {must_read_as: "two faint coloured rings around the cat's chest and hips that rotate in opposite directions, with small turn arrows"}
+  - id: room
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "a warm cut-away living room: tall bookshelf, sofa with a big cushion on the floor below; no holes"}
+
+hero: cat
+
+publish:
+  cover_at_s: 2.0
+  cover_headline: "How do cats flip?"
+  cover_label: {big: "0 spin", small: "still flips"}
+  hashtags: [cats, physics, science, slowmotion]
+  tagline: "cat physics that breaks your intuition."
+  youtube:
+    title: "How a Falling Cat Flips With Nothing to Push On"
+    description: |
+      A falling cat has nothing to push against, and a body falling with no spin can't start spinning on its own. So how does it flip? It bends in the middle and twists its front and back halves against each other, tucking and stretching its legs. Total spin stays zero, and it still lands feet down.
+
+      First photographed in 1894, explained with maths in 1969. Kittens start doing it at 3 to 4 weeks old.
+  how_made: "How it's made: original 3D characters and scenes, animated by us. No cats were dropped. The voices are AI voices (ElevenLabs)."
