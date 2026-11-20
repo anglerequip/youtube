@@ -70,7 +70,10 @@ def topical_hashtags(sb, k: int = 4) -> list[str]:
     return _uniq(hashtag(t) for t in src)[:k]
 
 
-def ai_disclosure() -> str:
+def ai_disclosure(sb=None) -> str:
+    own = ((sb.extra.get("publish") or {}).get("how_made") if sb is not None else None)
+    if own:                                   # episodes that aren't physics simulations say how they're made
+        return clean(str(own))
     voice = {"kokoro": "an AI text-to-speech voice", "elevenlabs": "an AI voice (ElevenLabs)"}.get(
         settings.tts_provider, "an AI voice")
     return ("How it's made: the motion comes from a real physics simulation, rendered as a 3D model. "
@@ -86,7 +89,7 @@ def youtube(sb) -> dict:
     parts = [lead.strip()]
     if sb.sources:
         parts.append("Sources:\n" + "\n".join(f"- {s}" for s in sb.sources))
-    parts.append(ai_disclosure())
+    parts.append(ai_disclosure(sb))
     parts.append(f"{settings.channel_name}: {settings.channel_tagline}")
     parts.append(tags_line)
     desc = "\n\n".join(p for p in parts if p)

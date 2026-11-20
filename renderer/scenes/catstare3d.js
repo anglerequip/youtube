@@ -86,6 +86,16 @@ export function build(world, plan) {
 
   const wiz = man(); wiz.position.set(...L.wiz); wiz.rotation.y = Math.PI / 2; S.add(wiz);
   const wom = woman(); wom.position.set(...L.woman); wom.rotation.y = -Math.PI / 2 + 0.12; S.add(wom);
+  // pure black never appears in the house style (and reads as a hole on a phone): lift near-black fabric
+  // and hair to a deep charcoal, so the woman's black outfit still reads black but keeps its folds
+  const lift = new THREE.Color('#3a3640').convertSRGBToLinear();
+  for (const p of [wiz, wom]) p.traverse(o => {
+    if (!o.isMesh) return;
+    for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+      if (!m || !m.color || m.isMeshBasicMaterial) continue;
+      if (Math.max(m.color.r, m.color.g, m.color.b) < lift.r) { m.color.r = Math.max(m.color.r, lift.r); m.color.g = Math.max(m.color.g, lift.g); m.color.b = Math.max(m.color.b, lift.b); }
+    }
+  });
 
   const tom = cat(); tom.position.set(...L.cat); tom.rotation.y = L.cat_face; S.add(tom);
   // the crumbs that fall from the sandwich onto the table edge, right under the cat's nose
@@ -125,7 +135,7 @@ export function build(world, plan) {
   const shed = new THREE.Group();
   const walls = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.3, 1.2), std('#e6e3dc', { flatShading: true })); walls.position.y = 0.65; shed.add(walls);
   const roof = new THREE.Mesh(new THREE.ConeGeometry(1.25, 0.6, 4), std('#8a6a48', { flatShading: true })); roof.position.y = 1.6; roof.rotation.y = Math.PI / 4; roof.scale.set(1, 1, 0.8); shed.add(roof);
-  shed.position.set(-2.6, 0, -4.6); shed.rotation.y = 0.35; S.add(shadowed(shed)); world.contactShadow(shed, -2.6, -4.6, 1.3);
+  shed.position.set(-4.8, 0, -1.2); shed.rotation.y = 1.2; S.add(shadowed(shed)); world.contactShadow(shed, -4.8, -1.2, 1.3);
 
   const focalPt = i => F.focal_pt[Math.min(i, F.focal_pt.length - 1)];
   const v = new THREE.Vector3();
@@ -177,9 +187,9 @@ export function build(world, plan) {
       }
       kits.forEach((c, q) => c.pose({ mode: 'sit', t: t + q, pitch: d > 1.4 ? 0.45 : -0.15, mouth: F.kit_mouth[k] * (q ? 1 : 0.8), yaw: 0.2 * Math.sin(t * 1.5 + q) }));
       // two grown cats pass each other without a sound
-      const p = F.pass[k], u = Math.min(1, p / 4.5);
-      passA.position.set(L.pass[0] - 0.9 + 1.8 * u, 0, L.pass[2] + 0.12); passA.rotation.y = Math.PI / 2;
-      passB.position.set(L.pass[0] + 0.9 - 1.8 * u, 0, L.pass[2] - 0.12); passB.rotation.y = -Math.PI / 2;
+      const p = F.pass[k], u = Math.min(1, p / 5.6);
+      passA.position.set(L.pass[0] - 0.45 + 0.9 * u, 0, L.pass[2] + 0.12); passA.rotation.y = Math.PI / 2;
+      passB.position.set(L.pass[0] + 0.45 - 0.9 * u, 0, L.pass[2] - 0.12); passB.rotation.y = -Math.PI / 2;
       passA.pose({ mode: 'stand', t, walk: p * 6, yaw: Math.abs(u - 0.5) < 0.12 ? 0.35 : 0, pitch: 0.05 });
       passB.pose({ mode: 'stand', t: t + 2, walk: p * 6 + 1, yaw: Math.abs(u - 0.5) < 0.12 ? -0.35 : 0, pitch: 0.05 });
       // purr ribbon
@@ -188,7 +198,7 @@ export function build(world, plan) {
       ribbon.visible = vis;
       if (vis) {
         const cp = world.camera.position;
-        ribbon.position.set(L.cat[0] + 0.15, L.cat[1] + 0.42, L.cat[2] + 0.06);
+        ribbon.position.set(L.cat[0] + 0.13, L.cat[1] + 0.34, L.cat[2] + 0.06);
         ribbon.lookAt(cp.x, ribbon.position.y, cp.z);
         const grow = Math.min(1, pr / 0.8);
         for (let q = 0; q < beadN; q++) {

@@ -75,12 +75,14 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         return ln.id if ln else None
 
     # ---- key moments
+    study_t = at("purr", "In") - 0.2                # cut to the woman for the study
+    urgent_t = at("purr", "urgent") - 0.35          # back to the cat
     cute_t = at("myth", "Cute") - 0.25            # cut to the woman for the verdict
     crumb1 = S("crumbs") + 0.4                      # first crumb falls; the cat leans down and eats it
     crumb2 = at("crumbs", "sometimes") - 0.2        # a second crumb: the occasional reward
     mother_t = at("alone", "mothers") - 0.35        # cut to the mother bringing a mouse
     kitten_t = at("meow", "Kittens") - 0.25         # cut to the kittens meowing at mum
-    us_t = at("meow", "us") - 0.55                  # back to the stool: the cat turns and meows at the wizard
+    us_t = at("meow", "save") - 0.35                  # back to the stool: the cat turns and meows at the wizard
     wblink = at("this", "this") - 0.05              # the wizard's slow blink
     cblink = E("this") + 0.35                       # ... the cat blinks back
     snap = cblink + 0.95                            # ... then the eyes snap back to the sandwich
@@ -150,8 +152,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         cam.shot(S("myth") - 0.1, cute_t, [(S("myth") - 0.1, K(0.9, 2.15, 4.4), K(0.0, 1.0, -0.15), 38),
                                            (cute_t, K(0.78, 2.1, 4.15), K(0.0, 1.0, -0.15), 38)], fps, "golden"),
         # myth (b): the woman, a little amused, on "Cute story. Mostly wrong."
-        cam.shot(cute_t, S("how") - 0.05, [(cute_t, K(-0.2, 1.58, 0.75), K(WOMAN[0], 1.45, WOMAN[2]), 36),
-                                           (S("how") - 0.05, K(-0.14, 1.58, 0.68), K(WOMAN[0], 1.45, WOMAN[2]), 36)], fps, "key"),
+        cam.shot(cute_t, S("how") - 0.05, [(cute_t, K(-0.3, 1.52, 0.78), K(WOMAN[0], 1.4, WOMAN[2]), 38),
+                                           (S("how") - 0.05, K(-0.25, 1.52, 0.72), K(WOMAN[0], 1.4, WOMAN[2]), 38)], fps, "key"),
         # how: punch-in on the wizard
         cam.shot(S("how") - 0.05, S("alone") - 0.1, [(S("how") - 0.05, K(0.3, 1.62, 0.75), K(WIZ[0], 1.5, WIZ[2]), 36),
                                                      (S("alone") - 0.1, K(0.22, 1.62, 0.68), K(WIZ[0], 1.5, WIZ[2]), 36)], fps, "key"),
@@ -162,11 +164,11 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         cam.shot(mother_t, S("judging") - 0.1, [(mother_t, K(dx - 0.9, 0.55, dz + 1.0), K(dx, 0.12, dz), 36),
                                                 (S("judging") - 0.1, K(dx - 0.75, 0.5, dz + 0.85), K(dx, 0.12, dz), 36)], fps, "golden"),
         # judging: over the wizard's shoulder at the staring cat
-        cam.shot(S("judging") - 0.1, S("meow") - 0.1, [(S("judging") - 0.1, K(-1.2, 1.95, -0.85), K(cx, cy + 0.2, cz), 34),
-                                                       (S("meow") - 0.1, K(-1.1, 1.92, -0.8), K(cx, cy + 0.2, cz), 34)], fps, "key"),
+        cam.shot(S("judging") - 0.1, S("meow") - 0.1, [(S("judging") - 0.1, K(-0.27, 1.36, -0.12), K(cx, cy + 0.27, cz), 34),
+                                                       (S("meow") - 0.1, K(-0.22, 1.35, -0.16), K(cx, cy + 0.27, cz), 34)], fps, "key"),
         # meow (a): two grown cats pass each other without a sound
-        cam.shot(S("meow") - 0.1, kitten_t, [(S("meow") - 0.1, K(px, 0.7, pz + 2.0), K(px, 0.15, pz), 36),
-                                             (kitten_t, K(px + 0.3, 0.62, pz + 1.7), K(px, 0.15, pz), 36)], fps, "key"),
+        cam.shot(S("meow") - 0.1, kitten_t, [(S("meow") - 0.1, K(px, 0.75, pz + 2.5), K(px, 0.15, pz), 36),
+                                             (kitten_t, K(px + 0.3, 0.68, pz + 2.2), K(px, 0.15, pz), 36)], fps, "key"),
         # meow (b): kittens meowing at their mother
         cam.shot(kitten_t, us_t, [(kitten_t, K(dx + 0.7, 0.4, dz + 0.75), K(dx, 0.12, dz), 34),
                                   (us_t, K(dx + 0.6, 0.36, dz + 0.62), K(dx, 0.12, dz), 34)], fps, "golden"),
@@ -177,8 +179,14 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         cam.shot(S("mum") - 0.1, S("purr") - 0.1, [(S("mum") - 0.1, K(0.45, 1.55, 0.95), K(-0.45, 1.42, -0.05), 40),
                                                    (S("purr") - 0.1, K(0.38, 1.55, 0.85), K(-0.45, 1.42, -0.05), 40)], fps, "golden"),
         # purr: close on the cat; a sound ribbon with a red cry inside it
-        cam.shot(S("purr") - 0.1, S("stare") - 0.1, [(S("purr") - 0.1, K(cx + 0.0, cy + 0.42, cz + 0.95), K(cx + 0.07, cy + 0.33, cz), 36),
-                                                     (S("stare") - 0.1, K(cx + 0.01, cy + 0.41, cz + 0.84), K(cx + 0.07, cy + 0.33, cz), 36)], fps, "key"),
+        cam.shot(S("purr") - 0.1, study_t, [(S("purr") - 0.1, K(cx + 0.0, cy + 0.42, cz + 0.95), K(cx + 0.06, cy + 0.34, cz), 36),
+                                            (study_t, K(cx + 0.01, cy + 0.41, cz + 0.86), K(cx + 0.06, cy + 0.34, cz), 36)], fps, "key"),
+        # purr (b): the woman tells the study
+        cam.shot(study_t, urgent_t, [(study_t, K(-0.3, 1.52, 0.78), K(WOMAN[0], 1.4, WOMAN[2]), 38),
+                                     (urgent_t, K(-0.24, 1.52, 0.7), K(WOMAN[0], 1.4, WOMAN[2]), 38)], fps, "golden"),
+        # purr (c): back on the purring cat from the table side, the red cry still pulsing
+        cam.shot(urgent_t, S("stare") - 0.1, [(urgent_t, K(-0.2, 1.22, 0.3), K(cx + 0.04, cy + 0.33, cz), 32),
+                                              (S("stare") - 0.1, K(-0.16, 1.21, 0.2), K(cx + 0.04, cy + 0.33, cz), 32)], fps, "key"),
         # stare: from behind the cat, past its ears, to the sandwich and the wizard
         cam.shot(S("stare") - 0.1, S("crumbs") - 0.1, [(S("stare") - 0.1, K(cx + 0.28, cy + 0.48, cz - 0.62), K(-0.25, 1.15, 0.1), 36),
                                                        (S("crumbs") - 0.1, K(cx + 0.24, cy + 0.46, cz - 0.55), K(-0.25, 1.15, 0.1), 36)], fps, "key"),
@@ -189,8 +197,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         cam.shot(crumb2 - 0.4, S("blink") - 0.1, [(crumb2 - 0.4, K(-0.12, 1.12, 0.22), K(0.02, 1.1, -0.4), 34),
                                                   (S("blink") - 0.1, K(-0.1, 1.12, 0.14), K(0.02, 1.1, -0.4), 34)], fps, "key"),
         # blink: the woman, straight to camera
-        cam.shot(S("blink") - 0.1, S("this") - 0.1, [(S("blink") - 0.1, K(-0.35, 1.52, 0.55), K(WOMAN[0], 1.42, WOMAN[2]), 36),
-                                                     (S("this") - 0.1, K(-0.28, 1.52, 0.5), K(WOMAN[0], 1.42, WOMAN[2]), 36)], fps, "key"),
+        cam.shot(S("blink") - 0.1, S("this") - 0.1, [(S("blink") - 0.1, K(-0.4, 1.5, 0.6), K(WOMAN[0], 1.4, WOMAN[2]), 38),
+                                                     (S("this") - 0.1, K(-0.35, 1.5, 0.55), K(WOMAN[0], 1.4, WOMAN[2]), 38)], fps, "key"),
         # this: the wizard's slow blink, close
         cam.shot(S("this") - 0.1, E("this") + 0.25, [(S("this") - 0.1, K(-0.02, 1.32, -0.42), K(WIZ[0], 1.6, WIZ[2]), 34),
                                                      (E("this") + 0.25, K(-0.07, 1.34, -0.38), K(WIZ[0], 1.6, WIZ[2]), 34)], fps, "key"),
@@ -217,11 +225,11 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         {"start": at("blink", "slow"), "end": S("this") - 0.12, "big": "Slow blink", "small": "a friendly signal", "y": 0.16},
     ]
     events = [(round(S("alone") - 0.1, 3), "whoosh", {"gain": 0.18}),
-              (round(crumb1 + 0.5, 3), "tick", {"gain": 0.22, "seed": 3}),
-              (round(crumb2 + 0.5, 3), "tick", {"gain": 0.22, "seed": 9}),
-              (round(us_t + 0.4, 3), "pop", {"gain": 0.14, "seed": 4}),
+              (round(crumb1 + 0.5, 3), "pop", {"gain": 0.12, "seed": 3}),
+              (round(crumb2 + 0.5, 3), "pop", {"gain": 0.12, "seed": 9}),
+              (round(us_t + 0.7, 3), "pop", {"gain": 0.14, "seed": 4}),
               (round(snap, 3), "pop", {"gain": 0.2, "seed": 12})]
-    timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [mother_t, us_t, cblink, snap], "events": events,
+    timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [mother_t, cblink, snap], "events": events,
                "mutes": [], "swells": [S("crumbs")]}
     facts = {"cat_face": CAT_FACE,
              "events": {"cat_meows": {"t": us_t + 0.7, "observe": "cat_mouth", "expect": 1.0, "tol": 0.1},

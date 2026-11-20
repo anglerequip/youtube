@@ -127,7 +127,7 @@ entities:
     type: hero_object
     category: A
     importance: primary
-    visual_contract: {must_read_as: "the young woman presenter (dark hair, plum top) standing across the table, explaining"}
+    visual_contract: {must_read_as: "the young woman presenter (long black hair with a fringe, black outfit) standing across the table, explaining"}
   - id: sandwich
     type: support
     category: C
@@ -149,15 +149,20 @@ hero: cat
 publish:
   cover_at_s: 1.2
   cover_headline: "Why your cat stares"
-  cover_label: {big: "Not selfish", small: "it's learned"}
-  hashtags: ["#shorts", "#cats", "#catbehavior", "#science", "#mythbusting"]
-  youtube_title: "Why Your Cat Stares While You Eat (It's Not What TikTok Says)"
-  youtube_description: |
-    The viral theory: your cat thinks you're selfish for not sharing your "kill". The research says no.
-    Adult cats hunt and eat alone, grown cats barely meow at each other but meow at us, some cats hide a
-    cry inside their purr, and every dropped crumb teaches the stare that it works. Try a slow blink instead.
+  cover_label: {big: "Not selfish", small: "just learned"}
+  hashtags: [cats, catbehavior, science, mythbusting]
+  youtube:
+    title: "Why Your Cat Stares While You Eat (It's Not Judging You)"
+    description: |
+      A viral theory says your cat thinks you're selfish for not sharing your "kill". The research says otherwise.
 
-    Sources: McComb et al. 2009, Current Biology; Humphrey et al. 2020, Scientific Reports;
-    Bradshaw, Cat Sense (2013); Merck Veterinary Manual.
+      Grown cats hunt and eat alone; it's mothers who bring food to kittens. Adult cats barely meow at each other, but they meow at us. Some cats even hide a cry inside their purr that people rate as more urgent. And every dropped crumb teaches the stare that it works. Want a friendlier cat? Try a slow blink.
+  how_made: "How it's made: original 3D characters and scenes, animated by us. The voices are AI voices (ElevenLabs)."
+  tiktok:
+    caption: "Your cat isn't judging you for not sharing. The stare is a habit your crumbs taught it."
+  facebook:
+    title: "Why Your Cat Stares While You Eat"
+    caption: |
+      Is your cat judging you for eating alone? The viral theory says yes. Cat research says no: grown cats eat alone, save their meows for people, and learn that staring pays off. Try a slow blink instead.
 
-    #shorts #cats #catbehavior #science #mythbusting
+      #cats #catbehavior #science
