@@ -1,0 +1,133 @@
+{
+  "slug": "cat-stare",
+  "generated_at": "2026-11-20T07:11:53+00:00",
+  "video": {
+    "path": "/home/user/youtube/out/cat-stare/final.mp4",
+    "sha256": "3c83af250292995e0e545221d791e203fba62b9fb3f8bf7f3195b451fb53d75e",
+    "bytes": 31703095,
+    "width": 1080,
+    "height": 1920,
+    "duration_s": 71.1
+  },
+  "cover": {
+    "path": "/home/user/youtube/out/cat-stare/publish/cover.jpg",
+    "sha256": "30e82bbe0b65cda5c74b81a780e7a418cffb975239eb0aeb11d9ba60c49d0c2c",
+    "bytes": 220467,
+    "at_s": 1.2,
+    "frame_source": "visual.mp4",
+    "headline": "Why your cat stares",
+    "label": {
+      "big": "Not selfish",
+      "small": "just learned"
+    }
+  },
+  "platforms": {
+    "youtube": {
+      "title": "Why Your Cat Stares While You Eat (It's Not Judging You)",
+      "description": "A viral theory says your cat thinks you're selfish for not sharing your \"kill\". The research says otherwise.\n\nGrown cats hunt and eat alone; it's mothers who bring food to kittens. Adult cats barely meow at each other, but they meow at us. Some cats even hide a cry inside their purr that people rate as more urgent. And every dropped crumb teaches the stare that it works. Want a friendlier cat? Try a slow blink.\n\nSources:\n- K. McComb, A. M. Taylor, C. Wilson and B. D. Charlton, 'The cry embedded within the purr', Current Biology 19(13), R507-R508 (2009).\n- T. Humphrey, L. Proops, J. Forman, R. Spooner and K. McComb, 'The role of cat eye narrowing movements in cat-human communication', Scientific Reports 10, 16503 (2020).\n- J. Bradshaw, Cat Sense (Basic Books, 2013): solitary hunting, meowing directed at people.\n- Merck Veterinary Manual, 'Social Behavior of Cats' (accessed 2026-11-20).\n- C. Tavernier, S. Ahmed, K. A. Houpt and S. C. Yeon, 'Feline vocal communication', Journal of Veterinary Science 21(1), e18 (2020).\n- Partial reinforcement extinction effect: e.g. M. E. Bouton, Learning and Behavior, 2nd ed. (Sinauer, 2016).\n\nHow it's made: original 3D characters and scenes, animated by us. The voices are AI voices (ElevenLabs).\n\nCounterphysical: physics that breaks your intuition.\n\n#shorts #cats #catbehavior #science #mythbusting",
+      "tags": [
+        "cats",
+        "cat behavior",
+        "cat staring",
+        "meow",
+        "purr",
+        "slow blink",
+        "science",
+        "counterphysical"
+      ],
+      "category_id": "28",
+      "made_for_kids": false,
+      "contains_synthetic_media": true,
+      "hash": "17451dc3aed610ebe0616d12c394b7b1259f27e927194c74495fe6f2cc4ec583"
+    },
+    "tiktok": {
+      "caption": "Your cat isn't judging you for not sharing. The stare is a habit your crumbs taught it.\n\n#cats #catbehavior #science #mythbusting #learnontiktok",
+      "is_aigc": true,
+      "disable_comment": false,
+      "disable_duet": false,
+      "disable_stitch": false,
+      "cover_timestamp_ms": 1200,
+      "privacy_level": null,
+      "hash": "7f20a7a3e47a49e0058638a6c093f3a5f019d4e165dcd9a4f6a67b16789a07e4"
+    },
+    "facebook": {
+      "title": "Why Your Cat Stares While You Eat",
+      "description": "Is your cat judging you for eating alone? The viral theory says yes. Cat research says no: grown cats eat alone, save their meows for people, and learn that staring pays off. Try a slow blink instead.\n\n#cats #catbehavior #science",
+      "is_ai_generated": true,
+      "hash": "6ac212eab9343c1e15dac483effeee2c2ed2fc144c6f1ba16efae12be9f9b3ef"
+    }
+  },
+  "checks": [
+    {
+      "name": "video over the minimum length",
+      "ok": true,
+      "detail": "71.1 s (minimum 5 s)"
+    },
+    {
+      "name": "Facebook Reels length limit",
+      "ok": true,
+      "detail": "71.1 s (max 90 s)"
+    },
+    {
+      "name": "vertical 9:16 video",
+      "ok": true,
+      "detail": "1080x1920"
+    },
+    {
+      "name": "YouTube title length",
+      "ok": true,
+      "detail": "56 chars"
+    },
+    {
+      "name": "YouTube description length",
+      "ok": true,
+      "detail": "1350 bytes"
+    },
+    {
+      "name": "YouTube description has #shorts",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "YouTube hashtag count",
+      "ok": true,
+      "detail": "5 hashtags"
+    },
+    {
+      "name": "TikTok caption length",
+      "ok": true,
+      "detail": "144 chars"
+    },
+    {
+      "name": "TikTok hashtags 3-6",
+      "ok": true,
+      "detail": "5 hashtags"
+    },
+    {
+      "name": "Facebook caption present",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "AI label on TikTok and YouTube",
+      "ok": true,
+      "detail": "set AI_LABEL=true (the default)"
+    },
+    {
+      "name": "no banned wording",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no narration markup left",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cover image under 2 MB (YouTube limit)",
+      "ok": true,
+      "detail": "220467 bytes"
+    }
+  ],
+  "ok": true
+}
