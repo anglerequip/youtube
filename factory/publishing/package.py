@@ -99,7 +99,7 @@ def checks(pkg: dict) -> list[dict]:
     return out
 
 
-def build(slug_or_sb, video: Path | None = None) -> dict:
+def build(slug_or_sb, video: Path | None = None, publish_at: str | None = None) -> dict:
     sb = slug_or_sb if isinstance(slug_or_sb, Storyboard) else load(slug_or_sb)
     video = Path(video or sb.final_video)
     if not video.exists():
@@ -117,6 +117,8 @@ def build(slug_or_sb, video: Path | None = None) -> dict:
     platforms = copywriter.all_platforms(sb)
     platforms["tiktok"]["cover_timestamp_ms"] = int(at_s * 1000)
     platforms["tiktok"]["privacy_level"] = None        # chosen at post time from TikTok's creator info
+    if publish_at:                                     # YouTube scheduled publish (RFC 3339, e.g. 2026-11-20T12:00:00+01:00)
+        platforms["youtube"]["publish_at"] = publish_at
     for name, fields in platforms.items():
         fields["hash"] = platform_hash(sb.slug, name, fields, video_sha, cover_sha)
 

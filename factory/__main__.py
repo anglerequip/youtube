@@ -71,6 +71,7 @@ def main(argv=None) -> int:
     pk.add_argument("slug")
     pk.add_argument("--video", default=None)
     pk.add_argument("--send", action="store_true")
+    pk.add_argument("--publish-at", default=None, help="YouTube scheduled publish time, RFC 3339 with offset")
     rv = sub.add_parser("review")
     rv.add_argument("slug")
     bt = sub.add_parser("bot")
@@ -161,7 +162,7 @@ def _publishing(db, args) -> int:
     from .publishing import PLATFORMS, approvals, package, publisher, telegram
     approvals.init(db)
     if args.cmd == "package":
-        pkg = package.build(args.slug, video=args.video)
+        pkg = package.build(args.slug, video=args.video, publish_at=args.publish_at)
         approvals.register(db, pkg)
         print((settings.out_dir / args.slug / "publish" / "review.md").read_text(encoding="utf-8"))
         if args.send:

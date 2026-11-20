@@ -66,12 +66,16 @@ def check() -> str:
 
 def body(pkg: dict) -> dict:
     f = pkg["platforms"]["youtube"]
+    status = {"privacyStatus": os.environ.get("YOUTUBE_PRIVACY", "public"),
+              "selfDeclaredMadeForKids": f["made_for_kids"],
+              "containsSyntheticMedia": f["contains_synthetic_media"]}
+    if f.get("publish_at"):   # YouTube keeps a scheduled video private until publishAt, then publishes it itself
+        status["privacyStatus"] = "private"
+        status["publishAt"] = f["publish_at"]
     return {
         "snippet": {"title": f["title"], "description": f["description"], "tags": f["tags"],
                     "categoryId": f["category_id"]},
-        "status": {"privacyStatus": os.environ.get("YOUTUBE_PRIVACY", "public"),
-                   "selfDeclaredMadeForKids": f["made_for_kids"],
-                   "containsSyntheticMedia": f["contains_synthetic_media"]},
+        "status": status,
     }
 
 

@@ -68,7 +68,7 @@ def test_package_files_and_checks(env):
 
 def test_short_video_fails_length_check(env, tmp_path):
     short = tmp_path / "short.mp4"
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(env["video"]), "-t", "20", "-c", "copy", str(short)],
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(env["video"]), "-t", "2", "-c", "copy", str(short)],
                    check=True)
     pkg = package.build(storyboard_engine.load(FIXTURE), video=short)
     assert not pkg["ok"]
