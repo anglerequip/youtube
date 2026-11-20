@@ -100,14 +100,15 @@ sources:
 claims:
   - {id: club_speed, beat: speed, unit: m/s, value: 23, scope: history,
      evidence: {quality: 1, source: "Patek, Korff & Caldwell 2004 (Nature 428): peak speeds 14-23 m/s"}}
-  - {id: club_kmh, beat: kmh, unit: km/h, value: 80, scope: derived,
+  - {id: club_kmh, beat: kmh, unit: km/h, value: 82.8, scope: derived,
      evidence: {quality: 1, source: "23 m/s x 3.6 = 82.8 km/h, so 'over eighty'"}}
-  - {id: duration, beat: fast, unit: s, value: 0.001, scope: history,
+  - {id: duration, beat: fast, unit: s, value: 0.0008, scope: history,
      evidence: {quality: 2, source: "Patek lab: the full sequence happens in less than 800 microseconds"}}
-  - {id: body_weights, beat: force, unit: x, value: 2500, scope: history,
+  - {id: body_weights, beat: force, unit: x, value: 2500, bound: lower, scope: history,
      evidence: {quality: 2, source: "Patek lab: peak forces of 1500 N, over 2500 times body weight"}}
 
 absolute_ok:
+  - {word: "never", beat: payoff, why: "the wizard's joke about his own hands, not a factual claim"}
   - {word: "every", beat: twice, why: "each strike produces the impact plus a bubble-collapse peak in the Patek lab's force traces"}
 
 entities:
@@ -130,17 +131,17 @@ entities:
     type: hero_object
     category: A
     importance: primary
-    visual_contract: {must_read_as: "the wizard presenter (hat, beard) in a diving mask beside the reef, wide-eyed"}
+    visual_contract: {must_read_as: "the wizard presenter (hat, beard) at the glass of a big aquarium reef tank, wide-eyed"}
   - id: woman
     type: hero_object
     category: A
     importance: primary
-    visual_contract: {must_read_as: "the young woman presenter (long black hair with a fringe, black outfit) in a diving mask, explaining"}
+    visual_contract: {must_read_as: "the young woman presenter (long black hair with a fringe, black outfit) at the aquarium glass, explaining"}
   - id: reef
     type: environment
     category: E
     importance: background
-    visual_contract: {must_read_as: "a calm shallow reef: sand, rocks, low-poly corals, sunbeams through blue-green water; no holes"}
+    visual_contract: {must_read_as: "a dim aquarium gallery with a glowing reef tank, and a calm shallow reef close-up: sand, rocks, low-poly corals, sunbeams through blue-green water; no holes"}
 
 hero: shrimp
 

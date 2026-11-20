@@ -91,23 +91,23 @@ sources:
   - "Wisconsin Department of Transportation, 'Zipper merge', wisconsindot.gov/Pages/safety/safety-eng/ZipperMerge.aspx (accessed 2026-11-20)"
 
 claims:
-  - {id: backup_cut, beat: forty, unit: percent, value: 40, scope: history,
+  - {id: backup_cut, beat: forty, unit: "%", value: 40, scope: history,
      evidence: {quality: 3, source: "Wisconsin DOT: backups reduced as much as 40%; Minnesota DOT: up to 50%, 40% common"}}
 
 absolute_ok:
   - {word: "everyone", beat: early, why: "a hypothetical: if all drivers merge early"}
 
 entities:
-  - id: wizard_car
+  - id: cutter_car
     type: hero_object
     category: A
     importance: primary
-    visual_contract: {must_read_as: "a cream boxy hatchback with the wizard (hat visible) at the wheel, in the queue at a lane closure"}
+    visual_contract: {must_read_as: "a teal boxy hatchback that drives the empty closing lane to the cones and slips in at the merge point"}
   - id: wizard
     type: hero_object
     category: A
     importance: primary
-    visual_contract: {must_read_as: "the wizard presenter (hat, beard) in the driver's seat, then standing on the verge"}
+    visual_contract: {must_read_as: "the wizard presenter (hat, beard) standing on the grass verge beside the queue, pointing at the car that cut in"}
   - id: woman
     type: hero_object
     category: A

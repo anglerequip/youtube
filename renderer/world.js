@@ -37,6 +37,10 @@ export const LIGHTING = {
   moonroom: { sun: '#b9c8ff', sunI: 1.25, elev: 48, az: 25, hemiSky: '#4a5a80', hemiGround: '#2a2420', hemiI: 0.85,
               rim: '#8fa6e0', rimI: 0.9, rimElev: 30, rimAz: 200, env: 0.18, bloomT: 2.6,
               sky: '#18213a', skyTop: '#0b1020', fog: '#141b2e', fogNear: 30, fogFar: 140, exposure: 1.15 },
+  // underwater / aquarium (mantis-shrimp-punch): bright blue-green light from above, teal haze that closes in fast
+  reef: { sun: '#d8f4ff', sunI: 2.4, elev: 62, az: 30, hemiSky: '#7cc9d8', hemiGround: '#3b5a52', hemiI: 1.25,
+          rim: '#bfe8ff', rimI: 1.2, rimElev: 30, rimAz: 200, env: 0.3, bloomT: 3.0,
+          sky: '#1d6a80', skyTop: '#0c3a50', fog: '#2b7f93', fogNear: 6, fogFar: 34, exposure: 1.0 },
   night: { sun: '#a9bcff', sunI: 0.7, elev: 40, az: 160, hemiSky: '#2a3552', hemiGround: '#141c14', hemiI: 0.9,
            sky: '#111826', skyTop: '#080b16', fog: '#111826', fogNear: 40, fogFar: 170, exposure: 1.25 },
 };

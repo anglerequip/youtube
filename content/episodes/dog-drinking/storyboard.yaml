@@ -115,7 +115,7 @@ entities:
     type: hero_object
     category: A
     importance: primary
-    visual_contract: {must_read_as: "the young woman presenter (long black hair with a fringe, black outfit) kneeling by the bowl, explaining"}
+    visual_contract: {must_read_as: "the young woman presenter (long black hair with a fringe, black outfit) standing behind the bowl, explaining"}
   - id: water
     type: support
     category: B

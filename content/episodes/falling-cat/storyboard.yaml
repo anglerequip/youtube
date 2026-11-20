@@ -57,7 +57,7 @@ beats:
     pause_after: 0.2
   - id: swap
     speaker: woman
-    text: "Then it switches. Arms out, hind legs in... and the hips roll round to match."
+    text: "Then it switches. Front paws out, hind legs in... and the hips roll round to match."
     pause_after: 0.2
   - id: cancel
     speaker: wizard
