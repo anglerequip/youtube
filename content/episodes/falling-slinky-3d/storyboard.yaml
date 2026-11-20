@@ -95,3 +95,29 @@ entities:
     visual_contract: {must_read_as: "a steel bar with a travelling wave pulse"}
 
 hero: slinky
+
+# ---------------------------------------------------------------------------------------------
+# Publishing package (factory/publishing). Every number here must also be a claim above.
+publish:
+  cover_at_s: 16.0
+  cover_headline: "The bottom doesn't fall"
+  cover_label: {big: "0.26 s", small: "the bottom just hovers"}
+  hashtags: [physics, science, slinky]
+  youtube:
+    title: "Drop a Slinky and the Bottom Just... Floats"
+    description: |
+      Let go of a hanging slinky and the bottom doesn't move. Not until the collapse reaches it, about a quarter of a second later.
+
+      The bottom can't know the top was released: that news has to travel down the spring, coil by coil. Meanwhile the slinky's centre of mass falls exactly like a dropped ball, so the top has to fall faster than gravity to make up for it.
+
+      Simulated with 80 coils, real gravity and real spring forces, then rendered as a 3D model.
+  tiktok:
+    caption: "Why doesn't the bottom of a falling slinky move? Because the news hasn't reached it yet. #physics #science #slinky #learnontiktok"
+  facebook:
+    title: "Drop a Slinky and the Bottom Just... Floats"
+    caption: |
+      Drop a hanging slinky and the bottom just hangs there in midair, for about a quarter of a second.
+
+      The bottom can't know the top was let go until the collapse travels down to it. Simulated coil by coil with real physics.
+
+      #physics #science #slinky
