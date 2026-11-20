@@ -67,10 +67,16 @@ def post_one(folder: Path, yt) -> str:
 
 
 def run(dry_run: bool = False) -> int:
+    from .ledger import Ledger
+    seen = Ledger().topics()
     folders = sorted(p for p in QUEUE.glob("*") if (p / "package.json").exists() and (p / "video.mp4").exists())
     due = []
     for f in folders:
         pkg = json.loads((f / "package.json").read_text(encoding="utf-8"))
+        topic = seen.get(f.name)
+        if topic and topic.status in ("scheduled", "published"):
+            print(f"refusing {f.name}: already {topic.status} in the topic ledger")
+            continue
         if pkg.get("publish_at"):
             due.append(f)
     if not due:
@@ -86,6 +92,7 @@ def run(dry_run: bool = False) -> int:
         try:
             vid = post_one(f, yt)
             print(f"scheduled {f.name}: https://youtube.com/shorts/{vid}")
+            Ledger().set_status(f.name, "scheduled", f"queued by cloud job, YouTube https://youtube.com/shorts/{vid}")
             shutil.rmtree(f)            # clean-up: the file now lives on YouTube
         except Exception as e:   # noqa: BLE001  keep the folder so the next run retries it
             failures += 1
