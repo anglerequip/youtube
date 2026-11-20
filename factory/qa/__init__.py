@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from . import audio, critic, frames, gate, inspect3d, pacing, science, sound, spec
+from . import audio, critic, frames, gate, hud, inspect3d, pacing, science, sound, spec
 from .findings import LayerResult
 
 log = logging.getLogger("factory.qa")
@@ -42,6 +42,9 @@ def pre_render(sb, ctx=None, inspect: bool = True) -> tuple[list[LayerResult], s
          _layer("events", lambda: spec.check_events(ctx) + spec.check_tracks(ctx)),
          _layer("pacing", lambda: pacing.check(ctx, cfg)),
          _layer("sound", lambda: sound.check(ctx, cfg))]
+    if ctx.plan is not None and ctx.plan.get("hud"):            # retention toolkit (factory/retention)
+        from ..retention import config as rcfg
+        L.append(_layer("hud", lambda: hud.check(ctx, rcfg())))
     if inspect and ctx.plan is not None:
         L.append(_layer("geometry", lambda: inspect3d.check(ctx)))
     elif inspect:
