@@ -130,7 +130,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         if fam_t <= t < S("wake") + 0.6:                 # one ear twitches in his sleep (seen at the start of "wake")
             ears = 0.35 * max(0.0, math.sin((t - fam_t) * 9.0))
         for l0 in lifts:                                 # quick wake-ups
-            up = max(up, _bump(t, l0, 0.18, 0.4, 0.3))
+            up = max(up, _bump(t, l0, 0.3, 0.35, 0.38))
         b = _bump(t, bark_t, 0.12, max(0.2, E("guard") - bark_t + 0.4), 0.5)     # the bark: head snaps up
         up = max(up, b)
         if up > 0:
@@ -174,7 +174,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # myth: wide three-quarter of the whole room with the woman
         E_(S("myth") - 0.1, lovely_t, K(2.25, 2.7, 4.3), K(2.15, 2.62, 4.1), K(0.05, 0.9, 0.1), 42),
         # myth (b): the woman, amused, on "Cute story. Half wrong."
-        E_(lovely_t, E("myth") - 0.1, K(-0.05, 1.58, 0.5), K(0.1, 1.57, 0.57), K(1.45, 1.3, 1.2), 40),
+        E_(lovely_t, E("myth") - 0.1, K(-0.05, 1.62, 0.5), K(0.1, 1.61, 0.57), K(1.45, 1.42, 1.2), 40),
         # which: the wizard, face on
         E_(E("myth") - 0.1, S("pack") - 0.1, K(0.2, 1.42, 0.75), K(0.1, 1.41, 0.66), K(hx, hy - 0.05, hz), 36),
         # pack (a): the wolf family resting in a moonlit clearing, wide

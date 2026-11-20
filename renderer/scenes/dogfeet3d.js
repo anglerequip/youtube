@@ -29,7 +29,7 @@ function softBox(w, h, d, r = 0.3, seg = 24) {
 function room(S, L) {
   const floorM = MAT.wood('#7a5a3e'), wallM = std('#7d7466', { roughness: 0.95 }), trimM = std('#d8d0c0', { roughness: 0.7 });
   // floor boards
-  box(S, 4.0, 0.06, 3.6, floorM, 0.4, -0.025, 0.1);           // top 5 mm above the lawn plane (no z-fighting)
+  box(S, 4.0, 0.06, 5.1, floorM, 0.4, -0.025, 0.85);          // top 5 mm above the lawn plane (no z-fighting); runs out under the open front
   const X0 = -1.6, X1 = 2.4, Z0 = -1.6, Hh = 2.6, t = 0.1;
   // back wall with a window opening (x 0.05..1.05, y 0.95..1.95)
   const wx0 = 0.05, wx1 = 1.05, wy0 = 0.95, wy1 = 1.95;
@@ -59,7 +59,7 @@ function room(S, L) {
   // right wall with a door opening (z -1.2..-0.3, y 0..2.05)
   const dz0 = -1.2, dz1 = -0.3, dh = 2.05;
   box(S, t, Hh, dz0 - Z0, wallM, X1 + t / 2, Hh / 2, (Z0 + dz0) / 2);
-  box(S, t, Hh, 2.0 - dz1, wallM, X1 + t / 2, Hh / 2, (dz1 + 2.0) / 2);
+  box(S, t, Hh, 3.4 - dz1, wallM, X1 + t / 2, Hh / 2, (dz1 + 3.4) / 2);   // runs past the open front so reverse shots on the woman never see outdoors
   box(S, t, Hh - dh, dz1 - dz0, wallM, X1 + t / 2, (dh + Hh) / 2, (dz0 + dz1) / 2);
   for (const [w, h, d, x, y, z] of [[0.13, 0.06, 1.0, X1, dh + 0.03, (dz0 + dz1) / 2], [0.13, dh, 0.05, X1, dh / 2, dz0], [0.13, dh, 0.05, X1, dh / 2, dz1]]) box(S, w, h, d, trimM, x, y, z);
   // door slab, ajar, swung into the room
@@ -225,7 +225,8 @@ export function build(world, plan) {
       if (!m || !m.color || m.isMeshBasicMaterial) continue;
       if (Math.max(m.color.r, m.color.g, m.color.b) < liftW.r) { m.color.r = Math.max(m.color.r, liftW.r); m.color.g = Math.max(m.color.g, liftW.g); m.color.b = Math.max(m.color.b, liftW.b); }
       // her legs and boots fall into the bed's shadow at the frame's lower edge: a faint self-glow keeps the fabric charcoal, never a black hole
-      if (/^w_(top|boot|tights|sole|skirt)$/.test(m.name) && m.emissive) { m.emissive.set('#2a2630'); m.emissiveIntensity = 1.0; }
+      if (/^w_(top|boot|tights|sole|skirt)$/.test(m.name) && m.emissive) { m.emissive.set('#3a3442'); m.emissiveIntensity = 1.0; }
+      if (/^w_hair/.test(m.name) && m.emissive) { m.emissive.set('#26212b'); m.emissiveIntensity = 1.0; }
     }
   });
   for (const p of [wiz, wom]) p.traverse(o => {
@@ -238,6 +239,8 @@ export function build(world, plan) {
 
   // a soft warm fill from the front of the room so the woman's face and dark outfit read
   const fill = new THREE.PointLight('#ffd9b0', 4.0, 5.0, 2); fill.position.set(0.9, 1.8, 1.8); S.add(fill);
+  // a soft key on her from the bed side, for the reverse shots
+  const keyW = new THREE.PointLight('#ffe2c4', 2.2, 3.5, 2); keyW.position.set(0.5, 1.9, 0.75); S.add(keyW);
   // the dog across his feet
   const rex = dog(); rex.position.set(...L.dog); S.add(rex);
 
