@@ -114,7 +114,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
             wb = min(1.0, (t - E("pillow") - 0.2) / 0.4)
         frames["wiz_blink"].append(round(wb, 3))
         frames["woman_blink"].append(1.0 if ((t + 1.3) % 3.4) < 0.12 else 0.0)
-        frames["look_m"].append("camera" if a in ("myth", "light") else ("dog" if a in ("bark", "draught") else "wizard"))
+        frames["look_m"].append("camera" if a in () else ("dog" if a in ("bark", "draught") else "wizard"))
         # the dog: asleep with his head on his paws, apart from the wake-ups, the bark, the yawn and the door
         mode, pitch, yaw, rest, blink, mouth, ears, tail, turn = "lie", 0.25, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0
         up = 0.0
@@ -163,10 +163,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         cam.shot(S("myth") - 0.1, lovely_t, [(S("myth") - 0.1, K(2.0, 2.7, 4.6), K(0.25, 0.75, -0.25), 42),
                                              (lovely_t, K(1.75, 2.6, 4.3), K(0.25, 0.75, -0.25), 42)], fps, "moonroom"),
         # myth (b): the woman, amused, on "Cute story. Half wrong."
-        cam.shot(lovely_t, S("which") - 0.05, [(lovely_t, K(0.45, 1.5, 1.95), K(WOMAN[0], 1.3, WOMAN[2]), 38),
-                                               (S("which") - 0.05, K(0.53, 1.5, 1.85), K(WOMAN[0], 1.3, WOMAN[2]), 38)], fps, "moonroom"),
+        cam.shot(lovely_t, E("myth") - 0.1, [(lovely_t, K(-0.1, 1.65, 3.3), K(1.35, 1.05, 0.4), 40),
+                                               (E("myth") - 0.1, K(0.05, 1.62, 3.15), K(1.35, 1.05, 0.4), 40)], fps, "moonroom"),
         # which: the wizard on his pillow, close, from above the front edge of the bed
-        cam.shot(S("which") - 0.05, S("pack") - 0.1, [(S("which") - 0.05, K(hx + 0.05, hy + 0.5, hz + 0.95), K(hx + 0.02, hy + 0.06, hz), 34),
+        cam.shot(E("myth") - 0.1, S("pack") - 0.1, [(E("myth") - 0.1, K(hx + 0.05, hy + 0.5, hz + 0.95), K(hx + 0.02, hy + 0.06, hz), 34),
                                                      (S("pack") - 0.1, K(hx + 0.05, hy + 0.48, hz + 0.86), K(hx + 0.02, hy + 0.06, hz), 34)], fps, "moonroom"),
         # pack (a): the wolf family resting in the snow, wide
         cam.shot(S("pack") - 0.1, fam_t, [(S("pack") - 0.1, K(wx + 2.4, 1.5, wz + 3.6), K(wx, 0.25, wz), 40),

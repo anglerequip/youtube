@@ -214,6 +214,15 @@ export function build(world, plan) {
   const wom = woman(); wom.position.set(...L.woman); wom.rotation.y = L.woman_face; S.add(wom);
   // pure black never appears in the house style: lift near-black fabric and hair to a deep charcoal
   const lift = new THREE.Color('#3a3640').convertSRGBToLinear();
+  // her black outfit sits in the night room's shadow side, so lift it a little further (still reads as black)
+  const liftW = new THREE.Color('#57525f').convertSRGBToLinear();
+  wom.traverse(o => {
+    if (!o.isMesh) return;
+    for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+      if (!m || !m.color || m.isMeshBasicMaterial) continue;
+      if (Math.max(m.color.r, m.color.g, m.color.b) < liftW.r) { m.color.r = Math.max(m.color.r, liftW.r); m.color.g = Math.max(m.color.g, liftW.g); m.color.b = Math.max(m.color.b, liftW.b); }
+    }
+  });
   for (const p of [wiz, wom]) p.traverse(o => {
     if (!o.isMesh) return;
     for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
@@ -223,7 +232,7 @@ export function build(world, plan) {
   });
 
   // a soft warm fill from the front of the room so the woman's face and dark outfit read
-  const fill = new THREE.PointLight('#ffd9b0', 1.6, 5.0, 2); fill.position.set(0.9, 2.1, 2.0); S.add(fill);
+  const fill = new THREE.PointLight('#ffd9b0', 4.0, 5.0, 2); fill.position.set(0.9, 1.8, 1.8); S.add(fill);
   // the dog across his feet
   const rex = dog(); rex.position.set(...L.dog); S.add(rex);
 
