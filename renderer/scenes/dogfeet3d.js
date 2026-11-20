@@ -221,6 +221,8 @@ export function build(world, plan) {
     for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
       if (!m || !m.color || m.isMeshBasicMaterial) continue;
       if (Math.max(m.color.r, m.color.g, m.color.b) < liftW.r) { m.color.r = Math.max(m.color.r, liftW.r); m.color.g = Math.max(m.color.g, liftW.g); m.color.b = Math.max(m.color.b, liftW.b); }
+      // her legs and boots fall into the bed's shadow at the frame's lower edge: a faint self-glow keeps the fabric charcoal, never a black hole
+      if (/^w_(top|boot|tights|sole|skirt)$/.test(m.name) && m.emissive) { m.emissive.set('#2a2630'); m.emissiveIntensity = 1.0; }
     }
   });
   for (const p of [wiz, wom]) p.traverse(o => {
