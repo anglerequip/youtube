@@ -93,7 +93,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     pile_back = at("pile", "you're") - 0.25         # match cut from the puppy pile back to the dog
     roll_t = at("draught", "He") - 0.15             # the dog rolls over to face the wall
     # the illustrated wake-ups during "woke up about twenty-three times": quick head lifts
-    lifts = [S("wake") + 0.9 + k * 1.15 for k in range(5)]
+    lifts = [S("wake") + 0.8 + k * 2.0 for k in range(3)]   # slow, eased lifts (fast snaps read as flicker)
 
     frames = {k: [] for k in ("talk_w", "talk_m", "wiz_blink", "woman_blink", "wiz_pitch", "wiz_yaw", "look_m",
                               "look_w", "wiz_point", "dog_mode", "dog_pitch", "dog_yaw", "dog_rest", "dog_blink", "dog_mouth", "dog_ears",
@@ -130,7 +130,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         if fam_t <= t < S("wake") + 0.6:                 # one ear twitches in his sleep (seen at the start of "wake")
             ears = 0.35 * max(0.0, math.sin((t - fam_t) * 9.0))
         for l0 in lifts:                                 # quick wake-ups
-            up = max(up, _bump(t, l0, 0.3, 0.35, 0.38))
+            up = max(up, 0.85 * _bump(t, l0, 0.65, 0.3, 0.7))
         b = _bump(t, bark_t, 0.12, max(0.2, E("guard") - bark_t + 0.4), 0.5)     # the bark: head snaps up
         up = max(up, b)
         if up > 0:
