@@ -182,119 +182,113 @@ function makePerson(o) {
   return root;
 }
 
-// ---------- 1) the man: everyday, normal-looking ----------
+// ---------- 1) the man: a friendly workshop engineer ----------
+// Bald on top with a short grey-brown ring of hair at the sides and back, a big bushy walrus moustache
+// (no beard), round friendly face, slate-blue work coveralls with a chest pocket and zip, dark work boots.
+// An original character, not modelled on any real person or existing character.
 export function man(opt = {}) {
-  const skin = soft(opt.skin ?? '#d6a283'), skinShade = soft(opt.skinShade ?? '#c98f70');
-  const hairC = opt.hair ?? '#3b2a20';
+  const skin = soft(opt.skin ?? '#d9a688'), skinShade = soft(opt.skinShade ?? '#c98f70');
+  const hairC = opt.hair ?? '#6b5a4c';
   const hairM = flat(hairC, { roughness: 0.9, side: THREE.DoubleSide });
+  const stacheM = flat(opt.stache ?? '#5e4c3f', { roughness: 0.9 });
+  const suit = flat(opt.suit ?? '#4f6d8f'), suitDark = flat('#3f5a78');
   return makePerson({
     name: 'presenter-man', height: opt.height ?? 1.78,
     skin, skinShade,
-    top: flat(opt.shirt ?? '#8fa6c8'),                 // powder-blue shirt
-    sleeve: flat(opt.shirt ?? '#8fa6c8'), foreMat: skin, cuffSleeve: true,
-    pants: flat(opt.pants ?? '#3c4352'), belt: flat('#4a3526'),
-    shoe: flat('#5b4030'), sole: flat('#2f2620'),
-    chestR: 0.205, waistR: 0.17, hipR: 0.165, chestDz: 0.62, shoulderX: 0.23, shoulderY: 1.43,
-    hipX: 0.092, thighR: 0.084, shinR: 0.066, armR: 0.056, foreR: 0.046, neckR: 0.052, shoeW: 0.105,
+    top: suit, sleeve: suit, foreMat: suit, cuffSleeve: true,
+    pants: suit, belt: suitDark,
+    shoe: flat('#3a2e26'), sole: flat('#1f1a17'), shoeW: 0.115,
+    chestR: 0.215, waistR: 0.19, hipR: 0.172, chestDz: 0.64, shoulderX: 0.235, shoulderY: 1.43,
+    hipX: 0.094, thighR: 0.088, shinR: 0.07, armR: 0.058, foreR: 0.05, neckR: 0.056,
     headOpts: {
-      a: 0.098, b: 0.122, c: 0.108, jawW: 0.8, skin, skinShade,
-      eyeX: 0.036, eyeY: 0.01, eyeW: 0.011, eyeH: 0.0125, iris: '#3a2c22', lash: '#2a1f18', lidT: 0.004,
-      browC: hairC, browUp: 0.032, browT: 0.0075, browTilt: 0.04, noseR: 0.0115, noseL: 0.026, lidUp: 1.2,
-      mouthY: -0.06, mouthW: 0.016, lip: '#8a5246', lipT: 0.0032,
+      a: 0.102, b: 0.12, c: 0.11, jawW: 0.86, skin, skinShade,
+      eyeX: 0.037, eyeY: 0.012, eyeW: 0.0105, eyeH: 0.0118, iris: '#3c4a5a', lash: '#3a2c22', lidT: 0.004,
+      browC: '#5e4c3f', browUp: 0.03, browT: 0.009, browTilt: 0.05, noseR: 0.014, noseL: 0.03, lidUp: 1.2,
+      mouthY: -0.066, mouthW: 0.016, lip: '#8a5246', lipT: 0.0032,
     },
-    collar: (body, o) => {                             // open shirt collar: two flat wings and a V of skin
+    collar: (body, o) => {                             // coverall collar, zip line, chest pocket with a pen
       for (const s of [-1, 1]) {
-        const w = mesh(new THREE.BoxGeometry(0.075, 0.012, 0.06), o.top, s * 0.045, o.shoulderY + 0.035, 0.07, body);
-        w.rotation.set(0.5, s * -0.5, s * -0.35);
+        const w = mesh(new THREE.BoxGeometry(0.085, 0.014, 0.07, 2, 1, 2), suitDark, s * 0.05, o.shoulderY + 0.03, 0.065, body);
+        w.rotation.set(0.55, s * -0.5, s * -0.35);
       }
-      const v = mesh(new THREE.ConeGeometry(0.035, 0.08, 3), o.skin, 0, o.shoulderY - 0.02, 0.118, body);
-      v.rotation.set(Math.PI + 0.25, 0, 0); v.scale.z = 0.3;
-      for (let i = 0; i < 4; i++) mesh(new THREE.SphereGeometry(0.006, 11, 7), flat('#e6e3dc'), 0, o.shoulderY - 0.09 - i * 0.1, 0.125 - i * 0.004, body);
+      mesh(new THREE.BoxGeometry(0.008, 0.42, 0.006), flat('#b9bdc2', { metalness: 0.6, roughness: 0.4 }), 0, o.shoulderY - 0.22, 0.137, body);
+      const pk = mesh(new THREE.BoxGeometry(0.08, 0.075, 0.01), suitDark, 0.09, o.shoulderY - 0.13, 0.128, body); pk.rotation.y = 0.35;
+      const pen = mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.05, 12), flat('#c92a2e'), 0.075, o.shoulderY - 0.085, 0.131, body);
     },
-    hair: (head, o) => {                               // short, tidy, side-parted; faceted
+    hair: (head, o) => {
       const { a, b, c } = o.headOpts;
-      const cap = mesh(new THREE.SphereGeometry(1, 32, 22, 0, Math.PI * 2, 0, 1.45), hairM, 0, b * 0.04, -c * 0.06, head);
-      cap.scale.set(a * 1.1, b * 1.06, c * 1.08); cap.rotation.x = -0.5;
-      const back = mesh(new THREE.SphereGeometry(1, 25, 20), hairM, 0, -b * 0.15, -c * 0.38, head); back.scale.set(a * 0.98, b * 0.72, c * 0.62);
-      const quiff = mesh(new THREE.IcosahedronGeometry(1, 2), hairM, -a * 0.1, b * 0.74, c * 0.45, head);
-      quiff.scale.set(a * 1.0, b * 0.28, c * 0.45); quiff.rotation.set(0.25, 0.3, 0.12);
+      // horseshoe ring: a band around the back and sides, below the crown (the top stays bald)
+      const ring = mesh(new THREE.SphereGeometry(1, 48, 24, Math.PI * 0.86, Math.PI * 1.28, Math.PI * 0.36, Math.PI * 0.22), hairM, 0, b * 0.02, -c * 0.02, head);
+      ring.scale.set(a * 1.05, b * 1.04, c * 1.05);
+      // moustache: two bushy, drooping halves meeting under the nose, covering the upper lip
+      for (const s of [-1, 1]) {
+        const m = mesh(new THREE.IcosahedronGeometry(1, 2), stacheM, s * 0.017, -b * 0.42, c * 0.86, head);
+        m.scale.set(0.028, 0.014, 0.016); m.rotation.set(0.2, s * 0.35, s * -0.38);
+        const tip = mesh(new THREE.IcosahedronGeometry(1, 2), stacheM, s * 0.036, -b * 0.5, c * 0.78, head);
+        tip.scale.set(0.012, 0.016, 0.011); tip.rotation.z = s * -0.2;
+      }
     },
   });
 }
 
-// ---------- 2) the woman: an original design, friendly and approachable ----------
-// Auburn high ponytail with a swept side fringe, teal cropped jacket over a cream top, slate trousers,
-// white trainers. Her own face (round eyes, freckle-free, soft smile); not modelled on any real person
-// or existing character.
+// ---------- 2) the woman: slim, slightly alternative look ----------
+// Black layered shoulder-length hair with a long side-swept fringe and one plum streak, winged eyeliner,
+// slim build and narrow face, plum zip hoodie over a charcoal tee, black skinny jeans, black trainers.
+// An original character, not modelled on any real person or existing character.
 export function woman(opt = {}) {
-  const skin = soft(opt.skin ?? '#e7bc9c'), skinShade = soft(opt.skinShade ?? '#dba98a');
-  const hairC = opt.hair ?? '#8a4630';
-  const hairM = flat(hairC, { roughness: 0.85, side: THREE.DoubleSide }), hairDark = flat('#6e3523', { roughness: 0.85 });
-  const jacketC = opt.jacket ?? '#2e8f86';
-  const jacketM = flat(jacketC);
+  const skin = soft(opt.skin ?? '#efcdb8'), skinShade = soft(opt.skinShade ?? '#e2b9a0');
+  const hairC = opt.hair ?? '#1d1b22';
+  const hairM = flat(hairC, { roughness: 0.6, side: THREE.DoubleSide }), streakM = flat(opt.streak ?? '#6a3a6e', { roughness: 0.6 });
+  const hoodM = flat(opt.hoodie ?? '#5b3d5e'), hoodDark = flat('#4a3150');
+  const tee = flat('#3a3b40');
   return makePerson({
-    name: 'presenter-woman', height: opt.height ?? 1.66,
+    name: 'presenter-woman', height: opt.height ?? 1.68,
     skin, skinShade,
-    top: flat(opt.top ?? '#ece6d8'), sleeve: jacketM, foreMat: jacketM, cuffSleeve: false,
-    pants: flat(opt.pants ?? '#4b5263'), cuff: flat('#4b5263'),
-    shoe: flat('#efece6'), sole: flat('#c9a77c'),
-    chestR: 0.17, waistR: 0.135, hipR: 0.158, chestDz: 0.64, shoulderX: 0.195, shoulderY: 1.42,
-    hipX: 0.088, thighR: 0.08, shinR: 0.06, armR: 0.049, foreR: 0.041, neckR: 0.044, shoeW: 0.095,
+    top: tee, sleeve: hoodM, foreMat: hoodM, cuffSleeve: false,
+    pants: flat(opt.pants ?? '#25262b'), cuff: flat('#25262b'),
+    shoe: flat('#2a2a2e'), sole: flat('#e6e3dc'),
+    chestR: 0.15, waistR: 0.118, hipR: 0.145, chestDz: 0.62, shoulderX: 0.178, shoulderY: 1.43,
+    hipX: 0.082, thighR: 0.066, shinR: 0.05, armR: 0.04, foreR: 0.034, neckR: 0.04, shoeW: 0.09,
     headOpts: {
-      a: 0.104, b: 0.128, c: 0.114, jawW: 0.72, skin, skinShade,
-      eyeX: 0.038, eyeY: 0.006, eyeW: 0.0135, eyeH: 0.0158, iris: '#4a3a2a', lash: '#2a1c16', lidT: 0.005, lashFlick: true, lidUp: 1.3,
-      browC: '#6e3523', browUp: 0.034, browT: 0.0055, browTilt: 0.015, noseR: 0.0095, noseL: 0.022,
-      mouthY: -0.064, mouthW: 0.017, lip: '#b8605a', lipT: 0.0042,
+      a: 0.094, b: 0.126, c: 0.108, jawW: 0.64, skin, skinShade,
+      eyeX: 0.036, eyeY: 0.008, eyeW: 0.0125, eyeH: 0.0135, iris: '#3e3428', lash: '#141216', lidT: 0.0065, lashFlick: true,
+      browC: '#1d1b22', browUp: 0.03, browT: 0.005, browTilt: 0.03, noseR: 0.0085, noseL: 0.022, lidUp: 1.25,
+      mouthY: -0.068, mouthW: 0.015, lip: '#a0626e', lipT: 0.0038,
     },
-    jacket: (body, o) => {                             // open cropped jacket: wider shell, cream top shows in front
-      const shell = taper(o.chestR * 1.1, o.waistR * 1.18, o.shoulderY + 0.03, 1.08, jacketM, body, o.chestDz * 1.05);
-      shell.material = jacketM;
-      // front opening: a cream panel slightly proud of the shell
-      const panel = mesh(new THREE.BoxGeometry(0.085, o.shoulderY - 1.07, 0.02), o.top, 0, (o.shoulderY + 1.08) / 2 - 0.02, o.chestR * 0.72, body);
-      panel.rotation.x = 0.06;
-      // lapels
-      for (const s of [-1, 1]) {
-        const l = mesh(new THREE.BoxGeometry(0.03, 0.17, 0.014), flat('#277a72'), s * 0.055, o.shoulderY - 0.08, o.chestR * 0.74, body);
-        l.rotation.set(0.1, 0, s * 0.32);
+    jacket: (body, o) => {                             // open zip hoodie: shell, front opening, hood folded at the back
+      taper(o.chestR * 1.12, o.waistR * 1.22, o.shoulderY + 0.03, 0.97, hoodM, body, o.chestDz * 1.05);
+      mesh(new THREE.BoxGeometry(0.07, o.shoulderY - 0.98, 0.02), o.top, 0, (o.shoulderY + 0.97) / 2 - 0.01, o.chestR * 0.7, body);
+      for (const s of [-1, 1]) mesh(new THREE.BoxGeometry(0.006, o.shoulderY - 0.98, 0.008), flat('#9a9ca2', { metalness: 0.5 }), s * 0.037, (o.shoulderY + 0.97) / 2 - 0.01, o.chestR * 0.74, body);
+      taper(o.waistR * 1.26, o.waistR * 1.26, 1.0, 0.96, hoodDark, body, o.chestDz * 1.05);
+      const hood = mesh(new THREE.TorusGeometry(0.085, 0.032, 12, 32, Math.PI * 1.2), hoodM, 0, o.shoulderY + 0.02, -0.03, body);
+      hood.rotation.set(Math.PI / 2 + 0.25, 0, -Math.PI * 0.1 + Math.PI); hood.scale.set(1, 1.15, 1);
+      for (const s of [-1, 1]) {                       // drawstrings
+        const d = mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.13, 8), flat('#d8d4cc'), s * 0.05, o.shoulderY - 0.07, o.chestR * 0.78, body);
       }
-      // jacket hem band
-      taper(o.waistR * 1.22, o.waistR * 1.22, 1.1, 1.06, flat('#277a72'), body, o.chestDz * 1.05);
-      // cream top shows below the jacket
-      taper(o.waistR * 1.04, o.waistR * 1.08, 1.06, 0.99, o.top, body, 0.68);
     },
     collar: (body, o) => {
-      const v = mesh(new THREE.ConeGeometry(0.03, 0.06, 3), o.skin, 0, o.shoulderY, 0.105, body);
-      v.rotation.set(Math.PI + 0.3, 0, 0); v.scale.z = 0.3;
+      const v = mesh(new THREE.CylinderGeometry(0.05, 0.055, 0.02, 24), o.top, 0, o.shoulderY + 0.01, 0.0, body);
     },
     hair: (head, o) => {
       const { a, b, c } = o.headOpts;
-      const cap = mesh(new THREE.SphereGeometry(1, 36, 25, 0, Math.PI * 2, 0, 1.5), hairM, 0, b * 0.05, -c * 0.04, head);
-      cap.scale.set(a * 1.1, b * 1.07, c * 1.1); cap.rotation.x = -0.42;
-      const back = mesh(new THREE.SphereGeometry(1, 29, 22), hairM, 0, -b * 0.1, -c * 0.36, head); back.scale.set(a * 1.03, b * 0.8, c * 0.66);
-      // swept side fringe: three faceted locks sweeping from the right part across the forehead
-      const locks = [[-0.35, 0.74, 0.6, 1.05, 0.2, -0.5], [0.12, 0.7, 0.66, 0.9, 0.2, -0.35], [0.55, 0.6, 0.62, 0.7, 0.2, -0.2]];
-      for (const [x, y, z, sx, sy, rz] of locks) {
-        const l = mesh(new THREE.IcosahedronGeometry(1, 2), hairM, a * x, b * y, c * z, head);
-        l.scale.set(a * 0.55 * sx, b * sy, c * 0.3); l.rotation.set(0.5, 0, rz);
-      }
-      // side strands framing the face, down to the jaw
-      for (const s of [-1, 1]) {
-        const st = mesh(new THREE.IcosahedronGeometry(1, 2), hairM, s * a * 0.9, -b * 0.18, c * 0.34, head);
-        st.scale.set(0.009, b * 0.4, 0.018); st.rotation.set(0.1, 0, s * 0.08);
-      }
-      // high ponytail: tie at the crown, then a chain of tapering faceted bunches swinging down the back
-      const tieP = new THREE.Vector3(0, b * 0.75, -c * 0.78);
-      const tie = mesh(new THREE.TorusGeometry(0.022, 0.009, 12, 24), flat('#e2c45a'), tieP.x, tieP.y, tieP.z, head);
-      tie.rotation.x = 0.9;
-      const tail = group(tieP.x, tieP.y, tieP.z - 0.01, head);
+      const cap = mesh(new THREE.SphereGeometry(1, 48, 32, 0, Math.PI * 2, 0, 1.55), hairM, 0, b * 0.06, -c * 0.03, head);
+      cap.scale.set(a * 1.12, b * 1.08, c * 1.12); cap.rotation.x = -0.32;
+      // layered back and sides down to the shoulders: a flared, open-front shell
       const prof = [];
-      for (let k = 0; k <= 24; k++) { const u = k / 24; prof.push(new THREE.Vector2(0.004 + 0.05 * Math.sin(Math.PI * Math.pow(u, 0.7)) * (1 - 0.35 * u), -0.36 * u)); }
-      const pony = mesh(new THREE.LatheGeometry(prof, 24), hairM, 0, 0.0, -0.035, tail);
-      pony.scale.z = 0.8; pony.rotation.x = 0.28;
-      const tip = mesh(new THREE.ConeGeometry(0.016, 0.07, 16), hairDark, 0, -0.36, -0.13, tail); tip.rotation.x = Math.PI - 0.3;
-      head.userData.ponytail = tail;
-      // small gold stud earrings
-      for (const s of [-1, 1]) mesh(new THREE.SphereGeometry(0.0055, 11, 7), new THREE.MeshStandardMaterial({ color: '#d9b45a', metalness: 0.8, roughness: 0.3 }), s * a * 1.0, -b * 0.3, -c * 0.02, head);
+      for (let k = 0; k <= 24; k++) { const u = k / 24; prof.push(new THREE.Vector2(1.06 + 0.22 * u * u - 0.05 * Math.sin(u * Math.PI), -1.9 * u)); }
+      const shell = mesh(new THREE.LatheGeometry(prof, 36, Math.PI * 0.36, Math.PI * 1.28), hairM, 0, b * 0.15, -c * 0.06, head);
+      shell.scale.set(a, b * 0.95, c * 0.95);
+      // long side-swept fringe from a deep left part across the forehead, over one brow
+      const locks = [[0.45, 0.62, 0.74, 1.0, 0.15, 0.4], [0.05, 0.46, 0.86, 1.05, 0.15, 0.5], [-0.4, 0.3, 0.86, 0.8, 0.14, 0.62]];
+      locks.forEach(([x, y, z, sx, sy, rz], k) => {
+        const l = mesh(new THREE.IcosahedronGeometry(1, 2), k === 1 ? streakM : hairM, a * x, b * y, c * z, head);
+        l.scale.set(a * 0.55 * sx, b * sy, c * 0.16); l.rotation.set(0.3, 0, rz);
+      });
+      // small silver hoop in each ear
+      for (const s of [-1, 1]) {
+        const h = mesh(new THREE.TorusGeometry(0.009, 0.0018, 8, 20), new THREE.MeshStandardMaterial({ color: '#c3c7cc', metalness: 0.9, roughness: 0.3 }), s * a * 1.0, -b * 0.36, -c * 0.02, head);
+        h.rotation.y = Math.PI / 2;
+      }
     },
   });
 }
