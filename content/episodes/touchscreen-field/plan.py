@@ -49,9 +49,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     tap1 = (0.25, 0.75, 1.35)                                  # hook: down, contact, up
     tap2 = (S("hook") + 1.9, S("hook") + 2.3, S("hook") + 2.8)
     cut0, cut1 = S("grid") + 0.1, S("grid") + 1.2              # glass turns see-through
-    fin0, fin1 = at("finger", "Bring") - 0.1, at("finger", "away") + 0.1     # finger lowers to contact
+    fin0, fin1 = at("finger", "Bring") - 0.1, at("finger", "close") + 0.35     # finger lowers to contact
+    HOVER = 14.0                                                # in-frame hover height (a solved ladder set)
     lift0 = S("glove") - 0.1                                    # finger leaves, glove arrives
-    glv0, glv1 = S("glove") + 0.3, at("glove", "holds") + 0.2
+    glv0, glv1 = S("glove") + 0.9, at("glove", "back") + 0.1
     sau0, sau1 = at("sausage", "tapped") - 0.2, at("sausage", "sausages") + 0.25
     detect_on = fin1 + 0.05
 
@@ -72,9 +73,9 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
             obj = None
         elif t < lift0:
             if t < fin0:
-                gap = FAR
+                gap = HOVER + (FAR - HOVER) * (1 - cam.ease(min(1.0, (t - S("finger")) / 0.8)))   # glides in, hovers
             elif t < fin1:
-                gap = cap.SKIN + (FAR - cap.SKIN) * (1 - cam.ease((t - fin0) / (fin1 - fin0))) ** 1.6
+                gap = cap.SKIN + (HOVER - cap.SKIN) * (1 - cam.ease((t - fin0) / (fin1 - fin0)))
             else:
                 gap = cap.SKIN
         elif t < S("sausage"):
@@ -82,12 +83,19 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                 gap = cap.SKIN + FAR * cam.ease((t - lift0) / 0.3)          # bare finger lifts away
             else:
                 obj, gl = "glove", 1
-                u = min(1.0, max(0.0, (t - glv0) / (glv1 - glv0)))
-                gap = cap.GLOVE + cap.SKIN + (FAR - cap.GLOVE) * (1 - cam.ease(u)) ** 1.6
+                g0 = cap.GLOVE + cap.SKIN
+                if t < glv0:
+                    gap = HOVER + (FAR - HOVER) * (1 - cam.ease(min(1.0, (t - lift0 - 0.3) / 0.5)))   # glides in, hovers
+                else:
+                    gap = g0 + (HOVER - g0) * (1 - cam.ease(min(1.0, (t - glv0) / (glv1 - glv0))))
         else:
             obj = "sausage"
-            u = min(1.0, max(0.0, (t - sau0) / (sau1 - sau0)))
-            gap = cap.SKIN + (FAR - cap.SKIN) * (1 - cam.ease(u)) ** 1.6
+            if t < sau0:
+                u = min(1.0, max(0.0, (t - S("sausage")) / max(0.5, sau0 - S("sausage"))))
+                gap = 12.0 + 18.0 * (1 - cam.ease(u))
+            else:
+                u = min(1.0, max(0.0, (t - sau0) / (sau1 - sau0)))
+                gap = cap.SKIN + (12.0 - cap.SKIN) * (1 - cam.ease(u))
         frames["obj"].append(obj); frames["gap"].append(round(gap, 3)); frames["glove"].append(gl)
         # cutaway: glass becomes see-through from the grid beat to the end
         frames["cut"].append(round(cam.ease((t - cut0) / (cut1 - cut0)) if t >= cut0 else 0.0, 3))
@@ -122,14 +130,14 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         cam.shot(S("field") - 0.1, S("finger") - 0.1, [(S("field") - 0.1, K(nx + 0.035, ny + 0.03, nz + 0.14), K(nx, ny + 0.004, nz), 40),
                                                        (S("finger") - 0.1, K(nx + 0.02, ny + 0.026, nz + 0.12), K(nx, ny + 0.005, nz), 40)], fps, "key"),
         # finger: slightly wider macro, the fingertip comes down into frame
-        cam.shot(S("finger") - 0.1, S("detect") - 0.1, [(S("finger") - 0.1, K(nx + 0.16, ny + 0.06, nz + 0.46), K(nx, ny + 0.04, nz), 40),
-                                                        (S("detect") - 0.1, K(nx + 0.12, ny + 0.045, nz + 0.38), K(nx, ny + 0.03, nz), 40)], fps, "key"),
+        cam.shot(S("finger") - 0.1, S("detect") - 0.1, [(S("finger") - 0.1, K(nx + 0.16, ny + 0.08, nz + 0.50), K(nx, ny + 0.07, nz), 40),
+                                                        (S("detect") - 0.1, K(nx + 0.12, ny + 0.05, nz + 0.40), K(nx, ny + 0.04, nz), 40)], fps, "key"),
         # detect: higher 3/4: the crossing glows red in the grid
         cam.shot(S("detect") - 0.1, S("glove") - 0.1, [(S("detect") - 0.1, K(nx + 0.30, ny + 0.42, nz + 0.50), K(nx, ny, nz), 40),
                                                        (S("glove") - 0.1, K(nx + 0.24, ny + 0.36, nz + 0.44), K(nx, ny, nz), 40)], fps, "golden"),
         # glove: side-on macro, the measuring line shows the 2 mm of wool
-        cam.shot(S("glove") - 0.1, S("sausage") - 0.1, [(S("glove") - 0.1, K(nx + 0.15, ny + 0.07, nz + 0.50), K(nx + 0.02, ny + 0.05, nz), 40),
-                                                        (S("sausage") - 0.1, K(nx + 0.12, ny + 0.06, nz + 0.44), K(nx + 0.02, ny + 0.045, nz), 40)], fps, "key"),
+        cam.shot(S("glove") - 0.1, S("sausage") - 0.1, [(S("glove") - 0.1, K(nx + 0.12, ny + 0.06, nz + 0.40), K(nx + 0.01, ny + 0.045, nz), 40),
+                                                        (S("sausage") - 0.1, K(nx + 0.09, ny + 0.045, nz + 0.30), K(nx + 0.01, ny + 0.035, nz), 40)], fps, "key"),
         # sausage: winter light, wide over the phone with snow falling
         cam.shot(S("sausage") - 0.1, sau0 - 0.1, [(S("sausage") - 0.1, K(nx + 0.75, ny + 0.65, nz + 1.25), K(nx, ny + 0.03, nz - 0.1), 40),
                                                   (sau0 - 0.1, K(nx + 0.62, ny + 0.56, nz + 1.08), K(nx, ny + 0.03, nz - 0.05), 40)], fps, "winter"),
@@ -150,11 +158,11 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         {"start": at("detect", "That's"), "end": S("glove") - 0.15, "big": "less charge", "small": "= a touch", "y": 0.17},
     ]
     contacts = [tap1[1], tap2[1], fin1, sau1]
-    events = [(round(tap1[1], 3), "pop", {"gain": 0.22, "seed": 1}),
-              (round(tap2[1], 3), "pop", {"gain": 0.2, "seed": 2}),
-              (round(fin1, 3), "pop", {"gain": 0.24, "seed": 3}),
-              (round(sau1, 3), "pop", {"gain": 0.24, "seed": 4}),
-              (round(cut0, 3), "rise", {"gain": 0.14})]
+    events = [(round(tap1[1], 3), "pop", {"gain": 0.5, "seed": 1}),
+              (round(tap2[1], 3), "pop", {"gain": 0.45, "seed": 2}),
+              (round(fin1, 3), "pop", {"gain": 0.55, "seed": 3}),
+              (round(sau1, 3), "pop", {"gain": 0.6, "seed": 4}),
+              (round(cut0, 3), "rise", {"gain": 0.3})]
     timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [cut0, fin1, sau1], "events": events,
                "mutes": [], "swells": [sau1], "contacts": contacts, "glove": [glv0, glv1]}
     facts = dict(f)

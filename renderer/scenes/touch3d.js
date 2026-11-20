@@ -43,25 +43,39 @@ function knitTex(base) {
   });
 }
 
-// a fingertip pointing down, axis tilted towards +z; the group origin is the lowest point of the tip
+// a fingertip pointing down, axis tilted towards -z (the hand is behind the phone); the group origin is the
+// lowest point of the tip. The nail faces the camera side (+z). A glove is an opaque knitted shell with a
+// wedge cut away on the camera side (a cutaway), so the bare finger inside and the 2 mm of wool both show.
 function finger(r, skin = '#e3b89c', gloveCol = null) {
   const g = new THREE.Group(), inner = new THREE.Group(); g.add(inner);
-  const mat = gloveCol ? new THREE.MeshStandardMaterial({ map: knitTex(gloveCol), roughness: 1, transparent: true, opacity: 0.42, depthWrite: false }) : MAT.plastic(skin);
-  if (gloveCol) { mat.map.wrapS = mat.map.wrapT = THREE.RepeatWrapping; mat.map.repeat.set(3, 3); }
-  if (!gloveCol) { mat.roughness = 0.55; mat.clearcoat = 0.1; }
   const len = r * 9;
-  const tip = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 18), mat); tip.scale.set(1, 0.92, 1.05);
-  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.02, r * 1.08, len, 24, 1, true), mat); shaft.position.y = len / 2;
+  let mat, tipG, shaftG;
+  if (gloveCol) {
+    const map = knitTex(gloveCol); map.wrapS = map.wrapT = THREE.RepeatWrapping; map.repeat.set(3, 3);
+    mat = new THREE.MeshStandardMaterial({ map, roughness: 1, side: THREE.DoubleSide });
+    const cut = 2.1, face = 0.3;                         // wedge (rad) removed around the camera direction
+    const phiC = Math.PI / 2 + face;                     // sphere phi facing roughly +z, a little +x
+    tipG = new THREE.SphereGeometry(r, 32, 18, phiC + cut / 2, 2 * Math.PI - cut, Math.PI / 2, Math.PI / 2);
+    shaftG = new THREE.CylinderGeometry(r, r, len, 32, 1, true, face + cut / 2, 2 * Math.PI - cut);
+  } else {
+    mat = MAT.plastic(skin); mat.roughness = 0.55; mat.clearcoat = 0.1;
+    tipG = new THREE.SphereGeometry(r, 32, 18, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);   // lower hemisphere
+    shaftG = new THREE.CylinderGeometry(r, r, len, 32, 1, false);
+  }
+  const tip = new THREE.Mesh(tipG, mat);                 // hemisphere and shaft share radius r: no seam
+  const shaft = new THREE.Mesh(shaftG, mat); shaft.position.y = len / 2;
   inner.add(tip, shaft);
-  for (const y of [len * 0.36, len * 0.7]) {      // knuckle creases
-    const k = new THREE.Mesh(new THREE.TorusGeometry(r * 1.05, r * 0.03, 6, 24), flat(gloveCol ? '#6e7f9c' : '#c99a80')); k.rotation.x = Math.PI / 2; k.position.y = y; inner.add(k);
-  }
   if (!gloveCol) {
-    const nail = new THREE.Mesh(new THREE.SphereGeometry(r * 0.8, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2.4), MAT.plastic('#f4ddd2'));
-    nail.scale.set(0.95, 0.3, 1.6); nail.rotation.x = -Math.PI / 2; nail.position.set(0, r * 1.1, -r * 0.7); inner.add(nail);
+    for (const y of [len * 0.36, len * 0.7]) {           // knuckle creases on the back (+z) side only
+      const k = new THREE.Mesh(new THREE.TorusGeometry(r * 1.0, r * 0.035, 6, 24, Math.PI * 0.8), flat('#c99a80'));
+      k.rotation.x = Math.PI / 2; k.rotation.z = Math.PI * 0.1; k.position.y = y; inner.add(k);
+    }
+    const nailM = new THREE.MeshStandardMaterial({ color: '#f3d9cf', roughness: 0.25, metalness: 0 });
+    const nail = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 14), nailM);
+    nail.scale.set(r * 0.56, r * 0.95, r * 0.16); nail.position.set(0, r * 1.3, r * 0.93); inner.add(nail);
   }
-  inner.position.y = r * 0.92;                     // lowest point of the tip at the group origin
-  g.rotation.x = -0.45;                            // lean back towards -z (the hand is behind the phone)
+  inner.position.y = r;                                  // lowest point of the tip at the group origin
+  g.rotation.x = -0.45;
   return shadowed(g);
 }
 
@@ -99,10 +113,14 @@ export function build(world, plan) {
   // ---- the phone: graphite body, glass top with the home screen; under it the display and electrode grid
   const W = L.phone_w, Lz = L.phone_l, T = L.phone_t;
   const phone = new THREE.Group(); phone.position.set(...L.phone); S.add(phone);
-  const body = new THREE.Mesh(new THREE.BoxGeometry(W, T * 0.8, Lz), flat('#3a3f47', { roughness: 0.7, flatShading: false })); body.position.y = T * 0.4; phone.add(body);
-  for (const s of [-1, 1]) {                        // rounded long edges
-    const e = new THREE.Mesh(new THREE.CylinderGeometry(T * 0.45, T * 0.45, Lz, 16), MAT.brushedSteel()); e.rotation.x = Math.PI / 2; e.position.set(s * W / 2, T * 0.45, 0); phone.add(e);
-  }
+  const rr = (w, l, rad) => { const sh = new THREE.Shape(), x = w / 2, z = l / 2;
+    sh.moveTo(-x + rad, -z); sh.lineTo(x - rad, -z); sh.quadraticCurveTo(x, -z, x, -z + rad); sh.lineTo(x, z - rad); sh.quadraticCurveTo(x, z, x - rad, z);
+    sh.lineTo(-x + rad, z); sh.quadraticCurveTo(-x, z, -x, z - rad); sh.lineTo(-x, -z + rad); sh.quadraticCurveTo(-x, -z, -x + rad, -z); return sh; };
+  const bev = 0.008, bodyH = L.elec_y - 0.004 - 2 * bev;
+  const bodyG = new THREE.ExtrudeGeometry(rr(W - 2 * bev, Lz - 2 * bev, 0.08), { depth: bodyH, bevelEnabled: true, bevelThickness: bev, bevelSize: bev, bevelSegments: 4, curveSegments: 12 });
+  bodyG.rotateX(-Math.PI / 2);                     // extrude upwards (+y), shape in the x-z plane
+  const body = new THREE.Mesh(bodyG, new THREE.MeshStandardMaterial({ color: '#4a4f57', roughness: 0.45, metalness: 0.6 }));
+  body.position.y = bev; phone.add(body);
   shadowed(phone);
   const display = new THREE.Mesh(new THREE.PlaneGeometry(W * 0.94, Lz * 0.96), new THREE.MeshStandardMaterial({ color: '#121622', roughness: 1.0, envMapIntensity: 0 }));
   display.rotation.x = -Math.PI / 2; display.position.y = L.elev_y ?? (L.elec_y - 0.002); phone.add(display);
@@ -110,8 +128,9 @@ export function build(world, plan) {
   uiMat.emissiveMap = uiMat.map; uiMat.emissiveIntensity = 0.35;
   const ui = new THREE.Mesh(new THREE.PlaneGeometry(W * 0.94, Lz * 0.96), uiMat); ui.rotation.x = -Math.PI / 2; ui.position.y = L.elec_y - 0.001; phone.add(ui);
   const glassM = new THREE.MeshStandardMaterial({ color: '#dfe8ef', roughness: 0.7, metalness: 0, transparent: true, opacity: 0.1, depthWrite: false, envMapIntensity: 0 });
-  const glass = new THREE.Mesh(new THREE.BoxGeometry(W * 0.98, L.glass_top - L.elec_y, Lz * 0.98), glassM);
-  glass.position.y = (L.glass_top + L.elec_y) / 2; phone.add(glass);
+  const glassG = new THREE.ExtrudeGeometry(rr(W * 0.98, Lz * 0.98, 0.075), { depth: L.glass_top - L.elec_y, bevelEnabled: false, curveSegments: 12 });
+  glassG.rotateX(-Math.PI / 2);
+  const glass = new THREE.Mesh(glassG, glassM); glass.position.y = L.elec_y; phone.add(glass);
   // electrode grid: drive rows (across x) and sense columns (along z), thin emissive strips
   const rowM = new THREE.MeshStandardMaterial({ envMapIntensity: 0, roughness: 1, color: '#d8d2c2', emissive: '#e8dcc2', emissiveIntensity: 0.0, transparent: true, opacity: 0 });
   const colM = new THREE.MeshStandardMaterial({ envMapIntensity: 0, roughness: 1, color: '#9fc4d8', emissive: '#a9d4ec', emissiveIntensity: 0.0, transparent: true, opacity: 0 });
@@ -166,11 +185,15 @@ export function build(world, plan) {
   // touch ring on the glass
   const ringM = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false });
   const ring = new THREE.Mesh(new THREE.RingGeometry(0.07, 0.078, 48), ringM); ring.rotation.x = -Math.PI / 2; ring.position.set(nx, L.glass_top + 0.0015, nz); S.add(ring);
+  const tapM = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false });
+  const tapDot = new THREE.Mesh(new THREE.CircleGeometry(0.06, 40), tapM); tapDot.rotation.x = -Math.PI / 2; tapDot.position.set(nx, L.glass_top + 0.001, nz); S.add(tapDot);
   // snow (sausage beat): flakes falling in a box around the phone
   const N = 500, pos = new Float32Array(N * 3), seeds = [];
   for (let k = 0; k < N; k++) seeds.push([world.rand() * 2.4 - 1.2, world.rand(), world.rand() * 2.4 - 1.0, 0.4 + world.rand() * 0.5]);
   const snowG = new THREE.BufferGeometry(); snowG.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const snow = new THREE.Points(snowG, new THREE.PointsMaterial({ color: '#ffffff', size: 0.012, transparent: true, opacity: 0.9, depthWrite: false }));
+  const flakeTex = canvasTex(64, 64, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.55, 'rgba(255,255,255,0.85)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+  const snow = new THREE.Points(snowG, new THREE.PointsMaterial({ color: '#ffffff', size: 0.014, map: flakeTex, transparent: true, opacity: 0.95, depthWrite: false, alphaTest: 0.02 }));
   S.add(snow);
 
   const focalPt = i => F.focal_pt[Math.min(i, F.focal_pt.length - 1)];
@@ -182,11 +205,12 @@ export function build(world, plan) {
       const k = Math.min(i, F.gap.length - 1), cut = F.cut[k], gap = F.gap[k], obj = F.obj[k];
       // cutaway
       uiMat.opacity = 1 - cut; uiMat.emissiveIntensity = 0.35 * (1 - cut); glassM.opacity = 0.1 * (1 - cut) + 0.04; glass.visible = cut < 0.9;
+      const gcut = Math.max(0, (cut - 0.45) / 0.55);
       rows.forEach((m, r) => {
         const on = F.scan[k] >= 0 && Math.abs(F.scan[k] - r) < 0.8;
-        m.material.opacity = 0.75 * cut; m.material.emissiveIntensity = cut * (on ? 2.6 : 0.35);
+        m.material.opacity = 0.75 * gcut; m.material.emissiveIntensity = gcut * (on ? 2.6 : 0.35);
       });
-      colM.opacity = 0.7 * cut; colM.emissiveIntensity = 0.3 * cut;
+      colM.opacity = 0.7 * gcut; colM.emissiveIntensity = 0.3 * gcut;
       padD.material.opacity = padS.material.opacity = cut; padD.material.emissiveIntensity = padS.material.emissiveIntensity = 0.9 * cut;
       const node = F.node[k];
       nodeRedM.opacity = 0.9 * node * cut; nodeRedM.emissiveIntensity = 2.2 * node; nodeGlow.material.opacity = 0.75 * node * cut;
@@ -224,6 +248,7 @@ export function build(world, plan) {
       if (touched && !wasTouched) touchStart = t; wasTouched = touched;
       const u = touchStart >= 0 ? (t - touchStart) / 0.6 : 2;
       ring.visible = u < 1; ring.scale.setScalar(1 + 1.4 * Math.max(0, u)); ringM.opacity = 0.9 * (1 - Math.max(0, u));
+      tapM.opacity = F.ui_tap[k] ? 0.55 : Math.max(0, tapM.opacity - 0.12);
       // snow
       snow.visible = F.snow[k] > 0;
       if (snow.visible) {
