@@ -29,7 +29,7 @@ def _service():
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
     from googleapiclient.discovery import build
-    raw = os.environ.get("YOUTUBE_TOKEN_JSON", "")
+    raw = os.environ.get("YOUTUBE_TOKEN_JSON", "").lstrip("﻿").strip()   # a secret pasted from PowerShell can start with a BOM
     if not raw:
         raise SystemExit("YOUTUBE_TOKEN_JSON secret is missing")
     creds = Credentials.from_authorized_user_info(json.loads(raw), SCOPES)
