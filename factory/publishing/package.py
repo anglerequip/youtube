@@ -119,6 +119,7 @@ def build(slug_or_sb, video: Path | None = None, publish_at: str | None = None) 
     platforms["tiktok"]["privacy_level"] = None        # chosen at post time from TikTok's creator info
     if publish_at:                                     # YouTube scheduled publish (RFC 3339, e.g. 2026-11-20T12:00:00+01:00)
         platforms["youtube"]["publish_at"] = publish_at
+        platforms["facebook"]["publish_at"] = publish_at
     for name, fields in platforms.items():
         fields["hash"] = platform_hash(sb.slug, name, fields, video_sha, cover_sha)
 

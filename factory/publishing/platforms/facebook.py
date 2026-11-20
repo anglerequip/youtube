@@ -51,6 +51,10 @@ def post(pkg: dict) -> tuple[str, str]:
             "Authorization": f"OAuth {tok}", "offset": "0", "file_size": str(size)}), "upload")
     finish = {"upload_phase": "finish", "video_id": vid, "video_state": "PUBLISHED", "access_token": tok,
               "title": f["title"], "description": f["description"]}
+    if f.get("publish_at"):   # Facebook holds the reel as SCHEDULED until scheduled_publish_time (unix seconds)
+        from datetime import datetime
+        finish["video_state"] = "SCHEDULED"
+        finish["scheduled_publish_time"] = str(int(datetime.fromisoformat(f["publish_at"]).timestamp()))
     if f.get("is_ai_generated"):
         finish["is_ai_generated"] = "true"
     _ok(requests.post(f"{GRAPH}/{ver}/{page}/video_reels", data=finish, timeout=60), "finish")
