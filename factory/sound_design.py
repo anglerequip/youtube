@@ -367,7 +367,7 @@ def stems(voice_wav: Path, events: list, duration: float | None = None, music: d
         b = music_bed(duration, mcfg.get("mutes", []), mcfg.get("bpm", 96), swell_at=mcfg.get("swells", []))
         # sidechain ducking under the voice (fast attack, slow release)
         env = np.abs(v)
-        rel = np.exp(-1 / (0.35 * SR))
+        rel = np.exp(-1 / (mcfg.get("duck_release", 0.35) * SR))
         e = signal.lfilter([1 - rel], [1, -rel], env)
         e = e / (np.percentile(e, 99) or 1)
         duck = 1 - 0.65 * np.clip(e, 0, 1)

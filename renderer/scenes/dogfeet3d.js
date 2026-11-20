@@ -95,27 +95,30 @@ function bed(S, L) {
   box(g, 0.07, 0.55, 1.8, wood, 1.17, 0.36, 0);                                    // footboard
   const mat = new THREE.Mesh(softBox(2.26, 0.22, 1.62, 0.6), std('#e9e5dc', { roughness: 0.9 }));
   mat.position.set(-0.05, top - 0.11, 0); g.add(mat);
-  const pil = new THREE.Mesh(softBox(0.42, 0.13, 0.72, 1.0), std('#f0ece3', { roughness: 0.85 }));
-  pil.position.set(-1.0, top + 0.06, 0.0); pil.rotation.z = 0.12; g.add(pil);
-  const pil2 = new THREE.Mesh(softBox(0.4, 0.12, 0.68, 1.0), std('#b9c4d6', { roughness: 0.85 }));
-  pil2.position.set(-1.13, top + 0.14, -0.42); pil2.rotation.set(0.2, 0.15, 0.5); g.add(pil2);
+  // pillows propped upright against the headboard: he sits up in bed, his back on them
+  const pil = new THREE.Mesh(softBox(0.16, 0.52, 0.78, 1.0), std('#f0ece3', { roughness: 0.85 }));
+  pil.position.set(-1.16, top + 0.27, 0.0); pil.rotation.z = 0.2; g.add(pil);
+  const pil2 = new THREE.Mesh(softBox(0.15, 0.46, 0.6, 1.0), std('#b9c4d6', { roughness: 0.85 }));
+  pil2.position.set(-1.18, top + 0.25, -0.52); pil2.rotation.set(0.0, 0.25, 0.22); g.add(pil2);
   S.add(shadowed(g));
 
-  // duvet: a subdivided sheet draped over the wizard's body and feet, hanging down the sides and the foot end
-  const xa = -0.62, xb = 1.12, zw = 0.84, NX = 120, NZ = 90;
+  // duvet: a subdivided sheet pulled up to his waist, over his outstretched legs and feet, hanging down the
+  // sides and the foot end. bodyH is the height of his body under it.
+  const xa = -1.24, xb = 1.12, zw = 0.84, NX = 140, NZ = 90;
   const geo = new THREE.PlaneGeometry(1, 1, NX, NZ); geo.rotateX(-Math.PI / 2);
   const P = geo.attributes.position;
   const bodyH = (x, z) => {
-    const across = Math.exp(-Math.pow(Math.abs(z) / 0.46, 6));
-    const along = smooth((x - xa + 0.02) / 0.12);
-    const feet = 0.05 * Math.exp(-Math.pow((x - 0.75) / 0.18, 2));                 // the toes push it up a little
-    return (0.31 + feet) * across * along;
+    const k = smooth((x + 0.62) / 0.3);                                             // 0 at the waist .. 1 along the legs
+    const w = 0.44 - 0.14 * k, across = Math.exp(-Math.pow(Math.abs(z) / w, 4));
+    const along = (0.19 - 0.08 * k) * (1 - smooth((x - 0.16) / 0.14));
+    const toes = 0.075 * Math.exp(-Math.pow((x - 0.16) / 0.08, 2)) * Math.exp(-Math.pow(Math.abs(z) / 0.24, 4));   // his feet poke it up
+    return along * across + toes;
   };
   for (let i = 0; i < P.count; i++) {
     const u = P.getX(i) + 0.5, w = P.getZ(i) * 2;                                   // u 0..1 along, w -1..1 across
     const xEnd = xb + 0.22;                                                         // the last strip hangs over the foot end
     let x = xa + (xEnd - xa) * u, z = w * (zw + 0.24), y;
-    const zc = Math.min(Math.abs(z), zw), xc = Math.min(x, xb);
+    const xc = Math.min(x, xb);
     y = top + 0.035 + bodyH(xc, z * zw / Math.max(zw, Math.abs(z))) + 0.008 * Math.sin(x * 23 + z * 9);
     if (Math.abs(z) > zw) { const k = (Math.abs(z) - zw) / 0.24; y = top + 0.035 - 0.22 * k; z = Math.sign(z) * (zw + 0.03 + 0.03 * k); }
     if (x > xb) { const k = (x - xb) / 0.22; y = Math.min(y, top + 0.035) - 0.2 * k; x = xb + 0.03 + 0.02 * k; }
@@ -125,16 +128,12 @@ function bed(S, L) {
   // a soft check pattern in vertex colours (powder blue and cream)
   const col = new Float32Array(P.count * 3), A = new THREE.Color('#8fa6c8'), B = new THREE.Color('#c9d3e0'), c = new THREE.Color();
   for (let i = 0; i < P.count; i++) {
-    const u = (P.getX(i) + 0.5), w = P.getZ(i);
     const k = ((Math.floor((i % (NX + 1)) / 10) + Math.floor(Math.floor(i / (NX + 1)) / 10)) % 2);
     c.copy(k ? A : B); col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
   }
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   const duvet = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, side: THREE.DoubleSide }));
   duvet.castShadow = duvet.receiveShadow = true; S.add(duvet);
-  // the turned-down sheet edge across his chest
-  const fold = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 1.0, 8, 32), std('#f0ece3', { roughness: 0.85 }));
-  fold.rotation.x = Math.PI / 2; fold.position.set(xa + 0.02, top + 0.33, 0); fold.scale.set(1, 1, 1); fold.castShadow = true; S.add(fold);
   const duvetTop = (x, z) => top + 0.035 + bodyH(Math.min(x, xb), z);
   return { duvetTop };
 }
@@ -172,7 +171,8 @@ function snowField(S, cx, cz, r) {
     Q.setY(i, d > r ? -0.2 : Math.max(0.005, 0.04 + h) * smooth((r - d) / 1.5));
   }
   pl.computeVertexNormals();
-  const m = new THREE.Mesh(pl, std('#e3e8ee', { roughness: 0.9 })); m.position.set(cx, 0, cz); m.receiveShadow = true; S.add(m);
+  // moonlit snow: mid blue-grey so the white captions still read on it
+  const m = new THREE.Mesh(pl, std('#9aa6b8', { roughness: 0.9 })); m.position.set(cx, 0, cz); m.receiveShadow = true; S.add(m);
 }
 
 function basket(S, x, z) {
@@ -203,14 +203,17 @@ export function build(world, plan) {
   const { duvetTop } = bed(S, L);
   nightstand(S, L);
 
-  // the wizard lying on his back: his up (y) runs along -x, his face (z) points at the ceiling
+  // the wizard sitting up in bed against his pillows, the duvet over his lap and legs. He is a standing model, so
+  // everything below the duvet line is clipped away (nothing can poke through the sheet)
   const wiz = man();
-  const basis = new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 0, -1), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0));
-  const tilt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -0.1);     // head a little up on the pillow
-  wiz.quaternion.setFromRotationMatrix(basis).premultiply(tilt);
-  wiz.position.set(...L.wiz); S.add(wiz);
-  // under the duvet only the head, hat, beard, hood and shoulders are ever seen: hide the rest so nothing pokes through
-  wiz.traverse(o => { if (o.isMesh && (/^z_(staff|stone|fork|pouch|robe|belt|sleeve)/.test(o.name) || o.name === 'wizard')) o.visible = false; });
+  wiz.position.set(...L.wiz); wiz.rotation.set(-0.14, L.wiz_face, 0, 'YXZ'); S.add(wiz);
+  world.renderer.localClippingEnabled = true;
+  const clip = [new THREE.Plane(new THREE.Vector3(0, 1, 0), -(L.bed_top + 0.13))];
+  wiz.traverse(o => {
+    if (!o.isMesh) return;
+    if (/^z_(staff|stone|fork)/.test(o.name)) { o.visible = false; return; }
+    o.material = o.material.clone(); o.material.clippingPlanes = clip; o.material.clipShadows = true;
+  });
   const wom = woman(); wom.position.set(...L.woman); wom.rotation.y = L.woman_face; S.add(wom);
   // pure black never appears in the house style: lift near-black fabric and hair to a deep charcoal
   const lift = new THREE.Color('#3a3640').convertSRGBToLinear();
@@ -290,8 +293,17 @@ export function build(world, plan) {
     const pitch = -Math.atan2(target[1] - person.position.y - 1.5, Math.hypot(v.x, v.z));
     return { headYaw: Math.max(-maxYaw, Math.min(maxYaw, w)), headPitch: Math.max(-0.3, Math.min(0.45, pitch)) };
   };
-  const wizHead = [L.head[0], L.head[1] + 0.1, L.head[2]];
-  const dogHead = [L.dog[0], L.dog[1] + 0.28, L.dog[2] + 0.3];
+  const wizHead = [L.head[0], L.head[1] + 0.05, L.head[2]];
+  const dogHead = [L.dog[0], L.dog[1] + 0.25, L.dog[2] + 0.35];
+  const womHead = [L.woman[0], 1.55, L.woman[2]], doorPt = [L.door[0], 1.0, L.door[2]];
+  const camPos0 = () => world.camera.position.toArray();
+  // the wizard's head turn toward a point, relative to the way his body faces (he leans back 0.14 rad)
+  const wizLook = (p) => {
+    const dx = p[0] - L.head[0], dy = p[1] - L.head[1], dz = p[2] - L.head[2];
+    let yaw = Math.atan2(dx, dz) - L.wiz_face; yaw = Math.atan2(Math.sin(yaw), Math.cos(yaw));
+    const pitch = -Math.atan2(dy, Math.hypot(dx, dz)) - 0.14;
+    return { yaw: Math.max(-0.85, Math.min(0.85, yaw)), pitch: Math.max(-0.3, Math.min(0.55, pitch)) };
+  };
   let lastShot = null;
   return {
     lightCenter: new THREE.Vector3(0.3, 0, 0),
@@ -299,14 +311,16 @@ export function build(world, plan) {
     update(i, t, shot) {
       const k = Math.min(i, F.talk_w.length - 1);
       // the wizard: mouth follows his voice; head turns to the woman, lifts to look at the dog
-      wiz.pose({ talk: F.talk_w[k], blink: F.wiz_blink[k], t, headPitch: F.wiz_pitch[k], headYaw: F.wiz_yaw[k], headTilt: 0 });
+      const lw = F.look_w[k], tw = lw === 'woman' ? womHead : lw === 'door' ? doorPt : lw === 'camera' ? camPos0() : dogHead;
+      const wl = wizLook(tw);
+      wiz.pose({ talk: F.talk_w[k], blink: F.wiz_blink[k], t, headPitch: wl.pitch, headYaw: wl.yaw, headTilt: 0.04 * Math.sin(t * 0.7), point: F.wiz_point[k] });
       const camPos = world.camera.position.toArray();
       const lk = F.look_m[k], lm = headLook(wom, lk === 'camera' ? camPos : lk === 'dog' ? dogHead : wizHead);
       wom.pose({ talk: F.talk_m[k], blink: F.woman_blink[k], t, ...lm, headTilt: 0.05 * Math.sin(t * 0.9 + 1) });
       // the dog: asleep on the feet; rolls over to face the wall near the end
       const turn = F.dog_turn[k];
       rex.rotation.y = 0.8 * Math.PI * turn;
-      rex.position.set(L.dog[0] - 0.04 * Math.sin(Math.PI * turn), L.dog[1] + 0.06 * Math.sin(Math.PI * turn), L.dog[2] - 0.12 * turn);
+      rex.position.set(L.dog[0] + 0.1 * turn, L.dog[1] + 0.06 * Math.sin(Math.PI * turn) + 0.015 * turn, L.dog[2] - 0.05 * turn);
       rex.pose({ mode: F.dog_mode[k], t, pitch: F.dog_pitch[k], yaw: F.dog_yaw[k], rest: F.dog_rest[k], blink: F.dog_blink[k],
                  mouth: F.dog_mouth[k], ears: F.dog_ears[k], tail: F.dog_tail[k], breath: 1, breathRate: 1.2 });
       // wolves rest; one parent lifts its head, the pups breathe
@@ -319,7 +333,7 @@ export function build(world, plan) {
         const fp = focalPt(i);
         world.setLighting(shot.lighting ?? 'moonroom', new THREE.Vector3(fp[0], 0, fp[2]));
         if (plan.bloom_threshold && shot.lighting === 'moonroom') world.bloom.threshold = plan.bloom_threshold;
-        const sc = world.sun.shadow.camera, e2 = shot.lighting === 'moonroom' ? 5 : 15;
+        const sc = world.sun.shadow.camera, e2 = Math.abs(fp[0]) > 10 ? 15 : 5;
         sc.left = -e2; sc.right = e2; sc.top = e2; sc.bottom = -e2; sc.far = 80; sc.updateProjectionMatrix();
       }
     },
