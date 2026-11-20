@@ -71,7 +71,39 @@ def check_streams(info: dict) -> list[Check]:
     out.append(Check("audio_stream", bool(a), "present" if a else "no audio stream"))
     dur = float(info["format"]["duration"])
     out.append(Check("duration", settings.min_seconds <= dur <= settings.max_seconds,
-                     f"{dur:.1f}s (allowed {settings.min_seconds:.0f}-{settings.max_seconds:.0f}s)"))
+                     f"{dur:.1f}s (technical limits {settings.min_seconds:.0f}-{settings.max_seconds:.0f}s; "
+                     "the length itself is set by the story)"))
+    return out
+
+
+def planned_duration(out_dir: Path, tl: Timeline, fps: int) -> float:
+    """What the production planned: the 3D plan's frame count, else the narration timeline."""
+    plan_p = out_dir / "plan.json"
+    if plan_p.exists():
+        plan = json.loads(plan_p.read_text())
+        return plan["n_frames"] / plan["fps"]
+    import math
+    return math.ceil(tl.duration * fps) / fps
+
+
+def check_timing(info: dict, tl: Timeline, out_dir: Path, fps: int) -> list[Check]:
+    """The finished video is exactly the length its content planned: picture and sound end together,
+    nothing of the narration is cut, and it ends soon after the last word (no padding)."""
+    dur = float(info["format"]["duration"])
+    streams = {s["codec_type"]: float(s.get("duration") or dur) for s in info["streams"]}
+    planned = planned_duration(out_dir, tl, fps)
+    last = tl.lines[-1].end if tl.lines else 0.0
+    out = [Check("duration_matches_plan", abs(dur - planned) <= max(0.12, 2.5 / fps),
+                 f"video {dur:.2f}s, planned {planned:.2f}s from the narration"),
+           Check("narration_complete", dur >= last + 0.15, f"last word ends {last:.2f}s, video ends {dur:.2f}s")]
+    if "audio" in streams and "video" in streams:
+        gap = abs(streams["audio"] - streams["video"])
+        out.append(Check("av_same_length", gap <= max(0.12, 2.5 / fps),
+                         f"picture {streams['video']:.2f}s, sound {streams['audio']:.2f}s"))
+    rules = yaml.safe_load((settings.root / "config" / "rules.yaml").read_text(encoding="utf-8"))
+    max_tail = float((rules.get("length") or {}).get("max_tail_s", 2.6))
+    out.append(Check("ends_after_payoff", dur - last <= max_tail,
+                     f"{dur - last:.2f}s of video after the last word (max {max_tail}s)", "warn"))
     return out
 
 
@@ -219,7 +251,9 @@ def run_all(sb: Storyboard, sim_report: dict | None = None) -> tuple[bool, list[
         duration = float(info["format"]["duration"])
         checks += check_streams(info)
         checks += check_audio(out_dir / "mix.wav")
-        checks += check_captions(Timeline.load(out_dir / "timeline.json"), out_dir / "captions.ass", duration)
+        tl = Timeline.load(out_dir / "timeline.json")
+        checks += check_timing(info, tl, out_dir, settings.fps)
+        checks += check_captions(tl, out_dir / "captions.ass", duration)
         checks += check_frames(video, duration)
     checks += check_motion(sb, out_dir)
     checks += check_metadata(sb)

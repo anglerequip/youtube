@@ -1,0 +1,185 @@
+slug: chain-fountain-hud
+title: "The Chain That Jumps Out of the Jar"
+topic: "momentum / the chain fountain: why a falling bead chain arches above its jar"
+component: custom   # physics: factory/simulation_engine/physics/chain_fountain.py (momentum + energy balance)
+# Retention demo (2026-11-19): the chain-fountain episode, same narration, plus the retention toolkit
+# (factory/retention, docs/RETENTION.md): live measurements, the open question, a no-push experiment.
+# plan.py reuses ../chain-fountain/plan.py and only adds what the HUD needs.
+renderer: three
+scene: chain3d
+hook_family: 1          # impossible-looking (attention plan)
+structure: B            # surprising result -> backwards explanation
+description: |
+  Let a bead chain pour out of a tall jar and it doesn't slide over the rim. It leaps up into an arch
+  above the jar. The reason: the pile pushes each link up as it is picked up. Simulated from the
+  momentum and energy balance of the chain.
+
+  #shorts #physics #science #chainfountain #momentum
+tags: [chain fountain, physics, momentum, science, experiment, shorts]
+voice: af_bella
+speed: 1.1
+beats:
+  - id: hook
+    text: "This chain jumps out of its jar. Nothing is pulling it up."
+    pause_after: 0.3
+  - id: setup
+    text: "Drop the end of a long bead chain over the edge, and let gravity do the rest."
+  - id: wrong
+    text: "You'd expect it to slide over the rim, like a rope."
+  - id: reality
+    text: "Instead it leaps up, and holds a steady arch above the jar."
+  - id: payoff
+    text: "And the drop sets the height. In our model, a one metre fall lifts the arch about fourteen centimetres."
+  - id: double
+    text: "Double the drop, and the arch doubles too."
+  - id: speed
+    text: "From two metres up, the chain races along at almost five metres per second."
+  - id: rehook
+    text: "So what pushes it up? Not the falling chain. The pile itself."
+  - id: links
+    text: "A bead chain is made of short, stiff links. Lift one by its end, and it tips like a tiny lever."
+  - id: push
+    text: "Its other end digs into the pile, and the pile pushes back, upward."
+  - id: rope
+    text: "A rope can't do that. It's floppy, so there's nothing to lever against the pile, and nothing throws it up."
+  - id: kick
+    text: "That push helps throw every link up, so the chain shoots above the jar before gravity turns it around. A longer fall means a faster chain, and a harder push."
+  - id: catch
+    text: "Physicists still argue about the details, like how much the beads bounce. But with no push from below, there's no fountain."
+  - id: outro
+    text: "So the chain isn't pulled out of the jar. It's pushed, one link at a time."
+    sfx: ding
+
+caveats:
+  - "Our simulation is the steady-state momentum and energy balance (after Biggins and Warner, 2014), not a link-by-link simulation. The arch height assumes a pile push of 12 percent of the chain's momentum flux; real values depend on the chain."
+  - "The exact mechanism is still discussed (link stiffness, bead bouncing); later analyses include Pantaleone (2017) and Flekkoy, Moura and Maloy (2018)."
+  - "The lever close-up is a simplified illustration of the mechanism described by Biggins and Warner."
+  - "The chain is shown slowed down so the beads can be followed."
+  - "The 'no push' sequence sets the pile push to zero in our model to show its role; it is an illustration of the model, not a recording of a real chain."
+sources:
+  - "J. S. Biggins and M. Warner, 'Understanding the chain fountain', Proceedings of the Royal Society A 470, 20130689 (2014)."
+  - "University of Cambridge press release, 'Understanding the chain fountain' (2014)."
+  - "J. Pantaleone, 'A quantitative analysis of the chain fountain', American Journal of Physics 85, 414 (2017)."
+  - "E. G. Flekkoy, M. Moura and K. J. Maloy, 'Mechanisms of the flying chain fountain', Frontiers in Physics 6, 84 (2018)."
+  - "The phenomenon was popularised by Steve Mould's 2013 video; this episode uses none of its footage or framing."
+
+# ---------------------------------------------------------------------------------------------
+# Single source of truth (factory/qa): every number heard or shown maps to a claim.
+claims:
+  - {id: drop_1m, beat: payoff, unit: m, sim: drop_1m, scope: condition}
+  - {id: arch_1m, beat: payoff, unit: cm, sim: arch_1m_cm, scope: model, tolerance: 0.06, event: arch_1m,
+     evidence: {quality: 1, source: "our steady-state model after Biggins & Warner, Proc. R. Soc. A 470, 20130689 (2014)"}}
+  - {id: drop_double, beat: double, unit: x, value: 2, scope: condition, match: "double the drop"}
+  - {id: arch_double, beat: double, unit: x, sim: arch_ratio_2m_1m, scope: model, match: "doubles too",
+     evidence: {quality: 1, source: "Biggins & Warner 2014: arch height proportional to the drop"}}
+  - {id: arch_2m, card: "≈ 27 cm", unit: cm, sim: arch_2m_cm, scope: model, event: arch_2m,
+     evidence: {quality: 1, source: "our steady-state model after Biggins & Warner 2014"}}
+  - {id: drop_2m, beat: speed, unit: m, sim: drop_2m, scope: condition}
+  - {id: push_share, card: "12 %", unit: "%", sim: alpha_pct, scope: model,
+     evidence: {quality: 1, source: "assumed pile push of 12% of the momentum flux in our model, after Biggins & Warner 2014 (labelled 'our model' on screen)"}}
+  - {id: speed_2m, beat: speed, unit: m/s, sim: speed_2m, scope: model, event: null,
+     evidence: {quality: 1, source: "our model: v = sqrt(g h / (1 - alpha)) style balance, Biggins & Warner 2014"}}
+
+absolute_ok:
+  - {beat: hook, word: nothing, why: "no external lifting agent acts on the chain; the upward push comes from the pile (Biggins & Warner 2014)"}
+  - {beat: rope, word: nothing, why: "an idealised flexible rope has no bending stiffness to lever against the pile"}
+  - {beat: kick, word: every, why: "in the steady state each link passes the pile and receives the push"}
+  - {beat: catch, word: "no", why: "Biggins & Warner: without the anomalous pile force the arch height is zero"}
+
+entities:
+  - id: chain
+    type: hero_object
+    category: B            # thin connected object: beads must read as one connected chain
+    importance: primary
+    visual_contract:
+      must_read_as: "a ball chain: round beads joined by short visible links, one continuous strand"
+      connectors_visible_px_at_1080: 1.5
+      no_gaps_or_floating_beads: true
+  - id: jar
+    type: support
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "a glass jar holding a coiled pile"}
+  - id: arch
+    type: phenomenon
+    category: B
+    importance: primary
+    visual_contract: {must_read_as: "a smooth arch above the rim whose height matches the card", measured_by: arch_cm}
+  - id: ground
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "continuous floor and sky, no black clipping holes"}
+
+  - id: trees
+    type: environment
+    category: F
+    importance: background
+    visual_contract: {must_read_as: "sparse low-poly trees framing the set", no_cut_shadows: true}
+
+hero: chain
+
+# ---------------------------------------------------------------------------------------------
+# Retention toolkit (factory/retention; docs/RETENTION.md). Every number below comes from the simulation.
+retention:
+  hud:
+    - id: drop                     # experiment state: the drop that sets the arch (rises 1 m -> 2 m with the stand)
+      type: counter
+      label: drop
+      value: {frames: h2}
+      format: "{v:.1f} m"
+      slot: top_left
+      show: [payoff+2.0, speed+0.7]
+      claims: [{claim: drop_1m, at: payoff+3.0}, {claim: drop_2m, at: speed}]
+    - id: arch1                    # the hero measurement, drawn on the world beside the jar (close shot)
+      type: dimension
+      label: arch (our model)
+      from: arch_base
+      to: arch_top
+      value: {frames: h1, scale: 100}
+      format: "{v:.0f} cm"
+      show: [payoff+0.3, payoff+1.95]
+      claims: [{claim: arch_1m, at: payoff+1.0}]
+    - id: arch                     # ...and again while the drop doubles (medium shot), growing with it
+      type: dimension
+      label: arch (our model)
+      from: arch_base
+      to: arch_top
+      value: {frames: h1, scale: 100}
+      format: "{v:.0f} cm"
+      show: [double, speed.end]
+      claims: [{claim: arch_2m, at: double.end}]
+    - id: why                      # the episode's open question, pinned until it is answered
+      type: question
+      text: "What pushes it up?"
+      ask: rehook@what
+      answer: push@pushes
+      answer_text: "the pile"
+      at: [0.45, 0.135]
+      accent: true
+    - id: push_point               # the force itself, on the point where the link presses into the pile
+      type: arrow
+      label: pile pushes up
+      anchor: push_point
+      dir: [0, 1, 0]
+      length_m: 0.0035
+      offset: [0.13, -0.03]
+      show: [push+0.2, push.end]
+    - id: push                     # the no-push experiment: the model's pile push drops to zero, then returns
+      type: meter
+      label: pile push (our model)
+      value: {frames: alpha_pct}
+      format: "{v:.0f} %"
+      min: 0
+      max: 15
+      threshold: {value: 1}
+      at: [0.45, 0.175]
+      show: [catch@no-0.6, outro+2.2]
+      claims: [{claim: push_share, at: catch@no-0.3}]
+  cues:
+    - {at: "hud:drop.settle", sfx: lock, gain: 0.28}          # the stand arrives at 2 m
+    - {at: "double@doubles", punch_in: 0.07, punch_s: 0.9}     # slow push-in as the arch doubles
+    - {at: "catch@no", music: drop, until: outro}              # music out while the push is switched off
+    - {at: "hud:push.cross", sfx: thud, gain: 0.3, speed: 0.6} # the arch is gone
+    - {at: "outro", music: swell}                              # push back on, the fountain returns
+
