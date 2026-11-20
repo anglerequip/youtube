@@ -97,7 +97,8 @@ and simple chunky vehicles that read instantly at phone size. It feels like a ca
 diorama filmed by a drone, not a diagram and not photorealism.
 
 ## 2. Rendering
-- Real 3D with perspective cameras. Flat-shaded or very lightly smoothed low-poly geometry.
+- Real 3D with perspective cameras. Flat-shaded or very lightly smoothed geometry, at the **higher
+  polygon budget in section 11** (Caesar, 2026-11-20): the faceted look stays, but facets are fine, not chunky.
 - One strong directional "sun" light + soft sky fill. **Hard-edged cast shadows** (cars, trees,
   posts) that are long and diagonal (low sun, roughly 25-35 deg elevation).
 - Subtle ambient occlusion where objects meet the ground (cars sit "in" the world).
@@ -180,3 +181,20 @@ that signals the phenomenon.
 ## 10. Our branding inside this style
 - Small "COUNTERPHYSICAL" wordmark is optional and must stay out of the caption band.
 - Our label cards may use our accent colours, but keep the off-white card + one strong colour rule.
+
+## 11. Polygon budget (Caesar, 2026-11-20: "increase the poly in the videos")
+Every new or edited model uses at least these segment counts. Prefer more on anything the camera gets close to.
+| Geometry | Hero / close-up (presenters, the phenomenon object) | Background props (trees, cars, fences) |
+|---|---|---|
+| Sphere (width x height segments) | 48 x 36 or more | 24 x 16 or more |
+| Cylinder / capsule radial segments | 24 or more (capsule cap segments 6) | 16 or more |
+| Icosahedron detail (faceted crowns, hair locks) | 2 | 1 |
+| Torus (tube x radial) | 12 x 32 | 8 x 20 |
+| Lathe (segments x profile points) | 24 x 24 | 16 x 12 |
+- Props and scenery may stay flat-shaded (stylised diorama). Presenters and other close-up characters are smooth-shaded
+  high-poly: continuous lathe/tube bodies (40+ radial segments), heads 72 x 54, hair and beards built from tapered strands.
+- Presenters come from `renderer/characters.js` (`man()` = the wizard, `woman()` = the young woman), already at this budget. Use them in place of
+  the old wooden toy figure. They are original designs: never restyle them, or any other model, to look like an
+  existing character, celebrity or actor.
+- Check render time after raising detail: a full 3D render must still finish in a reasonable time on Caesar's PC.
+
