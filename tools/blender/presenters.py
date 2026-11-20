@@ -310,12 +310,12 @@ def scalp_cap(name, head, C, P, hairline, material, scale=1.04):
 # ---------------------------------------------------------------- the woman
 def build_woman():
     M = {
-        'skin': mat('w_skin', '#f1d2c2', 0.5, sss=0.15), 'top': mat('w_top', '#1b1a1e', 0.88, sheen=0.3),
+        'skin': mat('w_skin', '#eec7b4', 0.48, sss=0.2), 'top': mat('w_top', '#1b1a1e', 0.88, sheen=0.3),
         'skirt': mat('w_skirt', '#151417', 0.75), 'tights': mat('w_tights', '#2a2327', 0.55),
         'boot': mat('w_boot', '#121114', 0.3, coat=0.4), 'sole': mat('w_sole', '#0c0b0d', 0.7),
         'hair': mat('w_hair', '#0d0b0f', 0.45), 'hairs': mat('w_hair_str', '#141117', 0.38), 'eyewhite': mat('w_eyewhite', '#f1ece6', 0.12),
         'iris': mat('w_iris', '#4a5a58', 0.2), 'pupil': mat('w_pupil', '#050506', 0.1), 'lash': mat('w_lash', '#070608', 0.5),
-        'brow': mat('w_brow', '#1a1517', 0.7), 'lip': mat('w_lip', '#a8636b', 0.4), 'mouth': mat('w_mouth', '#3a1518', 0.8),
+        'brow': mat('w_brow', '#1a1517', 0.7), 'lip': mat('w_lip', '#9c4f5c', 0.35), 'mouth': mat('w_mouth', '#3a1518', 0.8),
         'silver': mat('w_silver', '#d0d3d8', 0.2, metal=1.0),
     }
     J = {
@@ -349,8 +349,8 @@ def build_woman():
                 for s in (-1, 1): v.co.y -= 0.024 * g2(x, z, s * 0.058, 1.275, 0.05, 0.05)
     body, rig = build_body('woman', J, E, region, shape)
     C = (0, -0.004, 1.585)
-    P = dict(size=(0.075, 0.088, 0.1), jaw=0.27, chin=0.2, chinfwd=0.08, cheek=0.06, socket=0.05, ridge=0.012, nose=0.075,
-             tip=0.045, lips=0.035, eye_r=0.0122, eye_x=0.43, eye_z=0.05, iris=0.62, lid=0.17, lid_tilt=0.12, lash=0.0016, wing=True,
+    P = dict(size=(0.075, 0.088, 0.1), jaw=0.27, chin=0.2, chinfwd=0.08, cheek=0.06, socket=0.05, ridge=0.014, nose=0.09,
+             tip=0.045, lips=0.035, eye_r=0.0122, eye_x=0.43, eye_z=0.05, iris=0.6, lid=0.52, lid_tilt=0.1, lash=0.0016, wing=True,
              brow_x0=0.2, brow_x1=0.78, brow_z=0.25, brow_arch=0.06, brow_w=0.0016, mouth_z=-0.56, ulip=(0.0135, 0.0028),
              llip=(0.0125, 0.0036), ear=0.9)
     head = build_head('w_head', P, C, M)
@@ -460,7 +460,7 @@ def build_wizard():
     body, rig = build_body('wizard', J, E, region)
     C = (0, 0.002, 1.69)
     P = dict(size=(0.078, 0.094, 0.104), jaw=0.18, chin=0.08, chinfwd=0.06, cheek=0.05, socket=0.075, ridge=0.03, nose=0.12,
-             tip=0.06, lips=0.03, eye_r=0.0115, eye_x=0.41, eye_z=0.06, iris=0.6, lid=0.3, lid_tilt=-0.08, lash=0.0008, wing=False,
+             tip=0.06, lips=0.03, eye_r=0.0115, eye_x=0.41, eye_z=0.06, iris=0.6, lid=0.45, lid_tilt=-0.06, lash=0.0008, wing=False,
              brow_x0=0.18, brow_x1=0.8, brow_z=0.25, brow_arch=0.035, brow_w=0.0042, mouth_z=-0.56, ulip=(0.015, 0.0028),
              llip=(0.0145, 0.0036), ear=1.05)
     head = build_head('z_head', P, C, M)
@@ -578,8 +578,17 @@ def export(rig, path):
         o.select_set(True)
         for c in o.children: sel(c)
     sel(rig); bpy.context.view_layer.objects.active = rig
+    # slim for the real-time renderer: cap each mesh at about `budget` vertices with a temporary decimate
+    budget, added = 9000, []
+    dg = bpy.context.evaluated_depsgraph_get()
+    for o in bpy.context.selected_objects:
+        if o.type != 'MESH': continue
+        n = len(o.evaluated_get(dg).data.vertices)
+        if n > budget:
+            m = o.modifiers.new('slim', 'DECIMATE'); m.ratio = max(0.12, budget / n); added.append((o, m))
     bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True, export_apply=True, export_yup=True,
                               export_skins=True, export_animations=False)
+    for o, m in added: o.modifiers.remove(m)
 
 if __name__ == '__main__':
     argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
