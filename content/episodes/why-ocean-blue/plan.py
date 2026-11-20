@@ -18,7 +18,7 @@ SCENE = "ocean3d"
 ROPE = [0.0, 0.0, 0.0]          # rope from the boat at the pier's end; depth is -y
 PIER_Z = 6.0                    # pier runs from the beach (z = 40) to here
 GLASS = [1.25, 1.25, 9.0]       # on a pier post
-TANK = [4.0, 0.25, 30.0]        # a tall clear column of water standing on the beach (bottom of the water)
+TANK = [0.2, 0.95, 9.3]         # a long glass tank on the pier deck: near end (x, deck y, z); it runs 4 m towards the beach (+z)
 TANK_L = 4.0
 MOLE = [4.0, -3.0, -3.0]
 BEAMS_X = [-2.4, -1.2, 0.0]     # red, green, blue beams (x), at z = -4
@@ -45,8 +45,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     colours = {
         "sea": _hex(sea),
         "glass": _hex(wc.through(0.08)),                   # through an 8 cm glass
-        "tank": _hex(wc.through(2 * TANK_L)),              # its white floor seen from the top: 4 m down and 4 m back up
+        "tank": _hex(wc.through(TANK_L)),                  # the white end board seen down the tank's 4 m length
+        "tank_grad": [_hex(wc.through(TANK_L * q / 8)) for q in range(9)],   # white floor seen through 0..4 m of water
         "tank_side": _hex(wc.through(0.5)),
+        "path_out": _hex(deep * 0.8 + 0.05),               # the light that comes back out of the sea (model hue, display brightness)
         "underside": _hex(wc.through(3.0), 0.95),
         "beam_cols": ["#ff3b30", "#5fd36a", "#3d7bff"],
         "ball_surface": _hex(wc.through(0.0, wc.red_paint())),
@@ -59,7 +61,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
 
     dive0, dive1 = S("dive") + 0.1, max(S("dive") + 1.6, at("dive", "gone") + 0.2)
     lamp_off = at("red", "Down") - 0.1
-    frames = {k: [] for k in ("depth", "ball_y", "ball_col", "fog", "fog_far", "wob", "badge", "set", "lamp", "fish_col", "beams_on", "light")}
+    frames = {k: [] for k in ("depth", "ball_y", "ball_col", "fog", "fog_far", "wob", "badge", "set", "lamp", "fish_col", "beams_on", "light", "path_in", "path_up")}
+    up0 = at("back", "bounces") - 0.1
     for t in T:
         # the red ball sinks from just under the surface to 10 m during the dive beat
         u = min(1.0, max(0.0, (t - dive0) / (dive1 - dive0)))
@@ -69,16 +72,21 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         frames["depth"].append(round(d if t >= S("dive") - 0.1 else 0.0, 3))
         frames["ball_y"].append(round(-d, 3))
         # its colour: sunlight down d metres, off red paint, then ~2.5 m to the camera
-        frames["ball_col"].append(_hex(wc.through(d + 2.5, wc.red_paint()), 1.15))
+        amb = float(np.dot([0.2126, 0.7152, 0.0722], np.clip(wc.through(d), 0, None)))
+        frames["ball_col"].append(_hex(wc.through(d + 1.0, wc.red_paint()) / max(amb, 1e-3), 1.0))
         # underwater haze colour at the camera's depth (scene decides when the camera is underwater)
         if t >= S("red") - 0.1:
             frames["fog"].append(colours["deep_fog"]); frames["fog_far"].append(14.0); frames["light"].append(0.12)
         else:
             dc = {"absorb": 3.0, "metres": 6.0}.get(next((b for b in ("absorb", "metres") if S(b) - 0.1 <= t < E(b) + 0.15), ""), d)
             frames["fog"].append(_hex(wc.through(dc + 4.0), 0.75)); frames["fog_far"].append(26.0 if dc > 4 else 30.0)
-            frames["light"].append(round(float(np.mean(wc.through(dc))), 3))
+            frames["light"].append(round(float(np.dot([0.2126, 0.7152, 0.0722], np.clip(wc.through(dc), 0, None))), 3))
         frames["wob"].append(round(math.sin(t * 2 * math.pi * 1.6), 4))
         frames["beams_on"].append(1 if S("metres") - 0.1 <= t < S("dive") - 0.1 else 0)
+        # back beat: sunlight goes down into the sea, and blue light comes back up out of it
+        inb = S("back") - 0.1 <= t < S("red") - 0.1
+        frames["path_in"].append(round(cam.ease((t - S("back") + 0.1) / 1.0), 3) if inb else 0.0)
+        frames["path_up"].append(round(cam.ease((t - up0) / 1.0), 3) if inb and t >= up0 else 0.0)
         lamp = 1 if t < lamp_off else 0
         frames["lamp"].append(lamp)
         frames["fish_col"].append(colours["fish_lamp"] if lamp else colours["fish_dark"])
@@ -99,24 +107,24 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         cam.shot(0.0, S("glass") - 0.1, [(0.0, K(13.0, 6.5, 19.0), K(0.0, 0.3, 3.0), 44),
                                          (S("glass") - 0.1, K(11.0, 5.8, 16.5), K(0.0, 0.3, 3.0), 44)], fps, "key"),
         # glass: close on the glass, the long tank behind it
-        cam.shot(S("glass") - 0.1, at("glass", "You") - 0.1, [(S("glass") - 0.1, K(gx + 0.28, gy + 0.14, gz + 0.62), K(gx, gy + 0.07, gz), 38),
-                                                              (at("glass", "You") - 0.1, K(gx + 0.24, gy + 0.13, gz + 0.55), K(gx, gy + 0.07, gz), 38)], fps, "golden"),
+        cam.shot(S("glass") - 0.1, at("glass", "You") - 0.1, [(S("glass") - 0.1, K(gx + 0.05, gy + 0.16, gz - 0.62), K(gx - 0.1, gy + 0.05, gz + 0.3), 38),
+                                                              (at("glass", "You") - 0.1, K(gx + 0.02, gy + 0.15, gz - 0.55), K(gx - 0.1, gy + 0.05, gz + 0.3), 38)], fps, "golden"),
         # glass 2: down the length of the tank: 4 m of water looks blue
-        cam.shot(at("glass", "You") - 0.1, S("absorb") - 0.1, [(at("glass", "You") - 0.1, K(tx + 0.9, ty + TANK_L + 1.2, tz + 1.6), K(tx, ty + TANK_L * 0.45, tz), 40),
-                                                                 (S("absorb") - 0.1, K(tx + 0.6, ty + TANK_L + 1.0, tz + 1.1), K(tx, ty + TANK_L * 0.4, tz), 40)], fps, "golden"),
+        cam.shot(at("glass", "You") - 0.1, S("absorb") - 0.1, [(at("glass", "You") - 0.1, K(tx + 0.03, ty + 0.62, tz - 0.75), K(tx, ty + 0.18, tz + TANK_L), 40),
+                                                                 (S("absorb") - 0.1, K(tx + 0.02, ty + 0.52, tz - 0.55), K(tx, ty + 0.18, tz + TANK_L), 40)], fps, "golden"),
         # absorb: underwater, a water molecule wobbling in a red beam
         cam.shot(S("absorb") - 0.1, S("metres") - 0.1, [(S("absorb") - 0.1, K(mx + 2.0, my + 0.4, mz + 3.6), K(mx, my - 0.3, mz), 40),
                                                         (S("metres") - 0.1, K(mx + 1.6, my + 0.3, mz + 3.2), K(mx, my - 0.3, mz), 40)], fps, "key"),
         # metres: underwater, the three beams going down, red fading first
-        cam.shot(S("metres") - 0.1, S("dive") - 0.1, [(S("metres") - 0.1, K(bx + 5.0, -3.0, 7.0), K(bx, -5.0, -4.0), 46),
-                                                      (S("dive") - 0.1, K(bx + 4.4, -4.0, 6.4), K(bx, -5.5, -4.0), 46)], fps, "key"),
+        cam.shot(S("metres") - 0.1, S("dive") - 0.1, [(S("metres") - 0.1, K(bx + 8.0, -5.0, 12.0), K(bx, -7.0, -4.0), 50),
+                                                      (S("dive") - 0.1, K(bx + 7.2, -5.5, 11.0), K(bx, -7.5, -4.0), 50)], fps, "key"),
         # dive: follow the red ball down the rope
         cam.shot(S("dive") - 0.1, S("back") - 0.1, [(S("dive") - 0.1, K(1.4, 0.4, 2.4), K(0.0, -0.1, 0.0), 42),
                                                     (S("back") - 0.1, K(1.2, 0.3, 2.2), K(0.0, 0.0, 0.0), 42)], fps, "key",
                  subject=lambda i: (0.0, frames["ball_y"][min(i, n - 1)], 0.0)),
         # back: high aerial, the sea from above
-        cam.shot(S("back") - 0.1, S("red") - 0.1, [(S("back") - 0.1, K(-14.0, 30.0, 26.0), K(0.0, 0.0, -4.0), 44),
-                                                   (S("red") - 0.1, K(-11.0, 26.0, 23.0), K(0.0, 0.0, -4.0), 44)], fps, "key"),
+        cam.shot(S("back") - 0.1, S("red") - 0.1, [(S("back") - 0.1, K(-9.0, 8.5, 9.0), K(-3.0, 1.2, -3.0), 44),
+                                                   (S("red") - 0.1, K(-8.0, 7.6, 8.0), K(-3.0, 1.2, -3.0), 44)], fps, "key"),
         # red: the deep: a red fish in a lamp beam, then the lamp goes off
         cam.shot(S("red") - 0.1, end_t, [(S("red") - 0.1, K(fx + 1.3, fy + 0.35, fz + 2.6), K(fx, fy, fz), 40),
                                          (end_t, K(fx + 1.0, fy + 0.3, fz + 2.3), K(fx, fy, fz), 40)], fps, "key"),
@@ -133,10 +141,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     cards = [
         {"start": at("metres", "almost"), "end": at("metres", "Blue") - 0.05, "big": "46%", "small": "of the deepest red lost per metre", "y": 0.17},
         {"start": at("metres", "about"), "end": S("dive") - 0.15, "big": "≈ 0.9%", "small": "of the blue lost per metre", "y": 0.17},
-        {"start": at("dive", "gone"), "end": S("back") - 0.15, "big": "≈ 0.2%", "small": "of the deepest red left", "y": 0.17},
+        {"start": at("dive", "red") - 0.1, "end": at("back", "bounces") - 0.2, "big": "≈ 0.2%", "small": "of the deepest red left", "y": 0.17},
     ]
-    events = [(round(dive0 + 0.05, 3), "whoosh", {"gain": 0.14}),
-              (round(lamp_off, 3), "tick", {"gain": 0.18, "seed": 5})]
+    events = [(round(dive0 + 0.05, 3), "whoosh", {"gain": 0.35}),
+              (round(lamp_off, 3), "pop", {"gain": 0.22, "seed": 5})]
     timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [dive0, lamp_off], "events": events,
                "mutes": [], "swells": [S("back")], "lamp_off": lamp_off, "dive": [dive0, dive1]}
     facts = dict(f)

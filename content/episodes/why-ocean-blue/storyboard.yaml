@@ -49,7 +49,7 @@ beats:
 caveats:
   - "Both effects are real: the sea's colour is the light that comes back out of the water (blue, because water absorbs red) plus sky reflected off the surface, which matters most near the horizon and on calm days (Braun & Smirnov 1993: 'any simple answer is bound to mislead')."
   - "'The deepest red' is 700 nm, where pure water absorbs 0.624 per metre (46% lost per metre). Orange-red at 620 nm loses about 24% per metre. Blue at 450 nm absorbs 0.0092 per metre (about 0.9%). Pope & Fry 1997."
-  - "'Ten metres down, red is almost gone': at 700 nm, 0.2% of the light is left after 10 m of pure water. Longer reds (600-650 nm) keep more (a few to 10%), so a red object looks dark brown rather than pitch black at 10 m."
+  - "'Ten metres down, red is almost gone': at 700 nm, 0.2% of the light is left after 10 m of pure water. Longer reds (600-650 nm) keep more (a few to 10%), so at 10 m a red object looks a murky dark brown-grey rather than pitch black (on screen its colour is shown relative to the light around it, as an adapted eye sees it)."
   - "Real seawater also contains plankton, dissolved matter and particles, which make coastal water green or brown; our colours are for clear water."
   - "The colours on screen are computed from the absorption data (5800 K sunlight, CIE 1931 colour matching, sRGB); the sea surface also mixes in a little sky, and brightness is adjusted for display."
   - "NOAA Ocean Exploration: red light does not reach the deep ocean (by about 100 m), so red animals look black there."
@@ -123,5 +123,4 @@ retention:
       at: [0.27, 0.31]
       show: [dive, dive.end+0.3]
       claims: [{claim: depth_hud, at: dive.end+0.2}]
-  cues:
-    - {at: "red@black", sfx: thud, gain: 0.16}
+  cues: []
