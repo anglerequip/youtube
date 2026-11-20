@@ -74,20 +74,36 @@ export function build(world, plan) {
   const [ax, ay, az] = L.atoms;
   const cluster = new THREE.Group(); cluster.position.set(ax, ay, az); S.add(cluster);
   const R = world.rand;
-  for (let k = 0; k < 26; k++) {
-    const a = new THREE.Mesh(new THREE.IcosahedronGeometry(0.028, 1), MAT.plastic(k % 3 ? '#b9bdc2' : '#a99bc4'));
-    let p; do { p = new THREE.Vector3(R() - 0.5, R() - 0.5, R() - 0.5).multiplyScalar(0.36); } while (p.length() < 0.07);
+  // inside the banana: a soft cream backdrop around the cluster, so the atoms don't read as balloons in a garden
+  const inside = new THREE.Mesh(new THREE.SphereGeometry(1.25, 32, 20), new THREE.MeshBasicMaterial({ color: '#e9d796', side: THREE.BackSide, fog: false }));
+  cluster.add(inside);
+  const flesh = [];
+  for (let k = 0; k < 40; k++) {               // faint fibres of banana flesh, far behind the atoms
+    const f = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.5 + R() * 0.6, 5), new THREE.MeshBasicMaterial({ color: '#d9c27a', fog: false }));
+    const d = new THREE.Vector3(R() - 0.5, R() - 0.5, R() - 0.5).normalize(); f.position.copy(d.multiplyScalar(0.9 + R() * 0.25));
+    f.rotation.set(R() * 3, R() * 3, R() * 3); cluster.add(f); flesh.push(f);
+  }
+  for (let k = 0; k < 30; k++) {
+    const a = new THREE.Mesh(new THREE.IcosahedronGeometry(0.028, 1), flat(k % 3 ? '#a9adb3' : '#c4c7cb', { roughness: 0.7 }));
+    let p; do { p = new THREE.Vector3(R() - 0.5, R() - 0.5, R() - 0.5).multiplyScalar(0.4); }
+    while (p.length() < 0.07 || (p.z > 0.02 && Math.abs(p.x) < 0.11 && Math.abs(p.y) < 0.11));   // keep the view of the red atom clear
     a.position.copy(p); cluster.add(a);
   }
   const k40M = MAT.plastic('#c92a2e'); k40M.emissive = new THREE.Color('#ff3b30'); k40M.emissiveIntensity = 0.35;
   const k40 = new THREE.Mesh(new THREE.IcosahedronGeometry(0.034, 2), k40M); cluster.add(k40);
   const k40Glow = haloSprite('#ff3b30', 0.16, 0.35); cluster.add(k40Glow);
-  const electron = new THREE.Mesh(new THREE.SphereGeometry(0.008, 10, 8), MAT.emissive('#ffe3d6', 3)); cluster.add(electron);
-  const trailM = new THREE.MeshBasicMaterial({ color: '#ffb8a0', transparent: true, opacity: 0, depthWrite: false });
-  const trail = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 1, 6), trailM); cluster.add(trail);
-  const eDir = new THREE.Vector3(1, 0.35, 0.25).normalize();
+  const electron = new THREE.Mesh(new THREE.SphereGeometry(0.014, 12, 8), MAT.emissive('#ffffff', 4)); cluster.add(electron);
+  const eGlow = haloSprite('#9fd4ff', 0.09, 0); cluster.add(eGlow);
+  const fireFlash = haloSprite('#fff4e0', 0.3, 0); cluster.add(fireFlash);
+  const trailM = new THREE.MeshBasicMaterial({ color: '#cfe8ff', transparent: true, opacity: 0, depthWrite: false });
+  const trail = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 1, 8), trailM); cluster.add(trail);
+  const eDir = new THREE.Vector3(1, 0.45, 0.3).normalize();
   const ca = new THREE.Color('#efece4'), red = new THREE.Color('#c92a2e');
 
+  const extraDots = Array.from({ length: 24 }, (_, q) => {
+    const d = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), new THREE.MeshBasicMaterial({ color: '#ff7a3d', transparent: true, opacity: 0, depthWrite: false }));
+    S.add(d); return { d, x: (R() - 0.5) * 0.14, z: (R() - 0.5) * 0.08, ph: R() };
+  });
   const bodyPt = (e) => { const [, h, x, z] = e; const w = h > 1.45 ? 0.08 : h > 0.95 ? 0.16 : 0.1; return tmp.set(L.fig[0] + x * w, h, L.fig[2] + z * 0.08); };
   const focalPt = i => F.focal_pt[Math.min(i, F.focal_pt.length - 1)];
   let lastShot = null;
@@ -130,18 +146,26 @@ export function build(world, plan) {
         }
       }
       for (let q = used; q < pool.length; q++) { pool[q].glow.material.opacity = 0; pool[q].streak.visible = false; }
+      // the banana's extra potassium: arrives in the body, then drains away (down and out) as the kidneys remove it
+      const ex = F.extra[k];
+      for (const o of extraDots) {
+        const on = ex > 0.01 && o.ph < ex + 0.02;
+        o.d.visible = on;
+        if (on) { const y = 1.15 - ((o.ph + t * 0.35) % 1) * 1.1; o.d.position.set(L.fig[0] + o.x * (y > 0.9 ? 1 : 0.6), y, L.fig[2] + o.z); o.d.material.opacity = 0.9; }
+      }
       // the potassium-40 atom: waits, then fires an electron and turns into calcium (white)
       const a = F.atom[k];
-      cluster.rotation.y = 0.2 + t * 0.12;
-      k40.position.set(0, 0, 0.09 + 0.004 * Math.sin(t * 9));
-      k40M.color.copy(red).lerp(ca, Math.min(1, a * 2)); k40M.emissiveIntensity = 0.35 * (1 - Math.min(1, a * 2));
-      k40Glow.position.copy(k40.position); k40Glow.material.opacity = a > 0 ? 0.9 * Math.max(0, 1 - a * 3) + 0.0 : 0.35;
-      k40Glow.scale.setScalar(a > 0 ? 0.16 + 0.5 * a : 0.16);
-      electron.visible = a > 0 && a < 1;
-      const dist = 0.6 * a;
-      electron.position.copy(k40.position).addScaledVector(eDir, dist);
-      trail.visible = a > 0 && a < 1; trail.scale.set(1, Math.max(0.001, dist), 1);
-      trail.position.copy(k40.position).addScaledVector(eDir, dist / 2); trail.quaternion.setFromUnitVectors(up, eDir); trailM.opacity = 0.7 * (1 - a);
+      const el = F.electron[k];
+      cluster.rotation.y = 0.2 + 0.05 * Math.sin(t * 0.4);
+      k40.position.set(0, 0, 0.12 + (el === 0 ? 0.004 * Math.sin(t * 9) : 0));
+      k40M.color.copy(red).lerp(ca, a); k40M.emissiveIntensity = 0.35 * (1 - a);
+      k40Glow.position.copy(k40.position); k40Glow.material.opacity = 0.35 * (1 - a); k40Glow.scale.setScalar(0.16);
+      fireFlash.position.copy(k40.position); fireFlash.material.opacity = el > 0 ? Math.max(0, 1 - el * 3) : 0; fireFlash.scale.setScalar(0.12 + 0.4 * el);
+      electron.visible = el > 0 && el < 1; eGlow.material.opacity = electron.visible ? 0.9 : 0;
+      const dist = 0.7 * el;
+      electron.position.copy(k40.position).addScaledVector(eDir, dist); eGlow.position.copy(electron.position);
+      trail.visible = el > 0 && el < 1; trail.scale.set(1, Math.max(0.001, Math.min(dist, 0.25)), 1);
+      trail.position.copy(k40.position).addScaledVector(eDir, Math.max(dist - 0.125, dist / 2)); trail.quaternion.setFromUnitVectors(up, eDir); trailM.opacity = 0.8 * (1 - el);
       cluster.visible = focalPt(i)[1] > 1.1 && Math.abs(focalPt(i)[0] - L.atoms[0]) < 0.3;
       if (shot !== lastShot) {
         lastShot = shot;

@@ -41,9 +41,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     body_ev = [[t, round(float(rng.uniform(0.08, 1.68)), 3), round(float(rng.uniform(-1, 1)), 3), round(float(rng.uniform(-1, 1)), 3)] for t in body_t]
     count0 = S("hook") + 0.2
     eat0, eat1 = S("eat") + 0.3, S("eat") + 1.4               # banana goes to the figure
-    decay_t = at("what", "fires") - 0.05                      # the highlighted atom decays
+    fire_t = at("what", "electron") - 0.2                     # the highlighted atom fires its electron
+    decay_t = at("what", "calcium") - 0.35                    # ... and has become calcium as the word lands
 
-    frames = {k: [] for k in ("count", "body_k", "banana_on", "eaten", "atom", "badge", "body_on")}
+    frames = {k: [] for k in ("count", "body_k", "banana_on", "eaten", "atom", "electron", "badge", "body_on", "extra")}
     for t in T:
         frames["count"].append(sum(1 for x in bt if count0 <= x <= t))
         # body potassium: the banana's 0.45 g arrives, the kidneys remove it over a few hours (time-lapse)
@@ -55,11 +56,13 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         frames["body_k"].append(round(kb, 3))
         frames["banana_on"].append(0 if t >= eat1 else 1)
         frames["eaten"].append(round(cam.ease((t - eat0) / (eat1 - eat0)) if t >= eat0 else 0.0, 3))
-        frames["atom"].append(round(min(1.0, max(0.0, (t - decay_t) / 0.6)), 3) if t >= decay_t else 0.0)
+        frames["atom"].append(round(min(1.0, max(0.0, (t - decay_t) / 0.5)), 3) if t >= decay_t else 0.0)
+        frames["electron"].append(round(min(1.0, (t - fire_t) / 0.9), 3) if t >= fire_t else 0.0)
+        frames["extra"].append(round((kb - k40.BODY_K_G) / k40.BANANA_K_G, 3))
         frames["body_on"].append(1 if t >= S("you") - 0.1 else 0)
         b = ""
         if S("why") - 0.1 <= t < S("you") - 0.1:
-            b = "NOT TO SCALE"
+            b = "INSIDE THE BANANA, NOT TO SCALE"
         elif S("you") - 0.1 <= t < S("eat") - 0.1:
             b = "ONLY SOME DECAYS DRAWN"
         elif t >= eat1:
@@ -106,13 +109,19 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         {"start": at("what", "calcium") - 0.1, "end": S("you") - 0.15, "big": "calcium-40", "small": "what it becomes", "y": 0.17},
         {"start": at("you", "four"), "end": S("eat") - 0.15, "big": "≈ 4,400", "small": "decays a second in you", "y": 0.17},
     ]
-    events = [(round(decay_t + 0.02, 3), "pop", {"gain": 0.2, "seed": 6}),
-              (round(eat0, 3), "whoosh", {"gain": 0.12})]
-    timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [decay_t, eat1], "events": events,
+    # Geiger-style clicks for the banana's real decays during the hook (each a slightly different click)
+    # a counter beside a banana catches only a few of its decays: click on the first decay after each irregular gap
+    clicks, last = [], -9.0
+    for x in bt:
+        if 0.4 <= x <= S("why") - 0.4 and x - last >= 0.7 + 0.35 * (len(clicks) % 3):
+            clicks.append((round(x, 3), "pop", {"gain": 0.1, "seed": 31 + 7 * len(clicks)})); last = x
+    events = clicks + [(round(fire_t + 0.02, 3), "pop", {"gain": 0.3, "seed": 6}),
+                       (round(eat0, 3), "whoosh", {"gain": 0.25})]
+    timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [fire_t, decay_t, eat1], "events": events,
                "mutes": [], "swells": [S("you")], "decay_t": decay_t, "eat": [eat0, eat1]}
     facts = dict(f)
     facts.update({"slow_factors": [], "one_in_card": 8500.0,
-                  "events": {"atom_decayed": {"t": decay_t + 0.7, "observe": "atom", "expect": 1.0, "tol": 0.01}}})
+                  "events": {"atom_decayed": {"t": decay_t + 0.6, "observe": "atom", "expect": 1.0, "tol": 0.01}}})
     return {"scene": SCENE, "W": W, "H": H, "fps": fps, "n_frames": n, "seed": 51, "supersample": 1.0,
             "bloom_threshold": 3.0, "end_hold_s": 1.0,
             "layout": {"table": TABLE, "banana": BANANA, "fig": FIG, "atoms": ATOMS},
