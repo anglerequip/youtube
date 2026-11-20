@@ -42,6 +42,9 @@ function fromGLB(kind, name) {
         o.material = new THREE.MeshStandardMaterial({ name: m.name, color: m.color, roughness: m.roughness, metalness: m.metalness,
           emissive: m.emissive, emissiveIntensity: m.emissiveIntensity, map: m.map, normalMap: m.normalMap, side: m.side });
       }
+      if (o.geometry.attributes.color) {            // painted face shading (blush, eye sockets) from Blender
+        o.material = o.material.clone(); o.material.vertexColors = true;
+      } else if (o.material.vertexColors) { o.material = o.material.clone(); o.material.vertexColors = false; }
     }
   });
   model.updateMatrixWorld(true);
