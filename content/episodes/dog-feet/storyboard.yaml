@@ -123,7 +123,7 @@ entities:
     type: hero_object
     category: A
     importance: primary
-    visual_contract: {must_read_as: "the wizard presenter (hat, beard) lying in bed under a duvet, head on the pillow"}
+    visual_contract: {must_read_as: "the wizard presenter (hat, beard) sitting up in bed against his pillows, the duvet over his legs, the dog across his feet"}
   - id: woman
     type: hero_object
     category: A
