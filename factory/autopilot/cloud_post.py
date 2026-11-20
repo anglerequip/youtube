@@ -44,7 +44,8 @@ def body(pkg: dict) -> dict:
               "selfDeclaredMadeForKids": bool(pkg.get("made_for_kids", False)),
               "containsSyntheticMedia": bool(pkg.get("contains_synthetic_media", True))}
     return {"snippet": {"title": pkg["title"][:100], "description": pkg["description"],
-                        "tags": pkg.get("tags", []), "categoryId": str(pkg.get("category_id", "28"))},
+                        "tags": pkg.get("tags", []), "categoryId": str(pkg.get("category_id", "28")),
+                        "defaultLanguage": "en", "defaultAudioLanguage": "en"},
             "status": status}
 
 

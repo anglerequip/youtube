@@ -41,3 +41,9 @@ def test_queue_refuses_topics_already_in_the_ledger(tmp_path, monkeypatch):
     (d / "package.json").write_text(json.dumps({"title": "t", "description": "", "publish_at": "2026-11-21T16:00:00Z"}))
     assert cloud_post.run(dry_run=True) == 0
     assert d.exists()
+
+
+def test_language_is_declared_english():
+    b = cloud_post.body({"title": "t", "description": "", "publish_at": "2026-11-21T16:00:00Z"})
+    assert b["snippet"]["defaultLanguage"] == "en"
+    assert b["snippet"]["defaultAudioLanguage"] == "en"
