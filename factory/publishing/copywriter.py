@@ -77,6 +77,34 @@ def ai_disclosure() -> str:
             f"The narration is {voice}.")
 
 
+# Topic-aware sign-off line (Caesar, 2026-11-20: "it should depend on the context of the video").
+# A storyboard can set publish.tagline itself; otherwise the topic is read from the tags and title.
+TOPIC_TAGLINES = (   # first match wins
+    (("cat", "cats", "dog", "dogs", "pet", "pets", "animal", "animals", "bird", "birds", "wildlife"),
+     "animal science that breaks your intuition."),
+    (("biology", "body", "brain", "health", "human", "sleep", "medicine", "anatomy"),
+     "biology that breaks your intuition."),
+    (("chemistry", "chemical", "crystal", "crystals", "molecule", "molecules", "reaction"),
+     "chemistry that breaks your intuition."),
+    (("maths", "math", "probability", "statistics", "geometry"),
+     "maths that breaks your intuition."),
+    (("physics", "relativity", "gravity", "momentum", "waves", "electricity", "optics"),
+     "physics that breaks your intuition."),
+)
+GENERIC_TAGLINE = "science that breaks your intuition."
+
+
+def tagline(sb) -> str:
+    own = (sb.extra.get("publish") or {}).get("tagline")
+    if own:
+        return clean(str(own))
+    words = set(re.findall(r"[a-z]+", " ".join([*map(str, sb.tags), str(sb.title)]).lower()))
+    for keys, line in TOPIC_TAGLINES:
+        if words & set(keys):
+            return line
+    return GENERIC_TAGLINE
+
+
 def youtube(sb) -> dict:
     pub = (sb.extra.get("publish") or {})
     yt = pub.get("youtube") or {}
@@ -87,7 +115,7 @@ def youtube(sb) -> dict:
     if sb.sources:
         parts.append("Sources:\n" + "\n".join(f"- {s}" for s in sb.sources))
     parts.append(ai_disclosure())
-    parts.append(f"{settings.channel_name}: {settings.channel_tagline}")
+    parts.append(f"{settings.channel_name}: {tagline(sb)}")
     parts.append(tags_line)
     desc = "\n\n".join(p for p in parts if p)
     tags = _uniq([t.lstrip("#").lower() for t in sb.tags if t.lower() != "shorts"] + [settings.channel_name.lower()])

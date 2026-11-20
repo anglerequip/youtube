@@ -51,7 +51,7 @@ description, sources and tags. Every number in the copy or on the cover must als
 
 | Platform | What we send | Notes |
 |---|---|---|
-| YouTube Shorts | title (aim under 70 chars), description with lead, sources, how-it's-made line, tagline, `#shorts` + 3-4 topical hashtags; tags; category Science & Technology; not made for kids | Any vertical video up to 3 min is a Short. Custom thumbnails are tried but YouTube may keep a frame for the Shorts feed |
+| YouTube Shorts | title (aim under 70 chars), description with lead, sources, how-it's-made line, topic-aware tagline (`publish.tagline` or picked from the tags: animals, biology, chemistry, maths, physics, else science), `#shorts` + 3-4 topical hashtags; tags; category Science & Technology; not made for kids | Any vertical video up to 3 min is a Short. Custom thumbnails are tried but YouTube may keep a frame for the Shorts feed |
 | TikTok | caption (one or two lines + 3-5 hashtags), AI label, cover frame time | The API can't take a custom cover image, only a frame time, so the cover frame is the same frame as cover.jpg |
 | Facebook Reels | title, short description + 3 hashtags, AI label, cover image | Pages only, not personal profiles |
 

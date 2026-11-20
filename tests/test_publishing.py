@@ -204,3 +204,14 @@ def test_cli_post_refuses_a_hash_caesar_did_not_see(tmp_path, video):
     assert r.returncode == 2 and "NOT APPROVED" in r.stdout
     r = run("posts", "test-pendulum")
     assert "POSTED" not in r.stdout and "APPROVED" not in r.stdout
+
+
+def test_tagline_follows_the_topic():
+    from types import SimpleNamespace as NS
+    from factory.publishing.copywriter import tagline
+    mk = lambda tags, title="x", extra=None: NS(tags=tags, title=title, extra=extra or {})
+    assert tagline(mk(["cat behavior", "cats", "science"])) == "animal science that breaks your intuition."
+    assert tagline(mk(["physics", "slinky"])) == "physics that breaks your intuition."
+    assert tagline(mk(["traffic", "maths", "physics"])) == "maths that breaks your intuition."
+    assert tagline(mk(["ocean"], "Why the sea is blue")) == "science that breaks your intuition."
+    assert tagline(mk(["cats"], extra={"publish": {"tagline": "Own line."}})) == "Own line."
