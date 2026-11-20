@@ -160,8 +160,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                                           (S("pull") - 0.1, K(ROAD_X + 1.9, 3.0, 22.5), K(ROAD_X + 1.8, 0.9, -2), 40)], fps, "sunset",
                  subject=road_subject),
         # pull: low, ahead of the police car, looking back at its lights (moves with the cars)
-        cam.shot(S("pull") - 0.1, S("candy") - 0.1, [(S("pull") - 0.1, K(ROAD_X + 0.6, 1.1, 5.0), K(ROAD_X + 1.8, 1.0, 12.0), 40),
-                                                     (S("candy") - 0.1, K(ROAD_X + 0.6, 1.1, 5.4), K(ROAD_X + 1.8, 1.0, 12.0), 40)], fps, "sunset",
+        cam.shot(S("pull") - 0.1, S("candy") - 0.1, [(S("pull") - 0.1, K(ROAD_X + 1.1, 1.15, 2.6), K(ROAD_X + 1.8, 1.0, 12.0), 40),
+                                                     (S("candy") - 0.1, K(ROAD_X + 1.1, 1.15, 3.2), K(ROAD_X + 1.8, 1.0, 12.0), 40)], fps, "sunset",
                  subject=road_subject),
         # candy + told: roadside at night, the cop holds up one pink stick in his torch beam
         cam.shot(S("candy") - 0.1, S("spark") - 0.1, [(S("candy") - 0.1, K(cx_ - 4.8, 1.65, cz_ - 0.8), K(cx_ + 0.3, 1.25, cz_ - 0.95), 40),

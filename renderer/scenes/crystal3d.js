@@ -328,6 +328,10 @@ export function build(world, plan) {
   for (let q = 0; q < 6; q++) { const st = candyStick(cols[q % 5], 200 + q, 0.16); st.scale.setScalar(1.6); st.position.set(-0.3 + (q % 3) * 0.3, 0.2, -0.15 + Math.floor(q / 3) * 0.3); crate.add(st); }
   S.add(theirs);
   const cop2 = police(); S.add(cop2);
+  for (const ch of [theirs, cop2]) ch.traverse(o => {   // tinted windows and tyres stay dark grey, never pure black
+    if (!o.isMesh) return;
+    for (const m of [].concat(o.material)) if (m && m.emissive && m.emissive.getHex() === 0) m.emissive.setRGB(0.012, 0.012, 0.014);
+  });
   const St = L.stop;
   // headlight pools at the stop (night): the police car's beams on the road
   const beam = new THREE.SpotLight('#fff1d6', 0, 30, 0.5, 0.6, 1.4); S.add(beam); S.add(beam.target);
@@ -425,7 +429,7 @@ export function build(world, plan) {
         lastShot = shot;
         const f = fp(i);
         world.setLighting(shot.lighting ?? 'key', new THREE.Vector3(f[0], 0, f[2]));
-        moon.intensity = (shot.lighting === 'night') ? (set === 'stop' ? 0.85 : 0.4) : 0;
+        moon.intensity = (shot.lighting === 'night') ? (set === 'stop' ? 0.85 : 0.4) : (set === 'road' ? 0.35 : 0);
         if (plan.bloom_threshold) world.bloom.threshold = plan.bloom_threshold;
         const sc = world.sun.shadow.camera, e2 = set === 'road' ? 46 : set === 'house' ? 17 : 7;
         sc.left = -e2; sc.right = e2; sc.top = e2; sc.bottom = -e2; sc.far = 90; sc.updateProjectionMatrix();
