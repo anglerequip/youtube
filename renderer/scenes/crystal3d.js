@@ -425,7 +425,7 @@ export function build(world, plan) {
         lastShot = shot;
         const f = fp(i);
         world.setLighting(shot.lighting ?? 'key', new THREE.Vector3(f[0], 0, f[2]));
-        moon.intensity = (shot.lighting === 'night') ? 0.4 : 0;
+        moon.intensity = (shot.lighting === 'night') ? (set === 'stop' ? 0.85 : 0.4) : 0;
         if (plan.bloom_threshold) world.bloom.threshold = plan.bloom_threshold;
         const sc = world.sun.shadow.camera, e2 = set === 'road' ? 46 : set === 'house' ? 17 : 7;
         sc.left = -e2; sc.right = e2; sc.top = e2; sc.bottom = -e2; sc.far = 90; sc.updateProjectionMatrix();
