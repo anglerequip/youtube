@@ -226,11 +226,35 @@ def build_head(name, P, center, mats):
             y -= P['ridge'] * g2(x, z, s * 0.33, 0.26, 0.22, 0.07) * front
         y -= P['nose'] * g2(x, z, 0, -0.14, 0.085, 0.24) * front
         y -= P['tip'] * g2(x, z, 0, -0.33, 0.085, 0.07) * front
+        for s in (-1, 1):
+            y -= P.get('alar', 0) * g2(x, z, s * 0.1, -0.36, 0.05, 0.05) * front          # nose wings
+            y -= P.get('cheekbone', 0) * g2(x, z, s * 0.42, -0.1, 0.16, 0.09) * front    # cheekbones
+            y += P.get('hollow', 0) * g2(x, z, s * 0.45, -0.4, 0.14, 0.1) * front        # soft hollow under them
+            y += P.get('philtrum', 0) * g2(x, z, s * 0.06, -0.46, 0.035, 0.06) * front   # philtrum ridges either side
         y -= P['lips'] * g2(x, z, 0, -0.55, 0.22, 0.1) * front
         y += 0.05 * g2(x, z, 0, -0.68, 0.2, 0.05) * front         # crease under the lower lip
         v.co = Vector((x * a, y * d, z * h)) + Vector(center)
     head = mesh_obj(name, bm, mats['skin'], True, 1)
     C = Vector(center)
+    mats.setdefault('glint', mat('glint', '#ffffff', 0.1, emit='#ffffff', emit_s=0.6))
+    # painted shading (vertex colour, multiplied with the skin colour in the renderer): cheek blush, eye-socket
+    # shadow / makeup, a touch of colour on the nose tip and chin. Breaks the flat "mannequin" look.
+    paint = P.get('paint')
+    if paint:
+        ca = head.data.color_attributes.new('Col', 'FLOAT_COLOR', 'POINT')
+        for i, v in enumerate(head.data.vertices):
+            x, y, z = (v.co.x - C.x) / a, (v.co.y - C.y) / d, (v.co.z - C.z) / h
+            front = max(0.0, -y)
+            col = Vector((1.0, 1.0, 1.0))
+            for s in (-1, 1):
+                b = paint['blush'][3] * g2(x, z, s * 0.44, -0.22, 0.17, 0.12) * front
+                col = col.lerp(Vector(paint['blush'][:3]), min(1, b))
+                e = paint['socket'][3] * g2(x, z, s * 0.38, 0.1, 0.2, 0.11) * front
+                col = col.lerp(Vector(paint['socket'][:3]), min(1, e))
+            t = paint['blush'][3] * 0.6 * (g2(x, z, 0, -0.34, 0.07, 0.06) + 0.6 * g2(x, z, 0, -0.85, 0.15, 0.08)) * front
+            col = col.lerp(Vector(paint['blush'][:3]), min(1, t))
+            ca.data[i].color = (*col, 1.0)
+        head.data.color_attributes.active_color = ca
     def hit(x, z, depth=0.0):
         p, n = surface_hit(head, (x, C.y - 1.0, z), (0, 1, 0))
         return p + n * depth, n
@@ -244,13 +268,15 @@ def build_head(name, P, center, mats):
         eye = sphere(f'eye_{"L" if s > 0 else "R"}', r, 32, 24, ec, material=mats['eyewhite']); parts.append(eye)
         iris = sphere('iris', r * P['iris'], 32, 16, ec + Vector((0, -r * 0.93, 0)), (1, 0.18, 1), mats['iris']); parts.append(iris)
         pupil = sphere('pupil', r * P['iris'] * 0.45, 24, 12, ec + Vector((0, -r * 0.985, 0)), (1, 0.12, 1), mats['pupil']); parts.append(pupil)
+        # catchlight: a tiny bright spot on the cornea (named pupil_glint so blinks hide it with the eye)
+        gl = sphere('pupil_glint', r * 0.13, 16, 8, ec + Vector((r * 0.22, -r * 1.0, r * 0.25)), (1, 0.3, 1), mats['glint']); parts.append(gl)
         # upper lid: a skin cap over the top of the eyeball, edge tilted; lower lid: thin cap below
         def lid(nm, keep, scale=1.07):
             bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=40, v_segments=24, radius=r * scale)
             kill = [v for v in bm.verts if not keep(v.co)]
             bmesh.ops.delete(bm, geom=kill, context='VERTS')
             for v in bm.verts: v.co = v.co + ec
-            o = mesh_obj(nm, bm, mats['skin'], True, 0)
+            o = mesh_obj(nm, bm, mats.get('lidc', mats['skin']) if nm.startswith('lid_') else mats['skin'], True, 0)
             so = o.modifiers.new('solid', 'SOLIDIFY'); so.thickness = r * 0.12
             return o
         tilt = P['lid_tilt'] * s
@@ -267,7 +293,7 @@ def build_head(name, P, center, mats):
         pts.sort(key=lambda q: q.x * s)
         rad = [0.35 + 0.65 * math.sin(math.pi * (0.15 + 0.85 * k / 8)) for k in range(9)]
         if P['wing']:
-            o = pts[-1]; pts.append(o + Vector((s * r * 0.55, r * 0.1, r * 0.32))); rad.append(0.15)
+            o = pts[-1]; pts.append(o + Vector((s * r * 0.28, r * 0.05, r * 0.14))); rad.append(0.55); pts.append(o + Vector((s * r * 0.6, r * 0.12, r * 0.32))); rad.append(0.2)
         lash = tube('lash', [tuple(q) for q in pts], [P['lash'] * x for x in rad], mats['lash']); parts.append(lash)
         # brow along the surface
         bp, br = [], []
@@ -290,6 +316,16 @@ def build_head(name, P, center, mats):
         e.rotation_euler = (0, 0, -s * 0.25); parts.append(e)
     for o in parts: parent_keep(o, head)
     return head
+
+def neck_ring(name, body, z, axis, material, r=0.0055, out=0.0015, n=48):
+    """A clean round collar tube that hugs the body at height z (hides the jagged skin/cloth material seam)."""
+    pts = []
+    for k in range(n + 1):
+        ang = k / n * 2 * math.pi
+        dv = Vector((math.sin(ang), -math.cos(ang), 0))
+        p, nn = surface_hit(body, Vector((axis[0], axis[1], z)) + dv * 0.5, -dv)
+        pts.append(tuple((p if p is not None else Vector((axis[0], axis[1], z)) + dv * 0.05) + dv * out))
+    return tube(name, pts, [r] * len(pts), material, 2, 4)
 
 # ---------------------------------------------------------------- hair helpers
 def scalp_cap(name, head, C, P, hairline, material, scale=1.04):
@@ -315,12 +351,12 @@ def build_woman():
         'boot': mat('w_boot', '#121114', 0.3, coat=0.4), 'sole': mat('w_sole', '#0c0b0d', 0.7),
         'hair': mat('w_hair', '#0d0b0f', 0.45), 'hairs': mat('w_hair_str', '#141117', 0.38), 'eyewhite': mat('w_eyewhite', '#f1ece6', 0.12),
         'iris': mat('w_iris', '#4a5a58', 0.2), 'pupil': mat('w_pupil', '#050506', 0.1), 'lash': mat('w_lash', '#070608', 0.5),
-        'brow': mat('w_brow', '#1a1517', 0.7), 'lip': mat('w_lip', '#9c4f5c', 0.35), 'mouth': mat('w_mouth', '#3a1518', 0.8),
+        'brow': mat('w_brow', '#141012', 0.7), 'lidc': mat('w_lidshadow', '#9a7276', 0.55), 'trim': mat('w_trim', '#121114', 0.8), 'lip': mat('w_lip', '#a85f68', 0.4), 'mouth': mat('w_mouth', '#3a1518', 0.8),
         'silver': mat('w_silver', '#d0d3d8', 0.2, metal=1.0),
     }
     J = {
         'pelvis': ((0, 0, 0.95), (0.128, 0.09)), 'spine': ((0, 0.005, 1.08), (0.108, 0.072)), 'chest': ((0, 0.0, 1.25), (0.12, 0.082)),
-        'neck': ((0, 0.008, 1.44), (0.043, 0.042)), 'head': ((0, 0.005, 1.53), (0.034, 0.034)),
+        'neck': ((0, 0.008, 1.44), (0.049, 0.047)), 'head': ((0, 0.005, 1.525), (0.04, 0.04)),
     }
     for s, n in ((1, 'L'), (-1, 'R')):
         J.update({
@@ -337,7 +373,9 @@ def build_woman():
               (f'wrist_{n}', f'hand_{n}'), (f'wrist_{n}', f'thumb_{n}'), ('pelvis', f'hip_{n}'), (f'hip_{n}', f'thigh_{n}'),
               (f'thigh_{n}', f'knee_{n}'), (f'knee_{n}', f'calf_{n}'), (f'calf_{n}', f'ankle_{n}'), (f'ankle_{n}', f'toe_{n}')]
     def region(b, c):
-        if b.startswith(('hand', 'thumb', 'head')) or (b.startswith('neck') and c.z > 1.435): return M['skin']
+        if b.startswith(('hand', 'thumb')): return M['skin']
+        if c.z > 1.418 and abs(c.x) < 0.1 and b.startswith(('head', 'neck', 'chest', 'clav')): return M['skin']   # straight neckline
+        if b.startswith('head'): return M['skin']
         if b.startswith(('ankle', 'toe')) or (b.startswith('calf') and c.z < 0.3): return M['boot']
         if b.startswith(('thigh', 'knee', 'calf')): return M['tights']
         if b.startswith('hip') and c.z < 0.86: return M['tights']
@@ -348,11 +386,12 @@ def build_woman():
             if y < 0:
                 for s in (-1, 1): v.co.y -= 0.024 * g2(x, z, s * 0.058, 1.275, 0.05, 0.05)
     body, rig = build_body('woman', J, E, region, shape)
-    C = (0, -0.004, 1.585)
-    P = dict(size=(0.075, 0.088, 0.1), jaw=0.27, chin=0.2, chinfwd=0.08, cheek=0.06, socket=0.05, ridge=0.014, nose=0.09,
-             tip=0.045, lips=0.035, eye_r=0.0122, eye_x=0.43, eye_z=0.05, iris=0.6, lid=0.52, lid_tilt=0.1, lash=0.0016, wing=True,
-             brow_x0=0.2, brow_x1=0.78, brow_z=0.25, brow_arch=0.06, brow_w=0.0016, mouth_z=-0.56, ulip=(0.0135, 0.0028),
-             llip=(0.0125, 0.0036), ear=0.9)
+    C = (0, -0.004, 1.578)
+    P = dict(size=(0.075, 0.088, 0.1), jaw=0.27, chin=0.2, chinfwd=0.08, cheek=0.06, socket=0.06, ridge=0.016, nose=0.085, alar=0.025, cheekbone=0.035, hollow=0.015, philtrum=0.012,
+             tip=0.06, lips=0.035, eye_r=0.0122, eye_x=0.43, eye_z=0.05, iris=0.6, lid=0.52, lid_tilt=0.1, lash=0.0016, wing=True,
+             brow_x0=0.18, brow_x1=0.8, brow_z=0.26, brow_arch=0.07, brow_w=0.0024,
+             paint=dict(blush=(1.0, 0.7, 0.7, 0.65), socket=(0.62, 0.48, 0.56, 1.0)), mouth_z=-0.56, ulip=(0.0136, 0.0029),
+             llip=(0.0126, 0.0037), ear=0.9)
     head = build_head('w_head', P, C, M)
     a, d, h = P['size']
     # hair: scalp cap, blunt piecey bangs, long back curtain behind the shoulders, two front panels over the chest
@@ -419,6 +458,8 @@ def build_woman():
     hs.append(strands('w_str_crown', crown, 200, 10, Cv, M['hairs'], 0.0019, 0.0017, 0.0035, seed=5))
     for i, pf in enumerate(panels_fn):
         hs.append(strands(f'w_str_front{i}', pf, 70, 30, Cv, M['hairs'], 0.0018, 0.001, 0.004, seed=6 + i))
+    collar = neck_ring('w_collar', body, 1.418, (0, 0.008), M['trim'], 0.005)
+    parent_keep(collar, rig, 'neck')
     for o in [head, cap, hair_back, hair_bangs, chk] + panels + hoops + hs: parent_keep(o, rig, 'head' if o is not chk else 'neck')
     parent_keep(sk, rig, 'spine')
     for so, b in soles: parent_keep(so, rig, b)
@@ -437,7 +478,7 @@ def build_wizard():
     }
     J = {
         'pelvis': ((0, 0, 1.0), (0.14, 0.1)), 'spine': ((0, 0.01, 1.14), (0.135, 0.095)), 'chest': ((0, 0.005, 1.32), (0.15, 0.1)),
-        'neck': ((0, 0.015, 1.52), (0.045, 0.045)), 'head': ((0, 0.01, 1.63), (0.035, 0.035)),
+        'neck': ((0, 0.015, 1.52), (0.056, 0.054)), 'head': ((0, 0.01, 1.605), (0.046, 0.046)),
     }
     for s, n in ((1, 'L'), (-1, 'R')):
         J.update({
@@ -454,14 +495,15 @@ def build_wizard():
               (f'wrist_{n}', f'hand_{n}'), (f'wrist_{n}', f'thumb_{n}'), ('pelvis', f'hip_{n}'), (f'hip_{n}', f'thigh_{n}'),
               (f'thigh_{n}', f'knee_{n}'), (f'knee_{n}', f'calf_{n}'), (f'calf_{n}', f'ankle_{n}'), (f'ankle_{n}', f'toe_{n}')]
     def region(b, c):
-        if b.startswith(('hand', 'thumb', 'head')) or (b.startswith('neck') and c.z > 1.5): return M['skin']
+        if b.startswith(('hand', 'thumb', 'head')) or (b.startswith('neck') and c.z > 1.535): return M['skin']
         if b.startswith(('ankle', 'toe')): return M['boot']
         return M['robe']
     body, rig = build_body('wizard', J, E, region)
-    C = (0, 0.002, 1.69)
+    C = (0, 0.002, 1.668)
     P = dict(size=(0.078, 0.094, 0.104), jaw=0.18, chin=0.08, chinfwd=0.06, cheek=0.05, socket=0.075, ridge=0.03, nose=0.12,
              tip=0.06, lips=0.03, eye_r=0.0115, eye_x=0.41, eye_z=0.06, iris=0.6, lid=0.45, lid_tilt=-0.06, lash=0.0008, wing=False,
-             brow_x0=0.18, brow_x1=0.8, brow_z=0.25, brow_arch=0.035, brow_w=0.0042, mouth_z=-0.56, ulip=(0.015, 0.0028),
+             brow_x0=0.18, brow_x1=0.8, brow_z=0.25, brow_arch=0.035, brow_w=0.0042,
+             paint=dict(blush=(0.95, 0.7, 0.66, 0.5), socket=(0.82, 0.7, 0.68, 0.5)), mouth_z=-0.56, ulip=(0.015, 0.0028),
              llip=(0.0145, 0.0036), ear=1.05)
     head = build_head('z_head', P, C, M)
     a, d, h = P['size']
@@ -477,11 +519,12 @@ def build_wizard():
     rb = grid('z_robe', 96, 40, robe, M['robe'], True, 1, 0.008)
     def mantle(u, v):
         ang = u * 2 * math.pi
-        z = 1.5 - 0.24 * v
-        w = 0.1 + 0.15 * math.sin(min(1, v * 1.6) * math.pi / 2)
-        dd = 0.075 + 0.07 * math.sin(min(1, v * 1.6) * math.pi / 2)
+        z = 1.565 - 0.31 * v                                      # high soft collar round the neck, then the cape
+        e = math.sin(min(1, max(0.0, v - 0.18) / 0.82 * 1.6) * math.pi / 2)
+        w = 0.066 + 0.184 * e
+        dd = 0.062 + 0.083 * e
         return Vector((w * math.sin(ang), -dd * math.cos(ang) + 0.012, z))
-    mn = grid('z_mantle', 96, 16, mantle, M['mantle'], True, 1, 0.01)
+    mn = grid('z_mantle', 96, 20, mantle, M['mantle'], True, 1, 0.01)
     hood = sphere('z_hood', 1, 40, 24, (0, 0.11, 1.5), (0.11, 0.07, 0.07), M['mantle'], 1)
     def belt(u, v):
         ang = u * 2 * math.pi
@@ -520,15 +563,19 @@ def build_wizard():
             z0 = C[2] - h * (0.12 + 0.56 * math.cos(ang) ** 2)
             dirv = Vector((math.sin(ang), -math.cos(ang), 0))
             p, n = surface_hit(head, Vector((C[0], C[1], z0)) + dirv * 0.5, -dirv)
-            top_cache[u] = (p + n * 0.002 if p is not None else Vector((C[0], C[1], z0)) + dirv * a, n)
+            top_cache[u] = (p - n * 0.001 if p is not None else Vector((C[0], C[1], z0)) + dirv * a, n)
         top, n = top_cache[u]
-        z1 = C[2] - h * 1.0 - 0.1 * math.cos(ang) ** 2
-        bot = Vector((top.x * 0.3, C[1] - d * 0.8 + 0.02 * abs(math.sin(ang)), z1))
-        q = top.lerp(bot, v)
-        q += Vector((math.sin(ang) * 0.6, -math.cos(ang), 0)).normalized() * (0.014 * math.sin(math.pi * v) * (0.6 + 0.4 * math.cos(ang) ** 2))
+        c2 = math.cos(ang) ** 2
+        z1 = C[2] - h * 1.0 - 0.11 * c2
+        tip = Vector((top.x * 0.3, C[1] - d * 0.95 - 0.012, z1))
+        ring = Vector((0.07 * math.sin(ang), 0.015 - 0.066 * math.cos(ang), 1.56))   # on the collar, round the neck
+        bot = ring.lerp(tip, c2 ** 0.7)
+        mid = top.lerp(bot, 0.5); mid += (mid - Vector((C[0], C[1] + 0.01, mid.z))).normalized() * 0.006 * c2
+        q = top.lerp(mid, v * 2) if v < 0.5 else mid.lerp(bot, (v - 0.5) * 2)
+        q += Vector((math.sin(ang) * 0.6, -math.cos(ang), 0)).normalized() * (0.012 * math.sin(math.pi * v) * (0.25 + 0.75 * c2))
         return q
     bd = grid('z_beard', 48, 24, beard, M['beard'], False, 2, 0.01)
-    bds = strands('z_str_beard', beard, 240, 18, Vector((C[0], C[1] + 0.02, C[2] - h * 0.3)), M['beard'], 0.0024, 0.0009, 0.006, seed=9)
+    bds = strands('z_str_beard', beard, 240, 18, Vector((C[0], C[1] + 0.02, C[2] - h * 0.3)), M['beard'], 0.0024, 0.0009, 0.0035, seed=9)
     mus = []
     for s in (-1, 1):
         p0, _ = surface_hit(head, (C[0] + s * 0.004, C[1] - 1, C[2] - h * 0.43), (0, 1, 0))
@@ -587,7 +634,7 @@ def export(rig, path):
         if n > budget:
             m = o.modifiers.new('slim', 'DECIMATE'); m.ratio = max(0.12, budget / n); added.append((o, m))
     bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True, export_apply=True, export_yup=True,
-                              export_skins=True, export_animations=False)
+                              export_skins=True, export_animations=False, export_vertex_color='ACTIVE')
     for o, m in added: o.modifiers.remove(m)
 
 if __name__ == '__main__':
