@@ -143,8 +143,9 @@ function police(color = '#e6e3dc') {
   }
   g.setLights = (t, on = 1) => {
     // alternating red / blue, two quick flashes each (a common light-bar pattern)
-    const ph = (t * 2.2) % 1, flashA = (ph < 0.5) && ((ph * 8) % 2 < 1), flashB = (ph >= 0.5) && (((ph - 0.5) * 8) % 2 < 1);
-    const a = on * (flashA ? 1 : 0.06), b = on * (flashB ? 1 : 0.06);
+    // slow, soft alternation (about 0.8 cycles per second, smooth ramps): no strobing, safe for viewers
+    const w = Math.sin(t * Math.PI * 2 * 0.8), ramp = x => Math.min(1, Math.max(0, x * 1.6));
+    const a = on * (0.06 + 0.94 * ramp(w)), b = on * (0.06 + 0.94 * ramp(-w));
     mR.emissiveIntensity = 0.2 + 5.5 * a; mB.emissiveIntensity = 0.2 + 5.5 * b;
     lR.intensity = 9 * a; lB.intensity = 11 * b;
     hR.material.opacity = 0.75 * a; hB.material.opacity = 0.75 * b;
@@ -277,6 +278,25 @@ export function build(world, plan) {
   const nyx = woman(); S.add(nyx);
   const wiz = man(); S.add(wiz);
   const cop = officer(); S.add(cop);
+  // house style: never pure black. Lift near-black materials (Nyx's outfit and hair, tyres, trims) to a dark
+  // charcoal that keeps its hue, so they read as black cloth rather than holes.
+  const hsl = {};
+  S.traverse(o => {
+    if (!o.isMesh) return;
+    for (const m of [].concat(o.material)) {
+      if (!m || !m.color || m.userData.lifted) continue;
+      m.color.getHSL(hsl);
+      if (hsl.l < 0.025) m.color.setHSL(hsl.h, hsl.s, 0.025);   // working space is linear: 0.025 is about sRGB 40
+      m.userData.lifted = true;
+    }
+  });
+  // presenters use vertex colours, so also give their materials a faint emissive floor (dark cloth stays charcoal)
+  for (const ch of [nyx, wiz, cop]) ch.traverse(o => {
+    if (!o.isMesh) return;
+    for (const m of [].concat(o.material)) if (m && m.emissive && m.emissive.getHex() === 0) m.emissive.setRGB(0.014, 0.014, 0.017);
+  });
+  // a soft moonlight fill for the night sets, so dark clothes and the roadside keep some detail
+  const moon = new THREE.HemisphereLight('#9aaad0', '#2a3028', 0); S.add(moon);
 
   // ---- kitchen set (day)
   const K = L.kitchen;
@@ -405,6 +425,7 @@ export function build(world, plan) {
         lastShot = shot;
         const f = fp(i);
         world.setLighting(shot.lighting ?? 'key', new THREE.Vector3(f[0], 0, f[2]));
+        moon.intensity = (shot.lighting === 'night') ? 0.4 : 0;
         if (plan.bloom_threshold) world.bloom.threshold = plan.bloom_threshold;
         const sc = world.sun.shadow.camera, e2 = set === 'road' ? 46 : set === 'house' ? 17 : 7;
         sc.left = -e2; sc.right = e2; sc.top = e2; sc.bottom = -e2; sc.far = 90; sc.updateProjectionMatrix();
