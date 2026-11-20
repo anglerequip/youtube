@@ -81,8 +81,9 @@ export function build(world, plan) {
         const x = F.car_x[k][j], z = F.car_z[k][j], dx = x - F.car_x[kp][j], dz = z - F.car_z[kp][j];
         c.visible = z > -300; c.position.set(x, 0.05, z);
         c.rotation.y = Math.abs(dz) > 1e-3 ? Math.atan2(-dx, -dz) * 1.0 : 0;     // nose along the direction of travel
-        const speed = Math.hypot(dx, dz) * plan.fps;
-        brake[j] = speed < 1.5 ? 1 : 0;
+        const kw = Math.max(0, k - 8), speed = k > kw ? Math.hypot(x - F.car_x[kw][j], z - F.car_z[kw][j]) * plan.fps / (k - kw) : 0;   // speed over ~0.27 s: per-frame steps stutter
+        // hysteresis: a car creeping at about 1.5 m/s must not blink its brake lights every frame
+        if (speed < 1.1) brake[j] = 1; else if (speed > 2.2) brake[j] = 0;
         c.setBrake(brake[j]);
       });
       const g = F.ghost[k];

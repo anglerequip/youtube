@@ -27,9 +27,9 @@ function lapRig(S, O, style) {
   const fur = std(isDog ? '#b8875a' : '#d9893f', { roughness: 0.92 }), light = std(isDog ? '#efe6d6' : '#f2e3c9', { roughness: 0.92 });
   const SURF = 0.62, CX = 0.45, DEEP = isDog ? -0.1 : 0.03, HY = isDog ? 0 : -1.05;   // HY: the cat's head sits lower, closer to the water   // the dog plunges the tongue in; the cat only touches
   // floor, back wall and the bowl
-  const tiles = new THREE.Mesh(new THREE.BoxGeometry(16, 0.1, 12), std('#d8cbb6', { roughness: 0.6 })); tiles.position.set(0, -0.05, -1); tiles.receiveShadow = true; g.add(tiles);
-  for (let k = -7; k <= 7; k++) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.003, 12), std('#b5a58f')); l.position.set(k * 1.1, 0.002, -1); g.add(l); }
-  for (let k = -5; k <= 4; k++) { const l = new THREE.Mesh(new THREE.BoxGeometry(16, 0.003, 0.03), std('#b5a58f')); l.position.set(0, 0.002, k * 1.1); g.add(l); }
+  const tiles = new THREE.Mesh(new THREE.BoxGeometry(16, 0.1, 12), std('#d8cbb6', { roughness: 0.6 })); tiles.position.set(0, -0.02, -1);   // top 3 cm above the world ground plane: no z-fighting tiles.receiveShadow = true; g.add(tiles);
+  for (let k = -7; k <= 7; k++) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.003, 12), std('#b5a58f')); l.position.set(k * 1.1, 0.032, -1); g.add(l); }
+  for (let k = -5; k <= 4; k++) { const l = new THREE.Mesh(new THREE.BoxGeometry(16, 0.003, 0.03), std('#b5a58f')); l.position.set(0, 0.0325, k * 1.1); g.add(l); }
   const wall = new THREE.Mesh(new THREE.BoxGeometry(16, 9, 0.2), std(isDog ? '#e2d6bf' : '#b9c4b0', { roughness: 0.95 })); wall.position.set(0, 4.5, -6.5); wall.receiveShadow = true; g.add(wall);
   const cab = new THREE.Mesh(new THREE.BoxGeometry(7, 2.8, 1.2, 4, 4, 4), std('#8fa6c8', { roughness: 0.55 })); cab.position.set(-3.5, 1.4, -5.6); cab.receiveShadow = true; g.add(cab);
   const B = bowl(isDog ? '#c3c7cc' : '#d9b3a6', 2.6 / 1.05); B.scale.set(1, 0.62 / 0.05 * 0.065, 1); B.position.set(CX, 0, 0);
@@ -70,12 +70,12 @@ function lapRig(S, O, style) {
     const P = (x, y) => new THREE.Vector3(x, y, 0);
     const y1 = lerp(2.3 + HY, 1.75 + HY * 0.75, ext);
     const pts = [P(-0.2, 2.42 + HY), P(CX - 0.05, y1), P(CX + 0.12, (y1 + yTip) / 2), P(CX + 0.05, yTip + 0.06)];
-    if (curl > 0.01) pts.push(P(CX - 0.18 * curl, yTip + 0.02 + 0.08 * curl), P(CX - 0.38 * curl, yTip + 0.22 * curl));
+    if (curl > 0.01) pts.push(P(CX - 0.22 * curl, yTip - 0.02 + 0.1 * curl), P(CX - 0.48 * curl, yTip + 0.3 * curl));
     const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
     const geo = new THREE.TubeGeometry(curve, 64, isDog ? 0.17 : 0.11, 24, false);
     const Pp = geo.attributes.position, c = new THREE.Vector3(), v = new THREE.Vector3();
     for (let i = 0; i <= 64; i++) {                            // flatten across the curve's normal plane a little, taper the tip
-      curve.getPointAt(i / 64, c); const f = 1 - 0.35 * smooth((i / 64 - 0.6) / 0.4);
+      curve.getPointAt(i / 64, c); const f = 1 - 0.8 * smooth((i / 64 - 0.55) / 0.45);   // rounded tip, not a square end
       for (let j = 0; j <= 24; j++) { const k = i * 25 + j; v.fromBufferAttribute(Pp, k).sub(c); v.x *= f * 0.7; v.y *= f * 0.7; v.z *= f; Pp.setXYZ(k, c.x + v.x, c.y + v.y, c.z + v.z); }
     }
     geo.computeVertexNormals(); tongue.geometry.dispose(); tongue.geometry = geo;
@@ -100,7 +100,7 @@ function lapRig(S, O, style) {
   const ripples = [0, 1].map(() => { const r = new THREE.Mesh(new THREE.TorusGeometry(1, 0.025, 12, 96), waterMat()); r.rotation.x = Math.PI / 2; r.position.set(CX, SURF + 0.01, 0); g.add(r); return r; });
   const drops = [];
   for (let k = 0; k < (isDog ? 14 : 0); k++) {
-    const d = new THREE.Mesh(new THREE.SphereGeometry(0.05 + 0.04 * ((k * 7) % 3) / 2, 24, 16), waterMat());
+    const d = new THREE.Mesh(new THREE.SphereGeometry(0.08 + 0.05 * ((k * 7) % 3) / 2, 24, 16), waterMat());
     const a = (k / 14) * Math.PI * 2;
     d.userData.v = [0.9 * Math.cos(a) + 0.4, 1.8 + 0.6 * ((k * 5) % 4) / 3, 2.4 * Math.sin(a)];
     g.add(d); drops.push(d);
@@ -117,12 +117,12 @@ function lapRig(S, O, style) {
       else if (p < 0.62) { ext = slow * 0.15 * (1 - smooth((p - 0.55) / 0.07)); curl = isDog ? 1 : 0.1; open = 0.5 - 0.45 * smooth((p - 0.55) / 0.07); }
       else if (p < 0.9) { ext = 0; curl = isDog ? 1 : 0.1; open = 0.05; }
       else { ext = 0; curl = isDog ? 1 - 0.7 * smooth((p - 0.9) / 0.1) : 0.1; open = 0.05 + 0.45 * smooth((p - 0.9) / 0.1); }
-      jaw.rotation.z = -0.32 * open + 0.02;
+      jaw.rotation.z = -0.6 * open + 0.02;
       setTongue(ext, curl);
       const yTip = lerp(2.2 + HY, SURF + DEEP, ext);
       // the column: rises under the tongue while it is pulled up; cut at the bite; the rest falls back
-      const cut = 2.05 + HY;
-      if (p >= 0.3 && p < 0.6) setColumn(SURF - 0.02, Math.min(cut, yTip + 0.05), 1);
+      const cut = 2.38 + HY;   // the top of the column reaches between the jaws
+      if (p >= 0.3 && p < 0.6) setColumn(SURF - 0.02, Math.min(cut, yTip + 0.12), 1);
       else if (p >= 0.6 && p < 0.82) { const u = smooth((p - 0.6) / 0.22); setColumn(SURF - 0.02, lerp(cut - 0.08, SURF, u), 1 - u); }
       else setColumn(0, 0, 0);
       // ripples: from the slap (0.25) and from the column falling back (0.8)
@@ -131,7 +131,13 @@ function lapRig(S, O, style) {
         r.visible = u > 0 && u < 0.35; const s = 0.3 + 6 * u; r.scale.set(s, s, 1 + 2 * u); r.material.opacity = 0.8 * (1 - u / 0.35);
       });
       // ladle droplets: flung out of the curled tongue as the jaw snaps (slow motion: tau in rig seconds)
+      drops.forEach((d, k) => { d.userData.k = k; });
       for (const d of drops) {
+        if (p >= 0.24 && p < 0.5) {               // the slap: a crown of droplets thrown up and out of the bowl surface
+          const ts = (p - 0.24) * 2.2, a = (d.userData.k / 14) * Math.PI * 2, sp = 0.9 + 0.5 * ((d.userData.k * 3) % 4) / 3;
+          d.position.set(CX + Math.cos(a) * (0.25 + sp * ts), SURF + 2.2 * sp * ts - 4.9 * ts * ts, Math.sin(a) * (0.25 + sp * ts));
+          d.visible = d.position.y > SURF; continue;
+        }
         const tau = (p - 0.6) * 2.2;
         d.visible = tau > 0 && tau < 1.4;
         if (!d.visible) continue;
@@ -181,7 +187,7 @@ export function build(world, plan) {
     }
   });
   // real-time droplets flung from the dog's mouth while he laps
-  const dropM = new THREE.MeshPhysicalMaterial({ color: '#d6ecf5', roughness: 0.02, transparent: true, opacity: 0.85, emissive: '#6aa8c4', emissiveIntensity: 0.35, clearcoat: 1 });
+  const dropM = new THREE.MeshPhysicalMaterial({ color: '#d6ecf5', roughness: 0.02, transparent: true, opacity: 0.7, emissive: '#6aa8c4', emissiveIntensity: 0.2, clearcoat: 1 });
   const drops = Array.from({ length: 22 }, (_, k) => {
     const d = new THREE.Mesh(new THREE.SphereGeometry(0.0045 + 0.0018 * (k % 3), 16, 12), dropM);
     const a = (k * 2.39996) % (Math.PI * 2);
@@ -201,7 +207,7 @@ export function build(world, plan) {
     if (!near) o.castShadow = false;
   });
   const focalPt = i => F.focal_pt[Math.min(i, F.focal_pt.length - 1)];
-  const v = new THREE.Vector3(), mz = new THREE.Vector3();
+  const v = new THREE.Vector3(), mz = new THREE.Vector3(), dv = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0);
   const headLook = (person, target, maxYaw = 0.9, eye = 1.5) => {
     v.set(...target).sub(person.position);
     let yaw = Math.atan2(v.x, v.z) - person.rotation.y; yaw = Math.atan2(Math.sin(yaw), Math.cos(yaw));
@@ -225,7 +231,13 @@ export function build(world, plan) {
       for (const d of drops) {
         const u = d.userData, tau = ((t * 1.1 + u.ph) % 1) * 0.45, on = lap > 0.5 && F.drops[k] > 0;
         const p = mouthP.clone().addScaledVector(fwd, u.v[0] * tau).addScaledVector(side, u.v[2] * tau); p.y += u.v[1] * tau - 4.9 * tau * tau;
-        d.visible = on && p.y > 0.01; d.position.copy(p);
+        d.visible = on && p.y > 0.01 && Math.hypot(p.x - mouthP.x, p.z - mouthP.z) < 0.4; d.position.copy(p);
+        // grow and shrink (no pop at the loop seam) and streak along the velocity like a real 1/60 s shutter,
+        // so a fast droplet sweeps through the picture instead of jumping between frames
+        const s = Math.max(0.05, Math.sin(Math.PI * tau / 0.45) * Math.max(0, 1 - Math.hypot(p.x - mouthP.x, p.z - mouthP.z) / 0.4));   // gone before it crosses the people behind
+        dv.copy(fwd).multiplyScalar(u.v[0]).addScaledVector(side, u.v[2]); dv.y += u.v[1] - 9.8 * tau;
+        const sp = dv.length(); if (sp > 1e-6) d.quaternion.setFromUnitVectors(UP, dv.multiplyScalar(1 / sp));
+        d.scale.set(s, s * Math.min(2, 1 + sp / 60 / (2 * d.geometry.parameters.radius)), s);
       }
       const mess = F.mess[k];
       puddles.forEach(m => { const s = clamp01(mess * 1.6 - m.userData.k * 0.15); m.visible = s > 0.02; m.scale.setScalar(Math.max(0.01, s)); });

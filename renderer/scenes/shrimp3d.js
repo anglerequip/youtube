@@ -155,7 +155,7 @@ export function build(world, plan) {
       smallSnail.set({ crack: 0, t });
       const bs = F.bub[k];
       bubbles.forEach((b, q) => { const u = b.userData; b.visible = bs > 0.01; b.scale.setScalar(Math.max(1e-4, u.r * bs * (0.6 + 0.4 * Math.sin(q + t * 3)))); b.position.set(C[0] + u.o[0], C[1] + u.o[1], C[2] + u.o[2]); });
-      const fl = F.flash[k]; flash.material.opacity = 0.55 * fl; flash.scale.setScalar(0.015 + 0.035 * fl); flashLight.intensity = 0.4 * fl;
+      const fl = F.flash[k]; flash.material.opacity = 0.3 * fl; flash.scale.setScalar(0.01 + 0.018 * fl); flashLight.intensity = 0.2 * fl;   // faint and brief, as the caveat says
       snow.forEach(s => { const p = s.userData.p; s.position.set(p[0] + 0.05 * Math.sin(t * 0.3 + p[3]), (p[1] + 0.02 * t + p[3]) % 1.3, p[2]); });
       const lw = F.look_w[k], lm = F.look_m[k];
       wiz.pose({ talk: F.talk_w[k], blink: F.wiz_blink[k], t, ...headLook(wiz, lw === 'woman' ? womHead : tankPt, 0.9, 1.6), headTilt: 0.04 * Math.sin(t * 0.7), point: F.wiz_point[k] });

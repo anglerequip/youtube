@@ -82,8 +82,8 @@ function twistCat(opt = {}) {
     fb.rotation.set(0, 0, 0.45 * bend); rb.rotation.set(0, 0, -0.45 * bend);       // fold nose and hips up: toward the belly of an upside-down cat
     fr.rotation.x = p.rollF ?? 0; rr.rotation.x = p.rollR ?? 0;
     const tf = p.tuckF ?? 0, tr = p.tuckR ?? 0;
-    fl.forEach(l => { l.rotation.z = 1.35 * tf - 0.15 * (1 - tf); });                // tucked: folded forward against the chest
-    hl.forEach(l => { l.rotation.z = 1.25 * tr - 0.35 * (1 - tr); });                // tucked: drawn up under the belly
+    fl.forEach((l, i) => { l.rotation.z = 1.45 * tf - 0.15 * (1 - tf); l.rotation.x = -(i ? 1 : -1) * 0.85 * (1 - tf); });   // out: splayed wide, so tucked vs stretched reads from any angle                // tucked: folded forward against the chest
+    hl.forEach((l, i) => { l.rotation.z = 1.35 * tr - 0.35 * (1 - tr); l.rotation.x = -(i ? 1 : -1) * 0.85 * (1 - tr); });                // tucked: drawn up under the belly
     tail.rotation.x = 0.3 * Math.sin((p.t ?? 0) * 1.7);
     const ro = p.rings ?? 0;
     [[ringF, p.dir?.[0] ?? 1], [ringR, p.dir?.[1] ?? 1]].forEach(([R, d]) => {

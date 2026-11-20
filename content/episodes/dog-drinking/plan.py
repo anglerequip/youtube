@@ -61,16 +61,17 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     clings_t = at("column", "clings") - 0.2
     snap_t = at("bite", "snap")
     flung_t = at("ladle", "flung") - 0.3
+    ladle_end = max(flung_t + 0.3, min(flung_t + 1.4, S("cats") - 1.45))   # leaves the real-time ladle shot >= 1.3 s
     dog_t = at("gentle", "dog") - 0.45                  # "A dog has to hit it hard": cut from the cat macro to the dog
     fast_t = at("payoff", "fast")
-    macro_spans = [(watch_t, S("how") - 0.1), (S("column") - 0.1, S("midair") - 0.1), (S("ladle") - 0.1, flung_t + 1.4),
+    macro_spans = [(watch_t, S("how") - 0.1), (S("column") - 0.1, S("midair") - 0.1), (S("ladle") - 0.1, ladle_end),
                    (S("gentle") - 0.1, S("payoff") - 0.1)]
 
     # slow-motion lap phase in the dog macro rig (see lapRig in the scene for what each phase range shows)
     lap = _track([(0, 0.0), (watch_t, 0.0), (E("scoop"), 0.24), (at("column", "slaps") - 0.1, 0.24), (at("column", "slaps") + 0.25, 0.28),
                   (at("column", "yanks") + 0.1, 0.31), (E("column"), 0.55), (snap_t - 0.15, 0.555), (snap_t + 0.2, 0.615),
                   (at("bite", "falls"), 0.66), (E("bite"), 0.82), (S("ladle") - 0.1, 0.56), (at("ladle", "ladle"), 0.6),
-                  (flung_t + 1.4, 0.9), (S("gentle"), 0.9), (dog_t, 0.12), (at("gentle", "hard"), 0.27), (E("gentle") + 0.2, 0.42),
+                  (ladle_end, 0.9), (S("gentle"), 0.9), (dog_t, 0.12), (at("gentle", "hard"), 0.27), (E("gentle") + 0.2, 0.42),
                   (dur, 0.42)], T)
     lap_cat = _track([(0, 0.0), (S("gentle") - 0.1, 0.05), (dog_t, 0.5), (dur, 0.5)], T)
 
@@ -120,7 +121,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     dog_head = K(-0.72, 0.22, 0.85)
     shots = cam.chain([
         # hook (a): already in motion: low and close on the dog lapping, droplets flying
-        E_(0.0, water_t, K(-0.3, 0.3, 1.45), K(-0.34, 0.29, 1.37), K(-0.7, 0.24, 0.85), 40),
+        E_(0.0, water_t, K(-0.28, 0.62, 1.42), K(-0.32, 0.6, 1.35), K(-0.7, 0.2, 0.85), 40),   # looks down: light floor behind the spray
         # hook (b): the whole kitchen: the wizard looking down at the mess, the woman behind the bowl
         E_(water_t, S("scoop") - 0.1, K(1.55, 1.95, 3.7), K(1.45, 1.88, 3.45), K(-0.45, 0.75, 0.55), 42),
         # scoop (a): the woman, pointing at the bowl
@@ -142,9 +143,9 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # mess: low across the wet tiles
         E_(S("mess") - 0.1, S("ladle") - 0.1, K(0.25, 0.26, 1.55), K(0.18, 0.23, 1.42), K(-0.6, 0.06, 0.85), 40),
         # ladle (a): macro from the front: the leftover ladle is flung out sideways
-        E_(S("ladle") - 0.1, flung_t + 1.4, K(mx + 3.6, 2.6, mz + 4.2), K(mx + 3.3, 2.55, mz + 3.9), K(mx - 0.2, 1.9, mz), 40),
+        E_(S("ladle") - 0.1, ladle_end, K(mx + 3.6, 2.6, mz + 4.2), K(mx + 3.3, 2.55, mz + 3.9), K(mx - 0.2, 1.9, mz), 40),
         # ladle (b): real time, from in front of the dog: droplets out of both sides
-        E_(flung_t + 1.4, S("cats") - 0.1, K(0.42, 0.36, 1.0), K(0.32, 0.34, 0.98), K(-0.72, 0.2, 0.85), 40),
+        E_(ladle_end, S("cats") - 0.1, K(-0.22, 0.66, 1.5), K(-0.27, 0.62, 1.42), K(-0.72, 0.2, 0.85), 42),   # above the dog: nobody in front of the bowl
         # cats: the cat at her bowl by the fridge, neat
         E_(S("cats") - 0.1, S("gentle") - 0.1, K(-1.6, 0.46, 2.32), K(-1.66, 0.43, 2.2), K(-2.12, 0.14, 1.55), 38),
         # gentle (a): the cat macro: only the tongue tip touches the surface
@@ -153,7 +154,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         E_(dog_t, S("payoff") - 0.1, K(mx + 1.2, 1.6, mz + 4.6), K(mx + 1.0, 1.55, mz + 4.3), K(mx + 0.4, 1.2, mz), 40),
         # payoff: the wizard and his dog, the dog looks up and wags; eases back toward the opening picture
         cam.shot(S("payoff") - 0.1, dur + 0.05, [(S("payoff") - 0.1, K(-2.3, 0.95, 2.1), K(-0.2, 0.75, 0.8), 46),
-                                                (dur + 0.05, K(-2.15, 0.95, 2.02), K(-0.22, 0.75, 0.8), 46)], fps, "key"),
+                                                (dur + 0.05, K(-1.7, 0.85, 1.72), K(-0.3, 0.6, 0.82), 40)], fps, "key"),   # a slow push in, not a static hold
     ])
     frames["focal_pt"] = duo.focal_track(shots, n)
 
@@ -162,10 +163,9 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         {"start": at("filmed", "nineteen"), "end": S("mess") - 0.15, "big": "19 dogs", "small": "filmed in slow motion", "y": 0.16},
     ]
     events = [(round(watch_t, 3), "whoosh", {"gain": 0.14}),
-              (round(at("column", "slaps"), 3), "tick", {"gain": 0.22}),
-              (round(at("column", "yanks"), 3), "rise", {"gain": 0.14}),
-              (round(snap_t + 0.1, 3), "pop", {"gain": 0.3}),
-              (round(dog_t + 0.25, 3), "thud", {"gain": 0.2})]
+              (round(at("column", "slaps"), 3), "thud", {"gain": 0.12, "seed": 3}),     # a short wet slap, no ringing tone
+              (round(snap_t + 0.35, 3), "pop", {"gain": 0.34}),                         # on the spoken "snap", not before it
+              (round(at("gentle", "hard"), 3), "thud", {"gain": 0.2, "seed": 7})]
     timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [watch_t, snap_t, fast_t], "events": events,
                "mutes": [], "swells": [S("payoff")]}
     facts = {"dogs_filmed": 19,

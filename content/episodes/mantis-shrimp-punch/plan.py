@@ -136,9 +136,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # hook (a): already in motion on the macro reef: the shrimp, arms folded, the snail in front of it
         E_(0.0, snail_t, K(mx + 1.55, 0.62, mz + 1.9), K(mx + 1.4, 0.55, mz + 1.75), K(mx + 0.38, 0.16, mz), 40, "reef"),
         # hook (b): low and close: the punch
-        E_(snail_t, S("speed") - 0.1, K(mx + 0.62, 0.3, mz + 1.15), K(mx + 0.6, 0.28, mz + 1.05), K(mx + 0.6, 0.13, mz), 40, "reef"),
-        # speed (a): the woman at the glass, seen from inside the tank
-        inside_m(S("speed") - 0.1, its_t),
+        E_(snail_t, its_t, K(mx + 0.62, 0.3, mz + 1.15), K(mx + 0.6, 0.28, mz + 1.05), K(mx + 0.6, 0.13, mz), 40, "reef"),
+        # (the woman's cutaway here came 0.5 s after the punch reveal; the punch shot now plays on)
         # speed (b): macro side on, slow motion: the club swings out
         E_(its_t, S("kmh") - 0.1, K(mx + 0.45, 0.3, mz + 1.45), K(mx + 0.47, 0.29, mz + 1.35), K(mx + 0.5, 0.14, mz), 40, "reef"),
         # kmh: the wizard, from inside the tank
@@ -146,9 +145,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # muscle: the gallery from behind: two silhouettes against the glowing tank
         E_(S("muscle") - 0.1, S("spring") - 0.1, K(0.15, 1.75, 3.7), K(0.12, 1.72, 3.45), K(0.0, 1.4, -1.0), 42, "reef"),
         # spring: close on the arm: the latch, the saddle spring loading (glows), the release
-        E_(S("spring") - 0.1, S("crossbow") - 0.1, K(mx + 0.4, 0.2, mz + 1.0), K(mx + 0.41, 0.19, mz + 0.92), K(mx + 0.38, 0.1, mz), 34, "reef"),
-        # crossbow: the wizard
-        inside_w(S("crossbow") - 0.1, S("bubbles") - 0.1, 0.1),
+        E_(S("spring") - 0.1, loads_t - 0.1, K(mx + 0.4, 0.2, mz + 1.0), K(mx + 0.41, 0.19, mz + 0.92), K(mx + 0.38, 0.1, mz), 34, "reef"),
+        # spring (b): closer, from the other side, on the saddle as it loads, glows and lets go
+        E_(loads_t - 0.1, S("bubbles") - 0.1, K(mx + 0.05, 0.22, mz + 0.62), K(mx + 0.1, 0.2, mz + 0.55), K(mx + 0.38, 0.12, mz), 30, "reef"),
+        # (the wizard's crossbow cutaway came 0.7 s after the release reveal; the arm shot now holds through it)
         # bubbles: ultra slow motion in front of the club: the water tears into bubbles
         E_(S("bubbles") - 0.1, water_t, K(cx + 0.3, cy + 0.12, cz + 0.72), K(cx + 0.26, cy + 0.1, cz + 0.62), K(cx - 0.02, cy, cz), 40, "reef"),
         # bubbles (b): from the other side, looking back past the shell into the club's face as the water tears
@@ -162,9 +162,9 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # fast: macro side on, real speed: club, then bubble
         E_(S("fast") - 0.1, S("force") - 0.1, K(mx + 0.42, 0.36, mz + 1.6), K(mx + 0.44, 0.35, mz + 1.5), K(mx + 0.45, 0.14, mz), 40, "reef"),
         # force (a): the woman
-        inside_m(S("force") - 0.1, peak_t),
+        inside_m(S("force") - 0.1, max(peak_t, S("force") + 1.2)),   # at least 1.3 s: shorter reads as a flash
         # force (b): the shell gives way
-        E_(peak_t, S("payoff") - 0.1, K(cx + 0.45, 0.32, cz + 0.85), K(cx + 0.4, 0.3, cz + 0.78), K(cx + 0.05, 0.11, cz), 40, "reef"),
+        E_(max(peak_t, S("force") + 1.2), S("payoff") - 0.1, K(cx + 0.45, 0.32, cz + 0.85), K(cx + 0.4, 0.3, cz + 0.78), K(cx + 0.05, 0.11, cz), 40, "reef"),
         # payoff: from inside the tank behind the little shrimp, out at the wizard
         cam.shot(S("payoff") - 0.1, dur + 0.05, [(S("payoff") - 0.1, K(0.32, 0.86, -1.62), K(-0.35, 1.05, 0.55), 44),
                                                 (dur + 0.05, K(0.3, 0.87, -1.52), K(-0.38, 1.08, 0.55), 44)], fps, "reef"),
@@ -177,12 +177,11 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         {"start": at("fast", "thousandth") - 0.3, "end": S("force") - 0.15, "big": "under 0.001 s", "small": "club, then bubble", "y": 0.16},
         {"start": at("force", "two"), "end": S("payoff") - 0.15, "big": "over 2,500×", "small": "its body weight", "y": 0.16},
     ]
-    events = [(round(punch_t + 0.02, 3), "pop", {"gain": 0.3}),
-              (round(lets_t + 0.25, 3), "pop", {"gain": 0.26}),
-              (round(at("collapse", "hit"), 3), "tink", {"gain": 0.22}),
-              (round(club_t + 0.02, 3), "pop", {"gain": 0.26}),
-              (round(bubble_t + 0.2, 3), "tink", {"gain": 0.2}),
-              (round(forces_t + 0.02, 3), "impact", {"gain": 0.26})]
+    events = [(round(punch_t + 0.02, 3), "impact", {"gain": 0.32, "speed": 3.5, "seed": 2}),      # the shell-breaking punch has weight
+              (round(lets_t + 0.25, 3), "swish", {"gain": 0.18}),                                 # the spring lets go: a snap of motion, not a hit
+              (round(at("collapse", "crack"), 3), "pop", {"gain": 0.24, "seed": 5}),               # a short dry crack on "crack of sound"
+              (round(club_t + 0.02, 3), "impact", {"gain": 0.24, "speed": 3.0, "seed": 4}),       # club...
+              (round(bubble_t + 0.2, 3), "pop", {"gain": 0.22, "seed": 9})]                         # ...then bubble: two hits, no chime
     timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [punch_t, lets_t, at("collapse", "hit")], "events": events,
                "mutes": [], "swells": [S("payoff")]}
     facts = {"club_speed_ms": 23, "club_speed_kmh": 82.8, "strike_under_s": 0.001, "force_body_weights": 2500,

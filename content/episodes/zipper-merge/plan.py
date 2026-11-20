@@ -132,12 +132,14 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     tw, tm = duo.talk_tracks(tl, SPEAKER, env, fps)
 
     cut_t = at("hook", "cut") - 0.2
-    hookcut_t = 2.9
+    hookcut_t = S("correct") - 0.1     # the chase holds until the cutter has actually slipped in (the cut-in on screen)
     t_b = S("zipper") - 0.1
     then_t = at("zipper", "Then") - 0.2
     empty_t = at("why", "empty") - 0.5
     lanes_t = at("why", "both") - 0.2
     less_t = at("why", "less") - 0.1
+    mn_c = max(at("honest", "Minnesota") - 0.2, at("honest", "Not") + 1.6)   # no cut within 1.5 s of the "Not really" reveal
+    why_c = max(S("why") - 0.1, mn_c + 1.3)
     empty_e = at("early", "right") - 0.1
     X, Z = simulate(T, fps, 0.0, t_b, cut_t)
 
@@ -176,25 +178,24 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     K = lambda *a: list(a)
     # hook (a): chase cam low behind the cutter as it passes the stopped queue (keys follow its trajectory)
     keys = []
-    for tk in np.arange(0.0, hookcut_t + 0.01, 0.25):
+    for tk in np.arange(0.0, hookcut_t + 0.01, 1.0 / fps):          # every frame: 0.25 s eased keys made the chase stutter
         i = min(n - 1, int(round(tk * fps)))
         cz = float(Z[i, N_CARS]); cx = float(X[i, N_CARS])
         keys.append((float(tk), K(cx + 0.9, 1.7, cz + 7.5), K(cx - 0.6, 1.0, cz - 14.0), 45))
     gx, gb = GHOST_A, GHOST_B
     # why (b): chase the early merger on the empty comparison road
     ekeys = []
-    for tk in np.arange(empty_t, S("payoff") - 0.1 + 1e-6, 0.25):
+    for tk in np.arange(empty_t, S("payoff") - 0.1 + 1e-6, 1.0 / fps):
         i = min(n - 1, int(round(tk * fps)))
         ex, ez = early[i]
         ekeys.append((float(tk), K(ex + 2.2, 3.6, ez + 13.0), K(ex - 1.0, 0.6, ez - 18.0), 44))
     shots = cam.chain([
         cam.shot(0.0, hookcut_t, keys, fps, "day"),
-        # hook (b): the wizard on the verge pointing as the teal car squeezes in at the cones
-        E_(hookcut_t, S("correct") - 0.1, K(10.2, 2.0, 15.5), K(9.9, 1.95, 15.0), K(3.0, 1.1, 2.0), 42, "day"),
+        
+        # (the wizard cutaway here hid the cut-in itself; the chase now carries the whole hook)
         # correct: the woman, the road works behind her
-        E_(S("correct") - 0.1, S("what") - 0.1, K(7.0, 1.62, 9.4), K(7.05, 1.62, 9.15), K(7.6, 1.45, 6.4), 38, "day"),
-        # what: the wizard, the long queue behind him
-        E_(S("what") - 0.1, S("early") - 0.1, K(5.6, 1.65, 6.9), K(5.65, 1.65, 7.05), K(7.0, 1.6, 9.5), 36, "day"),
+        E_(S("correct") - 0.1, S("early") - 0.1, K(7.0, 1.62, 9.4), K(7.05, 1.62, 9.15), K(7.6, 1.45, 6.4), 38, "day"),
+        # (the wizard's short "what" line stays on the woman's shot: a separate 0.8 s shot read as a flash)
         # early: highway centreline from behind the queue: one long line beside an empty lane
         E_(S("early") - 0.1, empty_e, K(0.0, 9.0, 131.0), K(0.0, 8.6, 126.0), K(0.0, 0.0, 40.0), 40, "day"),
         # early (b): low in the empty right lane, the stopped queue receding beside it
@@ -210,10 +211,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # faster: the wizard, delighted
         E_(S("faster") - 0.1, S("honest") - 0.1, K(5.6, 1.65, 6.9), K(5.7, 1.65, 7.1), K(7.0, 1.62, 9.5), 36, "day"),
         # honest: the woman, then the merge flowing at its steady rate
-        E_(S("honest") - 0.1, at("honest", "Minnesota") - 0.2, K(7.0, 1.62, 9.4), K(7.05, 1.62, 9.2), K(7.5, 1.45, 6.4), 38, "day"),
-        E_(at("honest", "Minnesota") - 0.2, S("why") - 0.1, K(-8.0, 8.0, 14.0), K(-7.5, 7.6, 12.5), K(0.0, 0.0, 0.0), 42, "day"),
+        E_(S("honest") - 0.1, mn_c, K(7.0, 1.62, 9.4), K(7.05, 1.62, 9.2), K(7.5, 1.45, 6.4), 38, "day"),
+        E_(mn_c, why_c, K(-8.0, 8.0, 14.0), K(-7.5, 7.6, 12.5), K(0.0, 0.0, 0.0), 42, "day"),
         # why (a): highway centreline in front of the merge, both lanes rolling in at the same speed
-        E_(S("why") - 0.1, less_t, K(1.0, 5.5, -22.0), K(1.0, 5.2, -19.0), K(0.0, 0.5, 20.0), 40, "day"),
+        E_(why_c, less_t, K(1.0, 5.5, -22.0), K(1.0, 5.2, -19.0), K(0.0, 0.5, 20.0), 40, "day"),
         # why (a2): overhead 3/4 over the merge: no lane jumping, one from each side
         E_(less_t, empty_t, K(12.0, 15.0, 26.0), K(10.5, 14.0, 22.0), K(0.0, 0.0, 2.0), 40, "day"),
         # why (b): the empty comparison road: one car moves over early, long before the cones
@@ -230,7 +231,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     ]
     events = [(round(cut_t, 3), "swish", {"gain": 0.16}),
               (round(t_b, 3), "whoosh", {"gain": 0.14}),
-              (round(at("forty", "forty"), 3), "ding", {"gain": 0.14}),
+              (round(E("forty") + 0.05, 3), "ding", {"gain": 0.12}),          # in the pause after the line, not under it
               (round(empty_t + 0.2, 3), "whoosh", {"gain": 0.12})]
     timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [t_b, at("forty", "forty"), at("honest", "Not")], "events": events,
                "mutes": [], "swells": [S("payoff")]}

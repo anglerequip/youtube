@@ -103,7 +103,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     tuck_r = _eased([(0, 0.6), (slip_t, 0.6), (E("hook"), 0.3), (tucked_t + 0.6, 0.3), (at("tuck", "back") + 0.5, 0.0), (out_t + 0.5, 0.0),
                      (out_t + 1.3, 1.0), (lands_t - 0.6, 1.0), (lands_t - 0.1, 0.0), (dur, 0.0)], T)
     rings = _eased([(0, 0.0), (halves_t, 0.0), (halves_t + 0.4, 1.0), (lands_t - 0.3, 1.0), (lands_t + 0.2, 0.0), (dur, 0.0)], T)
-    slowmo = [(slip_t, S("seen") - 0.1), (S("bend") - 0.1, S("cancel") - 0.1), (S("zero") - 0.1, lands_t + 0.3)]
+    slowmo = [(slip_t, S("seen") - 0.1), (S("bend") - 0.1, lands_t + 0.3)]   # one continuous slow-motion fall
 
     frames = {k: [] for k in ("wiz_blink", "woman_blink", "look_w", "look_m", "wiz_point", "woman_point", "cat_x", "cat_y", "cat_z",
                               "cat_yaw", "roll_f", "roll_r", "bend", "tuck_f", "tuck_r", "rings", "dir_f", "dir_r", "kitten_on", "badge")}
@@ -148,16 +148,16 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # hook (b): the wizard staring up at it
         E_(hookcut_t, S("nospin") - 0.1, K(1.45, 1.5, 0.45), K(1.38, 1.5, 0.4), K(0.05, 1.6, 0.15), 36),
         # nospin (a): the whole room, the cat frozen in mid-air
-        E_(S("nospin") - 0.1, cant_t, K(1.05, 1.8, 2.45), K(1.0, 1.75, 2.25), K(1.2, 1.3, -1.4), 42),
+        E_(S("nospin") - 0.1, cant_t - 0.05, K(1.05, 1.8, 2.45), K(1.0, 1.75, 2.25), K(1.2, 1.3, -1.4), 42),
         # nospin (b): the woman beside the frozen cat
-        E_(cant_t, S("seen") - 0.1, K(1.8, 1.6, 0.3), K(1.76, 1.6, 0.18), K(1.72, 1.5, -1.4), 40),
+        E_(cant_t - 0.05, S("seen") - 0.1, K(1.8, 1.6, 0.3), K(1.76, 1.6, 0.18), K(1.72, 1.5, -1.4), 40),
         # seen: the wizard
         E_(S("seen") - 0.1, S("bend") - 0.1, K(1.5, 1.45, 0.5), K(1.42, 1.47, 0.42), K(0.05, 1.62, 0.15), 36),
         # bend: side on, close: the cat folds at the waist; the two rings appear
         E_(S("bend") - 0.1, S("tuck") - 0.1, K(1.36, cy(S("bend")) + 0.08, 0.15), K(1.34, cy(S("tuck")) + 0.06, 0.0),
            K(X, cy(S("bend")), -1.72), 40, "key", K(X, cy(S("tuck")), -1.72)),
         # tuck (a): side on: front legs tuck, back legs stretch
-        E_(S("tuck") - 0.1, turns_t - 0.2, K(1.34, cy(S("tuck")) + 0.06, 0.0), K(1.36, cy(turns_t) + 0.05, -0.15),
+        E_(S("tuck") - 0.1, turns_t - 0.2, K(1.62, cy(S("tuck")) - 0.12, -0.75), K(1.6, cy(turns_t) - 0.1, -0.85),   # low three-quarter: a new angle, not a jump cut
            K(X, cy(S("tuck")), -1.72), 40, "key", K(X, cy(turns_t), -1.72)),
         # tuck (b): from in front, along the spine: the front half turns a lot, the back half a little the other way
         E_(turns_t - 0.2, S("swap") - 0.1, K(2.32, cy(turns_t) + 0.22, -1.98), K(2.25, cy(S("swap")) + 0.18, -1.95),
@@ -168,12 +168,12 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # swap (b): from behind, three-quarter: the hips roll round to match
         E_(hips_t - 0.2, S("cancel") - 0.1, K(0.42, cy(hips_t) + 0.2, -1.05), K(0.48, cy(S("cancel")) + 0.15, -1.1),
            K(X, cy(hips_t), -1.72), 38, "key", K(X, cy(S("cancel")), -1.72)),
-        # cancel: the wizard, working it out
-        E_(S("cancel") - 0.1, S("zero") - 0.1, K(1.42, 1.55, 0.62), K(1.36, 1.55, 0.55), K(0.05, 1.58, 0.15), 38),
-        # zero: wider: the cat comes down feet first onto the cushion
-        E_(S("zero") - 0.1, S("who") - 0.1, K(1.95, 1.15, 0.35), K(1.88, 1.05, 0.2), K(1.3, 0.8, -1.6), 40, "key", K(1.3, 0.5, -1.6)),
-        # who: the wizard turns to the woman
-        E_(S("who") - 0.1, S("history") - 0.1, K(1.45, 1.6, 0.3), K(1.4, 1.6, 0.26), K(0.05, 1.6, 0.15), 38),
+        # cancel: side on, following the cat down: the hips finish rolling round and it is upright (the flip on screen)
+        E_(S("cancel") - 0.1, S("zero") - 0.1, K(1.4, cy(S("cancel")) + 0.08, -0.3), K(1.38, cy(S("zero")) + 0.06, -0.4),
+           K(X, cy(S("cancel")), -1.72), 40, "key", K(X, cy(S("zero")), -1.72)),
+        # zero + who: wider: the cat comes down feet first onto the cushion; held through the short "who" line
+        # so no cut lands within 1.5 s of the landing reveal
+        E_(S("zero") - 0.1, S("history") - 0.1, K(1.95, 1.15, 0.35), K(1.88, 1.05, 0.2), K(1.3, 0.8, -1.6), 40, "key", K(1.3, 0.5, -1.6)),
         # history (a): the wall of chronophotograph frames
         E_(S("history") - 0.1, eng_t, K(cx, 2.15, cz + 5.1), K(cx, 2.15, cz + 4.75), K(cx, 2.15, cz), 42),
         # history (b): pushing in on the middle frames
@@ -192,8 +192,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         {"start": at("history", "nineteen"), "end": S("kittens") - 0.15, "big": "1969", "small": "the maths", "y": 0.13},
         {"start": at("kittens", "three"), "end": S("payoff") - 0.15, "big": "3-4 weeks", "small": "kittens start righting", "y": 0.16},
     ]
-    events = [(round(slip_t, 3), "swish", {"gain": 0.14}),
-              (round(S("nospin") + 0.05, 3), "tick", {"gain": 0.16}),
+    events = [(round(slip_t - 0.4, 3), "swish", {"gain": 0.14}),                # just before the first words
+              (round(at("bend", "bends"), 3), "whoosh", {"gain": 0.1}),           # the first twist gets a movement sound too
               (round(turns_t, 3), "whoosh", {"gain": 0.12}),
               (round(hips_t, 3), "whoosh", {"gain": 0.12}),
               (round(lands_t, 3), "thud", {"gain": 0.24})]
