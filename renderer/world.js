@@ -32,6 +32,11 @@ export const LIGHTING = {
   winter: { sun: '#f2f4ff', sunI: 2.1, elev: 22, az: 40, hemiSky: '#dfe7f2', hemiGround: '#8a8f94', hemiI: 1.2,
             rim: '#e6efff', rimI: 1.6, rimElev: 18, rimAz: 205, env: 0.35, bloomT: 3.5,
             sky: '#dde3e9', skyTop: '#a7b6c6', fog: '#d6dde3', fogNear: 20, fogFar: 120, exposure: 1.0 },
+  // cosy night interior (dog-feet): cool moonlight from the open front of a cut-away room, a soft blue fill,
+  // dark blue sky outside the window; warm practical lights (lamp, door gap) are added by the scene
+  moonroom: { sun: '#b9c8ff', sunI: 1.25, elev: 48, az: 25, hemiSky: '#4a5a80', hemiGround: '#2a2420', hemiI: 0.85,
+              rim: '#8fa6e0', rimI: 0.9, rimElev: 30, rimAz: 200, env: 0.18, bloomT: 2.6,
+              sky: '#18213a', skyTop: '#0b1020', fog: '#141b2e', fogNear: 30, fogFar: 140, exposure: 1.15 },
   night: { sun: '#a9bcff', sunI: 0.7, elev: 40, az: 160, hemiSky: '#2a3552', hemiGround: '#141c14', hemiI: 0.9,
            sky: '#111826', skyTop: '#080b16', fog: '#111826', fogNear: 40, fogFar: 170, exposure: 1.25 },
 };
