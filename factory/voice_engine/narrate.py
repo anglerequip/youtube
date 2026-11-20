@@ -78,12 +78,60 @@ def _trim(samples: np.ndarray, sr: int, thresh: float = 0.01) -> np.ndarray:
     return samples[max(0, idx[0] - pad): idx[-1] + pad]
 
 
+def clip_dir(ep) -> Path | None:
+    """Pre-generated per-beat voice clips (`voice_clips: <dir>` in the storyboard, relative to the repo):
+    one <beat id>.mp3/.wav each, e.g. a duo voiced with two ElevenLabs voices through the connector."""
+    d = (getattr(ep, "extra", None) or {}).get("voice_clips")
+    if not d:
+        return None
+    from ..configuration import settings
+    p = Path(d) if Path(d).is_absolute() else settings.root / d
+    return p
+
+
+def load_clip(path: Path, sr: int = 24000) -> np.ndarray:
+    import subprocess
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-ac", "1", "-ar", str(sr), "-f", "f32le", "-"],
+                         check=True, capture_output=True).stdout
+    return np.frombuffer(raw, dtype="<f4").copy()
+
+
+def cap_pauses(a: np.ndarray, sr: int, max_pause: float, thresh: float = 0.01) -> np.ndarray:
+    """Shorten silences inside a clip to `max_pause` seconds (TTS models sometimes linger between sentences)."""
+    hop = int(sr * 0.01)
+    if max_pause <= 0 or len(a) < hop * 3:
+        return a
+    loud = np.array([np.sqrt(np.mean(a[i:i + hop] ** 2)) > thresh for i in range(0, len(a) - hop + 1, hop)])
+    keep, run = [], 0
+    for k, l in enumerate(loud):
+        run = 0 if l else run + 1
+        keep.append(l or run * 0.01 <= max_pause / 2 or (k + 1 < len(loud) and _near_loud(loud, k, max_pause / 2 / 0.01)))
+    mask = np.repeat(np.array(keep), hop)
+    tail = a[len(mask):]
+    return np.concatenate([a[:len(mask)][mask], tail])
+
+
+def _near_loud(loud, k, n):
+    n = int(n)
+    return bool(loud[k + 1: k + 1 + n].any())
+
+
+def _clip_for(ep, beat_id: str) -> Path | None:
+    d = clip_dir(ep)
+    if d is None:
+        return None
+    for ext in (".wav", ".mp3"):
+        if (d / f"{beat_id}{ext}").exists():
+            return d / f"{beat_id}{ext}"
+    raise FileNotFoundError(f"voice_clips is set but {d}/{beat_id}.mp3 is missing")
+
+
 def narrate(ep, out_wav: Path, provider: str | None = None) -> Timeline:
-    tts = get_tts(provider)
+    tts = get_tts(provider) if clip_dir(ep) is None else None
     delivery = _delivery()
     # expressive delivery (sentence-by-sentence takes, emphasis, punctuation pauses): see expressive.py
     expr = None
-    if getattr(tts, "name", "") == "kokoro" and delivery.get("expressive", True):
+    if tts is not None and getattr(tts, "name", "") == "kokoro" and delivery.get("expressive", True):
         from .expressive import ExpressiveKokoro
         expr = ExpressiveKokoro(tts)
     chunks: list[np.ndarray] = []
@@ -96,7 +144,13 @@ def narrate(ep, out_wav: Path, provider: str | None = None) -> Timeline:
         speed = ep.speed * (getattr(ln, "speed", None) or pace.get("speed", 1.0))
         # The voice gets pronunciation-normalised text; captions keep the written text (ln.text).
         spoken = normalise(ln.text)
-        if expr is not None:
+        clip = _clip_for(ep, ln.id)
+        if clip is not None:
+            samples, sr = load_clip(clip), 24000
+            mp = (getattr(ep, "extra", None) or {}).get("max_inner_pause_s")
+            if mp:
+                samples = cap_pauses(samples, sr, float(mp))
+        elif expr is not None:
             samples, sr = expr.synth(spoken, voice=ep.voice, speed=speed, key=f"{ep.slug}/{ln.id}")
         elif getattr(tts, "name", "") == "elevenlabs":
             i = ep.lines.index(ln)
