@@ -55,7 +55,7 @@ beats:
     pause_after: 0.25
   - id: wake
     speaker: woman
-    text: "Here's the true half. Dogs filmed overnight woke up about *twenty-three* times in eight hours."
+    text: "Here's the *true* half. Dogs filmed overnight woke up about twenty-three times in eight hours."
     pause_after: 0.2
   - id: bark
     speaker: woman
@@ -104,9 +104,9 @@ sources:
   - "Scientific American, 'Is the Alpha Wolf Idea a Myth?' (accessed 2026-11-20)."
 
 claims:
-  - {id: wakeups, beat: wake, unit: count, value: 23, scope: history,
+  - {id: wakeups, beat: wake, unit: x, value: 23, scope: history,
      evidence: {quality: 2, source: "Adams & Johnson 1993: on average 23 sleep-wake episodes during 8 h, 24 dogs"}}
-  - {id: night_hours, beat: wake, unit: h, value: 8, scope: history,
+  - {id: night_hours, beat: wake, unit: count, value: 8, scope: history,
      evidence: {quality: 2, source: "Adams & Johnson 1993: the 8-hour night-time observation window"}}
 
 absolute_ok:
@@ -155,7 +155,7 @@ hero: dog
 publish:
   cover_at_s: 1.0
   cover_headline: "Why your dog sleeps here"
-  cover_label: {big: "23 wake-ups", small: "every night"}
+  cover_label: {big: "23 times", small: "awake a night"}
   hashtags: [dogs, dogbehavior, science, mythbusting]
   youtube:
     title: "Why Your Dog Sleeps On Your Feet (It's Not Night Watch)"

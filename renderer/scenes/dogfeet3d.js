@@ -29,7 +29,7 @@ function softBox(w, h, d, r = 0.3, seg = 24) {
 function room(S, L) {
   const floorM = MAT.wood('#7a5a3e'), wallM = std('#7d7466', { roughness: 0.95 }), trimM = std('#d8d0c0', { roughness: 0.7 });
   // floor boards
-  box(S, 4.0, 0.06, 3.6, floorM, 0.4, -0.03, 0.1);
+  box(S, 4.0, 0.06, 3.6, floorM, 0.4, -0.025, 0.1);           // top 5 mm above the lawn plane (no z-fighting)
   const X0 = -1.6, X1 = 2.4, Z0 = -1.6, Hh = 2.6, t = 0.1;
   // back wall with a window opening (x 0.05..1.05, y 0.95..1.95)
   const wx0 = 0.05, wx1 = 1.05, wy0 = 0.95, wy1 = 1.95;
@@ -259,6 +259,17 @@ export function build(world, plan) {
     p.rotation.y = a + 1.6; S.add(p); return p;
   });
 
+  // only the room and the two cutaway sets cast shadows: the garden outside the window is far outside the tight
+  // shadow box the close bedroom shots use, and its shadows would be cut off at the box edge
+  S.updateMatrixWorld(true);
+  const wp = new THREE.Vector3();
+  S.traverse(o => {
+    if (!o.isMesh || !o.castShadow) return;
+    o.getWorldPosition(wp);
+    const inRoom = wp.x > -1.9 && wp.x < 2.7 && wp.z > -1.9 && wp.z < 2.2;
+    const nearSet = Math.hypot(wp.x - L.wolf[0], wp.z - L.wolf[2]) < 12 || Math.hypot(wp.x - L.pups[0], wp.z - L.pups[2]) < 12;
+    if (!inRoom && !nearSet) o.castShadow = false;
+  });
   const focalPt = i => F.focal_pt[Math.min(i, F.focal_pt.length - 1)];
   const v = new THREE.Vector3();
   const headLook = (person, target, maxYaw = 0.9) => {
@@ -297,7 +308,7 @@ export function build(world, plan) {
         const fp = focalPt(i);
         world.setLighting(shot.lighting ?? 'moonroom', new THREE.Vector3(fp[0], 0, fp[2]));
         if (plan.bloom_threshold && shot.lighting === 'moonroom') world.bloom.threshold = plan.bloom_threshold;
-        const sc = world.sun.shadow.camera, e2 = shot.lighting === 'moonroom' ? 5 : 10;
+        const sc = world.sun.shadow.camera, e2 = shot.lighting === 'moonroom' ? 5 : 15;
         sc.left = -e2; sc.right = e2; sc.top = e2; sc.bottom = -e2; sc.far = 80; sc.updateProjectionMatrix();
       }
     },

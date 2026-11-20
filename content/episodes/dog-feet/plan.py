@@ -87,6 +87,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     fam_t = at("pack", "families") - 0.3            # closer on the wolf pups
     bark_t = at("bark", "bark") + 0.05              # the bark outside
     yawn_t = at("light", "Not") - 0.1            # the dog yawns and flops back down
+    pups_t = at("pile", "Puppies") - 0.25           # cut to the puppy pile
     pile_back = at("pile", "you're") - 0.25         # match cut from the puppy pile back to the dog
     roll_t = at("draught", "He") - 0.15             # the dog rolls over to face the wall
     # the illustrated wake-ups during "woke up about twenty-three times": quick head lifts
@@ -188,9 +189,12 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # feet: over the wizard's head, down the duvet to the dog on his feet
         cam.shot(S("feet") - 0.1, S("pile") - 0.1, [(S("feet") - 0.1, K(hx - 0.05, hy + 0.85, hz + 0.3), K(dx - 0.05, dy + 0.1, dz), 30),
                                                     (S("pile") - 0.1, K(hx + 0.05, hy + 0.82, hz + 0.28), K(dx - 0.05, dy + 0.1, dz), 30)], fps, "moonroom"),
-        # pile (a): the puppy pile in its basket
-        cam.shot(S("pile") - 0.1, pile_back, [(S("pile") - 0.1, K(px + 0.7, 0.85, pz + 1.0), K(px, 0.15, pz), 36),
-                                              (pile_back, K(px + 0.55, 0.75, pz + 0.85), K(px, 0.15, pz), 36)], fps, "golden"),
+        # pile (a): "warmth, your smell": low and close along the duvet, the dog's nose against the toes
+        cam.shot(S("pile") - 0.1, pups_t, [(S("pile") - 0.1, K(dx + 0.55, dy + 0.45, dz + 1.3), K(dx - 0.1, dy + 0.1, dz + 0.05), 34),
+                                           (pups_t, K(dx + 0.48, dy + 0.42, dz + 1.18), K(dx - 0.1, dy + 0.1, dz + 0.05), 34)], fps, "moonroom"),
+        # pile (b): the puppy pile in its basket
+        cam.shot(pups_t, pile_back, [(pups_t, K(px + 0.7, 0.85, pz + 1.0), K(px, 0.15, pz), 36),
+                                     (pile_back, K(px + 0.55, 0.75, pz + 0.85), K(px, 0.15, pz), 36)], fps, "golden"),
         # pile (b): match cut back to the dog on the feet
         cam.shot(pile_back, S("door") - 0.1, [(pile_back, K(dx + 0.55, dy + 0.75, dz + 0.85), K(dx, dy + 0.1, dz), 36),
                                               (S("door") - 0.1, K(dx + 0.5, dy + 0.7, dz + 0.78), K(dx, dy + 0.1, dz), 36)], fps, "moonroom"),
@@ -218,10 +222,11 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
 
     cards = [
         {"start": S("myth") + 0.3, "end": S("which") - 0.15, "big": "Night watch?", "small": "the viral theory", "y": 0.16},
+        {"start": at("pack", "captive"), "end": fam_t - 0.1, "big": "Captive wolves", "small": "where 'top dog' came from", "y": 0.16},
         {"start": fam_t, "end": S("wake") - 0.15, "big": "Wild packs", "small": "are mostly families", "y": 0.16},
-        {"start": at("wake", "twenty"), "end": S("bark") - 0.15, "big": "≈ 23 wake-ups", "small": "in an 8-hour night", "y": 0.16},
+        {"start": at("wake", "twenty"), "end": S("bark") - 0.15, "big": "≈ 23 times", "small": "awake in an 8-hour night", "y": 0.16},
         {"start": at("bark", "reaction") - 0.1, "end": S("guard") - 0.15, "big": "Barks", "small": "get extra attention", "y": 0.16},
-        {"start": at("pile", "Warmth"), "end": at("pile", "Puppies") - 0.1, "big": "Warmth + smell", "small": "the likely reasons", "y": 0.16},
+        {"start": at("pile", "Warmth"), "end": pups_t - 0.05, "big": "Warmth + smell", "small": "the likely reasons", "y": 0.16},
         {"start": at("draught", "Nobody"), "end": S("pillow") - 0.12, "big": "Not measured", "small": "no study found", "y": 0.16},
     ]
     events = [(round(S("pack") - 0.1, 3), "whoosh", {"gain": 0.16}),
