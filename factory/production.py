@@ -127,6 +127,52 @@ def _render_matplotlib(sb: Storyboard, tl, out: Path, previews: bool, force: boo
 RENDERER_DIR = Path(__file__).resolve().parent.parent / "renderer"
 
 
+def _render_chunked(node: list, out: Path, n_frames: int, skey: str):
+    """Render the frames in chunks that survive a restart: finished chunks (with their .meta.json) are kept
+    and skipped next time, then joined without re-encoding. RENDER_CHUNK (frames, default 240) and
+    RENDER_JOBS (parallel Chromium processes, default 1) tune it; RENDER_CHUNK=0 renders in one go."""
+    import os
+    import subprocess
+    size = int(os.environ.get("RENDER_CHUNK", "240"))
+    if size <= 0:
+        subprocess.run(node + ["--out", str(out / "visual.mp4")], check=True)
+        return
+    d = out / "chunks" / skey[:12]
+    d.mkdir(parents=True, exist_ok=True)
+    todo = []
+    parts = []
+    for f0 in range(0, n_frames, size):
+        f1 = min(n_frames, f0 + size)
+        mp4 = d / f"c{f0:06d}_{f1:06d}.mp4"
+        parts.append(mp4)
+        if not (mp4.exists() and mp4.with_suffix(".meta.json").exists()):
+            todo.append((f0, f1, mp4))
+    jobs = max(1, int(os.environ.get("RENDER_JOBS", "1")))
+    running = []
+    while todo or running:
+        while todo and len(running) < jobs:
+            f0, f1, mp4 = todo.pop(0)
+            tmp = mp4.with_name("tmp_" + mp4.name)
+            log.info("  chunk %d-%d", f0, f1)
+            running.append((subprocess.Popen(node + ["--out", str(tmp), "--from", str(f0), "--to", str(f1)]), tmp, mp4))
+        for pr in list(running):
+            if pr[0].poll() is not None:
+                running.remove(pr)
+                if pr[0].returncode != 0:
+                    raise RuntimeError(f"chunk render failed: {pr[2].name}")
+                pr[1].with_suffix(".meta.json").replace(pr[2].with_suffix(".meta.json"))
+                pr[1].replace(pr[2])
+        time.sleep(1)
+    lst = d / "list.txt"
+    lst.write_text("".join(f"file '{p.name}'\n" for p in parts))
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy",
+                    str(out / "visual.mp4")], check=True)
+    meta = {}
+    for p in parts:
+        meta.update(json.loads(p.with_suffix(".meta.json").read_text()))
+    (out / "visual.meta.json").write_text(json.dumps(meta))
+
+
 def _render_three(sb: Storyboard, tl, out: Path, previews: bool, force: bool):
     """3D diorama renderer (renderer/, three.js in headless Chromium). plan.py builds the per-frame plan."""
     import subprocess
@@ -156,7 +202,7 @@ def _render_three(sb: Storyboard, tl, out: Path, previews: bool, force: bool):
     log.info("[%s] pre-render QA: no blockers (%s)", sb.slug, verdict["state"])
     if force or not _cached(out, "visual.mp4", skey):
         log.info("[%s] 3D render (%d frames)", sb.slug, plan["n_frames"])
-        subprocess.run(node + ["--out", str(out / "visual.mp4")], check=True)
+        _render_chunked(node, out, plan["n_frames"], skey)
         _mark(out, "visual.mp4", skey)
     else:
         log.info("[%s] 3D render: cached", sb.slug)
