@@ -29,7 +29,7 @@ DOOR = [2.28, 0.0, -0.75]           # door in the right wall
 WINDOW = [0.55, 1.45, -1.6]         # window in the back wall
 WOLF = [40.0, 0.0, 0.0]             # wolf family cutaway
 PUPS = [-40.0, 0.0, 0.0]            # puppy pile cutaway
-SPEAKER = {"hook": "wizard", "myth": "woman", "which": "wizard", "pack": "woman", "shift": "wizard",
+SPEAKER = {"hook": "wizard", "myth": "woman", "which": "wizard", "pack": "woman",
            "wake": "woman", "bark": "woman", "guard": "wizard", "light": "woman", "feet": "wizard",
            "pile": "woman", "door": "wizard", "draught": "woman", "pillow": "wizard"}
 HEAD_WOMAN = [WOMAN[0], 1.52, WOMAN[2]]
@@ -83,15 +83,14 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         return ln.id if ln else None
 
     # ---- key moments
-    lovely_t = at("myth", "Lovely") - 0.25          # cut to the woman for the verdict
+    lovely_t = at("myth", "Cute") - 0.25          # cut to the woman for the verdict
     fam_t = at("pack", "families") - 0.3            # closer on the wolf pups
-    sixteen_t = at("wake", "Sixteen") - 0.2         # the sleep/wake split card
     bark_t = at("bark", "bark") + 0.05              # the bark outside
-    yawn_t = at("light", "That's") - 0.1            # the dog yawns and flops back down
+    yawn_t = at("light", "Not") - 0.1            # the dog yawns and flops back down
     pile_back = at("pile", "you're") - 0.25         # match cut from the puppy pile back to the dog
     roll_t = at("draught", "He") - 0.15             # the dog rolls over to face the wall
     # the illustrated wake-ups during "woke up about twenty-three times": quick head lifts
-    lifts = [S("wake") + 1.4 + k * 1.15 for k in range(5)]
+    lifts = [S("wake") + 1.0 + k * 1.05 for k in range(5)]
 
     frames = {k: [] for k in ("talk_w", "talk_m", "wiz_blink", "woman_blink", "wiz_pitch", "wiz_yaw", "look_m",
                               "dog_mode", "dog_pitch", "dog_yaw", "dog_rest", "dog_blink", "dog_mouth", "dog_ears",
@@ -114,12 +113,12 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
             wb = min(1.0, (t - E("pillow") - 0.2) / 0.4)
         frames["wiz_blink"].append(round(wb, 3))
         frames["woman_blink"].append(1.0 if ((t + 1.3) % 3.4) < 0.12 else 0.0)
-        frames["look_m"].append("camera" if a in ("wake", "light") else ("dog" if a in ("bark", "draught") else "wizard"))
+        frames["look_m"].append("camera" if a in ("myth", "light") else ("dog" if a in ("bark", "draught") else "wizard"))
         # the dog: asleep with his head on his paws, apart from the wake-ups, the bark, the yawn and the door
         mode, pitch, yaw, rest, blink, mouth, ears, tail, turn = "lie", 0.25, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0
         up = 0.0
-        if S("shift") + 0.3 <= t < E("shift") + 0.2:     # one ear twitches in his sleep
-            ears = 0.35 * max(0.0, math.sin((t - S("shift") - 0.3) * 9.0)) * _bump(t, S("shift") + 0.3, 0.1, 1.2, 0.2)
+        if fam_t <= t < S("wake") + 0.6:                 # one ear twitches in his sleep (seen at the start of "wake")
+            ears = 0.35 * max(0.0, math.sin((t - fam_t) * 9.0))
         for l0 in lifts:                                 # quick wake-ups
             up = max(up, _bump(t, l0, 0.18, 0.4, 0.3))
         b = _bump(t, bark_t, 0.12, max(0.2, E("guard") - bark_t + 0.4), 0.5)     # the bark: head snaps up
@@ -145,7 +144,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         frames["wolf"].append(round(max(0.0, t - S("pack")), 3))
         frames["pups"].append(round(max(0.0, t - S("pile")), 3))
         badge = ""
-        if S("wake") + 1.2 <= t < sixteen_t:
+        if S("wake") + 0.9 <= t < E("wake") + 0.2:
             badge = "ILLUSTRATION: A FEW OF THE WAKE-UPS"
         frames["badge"].append(badge)
 
@@ -162,7 +161,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # myth: wide three-quarter of the whole room
         cam.shot(S("myth") - 0.1, lovely_t, [(S("myth") - 0.1, K(2.0, 2.7, 4.6), K(0.25, 0.75, -0.25), 42),
                                              (lovely_t, K(1.75, 2.6, 4.3), K(0.25, 0.75, -0.25), 42)], fps, "moonroom"),
-        # myth (b): the woman, amused, on "Lovely story. Half wrong."
+        # myth (b): the woman, amused, on "Cute story. Half wrong."
         cam.shot(lovely_t, S("which") - 0.05, [(lovely_t, K(0.45, 1.5, 1.95), K(WOMAN[0], 1.3, WOMAN[2]), 38),
                                                (S("which") - 0.05, K(0.53, 1.5, 1.85), K(WOMAN[0], 1.3, WOMAN[2]), 38)], fps, "moonroom"),
         # which: the wizard on his pillow, close, from above the front edge of the bed
@@ -172,17 +171,11 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         cam.shot(S("pack") - 0.1, fam_t, [(S("pack") - 0.1, K(wx + 2.4, 1.5, wz + 3.6), K(wx, 0.25, wz), 40),
                                           (fam_t, K(wx + 2.0, 1.3, wz + 3.1), K(wx, 0.25, wz), 40)], fps, "winter"),
         # pack (b): closer on the parents and pups: a family
-        cam.shot(fam_t, S("shift") - 0.1, [(fam_t, K(wx - 0.9, 0.7, wz + 1.9), K(wx + 0.1, 0.25, wz), 36),
-                                           (S("shift") - 0.1, K(wx - 0.75, 0.65, wz + 1.7), K(wx + 0.1, 0.25, wz), 36)], fps, "winter"),
-        # shift: the dog asleep, close, an ear twitches
-        cam.shot(S("shift") - 0.1, S("wake") - 0.1, [(S("shift") - 0.1, K(dx + 0.55, dy + 0.42, dz + 1.05), K(dx, dy + 0.12, dz + 0.22), 34),
-                                                     (S("wake") - 0.1, K(dx + 0.5, dy + 0.4, dz + 0.95), K(dx, dy + 0.12, dz + 0.22), 34)], fps, "moonroom"),
+        cam.shot(fam_t, S("wake") - 0.1, [(fam_t, K(wx - 0.9, 0.7, wz + 1.9), K(wx + 0.1, 0.25, wz), 36),
+                                          (S("wake") - 0.1, K(wx - 0.75, 0.65, wz + 1.7), K(wx + 0.1, 0.25, wz), 36)], fps, "winter"),
         # wake (a): straight down over the bed, slowly rotating: the dog lifts his head again and again
-        cam.shot(S("wake") - 0.1, sixteen_t, [(S("wake") - 0.1, K(2.7, 3.3, 1.0), K(0.1, 0.7, 0.0), 40),
-                                              (sixteen_t, K(2.5, 3.1, 0.7), K(0.1, 0.7, 0.0), 40)], fps, "moonroom"),
-        # wake (b): the woman to camera for the split
-        cam.shot(sixteen_t, S("bark") - 0.1, [(sixteen_t, K(0.45, 1.5, 1.95), K(WOMAN[0], 1.3, WOMAN[2]), 38),
-                                              (S("bark") - 0.1, K(0.52, 1.5, 1.85), K(WOMAN[0], 1.3, WOMAN[2]), 38)], fps, "moonroom"),
+        cam.shot(S("wake") - 0.1, S("bark") - 0.1, [(S("wake") - 0.1, K(2.7, 3.4, -0.35), K(0.05, 0.7, 0.0), 40),
+                                                    (S("bark") - 0.1, K(2.5, 3.2, -0.6), K(0.05, 0.7, 0.0), 40)], fps, "moonroom"),
         # bark: from the window side, the dog's head snaps up toward the window
         cam.shot(S("bark") - 0.1, S("guard") - 0.1, [(S("bark") - 0.1, K(dx - 0.65, dy + 0.55, dz + 1.15), K(dx + 0.05, dy + 0.2, dz + 0.15), 34),
                                                      (S("guard") - 0.1, K(dx - 0.58, dy + 0.52, dz + 1.05), K(dx + 0.05, dy + 0.2, dz + 0.15), 34)], fps, "moonroom"),
@@ -225,9 +218,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
 
     cards = [
         {"start": S("myth") + 0.3, "end": S("which") - 0.15, "big": "Night watch?", "small": "the viral theory", "y": 0.16},
-        {"start": fam_t, "end": S("shift") - 0.15, "big": "Wild packs", "small": "are mostly families", "y": 0.16},
-        {"start": at("wake", "twenty"), "end": sixteen_t - 0.1, "big": "≈ 23 wake-ups", "small": "in an 8-hour night", "y": 0.16},
-        {"start": sixteen_t + 0.1, "end": S("bark") - 0.15, "big": "16 min / 5 min", "small": "asleep / awake", "y": 0.16},
+        {"start": fam_t, "end": S("wake") - 0.15, "big": "Wild packs", "small": "are mostly families", "y": 0.16},
+        {"start": at("wake", "twenty"), "end": S("bark") - 0.15, "big": "≈ 23 wake-ups", "small": "in an 8-hour night", "y": 0.16},
         {"start": at("bark", "reaction") - 0.1, "end": S("guard") - 0.15, "big": "Barks", "small": "get extra attention", "y": 0.16},
         {"start": at("pile", "Warmth"), "end": at("pile", "Puppies") - 0.1, "big": "Warmth + smell", "small": "the likely reasons", "y": 0.16},
         {"start": at("draught", "Nobody"), "end": S("pillow") - 0.12, "big": "Not measured", "small": "no study found", "y": 0.16},
@@ -238,7 +230,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
               (round(roll_t + 0.45, 3), "thud", {"gain": 0.1, "speed": 1.2})]
     timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [lovely_t, bark_t, roll_t], "events": events,
                "mutes": [], "swells": [S("pile")]}
-    facts = {"wakeups_per_night": 23, "sleep_bout_min": 16, "wake_bout_min": 5,
+    facts = {"wakeups_per_night": 23,
              "events": {"head_up_at_bark": {"t": bark_t + 0.4, "observe": "dog_rest", "expect": 0.0, "tol": 0.05},
                         "curled_at_end": {"t": E("pillow"), "observe": "dog_turn", "expect": 1.0, "tol": 0.02}}}
     return {"scene": SCENE, "W": W, "H": H, "fps": fps, "n_frames": n, "seed": 29, "supersample": 1.0,

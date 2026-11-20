@@ -7,7 +7,7 @@ scene: dogfeet3d
 hook_family: 2          # a familiar moment with a popular explanation that is half wrong
 structure: D            # duo: claim -> which half is wrong -> which half is true -> the likely real reasons -> joke payoff
 voice_clips: content/episodes/dog-feet/voice   # duo voiced with ElevenLabs (wizard zYcjlYFOd3taleS0gkk3, woman 0ggs85h7hrWz8ExXnsBc), eleven_v4, English
-max_inner_pause_s: 0.4   # trims the TTS model's long gaps between sentences (not a speed change)
+max_inner_pause_s: 0.3   # trims the TTS model's long gaps between sentences (not a speed change)
 speakers: {wizard: zYcjlYFOd3taleS0gkk3, woman: 0ggs85h7hrWz8ExXnsBc}
 description: |
   Your dog sleeps on your feet, so it must be guarding you on "night watch", right? Half right.
@@ -24,7 +24,7 @@ speed: 1.0
 story:
   core_idea: "Your dog isn't on pack night-watch duty; dogs are just light sleepers who like your warmth and smell."
   fascination: "the viral story is half true: dogs really do wake about every twenty minutes, but the 'pack job' part is a myth from captive wolves"
-  steps: 4            # the pack myth; dogs wake ~23 times a night; barks get extra attention; warmth/smell/social sleeping
+  steps: 4            # the pack myth; dogs wake ~23 times a night (cycles of ~16 min asleep, 5 awake, in the caveat); barks get extra attention; warmth/smell/social sleeping
   buildup: low
   extras: [twist]     # the 'facing the door' detail nobody has measured
   payoff: pillow
@@ -33,6 +33,8 @@ story:
     - "whether to let dogs sleep in your bed (sleep-quality studies): advice, not the myth-bust"
     - "Mech withdrawing his own 1970 book: a nice story, but slows the pack beat"
     - "breed differences in sleep: no solid numbers for the claim"
+    - "the 16-min asleep / 5-min awake split: true, but the 23 wake-ups already make the point; kept in the caveat"
+    - "'mum, dad and the kids' and 'strangers thrown together': the picture of the wolf family says it"
 end_hold_s: 1.6
 beats:
   - id: hook
@@ -41,7 +43,7 @@ beats:
     pause_after: 0.25
   - id: myth
     speaker: woman
-    text: "The internet says yes. Night watch... the most dangerous job in the pack. Lovely story. Half *wrong*."
+    text: "The internet says yes. Night watch, for the pack. Cute story. Half *wrong*."
     pause_after: 0.2
   - id: which
     speaker: wizard
@@ -49,15 +51,11 @@ beats:
     pause_after: 0.15
   - id: pack
     speaker: woman
-    text: "The pack part. The \"top dog\" idea came from captive wolves, strangers thrown together. Wild packs are mostly just *families*. Mum, dad, and the kids."
+    text: "The pack part. That \"top dog\" idea came from captive wolves. Wild packs are mostly just *families*."
     pause_after: 0.25
-  - id: shift
-    speaker: wizard
-    text: "So there's no secret night shift?"
-    pause_after: 0.15
   - id: wake
     speaker: woman
-    text: "Here's the true half. Dogs filmed overnight woke up about twenty-three times in eight hours. Sixteen minutes asleep... five awake."
+    text: "Here's the true half. Dogs filmed overnight woke up about *twenty-three* times in eight hours."
     pause_after: 0.2
   - id: bark
     speaker: woman
@@ -69,7 +67,7 @@ beats:
     pause_after: 0.15
   - id: light
     speaker: woman
-    text: "Light sleeper, yes. Bodyguard, not really. That's just how dogs sleep."
+    text: "Light sleeper, yes. Bodyguard? Not really."
     pause_after: 0.2
   - id: feet
     speaker: wizard
@@ -110,10 +108,6 @@ claims:
      evidence: {quality: 2, source: "Adams & Johnson 1993: on average 23 sleep-wake episodes during 8 h, 24 dogs"}}
   - {id: night_hours, beat: wake, unit: h, value: 8, scope: history,
      evidence: {quality: 2, source: "Adams & Johnson 1993: the 8-hour night-time observation window"}}
-  - {id: sleep_bout, beat: wake, unit: min, value: 16, scope: history,
-     evidence: {quality: 2, source: "Adams & Johnson 1993: average 16 min asleep per cycle"}}
-  - {id: wake_bout, beat: wake, unit: min, value: 5, scope: history,
-     evidence: {quality: 2, source: "Adams & Johnson 1993: average 5 min awake per cycle"}}
 
 absolute_ok:
   - {word: "every", beat: hook, why: "'every night' is the wizard's own anecdote about his dog"}
