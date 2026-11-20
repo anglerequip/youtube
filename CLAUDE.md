@@ -178,3 +178,17 @@ Two extra looks studied from TikToks Caesar shared. Use either one whole when th
   captions (`caption_style: build`), lighting `blizzard`.
 - Building blocks: `renderer/overlays.js` (2D, plan `overlays:`), `renderer/effects3d.js` (3D), presets in `renderer/world.js`.
 - Copy techniques only. Never copy a reference's characters, creatures, models, scripts, screens or exact shots.
+
+## Autopilot efficiency (Caesar, 2026-11-20, via the project coordinator)
+
+These rules keep the hands-free pipeline cheap. They don't override the rules above.
+
+1. **Reusable scene sets.** Build a small library (bedroom, street/traffic, kitchen, lab, outdoors) and
+   have each new episode swap props and camera rather than model from scratch. A new set is added only
+   when no existing one fits.
+2. **One AI review round by default.** A second round runs only if round one scores under 3.0. The
+   two-round maximum still applies, and after round two the verdict is `deliver`.
+3. **Model per step.** Use the strongest model for scripts, fact checks and scene building. Use a
+   cheaper model (Sonnet or Haiku) for routine work: packaging, topic-ledger checks, QA summaries.
+4. **Fewer chat messages.** Post to the project chat only for a result, a blocker or a question that
+   needs Caesar. Routine progress goes on the checklist.
