@@ -4,7 +4,8 @@
 //
 //   import { cat, mouse } from '../cat.js';
 //   const c = cat({ coat: '#d9893f', stripe: '#a9581f' }); c.position.set(x, y, z); scene.add(c);
-//   c.pose({ mode: 'sit'|'stand'|'crouch', blink: 0..1, yaw, pitch, mouth: 0..1, walk: phase, tail: 0..1, t });
+//   c.pose({ mode: 'sit'|'stand'|'crouch'|'lie', blink: 0..1, yaw, pitch, mouth: 0..1, walk: phase, tail: 0..1, t,
+//           fold: 0..1 (lie: stretched -> loaf), hunch: 0..1, ears: 0..1, heat: 0..1, heatBody: 0..1 });
 import * as THREE from 'three';
 
 const std = (c, x = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.8, metalness: 0, ...x });
@@ -15,7 +16,7 @@ function mesh(geo, m, parent, x = 0, y = 0, z = 0) {
 }
 const grp = (parent, x = 0, y = 0, z = 0) => { const g = new THREE.Group(); g.position.set(x, y, z); parent.add(g); return g; };
 function ell(parent, m, rx, ry, rz, x = 0, y = 0, z = 0, seg = 48) {
-  const o = mesh(new THREE.SphereGeometry(1, seg, Math.round(seg * 0.75)), m, parent, x, y, z); o.scale.set(rx, ry, rz); return o;
+  const o = mesh(new THREE.SphereGeometry(1, seg, Math.round(seg * 0.75)), m, parent, x, y, z); o.scale.set(rx, ry, rz); o.userData.prim = 'ell'; return o;
 }
 // tapered tube along a smooth curve (legs, tail, whiskers)
 function strand(points, r, m, parent, taper = u => 1, seg = 40, rad = 20) {
@@ -26,9 +27,9 @@ function strand(points, r, m, parent, taper = u => 1, seg = 40, rad = 20) {
     for (let j = 0; j <= rad; j++) { const k = i * (rad + 1) + j; v.fromBufferAttribute(P, k).sub(c).multiplyScalar(f); P.setXYZ(k, c.x + v.x, c.y + v.y, c.z + v.z); }
   }
   g.computeVertexNormals();
-  const o = mesh(g, m, parent);
+  const o = mesh(g, m, parent); o.userData.prim = { type: 'tube', curve, r, taper };
   // round end caps
-  for (const u of [0, 1]) { const p = curve.getPointAt(u); mesh(new THREE.SphereGeometry(r * Math.max(0.05, taper(u)), 20, 14), m, parent, p.x, p.y, p.z); }
+  o.userData.caps = [0, 1].map(u => { const p = curve.getPointAt(u); const c = mesh(new THREE.SphereGeometry(r * Math.max(0.05, taper(u)), 24, 16), m, parent, p.x, p.y, p.z); c.userData.prim = 'ell'; return c; });
   return o;
 }
 
@@ -59,13 +60,13 @@ function makeHead(opt, m) {
   ell(head, m.cream, 0.016, 0.01, 0.014, 0, -0.038, 0.042, 40);                                      // chin
   const nose = ell(head, m.nose, 0.0085, 0.006, 0.006, 0, -0.012, 0.061, 32); nose.rotation.x = 0.3;
   // mouth: a dark opening under the muzzle that opens for a meow, with a little pink tongue
-  const mouth = grp(head, 0, -0.033, 0.047); U.mouth = mouth;
+  const mouth = grp(head, 0, -0.033, 0.047); U.mouth = mouth; mouth.userData.noArea = true;
   const inside = ell(mouth, m.mouth, 0.012, 0.008, 0.008, 0, 0, 0, 32); U.inside = inside;
   ell(mouth, m.nose, 0.007, 0.003, 0.006, 0, -0.004, 0.001, 24);
   // eyes: big amber-green irises, vertical slit pupils, glossy cornea; eyelids close by scaling the eye group
   U.eyes = [];
   for (const s of [-1, 1]) {
-    const eye = grp(head, s * 0.025, 0.008, 0.049); eye.rotation.y = s * 0.32;
+    const eye = grp(head, s * 0.025, 0.008, 0.049); eye.rotation.y = s * 0.32; eye.userData.noArea = true;
     ell(eye, m.lid, 0.0175, 0.0145, 0.008, 0, 0, -0.002, 40);
     const iris = ell(eye, m.iris, 0.0155, 0.0128, 0.007, 0, 0, 0.001, 48);
     const pupil = ell(eye, m.pupil, 0.0035, 0.0105, 0.004, 0, 0, 0.0055, 32); U.pupils = (U.pupils || []).concat(pupil);
@@ -77,14 +78,15 @@ function makeHead(opt, m) {
   }
   // ears: smooth cones, thin, with pink inner cones and a tuft
   for (const s of [-1, 1]) {
-    const ear = grp(head, s * 0.036, 0.046, -0.004); ear.rotation.set(-0.12, 0, -s * 0.38);
+    const ear = grp(head, s * 0.036, 0.046, -0.004); ear.rotation.set(-0.12, 0, -s * 0.38); ear.userData.side = s; U.ears = (U.ears || []).concat(ear);
     const outer = mesh(new THREE.ConeGeometry(0.024, 0.05, 40, 6), m.fur, ear, 0, 0.022, 0); outer.scale.z = 0.42;
     const inner = mesh(new THREE.ConeGeometry(0.016, 0.036, 40, 4), m.ear, ear, 0, 0.018, 0.0055); inner.scale.z = 0.25;
   }
   // whiskers
+  const wh = grp(head); wh.userData.noArea = true;
   for (const s of [-1, 1]) for (const k of [0, 1, 2]) {
     const y = -0.02 - k * 0.005;
-    strand([[s * 0.018, y, 0.06], [s * 0.05, y + 0.004 - k * 0.003, 0.064], [s * 0.085, y - 0.002 - k * 0.007, 0.055]], 0.0007, m.whisker, head, u => 1 - 0.7 * u, 12, 6);
+    strand([[s * 0.018, y, 0.06], [s * 0.05, y + 0.004 - k * 0.003, 0.064], [s * 0.085, y - 0.002 - k * 0.007, 0.055]], 0.0007, m.whisker, wh, u => 1 - 0.7 * u, 12, 6);
   }
   head.traverse(o => { if (o.isMesh) o.castShadow = true; });
   return head;
@@ -137,17 +139,60 @@ export function cat(opt = {}) {
   stripes(stMesh, opt.coat, opt.stripe, 'y', 90, 0.4);
   const standNeck = grp(stand, 0, 0.26, 0.17);
 
+  // ---- lying body: `fold` 0 = stretched out flat (legs forward and back, tail straight), 1 = the loaf
+  // (front paws tucked under the chest, hind legs under the hips, tail wrapped along the side).
+  // Legs and tail have their own materials so a scene can make them glow (heat-loss view).
+  const lie = grp(body); lie.visible = false;
+  m.limb = std(opt.coat, { roughness: 0.9 }); m.limbPaw = std('#efe2c8', { roughness: 0.9 });
+  const lieTorso = grp(lie);
+  const ltorso = ell(lieTorso, m.fur, 0.09, 0.083, 0.165, 0, 0.085, -0.02, 72); stripes(ltorso, opt.coat, opt.stripe, 'z', 70, 0.5, belly);
+  const lchest = ell(lieTorso, m.fur, 0.077, 0.086, 0.082, 0, 0.096, 0.11, 64);
+  stripes(lchest, opt.coat, opt.stripe, 'y', 70, 0.65, v => (v.z > 0.04 ? Math.min(1, (v.z - 0.04) * 35) : 0));
+  const lhips = ell(lieTorso, m.fur, 0.086, 0.08, 0.08, 0, 0.09, -0.13, 64); stripes(lhips, opt.coat, opt.stripe, 'y', 70, 0.55);
+  for (const s of [-1, 1]) { const th = ell(lieTorso, m.fur, 0.042, 0.058, 0.078, s * 0.072, 0.072, -0.1, 48); stripes(th, opt.coat, opt.stripe, 'z', 90, 0.6); }
+  const lieLegs = [];
+  for (const [x, z, front] of [[-0.042, 0.12, 1], [0.042, 0.12, 1], [-0.05, -0.15, 0], [0.05, -0.15, 0]]) {
+    const hip = grp(lie, x, 0.02, z), leg = grp(hip);
+    strand([[0, 0, 0], [0, -0.075, front ? 0.004 : -0.006], [0, -0.15, 0]], front ? 0.018 : 0.021, m.limb, leg, u => 1 - 0.25 * u);
+    ell(leg, m.limbPaw, 0.021, 0.029, 0.013, 0, -0.158, 0, 40);
+    lieLegs.push({ hip, leg, front });
+  }
+  const lieTail = grp(lie, 0, 0.03, -0.2);
+  const tailStraight = [[0, 0, 0], [0, -0.012, -0.08], [0.01, -0.014, -0.16], [0.0, -0.014, -0.24], [-0.012, -0.014, -0.3]];
+  const tailWrap = [[0, 0, 0], [0.06, -0.016, -0.02], [0.098, -0.017, 0.05], [0.094, -0.017, 0.13], [0.05, -0.018, 0.185]];
+  let tailFold = -1;
+  const buildTail = f => {
+    for (const c of [...lieTail.children]) { lieTail.remove(c); c.geometry.dispose(); }
+    const pts = tailStraight.map((p, k) => p.map((v, j) => v + (tailWrap[k][j] - v) * f));
+    const tm = strand(pts, 0.016, m.limb, lieTail, u => 1 - 0.35 * u, 48);
+    stripes(tm, opt.coat, opt.stripe, 'x', 90, 0.4);
+    tm.material = m.limb.clone(); tm.material.vertexColors = true; tm.material.color.set('#ffffff'); m.tailMat = tm.material;
+    tailFold = f;
+  };
+  buildTail(1);
+  const lieNeck = grp(lie, 0, 0.16, 0.15);
+  root.userData.lie = { legs: lieLegs, tail: lieTail };
+
   const head = makeHead(opt, m);
   const neckJoint = new THREE.Group(); neckJoint.add(head); head.position.set(0, 0.035, 0.03);
   sitNeck.add(neckJoint);
   const H = head.userData;
   root.traverse(o => { if (o.isMesh && !o.material.isMeshBasicMaterial && !o.material.transparent) { o.castShadow = true; o.receiveShadow = true; } });
 
+  const furMats = new Set();
+  root.traverse(o => { if (o.isMesh && (o.material === m.fur || o.material.vertexColors) && o.parent !== lieTail) furMats.add(o.material); });
   root.pose = (p = {}) => {
     const mode = p.mode ?? 'sit', t = p.t ?? 0;
-    const standing = mode !== 'sit';
-    sit.visible = !standing; stand.visible = standing;
-    (standing ? standNeck : sitNeck).add(neckJoint);
+    const standing = mode === 'stand' || mode === 'crouch', lying = mode === 'lie';
+    sit.visible = mode === 'sit'; stand.visible = standing; lie.visible = lying;
+    (standing ? standNeck : lying ? lieNeck : sitNeck).add(neckJoint);
+    // ears: 0 = upright, 1 = flattened out to the sides (a tense or unwell cat)
+    const ea = p.ears ?? 0;
+    for (const e of H.ears) e.rotation.set(-0.12 - 0.35 * ea, 0, -e.userData.side * (0.38 + 0.75 * ea));
+    // heat-loss glow on legs and tail (and a faint warm body), for the thermal-style beat
+    const heat = p.heat ?? 0, hb = p.heatBody ?? 0;
+    for (const mm of [m.limb, m.limbPaw, m.tailMat]) { mm.emissive.set('#ff2a1a'); mm.emissiveIntensity = 3.0 * heat; }
+    for (const fm of furMats) { fm.emissive.set('#ff8a3c'); fm.emissiveIntensity = 0.35 * hb; }
     neckJoint.rotation.set(p.pitch ?? 0, p.yaw ?? 0, p.tilt ?? 0, 'YXZ');
     const bl = Math.min(1, Math.max(0, p.blink ?? 0));
     for (const lid of H.lids) { lid.visible = bl > 0.02; lid.position.y = 0.02 * (1 - bl); lid.scale.y = 0.0155 * (0.6 + 0.4 * bl); }
@@ -157,6 +202,26 @@ export function cat(opt = {}) {
     // tail: a slow sway; flick when `tail` is high
     const sway = 0.18 * Math.sin(t * 1.3) + 0.35 * (p.tail ?? 0) * Math.sin(t * 7);
     sitTail.rotation.y = sway; standTail.rotation.z = sway * 0.6;
+    if (lying) {
+      const f = Math.min(1, Math.max(0, p.fold ?? 1)), hu = Math.min(1, Math.max(0, p.hunch ?? 0));
+      const tf = Math.min(1, Math.max(0, p.tailFold ?? f));
+      if (Math.abs(tf - tailFold) > 0.004) buildTail(tf);
+      lieTail.rotation.y = 0.04 * Math.sin(t * 0.9) * (1 - tf) + (p.tail ?? 0) * 0.12 * Math.sin(t * 5);
+      // hunched: the back rises and rounds, the head drops and pulls in
+      lieTorso.position.y = 0.012 * hu; lieTorso.scale.set(1 - 0.04 * hu, 1 + 0.12 * hu, 1 - 0.06 * hu);
+      for (const L of lieLegs) {
+        const hipY = 0.02 + 0.03 * f;
+        L.hip.position.y = hipY;
+        // folding: front legs swing down and back under the chest, hind legs forward under the hips, both shortening
+        // until they are hidden inside the body (a true loaf shows no feet)
+        const th = L.front ? -Math.PI / 2 + (Math.PI / 2 + 1.2) * f : Math.PI / 2 - (Math.PI / 2 + 1.2) * f;
+        let len = 1 - 0.88 * f;
+        const c = Math.cos(th); if (c > 0.01) len = Math.min(len, (hipY - 0.004) / (0.165 * c));
+        L.leg.rotation.x = th; L.leg.scale.set(1 - 0.5 * f, Math.max(0.05, len), 1 - 0.3 * f);
+        L.hip.position.z = (L.front ? 0.12 : -0.15) + (L.front ? -0.02 : 0.03) * f;
+      }
+      lieNeck.position.set(0, 0.125 + 0.035 * f - 0.035 * hu, 0.17 - 0.02 * f - 0.02 * hu);
+    }
     if (standing) {
       const crouch = mode === 'crouch' ? 1 : 0;
       stand.position.y = -0.075 * crouch; stand.rotation.x = 0.0;

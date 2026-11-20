@@ -1,0 +1,154 @@
+slug: cat-loaf
+title: "Why Does My Cat Sit Like a Loaf?"
+topic: "the 'cat loaf' posture: mostly heat saving (tucked legs and tail mean less exposed surface), a sign of feeling safe, and, when tense and squinting, a possible pain sign"
+component: custom   # behaviour and heat; the one number we compute is the model cat's exposed surface (renderer/cat_area.mjs)
+renderer: three
+scene: catloaf3d
+hook_family: 2          # a familiar moment, explained
+structure: D            # duo: odd sight -> heat -> surface -> trust -> the pain caveat -> warm payoff
+voice_clips: content/episodes/cat-loaf/voice   # duo voiced with ElevenLabs (wizard zYcjlYFOd3taleS0gkk3, woman 0ggs85h7hrWz8ExXnsBc), English
+max_inner_pause_s: 0.4   # trims the TTS model's long gaps between sentences (not a speed change)
+speakers: {wizard: zYcjlYFOd3taleS0gkk3, woman: 0ggs85h7hrWz8ExXnsBc}
+description: |
+  Why do cats tuck their paws and tail under them and turn into a "loaf"? Mostly heat. Cats are comfiest
+  at around 30 °C, so a normal living room is chilly to them, and legs and a tail lose heat fast. Folding
+  them away means less surface open to the air. A loaf also means a relaxed cat, since it can't sprint off
+  instantly. But a tense, hunched loaf with squinting eyes and the head down can be a pain sign: worth a vet check.
+
+  Sources: Wikipedia "Cat" (thermoneutral zone), Gilbert et al. 2010 (Biological Reviews),
+  International Cat Care, Bradshaw, Cat Sense (2013), Evangelista et al. 2019 (Scientific Reports), Reid et al. 2017.
+
+  #shorts #cats #catbehavior #science
+tags: [cats, cat loaf, cat behavior, cat posture, cat body heat, feline grimace scale, science, shorts]
+voice: elevenlabs-duo
+speed: 1.0
+story:
+  core_idea: "A cat loafs mainly to keep warm: tucking legs and tail away hides the parts that leak the most heat."
+  fascination: "a cute pose is quietly a heating strategy, and the same pose, done tense, can be a pain signal"
+  steps: 4            # cats need it warmer than us; heat leaks from exposed surface; tucking cuts surface; tucked paws = relaxed
+  buildup: low
+  extras: [twist]     # the tense, squinting loaf that means a vet check
+  payoff: warm
+  cut:
+    - "surface-to-volume maths and Bergmann's rule: true, but the hug-your-knees comparison carries it faster"
+    - "fur insulation values and piloerection: a second video; the coat point is answered by 'thirty degrees'"
+    - "the full Feline Grimace Scale (five action units): too much for one beat; we show the two a viewer can see (posture, squinting)"
+    - "kittens loafing on radiators and laptops: cute filler, doesn't add a step"
+end_hold_s: 1.4
+beats:
+  - id: hook
+    speaker: wizard
+    text: "My cat just turned into a *bread roll*."
+    pause_after: 0.2
+  - id: loaf
+    speaker: woman
+    text: "That's the loaf. And it's mostly about *heat*."
+    pause_after: 0.2
+  - id: coat
+    speaker: wizard
+    text: "She's a cat. She's got a fur coat."
+    pause_after: 0.15
+  - id: comfy
+    speaker: woman
+    text: "Cats feel comfy at around thirty degrees. Your living room is a *fridge* to her."
+    pause_after: 0.2
+  - id: leak
+    speaker: woman
+    text: "Heat leaks out through every bit of you that touches the air. Legs and tail are the leakiest... so she *folds them away*."
+    pause_after: 0.2
+  - id: knees
+    speaker: woman
+    text: "Same reason you hug your knees when you're cold. Less surface, less heat lost."
+    pause_after: 0.25
+  - id: trust
+    speaker: wizard
+    text: "So it's not because she trusts me?"
+    pause_after: 0.15
+  - id: tucked
+    speaker: woman
+    text: "A little bit. Paws tucked means she can't sprint off instantly. Cats don't do that when they feel *threatened*."
+    pause_after: 0.25
+  - id: pain
+    speaker: woman
+    text: "But a tense, hunched loaf, with squinting eyes and head down? That can mean pain. Worth a vet check."
+    pause_after: 0.3
+  - id: warm
+    speaker: wizard
+    text: "So a happy loaf... is a warm loaf."
+    pause_after: 0.0
+
+caveats:
+  - "Thermoneutral zone: domestic cats need no extra effort to stay warm at roughly 30-38 °C ambient (Wikipedia 'Cat', citing physiology literature), well above a typical heated room of about 18-22 °C. 'Comfy at around thirty degrees' is the lower end of that range; 'a fridge to her' is a joke, not a measurement."
+  - "Heat loss and posture: animals reduce heat loss by curling up and tucking in extremities, which cuts the surface exposed to the air (postural thermoregulation, reviewed in Gilbert et al. 2010). Legs and tails are thin, so they have a lot of surface for their volume; 'the leakiest' is a simplification of that geometry, not a measured per-limb heat-loss figure."
+  - "The on-screen '≈ 20% less surface' is our model, not a measurement on real cats: we computed the exposed fur area of our own 3D cat (renderer/cat_area.mjs), stretched out flat versus loafed, counting only surface not touching the floor and not hidden against the cat's own body. Real cats, coats and poses differ."
+  - "Loafing and relaxation: a cat with its paws tucked under can't get up and run as quickly, and behaviour guides read the relaxed loaf as a sign the cat feels secure (International Cat Care; Bradshaw 2013). 'A little bit' trust is our framing; cats also loaf simply to rest."
+  - "Pain: a hunched posture with the head lowered and narrowed or squinting eyes are items on validated feline pain scales (Feline Grimace Scale, Evangelista et al. 2019; Glasgow CMPS-Feline, Reid et al. 2017). They are warning signs, not a diagnosis; a vet decides."
+  - "Our own wording and pictures. The wizard, the woman and the cat are original 3D characters; the thermal view is a stylised illustration, not a real thermal camera image."
+sources:
+  - "Wikipedia, 'Cat' (section on physiology: thermoneutral zone of the domestic cat about 30-38 °C), accessed 2026-11-20."
+  - "C. Gilbert, D. McCafferty, Y. Le Maho, J.-M. Martrette, S. Giroud, S. Blanc and A. Ancel, 'One for all and all for one: the energetic benefits of huddling in endotherms', Biological Reviews 85(3), 545-569 (2010): postural and social thermoregulation, reduced exposed surface."
+  - "International Cat Care, 'Cat body language' guidance (accessed 2026-11-20); J. Bradshaw, Cat Sense (Basic Books, 2013)."
+  - "M. C. Evangelista, R. Watanabe, V. S. Y. Leung, B. P. Monteiro, E. O'Toole, D. S. J. Pang and P. V. Steagall, 'Facial expressions of pain in cats: the development and validation of a Feline Grimace Scale', Scientific Reports 9, 19128 (2019)."
+  - "J. Reid, E. M. Scott, G. Calvo, A. M. Nolan, 'Definitive Glasgow acute pain scale for cats: validation and intervention level', Veterinary Record 180(18), 449 (2017)."
+
+claims:
+  - {id: comfy_temp, beat: comfy, unit: deg, value: 30, scope: typical,
+     evidence: {quality: 3, source: "Wikipedia 'Cat': thermoneutral zone 30-38 °C; 'around thirty degrees' is its lower bound"}}
+  - {id: comfy_card, card: "≈ 30 °C", unit: deg, value: 30, scope: typical,
+     evidence: {quality: 3, source: "same thermoneutral zone, shown on screen"}}
+  - {id: surface_card, card: "≈ 20% less", unit: "%", sim: loaf_less_pct, scope: model, tolerance: 0.05,
+     evidence: {quality: 2, source: "computed from our cat mesh (renderer/cat_area.mjs): exposed area loaf vs stretched-out, floor contact and self-contact excluded; labelled 'our model'"}}
+
+absolute_ok:
+  - {word: "every", beat: leak, why: "'every bit of you that touches the air' is the physical rule: heat leaves through all exposed surface"}
+  - {word: "instantly", beat: tucked, why: "'can't sprint off instantly' is the point of the beat: with paws folded under, a cat must first get its feet beneath it before running; it can still move, just not at once (caveat on relaxation)"}
+
+entities:
+  - id: cat
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "an orange tabby house cat lying on a rug in the loaf pose: paws tucked out of sight, tail wrapped close along her side, a rounded bread-like shape, head up; ears, eyes and whiskers visible"}
+  - id: wizard
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the wizard presenter (blue robe, hat, beard) standing in the living room, looking at the cat"}
+  - id: woman
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the young woman presenter (long black hair with a fringe, black outfit) in the living room, explaining"}
+  - id: room
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "a cosy living room: wooden floor, a round rug, a sofa, a radiator under a window with low winter sun outside; no holes, no see-through walls"}
+  - id: twin
+    type: support
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "the same cat shown twice side by side: stretched out flat with legs and tail out, and loafed; a short bar beside each for exposed surface"}
+
+hero: cat
+
+publish:
+  cover_at_s: 2.2
+  cover_headline: "Why cats loaf"
+  cover_label: {big: "Heat", small: "folded away"}
+  hashtags: [cats, catbehavior, catloaf, science]
+  youtube:
+    title: "Why Does My Cat Sit Like a Loaf? (It's Mostly Heat)"
+    description: |
+      Paws gone, tail gone, one neat bread roll. The cat loaf is mostly about staying warm.
+
+      Cats are comfiest at around 30 °C, so a normal living room is chilly to them. Thin legs and a tail lose heat fast, so tucking them away means less surface open to the air (in our own 3D cat model, about 20% less than lying stretched out). Tucked paws also mean a relaxed cat: she can't sprint off instantly. But a tense, hunched loaf with squinting eyes and the head down can be a pain sign, worth a vet check.
+  how_made: "How it's made: original 3D characters and scenes, animated by us. The voices are AI voices (ElevenLabs)."
+  tiktok:
+    caption: "The cat loaf is a heating trick: legs and tail folded away, less surface losing heat."
+  facebook:
+    title: "Why Does My Cat Sit Like a Loaf?"
+    caption: |
+      Paws tucked, tail gone, perfect bread roll. Cats loaf mostly to stay warm: they like it around 30 °C, and tucking legs and tail away means less surface losing heat. A tense, squinting loaf is different, though: that can mean pain.
+
+      #cats #catbehavior #science

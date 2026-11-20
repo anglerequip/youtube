@@ -1,0 +1,25 @@
+{
+  "method": "triangle-centre sampling of renderer/cat.js; exposed = not inside another body part and not within 0.006 m of the floor; eyes, mouth, whiskers excluded",
+  "contact_m": 0.006,
+  "poses": {
+    "stretched": {
+      "exposed_cm2": 3669,
+      "contact_cm2": 149.2,
+      "buried_cm2": 2585.4,
+      "total_mesh_cm2": 6403.6
+    },
+    "loaf": {
+      "exposed_cm2": 2918.5,
+      "contact_cm2": 114,
+      "buried_cm2": 2346.2,
+      "total_mesh_cm2": 5378.7
+    },
+    "sitting": {
+      "exposed_cm2": 2644.9,
+      "contact_cm2": 298.5,
+      "buried_cm2": 1910.5,
+      "total_mesh_cm2": 4853.9
+    }
+  },
+  "loaf_less_than_stretched_pct": 20.5
+}
