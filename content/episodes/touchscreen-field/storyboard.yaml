@@ -109,7 +109,7 @@ hero: field
 
 publish:
   cover_headline: "Your phone can't feel you"
-  cover_label: "it sees your field"
+  cover_label: {big: "it sees your field", small: "not your pressure"}
   hashtags: ["#shorts", "#physics", "#touchscreen", "#science", "#electricity"]
 
 retention:

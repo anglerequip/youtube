@@ -110,7 +110,7 @@ hero: beams
 
 publish:
   cover_headline: "Water itself is blue"
-  cover_label: "red fades first"
+  cover_label: {big: "red fades first", small: "water is blue"}
   hashtags: ["#shorts", "#physics", "#ocean", "#science", "#light"]
 
 retention:

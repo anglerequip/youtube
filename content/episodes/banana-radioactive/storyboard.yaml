@@ -108,7 +108,7 @@ hero: banana
 
 publish:
   cover_headline: "Your banana is radioactive"
-  cover_label: "15 decays a second"
+  cover_label: {big: "≈ 15 decays", small: "every second"}
   hashtags: ["#shorts", "#physics", "#radiation", "#science", "#banana"]
 
 retention:
