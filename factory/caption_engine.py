@@ -120,7 +120,20 @@ def timed_chunks(tl: Timeline) -> list[tuple[float, float, str]]:
     return events
 
 
-def write_ass(tl: Timeline, path: Path):
+def _emphasise(text: str, words: set[str], mode: str) -> str:
+    """Mark stressed words in one caption chunk (retention feature `caption_emphasis`).
+    'weight' only: Blueprint 6 forbids colour highlighting and pop-in, so emphasis is a heavier weight."""
+    if mode != "weight" or not words:
+        return text
+    out = []
+    for tok in text.split(" "):
+        bare = re.sub(r"[^\w%°/.-]", "", tok.lower()).strip(".")
+        out.append(rf"{{\b1}}{tok}{{\b0}}" if bare and bare in words else tok)
+    return " ".join(out)
+
+
+def write_ass(tl: Timeline, path: Path, emphasis: dict | None = None, mode: str = "none"):
+    """emphasis: {beat id: {lower-case words}} (from the storyboard's *stars* and retention keywords)."""
     r = rules()
     cy = int(r.get("center_y", 0.73) * H)
     size = int(r.get("cap_height_frac", 0.03) * H / 0.70)   # Poppins cap height is ~0.70 em
@@ -139,7 +152,11 @@ Style: Cap,Poppins SemiBold,{size},&H00FFFFFF,&H00FFFFFF,&H48000000,&H70000000,0
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     lines = []
+    beat_at = [(ln.start, ln.end + 0.3, ln.id) for ln in tl.lines]
     for s, e, text in timed_chunks(tl):
+        if emphasis and mode != "none":
+            bid = next((b for a, z, b in beat_at if a - 0.01 <= s < z), None)
+            text = _emphasise(text, emphasis.get(bid, set()), mode)
         # soft shadow: blurred semi-transparent outline + offset shadow, no box (Blueprint 6)
         tag = rf"{{\pos({W // 2},{cy})\blur4\fad(80,80)}}"
         # wide, faint dark halo underneath (picture review, round 7: white words got lost over the silver

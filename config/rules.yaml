@@ -2,8 +2,8 @@
 # Sources: SCRIPT_ENGINE_SPECIFICATION (SC-*), TEXT_AND_CAPTION_DESIGN_SYSTEM (TX-*, CP-*),
 #          MOTION_DESIGN_SYSTEM (MD-*, CAM-*), HOOK_ENGINE_SPECIFICATION (HK-*).
 script:
-  length_s: [61, 75]             # Caesar's rule (2026-11-19): > 60 s, hard fail below 61 (settings.min_seconds)
-  beats: [8, 14]                 # SC-1 warn
+  # No length target and no beat count (Caesar, 2026-11-19 evening, replacing the "over 60 s" rule):
+  # content decides duration. See `length:` below and factory/story_length.py.
   wpm_target: [150, 185]         # SC-2
   wpm_warn: [140, 200]
   beat_wpm_max: 210              # SC-3
@@ -50,3 +50,33 @@ motion:
   typical_cut_s: [7.0, 12.0]       # measured on the style reference: 5 hard cuts in 60.5 s; camera moves inside shots
   no_cut_reveal_s: 1.5           # MD-8 (fail)
   reveal_camera_still_s: 1.0     # CAM-5
+
+# Story length (factory/story_length.py). Content decides duration: these numbers only describe how
+# long a part of a story usually takes to say, and when a script looks padded. None of them is a target,
+# and nothing pads or trims a video to reach one.
+length:
+  words_per_s_at_speed_1: 3.05   # house voice incl. sentence pauses (Kokoro timelines: 3.2-3.5 w/s at 1.1)
+  parts_s:                       # natural cost of each story part, for the pre-writing estimate
+    hook: 3.0
+    step: 7.0                    # one explanation step the viewer genuinely needs
+    extra: 5.0                   # one optional layer that earns its place (history, twist, scale...)
+    payoff: 5.0
+    ending: 2.0
+  recap_warn: 0.6                # recap score (story_length.recap_score) -> "recap?" (polish)
+  recap_block: 0.72              # ... -> high: repair before approval
+  max_words_after_payoff: 30     # a decisive ending, not a tour of extras...
+  after_payoff_share: 0.15       # ...and at most this share of the script's words (never under 12)
+  min_rel_speed: 0.94            # slower than this (not a reveal) stretches the voice
+  max_rel_speed: 1.12            # faster than this crams a script that should be cut
+  max_pause_s: 0.8               # pause after a beat that isn't a reveal
+  max_pause_share: 0.15          # all script pauses vs narration time
+  long_vs_estimate: 1.4          # soft: much longer than the story's own plan
+  short_vs_estimate: 0.6         # soft: much shorter (explanation may be incomplete)
+  max_tail_s: 2.6                # video after the last word (end hold + music fade + loop frame)
+
+# Platform programmes with their own duration rules. All OFF by default; switch one on per storyboard
+# (`platforms: {tiktok: {creator_rewards: true}}`). They only report; they never change the script.
+platforms:
+  tiktok:
+    creator_rewards: false       # TikTok Creator Rewards pays only for videos over 1 minute
+    creator_rewards_min_s: 60.0
