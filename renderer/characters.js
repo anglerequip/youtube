@@ -22,12 +22,12 @@ function mesh(geo, mat, x = 0, y = 0, z = 0, parent = null) {
 }
 const group = (x = 0, y = 0, z = 0, parent = null) => { const g = new THREE.Group(); g.position.set(x, y, z); if (parent) parent.add(g); return g; };
 // capsule hanging DOWN from its parent's origin: total length len (incl. caps), radius r
-function limb(r, len, mat, parent, seg = 7) {
-  const m = mesh(new THREE.CapsuleGeometry(r, Math.max(0.001, len - 2 * r), 2, seg), mat, 0, -len / 2, 0, parent);
+function limb(r, len, mat, parent, seg = 11) {
+  const m = mesh(new THREE.CapsuleGeometry(r, Math.max(0.001, len - 2 * r), 3, seg), mat, 0, -len / 2, 0, parent);
   return m;
 }
 // tapered 8-sided segment hanging down from y0 to y1 (y0 > y1), elliptical cross-section (depth factor dz)
-function taper(rTop, rBot, y0, y1, mat, parent, dz = 0.7, sides = 8) {
+function taper(rTop, rBot, y0, y1, mat, parent, dz = 0.7, sides = 12) {
   const m = mesh(new THREE.CylinderGeometry(rTop, rBot, y0 - y1, sides), mat, 0, (y0 + y1) / 2, 0, parent);
   m.scale.z = dz; m.rotation.y = Math.PI / sides; return m;
 }
@@ -36,7 +36,7 @@ function taper(rTop, rBot, y0, y1, mat, parent, dz = 0.7, sides = 8) {
 function makeHead(o) {
   const head = new THREE.Group();
   const { a, b, c } = o;                       // ellipsoid radii x, y, z
-  const sg = new THREE.SphereGeometry(1, 22, 18), P = sg.attributes.position;
+  const sg = new THREE.SphereGeometry(1, 28, 22), P = sg.attributes.position;
   for (let i = 0; i < P.count; i++) {          // narrow the lower half into a soft jaw and chin
     const y = P.getY(i); if (y >= 0) continue;
     const t = -y; P.setX(i, P.getX(i) * (1 - (1 - o.jawW) * t * t)); P.setZ(i, P.getZ(i) * (1 - 0.12 * t * t) + 0.06 * t * t * Math.max(0, P.getZ(i)));
@@ -49,10 +49,10 @@ function makeHead(o) {
     return new THREE.Vector3(x, y, c * Math.sqrt(Math.max(0.02, k)) + d);
   };
   for (const s of [-1, 1]) {
-    const ear = mesh(new THREE.SphereGeometry(1, 8, 6), o.skin, s * a * 0.97, -b * 0.08, -c * 0.05, head);
+    const ear = mesh(new THREE.SphereGeometry(1, 12, 9), o.skin, s * a * 0.97, -b * 0.08, -c * 0.05, head);
     ear.scale.set(0.018, 0.034, 0.024);
   }
-  const nose = mesh(new THREE.SphereGeometry(1, 8, 6), o.skin, 0, 0, 0, head);
+  const nose = mesh(new THREE.SphereGeometry(1, 12, 9), o.skin, 0, 0, 0, head);
   nose.scale.set(o.noseR, o.noseL * 0.55, o.noseR * 0.9);
   nose.position.copy(surf(0, -b * 0.2, -o.noseR * 0.2));
   // eyes: dark iris discs set into the surface, white catchlight, upper lid line
@@ -85,7 +85,7 @@ function makeHead(o) {
   const inside = mesh(new THREE.SphereGeometry(1, 14, 8), soft('#5a2a26'), 0, -0.004, 0.001, mouth);
   inside.scale.set(o.mouthW * 1.1, 0.001, 0.004); inside.castShadow = false;
   const arcA = 1.25, R = o.mouthW * 2.0;           // smile line: lower arc of a small circle
-  const upper = mesh(new THREE.TorusGeometry(R, o.lipT, 5, 14, arcA), soft(o.lip), 0, R * 0.92, 0.003, mouth);
+  const upper = mesh(new THREE.TorusGeometry(R, o.lipT, 6, 18, arcA), soft(o.lip), 0, R * 0.92, 0.003, mouth);
   upper.rotation.z = -Math.PI / 2 - arcA / 2; upper.castShadow = false;
   const lower = new THREE.Object3D(); mouth.add(lower);
   // smile: corners lift slightly
@@ -116,11 +116,11 @@ function makePerson(o) {
     limb(o.thighR, 0.47, o.pants, hip);
     const knee = group(0, -0.45, 0, hip);
     limb(o.shinR, 0.42, o.pants, knee);
-    if (o.cuff) { const cf = mesh(new THREE.CylinderGeometry(o.shinR * 1.12, o.shinR * 1.12, 0.035, 8), o.cuff, 0, -0.37, 0, knee); }
+    if (o.cuff) { const cf = mesh(new THREE.CylinderGeometry(o.shinR * 1.12, o.shinR * 1.12, 0.035, 12), o.cuff, 0, -0.37, 0, knee); }
     const ankle = group(0, -0.4, 0, knee);
     const shoe = mesh(new THREE.BoxGeometry(o.shoeW, 0.075, 0.25), o.shoe, 0, -0.045, 0.045, ankle);
     const sole = mesh(new THREE.BoxGeometry(o.shoeW * 1.04, 0.022, 0.26), o.sole, 0, -0.078, 0.045, ankle);
-    const toe = mesh(new THREE.SphereGeometry(1, 8, 6), o.shoe, 0, -0.05, 0.16, ankle); toe.scale.set(o.shoeW / 2, 0.04, 0.05);
+    const toe = mesh(new THREE.SphereGeometry(1, 12, 8), o.shoe, 0, -0.05, 0.16, ankle); toe.scale.set(o.shoeW / 2, 0.04, 0.05);
     rig[s < 0 ? 'legR' : 'legL'] = hip; rig[s < 0 ? 'kneeR' : 'kneeL'] = knee;
   }
   // pelvis + torso
@@ -129,7 +129,7 @@ function makePerson(o) {
   const chest = taper(o.chestR, o.waistR, o.shoulderY + 0.02, 1.0, o.top, body, o.chestDz);
   if (o.jacket) o.jacket(body, o);
   // neck + head
-  mesh(new THREE.CylinderGeometry(o.neckR, o.neckR * 1.12, 0.1, 8), o.skin, 0, o.shoulderY + 0.03, 0, body);
+  mesh(new THREE.CylinderGeometry(o.neckR, o.neckR * 1.12, 0.1, 12), o.skin, 0, o.shoulderY + 0.03, 0, body);
   if (o.collar) o.collar(body, o);
   const neck = group(0, o.shoulderY + 0.06, 0, body);
   const head = makeHead(o.headOpts);
@@ -140,14 +140,14 @@ function makePerson(o) {
   // arms: pivots at the shoulders, hanging down, slightly away from the body
   for (const s of [-1, 1]) {
     const sh = group(s * o.shoulderX, o.shoulderY - 0.03, 0, body);
-    mesh(new THREE.SphereGeometry(o.armR * 1.08, 10, 8), o.sleeve, -Math.sign(sh.position.x) * 0.012, -0.01, 0, sh);
+    mesh(new THREE.SphereGeometry(o.armR * 1.08, 14, 10), o.sleeve, -Math.sign(sh.position.x) * 0.012, -0.01, 0, sh);
     limb(o.armR, 0.3, o.sleeve, sh);
     const elbow = group(0, -0.28, 0, sh);
     limb(o.foreR, 0.26, o.foreMat, elbow);
-    if (o.cuffSleeve) mesh(new THREE.CylinderGeometry(o.armR * 1.15, o.armR * 1.1, 0.05, 8), o.sleeve, 0, 0.0, 0, elbow);
+    if (o.cuffSleeve) mesh(new THREE.CylinderGeometry(o.armR * 1.15, o.armR * 1.1, 0.05, 12), o.sleeve, 0, 0.0, 0, elbow);
     const wrist = group(0, -0.25, 0, elbow);
-    const hand = mesh(new THREE.SphereGeometry(1, 10, 8), o.skin, 0, -0.045, 0.005, wrist); hand.scale.set(0.036, 0.055, 0.026);
-    const thumb = mesh(new THREE.CapsuleGeometry(0.011, 0.03, 2, 5), o.skin, s * -0.025, -0.03, 0.02, wrist); thumb.rotation.z = s * 0.5;
+    const hand = mesh(new THREE.SphereGeometry(1, 14, 10), o.skin, 0, -0.045, 0.005, wrist); hand.scale.set(0.036, 0.055, 0.026);
+    const thumb = mesh(new THREE.CapsuleGeometry(0.011, 0.03, 3, 7), o.skin, s * -0.025, -0.03, 0.02, wrist); thumb.rotation.z = s * 0.5;
     sh.rotation.z = s * 0.07;
     rig[s < 0 ? 'armR' : 'armL'] = sh; rig[s < 0 ? 'elbowR' : 'elbowL'] = elbow;
   }
@@ -213,10 +213,10 @@ export function man(opt = {}) {
     },
     hair: (head, o) => {                               // short, tidy, side-parted; faceted
       const { a, b, c } = o.headOpts;
-      const cap = mesh(new THREE.SphereGeometry(1, 12, 8, 0, Math.PI * 2, 0, 1.45), hairM, 0, b * 0.04, -c * 0.06, head);
+      const cap = mesh(new THREE.SphereGeometry(1, 18, 12, 0, Math.PI * 2, 0, 1.45), hairM, 0, b * 0.04, -c * 0.06, head);
       cap.scale.set(a * 1.1, b * 1.06, c * 1.08); cap.rotation.x = -0.5;
-      const back = mesh(new THREE.SphereGeometry(1, 10, 8), hairM, 0, -b * 0.15, -c * 0.38, head); back.scale.set(a * 0.98, b * 0.72, c * 0.62);
-      const quiff = mesh(new THREE.IcosahedronGeometry(1, 0), hairM, -a * 0.1, b * 0.74, c * 0.45, head);
+      const back = mesh(new THREE.SphereGeometry(1, 14, 11), hairM, 0, -b * 0.15, -c * 0.38, head); back.scale.set(a * 0.98, b * 0.72, c * 0.62);
+      const quiff = mesh(new THREE.IcosahedronGeometry(1, 1), hairM, -a * 0.1, b * 0.74, c * 0.45, head);
       quiff.scale.set(a * 1.0, b * 0.28, c * 0.45); quiff.rotation.set(0.25, 0.3, 0.12);
     },
   });
@@ -268,30 +268,30 @@ export function woman(opt = {}) {
     },
     hair: (head, o) => {
       const { a, b, c } = o.headOpts;
-      const cap = mesh(new THREE.SphereGeometry(1, 14, 10, 0, Math.PI * 2, 0, 1.5), hairM, 0, b * 0.05, -c * 0.04, head);
+      const cap = mesh(new THREE.SphereGeometry(1, 20, 14, 0, Math.PI * 2, 0, 1.5), hairM, 0, b * 0.05, -c * 0.04, head);
       cap.scale.set(a * 1.1, b * 1.07, c * 1.1); cap.rotation.x = -0.42;
-      const back = mesh(new THREE.SphereGeometry(1, 12, 8), hairM, 0, -b * 0.1, -c * 0.36, head); back.scale.set(a * 1.03, b * 0.8, c * 0.66);
+      const back = mesh(new THREE.SphereGeometry(1, 16, 12), hairM, 0, -b * 0.1, -c * 0.36, head); back.scale.set(a * 1.03, b * 0.8, c * 0.66);
       // swept side fringe: three faceted locks sweeping from the right part across the forehead
       const locks = [[-0.35, 0.74, 0.6, 1.05, 0.2, -0.5], [0.12, 0.7, 0.66, 0.9, 0.2, -0.35], [0.55, 0.6, 0.62, 0.7, 0.2, -0.2]];
       for (const [x, y, z, sx, sy, rz] of locks) {
-        const l = mesh(new THREE.IcosahedronGeometry(1, 0), hairM, a * x, b * y, c * z, head);
+        const l = mesh(new THREE.IcosahedronGeometry(1, 1), hairM, a * x, b * y, c * z, head);
         l.scale.set(a * 0.55 * sx, b * sy, c * 0.3); l.rotation.set(0.5, 0, rz);
       }
       // side strands framing the face, down to the jaw
       for (const s of [-1, 1]) {
-        const st = mesh(new THREE.IcosahedronGeometry(1, 0), hairM, s * a * 0.9, -b * 0.18, c * 0.34, head);
+        const st = mesh(new THREE.IcosahedronGeometry(1, 1), hairM, s * a * 0.9, -b * 0.18, c * 0.34, head);
         st.scale.set(0.009, b * 0.4, 0.018); st.rotation.set(0.1, 0, s * 0.08);
       }
       // high ponytail: tie at the crown, then a chain of tapering faceted bunches swinging down the back
       const tieP = new THREE.Vector3(0, b * 0.75, -c * 0.78);
-      const tie = mesh(new THREE.TorusGeometry(0.022, 0.009, 6, 10), flat('#e2c45a'), tieP.x, tieP.y, tieP.z, head);
+      const tie = mesh(new THREE.TorusGeometry(0.022, 0.009, 8, 14), flat('#e2c45a'), tieP.x, tieP.y, tieP.z, head);
       tie.rotation.x = 0.9;
       const tail = group(tieP.x, tieP.y, tieP.z - 0.01, head);
       const prof = [];
-      for (let k = 0; k <= 10; k++) { const u = k / 10; prof.push(new THREE.Vector2(0.004 + 0.05 * Math.sin(Math.PI * Math.pow(u, 0.7)) * (1 - 0.35 * u), -0.36 * u)); }
-      const pony = mesh(new THREE.LatheGeometry(prof, 9), hairM, 0, 0.0, -0.035, tail);
+      for (let k = 0; k <= 14; k++) { const u = k / 14; prof.push(new THREE.Vector2(0.004 + 0.05 * Math.sin(Math.PI * Math.pow(u, 0.7)) * (1 - 0.35 * u), -0.36 * u)); }
+      const pony = mesh(new THREE.LatheGeometry(prof, 14), hairM, 0, 0.0, -0.035, tail);
       pony.scale.z = 0.8; pony.rotation.x = 0.28;
-      const tip = mesh(new THREE.ConeGeometry(0.016, 0.07, 6), hairDark, 0, -0.36, -0.13, tail); tip.rotation.x = Math.PI - 0.3;
+      const tip = mesh(new THREE.ConeGeometry(0.016, 0.07, 9), hairDark, 0, -0.36, -0.13, tail); tip.rotation.x = Math.PI - 0.3;
       head.userData.ponytail = tail;
       // small gold stud earrings
       for (const s of [-1, 1]) mesh(new THREE.SphereGeometry(0.0055, 6, 4), new THREE.MeshStandardMaterial({ color: '#d9b45a', metalness: 0.8, roughness: 0.3 }), s * a * 1.0, -b * 0.3, -c * 0.02, head);
