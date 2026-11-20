@@ -1,0 +1,136 @@
+slug: crystal-caper
+title: "We Cooked Crystals and the Cops Showed Up"
+topic: "a comedy caper with the channel's presenters: they 'cook crystals', which turns out to be rock candy, with real crystallisation science (solubility, supersaturation, nucleation, flat crystal faces) and a final twist: sugar sparks when it cracks (triboluminescence)"
+component: custom   # physics: factory/simulation_engine/physics/crystal.py (CRC sucrose solubility; growth is our model)
+renderer: three
+scene: crystal3d
+genre: comedy        # dialogue sketch with three voices (pre-recorded ElevenLabs lines, beat `audio:`)
+hook_family: 7       # mistaken assumption: sounds like a crime, it's candy
+structure: B
+description: |
+  The wizard and Nyx cooked crystals. The police had questions. It was rock candy.
+
+  Hot water near boiling can hold almost five times its own weight in sugar. Let it cool and it holds more
+  than it should (supersaturated), so the extra sugar crystallises on a rough string over about a week,
+  in flat-sided crystals because the molecules stack in a repeating pattern. And crack a sugar crystal in
+  a really dark room: it gives off faint flashes of light (triboluminescence).
+
+  No crimes were committed. Only candy.
+
+  #shorts #science #chemistry #rockcandy #crystals #funny #comedy
+tags: [rock candy, crystals, sugar, supersaturation, triboluminescence, science, comedy, shorts]
+voice: dialogue      # three pre-recorded voices, see beats[].audio
+speed: 1.0
+story:
+  core_idea: "The 'crystals' are rock candy: hot water holds far more sugar, cooling leaves too much dissolved, and the extra grows into flat-sided crystals; crack one and it sparks."
+  fascination: "a crime-caper setup that turns into real kitchen science, and candy that literally sparks in the dark"
+  steps: 3             # hot water holds more; cooling supersaturates; extra sugar needs a rough start and grows in a pattern
+  buildup: medium      # a comedy needs its set-ups and buttons
+  extras: [twist]      # the sparking candy
+  payoff: tribo
+  cut:
+    - "exact recipe (sugar to water ratio, temperatures, days): not needed for the joke, and the video isn't a how-to"
+    - "why the charges separate (piezoelectric sucrose crystals): one sentence is enough"
+    - "wintergreen candy glowing brighter: a different video"
+    - "any real drug talk, drug names, powders or bags: never; it's candy from frame one"
+end_hold_s: 1.2
+
+beats:
+  - {id: hook, speaker: nyx, audio: voice/hook.mp3, text: "So we cooked crystals... and now the cops are here.", pause_after: 0.35}
+  - {id: rule, speaker: wizard, audio: voice/rule.mp3, text: "Rule one. Nobody can know what we're making.", pause_after: 0.15}
+  - {id: sugar, speaker: nyx, audio: voice/sugar.mp3, text: "It's sugar.", pause_after: 0.3}
+  - {id: hot, speaker: wizard, audio: voice/hot.mp3, text: "Hot water holds way more sugar. Near boiling... almost five times its own weight.", pause_after: 0.2}
+  - {id: cool, speaker: wizard, audio: voice/cool.mp3, text: "Now let it cool... and it's holding more than it can.", pause_after: 0.2}
+  - {id: stressed, speaker: nyx, audio: voice/stressed.mp3, text: "So it's... stressed.", pause_after: 0.15}
+  - {id: super, speaker: wizard, audio: voice/super.mp3, text: "Supersaturated.", pause_after: 0.3}
+  - {id: string, speaker: wizard, audio: voice/string.mp3, text: "The extra sugar wants out. It just needs somewhere rough to start.", pause_after: 0.2}
+  - {id: howlong, speaker: nyx, audio: voice/howlong.mp3, text: "How long?", pause_after: 0.1}
+  - {id: week, speaker: wizard, audio: voice/week.mp3, text: "About a week.", pause_after: 0.8}
+  - {id: faces, speaker: wizard, audio: voice/faces.mp3, text: "Look at those faces. The molecules stack in a pattern... so it grows flat sides.", pause_after: 0.3}
+  - {id: run, speaker: nyx, audio: voice/run.mp3, text: "Why are we running?!", pause_after: 0.05}
+  - {id: habit, speaker: wizard, audio: voice/habit.mp3, text: "Habit!", pause_after: 0.3}
+  - {id: pull, speaker: cop, audio: voice/pull.mp3, text: "Pull over! We know about the crystals!", pause_after: 0.5}
+  - {id: candy, speaker: cop, audio: voice/candy.mp3, text: "...This is candy.", pause_after: 0.2}
+  - {id: told, speaker: nyx, audio: voice/told.mp3, text: "We told you.", pause_after: 0.5}
+  - {id: spark, speaker: cop, audio: voice/spark.mp3, text: "Wait. It's sparking!", pause_after: 0.2}
+  - {id: tribo, speaker: wizard, audio: voice/tribo.mp3, text: "Triboluminescence. Crack a sugar crystal and charges jump across the gap. You need a really dark room.", pause_after: 0.5}
+  - {id: makeme, speaker: cop, audio: voice/makeme.mp3, text: "...Can you make me some?", pause_after: 0.3}
+  - {id: end, speaker: nyx, audio: voice/end.mp3, text: "So now we cook crystals... for the cops."}
+
+caveats:
+  - "This is a comedy sketch about rock candy (sugar and water). Nothing in it is about drugs."
+  - "Solubility of sucrose (CRC Handbook): about 487 g per 100 g of water at 100 C and about 204 g at 20 C, so near boiling water holds about 4.9 times its weight ('almost five times')."
+  - "Rock candy usually takes about 5-10 days to grow; 'about a week' is the usual guidance. The growth on screen is our model (time constant two days), not a measurement."
+  - "Sugar triboluminescence is real but faint: a dark-adapted eye in a very dark room sees small bluish flashes when sugar crystals crack. The flashes are drawn brighter so they read on a phone."
+  - "The light comes mostly from nitrogen in the air, excited by the discharge between the oppositely charged crack faces."
+  - "Characters, the house, the cars and the police are fictional."
+sources:
+  - "CRC Handbook of Chemistry and Physics, 'Aqueous solubility of sucrose' (also Wikipedia, 'Sucrose', solubility table)."
+  - "Exploratorium, 'Rock Candy' science snack (crystals grow over several days to about a week)."
+  - "L. M. Sweeting, 'Light your candy', Towson University (triboluminescence of sugar and wintergreen candy)."
+  - "L. M. Sweeting et al., 'Triboluminescence with and without air', Chemistry of Materials 13, 854-870 (2001)."
+  - "F. Bacon, The Advancement of Learning (1605): sugar sparkles when scraped in the dark."
+
+claims:
+  - {id: rule_one, beat: rule, unit: count, value: 1, scope: universal, evidence: {quality: 1, source: "joke wording: the first rule"}}
+  - {id: five_times, beat: hot, unit: ratio, sim: hot_ratio, scope: condition, tolerance: 0.05,
+     evidence: {quality: 1, source: "CRC: 487.2 g sucrose per 100 g water at 100 C = 4.87x ('almost five')"}}
+  - {id: a_week, beat: week, unit: days, sim: week_days, scope: typical,
+     evidence: {quality: 2, source: "Exploratorium rock candy: several days to about a week"}}
+  - {id: hot_card, card: "≈ 4.9 ×", unit: ratio, sim: hot_ratio, scope: condition, tolerance: 0.02,
+     evidence: {quality: 1, source: "CRC: 4.87 g sugar per g water at 100 C"}}
+  - {id: room_card, card: "≈ 2 ×", unit: ratio, sim: room_ratio, scope: condition, tolerance: 0.03,
+     evidence: {quality: 1, source: "CRC: 2.04 g sugar per g water at 20 C"}}
+  - {id: hot_temp, card: "100 °C", unit: C, value: 100, scope: condition, evidence: {quality: 1, source: "boiling water at sea level"}}
+  - {id: room_temp, card: "20 °C", unit: C, value: 20, scope: condition, evidence: {quality: 1, source: "room temperature in the CRC table"}}
+  - {id: week_card, card: "1 week later", unit: days, sim: week_days, scope: typical, tolerance: 0.01,
+     evidence: {quality: 2, source: "story time card; matches the usual rock-candy growth time"}}
+  - {id: days_card, card: "8 days earlier", unit: days, value: 8, scope: specific,
+     evidence: {quality: 1, source: "story time card: one week of growth plus the day of the chase"}}
+
+absolute_ok:
+  - {word: nobody, reason: "a joke line (the wizard's 'rule one'), not a scientific claim"}
+
+entities:
+  - id: wizard
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "the channel's original wizard presenter (midnight-blue robe, hat, brown beard) talking"}
+  - id: nyx
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "the channel's original alt-style woman presenter (long black hair with a blunt fringe, black top) talking"}
+  - id: pot
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "a steaming copper pot of clear syrup on a kitchen stove, a sugar bag beside it labelled SUGAR"}
+  - id: jar
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "a glass jar of clear syrup with a string hanging into it; pink sugar crystals grow along the string"}
+  - id: candy
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "pink and amber rock-candy crystals on wooden sticks, clearly candy, with flat shiny faces"}
+  - id: cars
+    type: support
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "a small boxy car with a crate on its roof rack, chased by a police car with red and blue lights"}
+  - id: ground
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "the diorama world: grass, road, a small house; no holes"}
+
+hero: candy
+
+publish:
+  cover_headline: "We cooked crystals"
+  cover_label: {big: "rock candy", small: "the cops were confused"}
+  hashtags: ["#shorts", "#science", "#chemistry", "#rockcandy", "#crystals", "#funny", "#comedy"]

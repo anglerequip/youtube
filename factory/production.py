@@ -19,6 +19,16 @@ from .database import DB
 from .storyboard_engine import Storyboard, load
 from .voice_engine import narrate as voice
 
+
+def _audio_digest(sb, beat) -> str:
+    """Pre-recorded lines (beat `audio:`) re-time the video when the file changes."""
+    import hashlib
+    rel = (beat.extra or {}).get("audio")
+    if not rel:
+        return ""
+    p = sb.path / rel
+    return hashlib.sha256(p.read_bytes()).hexdigest()[:16] if p.exists() else "missing"
+
 log = logging.getLogger("factory.production")
 
 PRE_APPROVAL = ("SCRIPTED", "STORYBOARDED", "RENDERED", "QUALITY_CHECKED", "QC_FAILED",
@@ -53,7 +63,7 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
     timings = {}
 
     t0 = time.time()
-    vkey = _key([(b.id, b.text, b.pause_after) for b in sb.beats], sb.voice, sb.speed, provider, "expressive-v1",
+    vkey = _key([(b.id, b.text, b.pause_after, _audio_digest(sb, b)) for b in sb.beats], sb.voice, sb.speed, provider, "expressive-v1",
                 *([voice.tail_for(sb)] if sb.extra.get("end_hold_s") is not None else []))
     if force or not _cached(out, "voice.wav", vkey) or not (out / "timeline.json").exists():
         log.info("[%s] voice (%s)", sb.slug, provider)

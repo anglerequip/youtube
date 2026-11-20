@@ -78,12 +78,33 @@ def _trim(samples: np.ndarray, sr: int, thresh: float = 0.01) -> np.ndarray:
     return samples[max(0, idx[0] - pad): idx[-1] + pad]
 
 
+def _load_recorded(path: Path, sr: int | None) -> tuple[np.ndarray, int]:
+    """A pre-recorded line (any format ffmpeg reads), as mono float32 at sr (or its own rate)."""
+    import subprocess
+    rate = sr or 24000
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-ac", "1", "-ar", str(rate), "-f", "f32le", "-"],
+                         check=True, capture_output=True).stdout
+    return np.frombuffer(raw, dtype=np.float32).copy(), rate
+
+
+def _recorded_path(ep, ln) -> Path | None:
+    """Beats may carry `audio: voice/<id>.mp3` (a line recorded elsewhere, e.g. a multi-voice dialogue)."""
+    rel = (getattr(ln, "extra", None) or {}).get("audio")
+    if not rel:
+        return None
+    p = Path(getattr(ep, "path", ".")) / rel
+    if not p.exists():
+        raise FileNotFoundError(f"beat {ln.id}: recorded audio {p} not found")
+    return p
+
+
 def narrate(ep, out_wav: Path, provider: str | None = None) -> Timeline:
-    tts = get_tts(provider)
+    recorded = all(_recorded_path(ep, ln) for ln in ep.lines) if ep.lines else False
+    tts = None if recorded else get_tts(provider)
     delivery = _delivery()
     # expressive delivery (sentence-by-sentence takes, emphasis, punctuation pauses): see expressive.py
     expr = None
-    if getattr(tts, "name", "") == "kokoro" and delivery.get("expressive", True):
+    if tts is not None and getattr(tts, "name", "") == "kokoro" and delivery.get("expressive", True):
         from .expressive import ExpressiveKokoro
         expr = ExpressiveKokoro(tts)
     chunks: list[np.ndarray] = []
@@ -96,7 +117,10 @@ def narrate(ep, out_wav: Path, provider: str | None = None) -> Timeline:
         speed = ep.speed * (getattr(ln, "speed", None) or pace.get("speed", 1.0))
         # The voice gets pronunciation-normalised text; captions keep the written text (ln.text).
         spoken = normalise(ln.text)
-        if expr is not None:
+        rec = _recorded_path(ep, ln)
+        if rec is not None:
+            samples, sr = _load_recorded(rec, sr_ref)
+        elif expr is not None:
             samples, sr = expr.synth(spoken, voice=ep.voice, speed=speed, key=f"{ep.slug}/{ln.id}")
         elif getattr(tts, "name", "") == "elevenlabs":
             i = ep.lines.index(ln)
