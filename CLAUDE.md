@@ -203,7 +203,10 @@ Every new or edited model uses at least these segment counts. Prefer more on any
 - Props and scenery may stay flat-shaded (stylised diorama). Presenters and other close-up characters are smooth-shaded
   high-poly: continuous lathe/tube bodies (40+ radial segments), heads 72 x 54, hair and beards built from tapered strands.
 - Presenters come from `renderer/characters.js` (`man()` = the wizard, `woman()` = the young woman), already at this budget. Use them in place of
-  the old wooden toy figure. They are original designs: never restyle them, or any other model, to look like an
+  the old wooden toy figure. Since v6 they are Blender models (`tools/blender/presenters.py` builds and exports
+  `assets/characters/{wizard,woman}.glb`, run with the pip `bpy` module); `renderer/boot.js` preloads them, so scene `build()` may stay
+  synchronous and just call `man()`/`woman()`. Pose API: `p.pose({talk, blink, wave, point, headYaw, headPitch, headTilt, walk, t})`.
+  Edit the Blender script and re-export rather than editing the GLBs. They are original designs: never restyle them, or any other model, to look like an
   existing character, celebrity or actor.
 - Check render time after raising detail: a full 3D render must still finish in a reasonable time on Caesar's PC.
 
