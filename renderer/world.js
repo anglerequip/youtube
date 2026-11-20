@@ -28,6 +28,16 @@ export const LIGHTING = {
   golden: { sun: '#ffd2a1', sunI: 2.5, elev: 20, az: 55, hemiSky: '#f1dcc6', hemiGround: '#7d6a4a', hemiI: 1.0,
             rim: '#ffe2c0', rimI: 2.0, rimElev: 16, rimAz: 215, env: 0.32, bloomT: 3.5,
             sky: '#efd8bd', skyTop: '#9fb0c6', fog: '#e3cdb4', fogNear: 25, fogFar: 140, exposure: 1.0 },
+  // DUO module (docs/styles/DUO.md): crisp clear day, deeper blue sky overhead, less haze, punchier
+  // contrast for close character shots. Opt-in per shot; no existing episode uses it.
+  clear: { sun: '#fff4e4', sunI: 2.8, elev: 38, az: 30, hemiSky: '#cfe0f2', hemiGround: '#7f8a5c', hemiI: 1.15,
+           rim: '#e6efff', rimI: 1.6, rimElev: 24, rimAz: 200, env: 0.35, bloomT: 3.5,
+           sky: '#b9cde0', skyTop: '#3d6aa6', fog: '#c4d3e0', fogNear: 35, fogFar: 200, exposure: 1.02 },
+  // BUILD module (docs/styles/BUILD.md): cold overcast snow day. Sky and snow measured from the reference
+  // frames (sky #8390a4-#8b98ac, snow #c9d0d4-#d2d1dd): soft light, short pale shadows, cool grade.
+  blizzard: { sun: '#eef3ff', sunI: 1.6, elev: 48, az: 30, hemiSky: '#c9d3e2', hemiGround: '#b8c0cc', hemiI: 1.6,
+              rim: '#dfe8ff', rimI: 1.2, rimElev: 20, rimAz: 200, env: 0.3, bloomT: 3.5,
+              sky: '#b3bccb', skyTop: '#7f8ca2', fog: '#c3cad5', fogNear: 12, fogFar: 90, exposure: 1.0 },
   night: { sun: '#a9bcff', sunI: 0.7, elev: 40, az: 160, hemiSky: '#2a3552', hemiGround: '#141c14', hemiI: 0.9,
            sky: '#111826', skyTop: '#080b16', fog: '#111826', fogNear: 40, fogFar: 170, exposure: 1.25 },
 };
@@ -39,6 +49,20 @@ export function rng(seed = 1) {
 }
 
 const flat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.92, metalness: 0, flatShading: true, ...extra });
+
+// deterministic 0..1 hash of a position (does not touch the world RNG)
+function hash2(x, z) { const v = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return v - Math.floor(v); }
+// faceted ball with gently pushed-out vertices, so tree crowns read as foliage clumps, not perfect spheres
+function lumpy(r, detail, seed) {
+  const g = new THREE.IcosahedronGeometry(r, detail), p = g.attributes.position, v = new THREE.Vector3();
+  const key = new Map();
+  for (let i = 0; i < p.count; i++) {
+    v.fromBufferAttribute(p, i); const k = `${v.x.toFixed(4)},${v.y.toFixed(4)},${v.z.toFixed(4)}`;
+    if (!key.has(k)) key.set(k, 1 + 0.09 * (hash2(v.x * 9 + seed, v.z * 9 + v.y * 5) - 0.5) * 2);
+    v.multiplyScalar(key.get(k)); p.setXYZ(i, v.x, v.y, v.z);
+  }
+  g.computeVertexNormals(); return g;
+}
 
 export class World {
   constructor(canvas, W, H, seed = 7, opts = {}) {
@@ -129,24 +153,35 @@ export class World {
   }
 
   roundTree(x, z, s = 1) {
+    // section 11 polygon budget: 16-sided trunk, crown = one detail-2 faceted ball plus two smaller lumps
+    // (jitter comes from a hash of the position, so the world RNG sequence, and every layout, is unchanged)
     const g = new THREE.Group();
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.07 * s, 0.1 * s, 0.9 * s, 6), flat(PALETTE.trunk));
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.07 * s, 0.1 * s, 0.9 * s, 16), flat(PALETTE.trunk));
     trunk.position.y = 0.45 * s;
     const col = this.rand() < 0.5 ? PALETTE.treeLime : PALETTE.treeOlive;
-    const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(0.75 * s, 1), flat(col));
+    const crown = new THREE.Mesh(lumpy(0.75 * s, 2, x * 7.1 + z * 3.3), flat(col));
     crown.position.y = 1.35 * s; crown.rotation.set(this.rand() * 3, this.rand() * 3, 0);
-    g.add(trunk, crown); g.position.set(x, 0, z);
+    g.add(trunk, crown);
+    const h = hash2(x, z);
+    for (const [dx, dy, dz, r] of [[0.42, -0.18, 0.12, 0.42], [-0.36, -0.08, -0.2, 0.38]]) {
+      const lump = new THREE.Mesh(lumpy(r * s * (0.9 + 0.2 * h), 2, x + z + r), flat(col));
+      lump.position.set(dx * s * (h > 0.5 ? 1 : -1), 1.35 * s + dy * s, dz * s); g.add(lump);
+    }
+    g.position.set(x, 0, z);
     g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
     this.scene.add(g); return g;
   }
 
   conifer(x, z, s = 1) {
+    // three stacked 16-sided tiers instead of one 7-sided cone
     const g = new THREE.Group();
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.06 * s, 0.08 * s, 0.5 * s, 5), flat(PALETTE.trunk));
-    trunk.position.y = 0.25 * s;
-    const cone = new THREE.Mesh(new THREE.ConeGeometry(0.6 * s, 2.2 * s, 7), flat(PALETTE.conifer));
-    cone.position.y = 1.45 * s;
-    g.add(trunk, cone); g.position.set(x, 0, z); g.rotation.y = this.rand() * 6;
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.06 * s, 0.08 * s, 0.5 * s, 16), flat(PALETTE.trunk));
+    trunk.position.y = 0.25 * s; g.add(trunk);
+    for (const [r, hgt, y] of [[0.62, 1.2, 0.95], [0.5, 1.05, 1.5], [0.36, 0.9, 2.02]]) {
+      const tier = new THREE.Mesh(new THREE.ConeGeometry(r * s, hgt * s, 16, 2), flat(PALETTE.conifer));
+      tier.position.y = y * s; g.add(tier);
+    }
+    g.position.set(x, 0, z); g.rotation.y = this.rand() * 6;
     g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
     this.scene.add(g); return g;
   }
@@ -157,7 +192,7 @@ export class World {
     if (!this._blobM) this._blobM = new THREE.MeshBasicMaterial({ color: '#1c2912', transparent: true, opacity: 0.35,
       depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
     tree.traverse(m => { if (m.isMesh) m.castShadow = false; });
-    const blob = new THREE.Mesh(new THREE.CircleGeometry(0.95 * s, 20), this._blobM);
+    const blob = new THREE.Mesh(new THREE.CircleGeometry(0.95 * s, 32), this._blobM);
     blob.rotation.x = -Math.PI / 2; blob.position.set(x, 0.005, z); blob.renderOrder = 1; this.scene.add(blob);
     return blob;
   }
@@ -173,7 +208,7 @@ export class World {
   hills(n = 9, radius = 120) {
     for (let i = 0; i < n; i++) {
       const a = (i / n) * Math.PI * 2 + this.rand() * 0.4, r = radius * (0.85 + this.rand() * 0.3);
-      const h = new THREE.Mesh(new THREE.IcosahedronGeometry(18 + this.rand() * 22, 1), flat(PALETTE.grass[i % 4]));
+      const h = new THREE.Mesh(new THREE.IcosahedronGeometry(18 + this.rand() * 22, 3), flat(PALETTE.grass[i % 4]));
       h.scale.y = 0.28; h.position.set(Math.cos(a) * r, -3, Math.sin(a) * r); h.receiveShadow = true;
       this.scene.add(h);
     }

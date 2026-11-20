@@ -37,3 +37,23 @@ def test_syllables():
 
 def test_captions_use_written_text_but_voice_gets_words():
     assert normalise("about 20 km/h") == "about twenty kilometres per hour"
+
+
+def test_style_modules_duo_and_build(tmp_path):
+    """DUO colours the stressed word by speaker; BUILD shows one ALL-CAPS word at a time."""
+    from factory import caption_engine as ce
+    from factory.storyboard_engine import Beat
+    from factory.voice_engine.narrate import Timeline, TimedLine
+    tl = Timeline([TimedLine("a", "Heavy ball lands first.", 0.2, 2.0), TimedLine("b", "Drop them.", 2.2, 3.0)], 3.2)
+    beats = {"a": Beat.from_dict({"id": "a", "text": "Heavy ball lands *first*.", "speaker": "woman"}),
+             "b": Beat.from_dict({"id": "b", "text": "*Drop* them.", "speaker": "man"})}
+    p = tmp_path / "duo.ass"
+    ce.write_ass(tl, p, style="duo", beats=beats)
+    txt = p.read_text()
+    assert r"\1c&H0047B5FF" in txt and "first" in txt          # amber for the woman
+    assert r"\1c&H00FFCB8E" in txt and "Drop" in txt           # sky blue for the man
+    p2 = tmp_path / "build.ass"
+    ce.write_ass(tl, p2, style="build", beats=beats)
+    dialogue = [ln for ln in p2.read_text().splitlines() if ln.startswith("Dialogue")]
+    assert len(dialogue) == 6                                   # one word per caption
+    assert all(ln.split(",,")[-1].split("}")[-1].isupper() for ln in dialogue)

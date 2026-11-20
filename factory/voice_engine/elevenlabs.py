@@ -15,8 +15,8 @@ import numpy as np
 import requests
 
 API = "https://api.elevenlabs.io/v1/text-to-speech/{voice}"
-# "Adam", a stock ElevenLabs voice. Override with ELEVENLABS_VOICE_ID.
-DEFAULT_VOICE = "pNInz6obpgDQGcFmaJgB"
+# The channel narrator (Caesar, 2026-11-20). Override with ELEVENLABS_VOICE_ID.
+DEFAULT_VOICE = "TWutjvRaJqAX89preB4e"
 
 
 def to_elevenlabs_text(text: str) -> str:

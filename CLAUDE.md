@@ -40,6 +40,14 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
 - Secrets only in `.env` / environment variables.
 - Run `python -m pytest -q` before committing.
 
+## Voices (Caesar, 2026-11-20)
+
+- **Narrator** (solo episodes): ElevenLabs `TWutjvRaJqAX89preB4e` (`TTS_PROVIDER=elevenlabs`, `ELEVENLABS_VOICE_ID`).
+  It replaces Kokoro `af_bella`, which stays as the free fallback (`TTS_PROVIDER=kokoro`).
+- **Presenters** (two-character DUO episodes, `docs/styles/DUO.md`): man `zYcjlYFOd3taleS0gkk3`, woman `0ggs85h7hrWz8ExXnsBc`
+  (`ELEVENLABS_VOICE_MAN`, `ELEVENLABS_VOICE_WOMAN`).
+- Don't re-voice an episode that is already published or scheduled.
+
 
 ---
 
@@ -159,3 +167,14 @@ Every new or edited model uses at least these segment counts. Prefer more on any
   existing character, celebrity or actor.
 - Check render time after raising detail: a full 3D render must still finish in a reasonable time on Caesar's PC.
 
+
+## 12. Optional style modules (Caesar, 2026-11-20)
+Two extra looks studied from TikToks Caesar shared. Use either one whole when the topic fits, or borrow single blocks
+(an overlay, the weather, a caption style) into a normal episode. Both sit on top of sections 1-11 and the honesty rules.
+- **DUO** (`docs/styles/DUO.md`): our two presenters as skeptic + explainer, fast alternating short lines, punch-in
+  reaction close-ups, speaker-coloured captions (`caption_style: duo`, beat field `speaker: man|woman`), lighting `clear`.
+- **BUILD** (`docs/styles/BUILD.md`): one hero object transforms step by step ("But X... so you Y"), callout labels,
+  pill badges, gauges, shrink/grow arrows, dimension brackets, snow/blizzard, freeze and shatter, one-word ALL-CAPS
+  captions (`caption_style: build`), lighting `blizzard`.
+- Building blocks: `renderer/overlays.js` (2D, plan `overlays:`), `renderer/effects3d.js` (3D), presets in `renderer/world.js`.
+- Copy techniques only. Never copy a reference's characters, creatures, models, scripts, screens or exact shots.

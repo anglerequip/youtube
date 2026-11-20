@@ -77,7 +77,8 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
     timings["render_s"] = round(time.time() - t0, 1)
 
     t0 = time.time()
-    caption_engine.write_ass(tl, out / "captions.ass")
+    caption_engine.write_ass(tl, out / "captions.ass", style=sb.extra.get("caption_style"),
+                             beats={b.id: b for b in sb.beats})
     events = [(tl.start(b.id), b.sfx) for b in sb.beats if b.sfx] + list(events)
     if sb.renderer == "three":      # designed SFX + music + mastering (factory/sound_design.py)
         from . import sound_design
