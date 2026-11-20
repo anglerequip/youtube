@@ -219,7 +219,7 @@ function pot(S, L, T) {
   const shell = new THREE.Mesh(new THREE.LatheGeometry(prof.map(([y, r]) => new THREE.Vector2(r, y)), 48), copper);
   shell.material.side = THREE.DoubleSide; shell.castShadow = true; g.add(shell);
   for (const s of [-1, 1]) { const h = mesh(new THREE.TorusGeometry(0.035, 0.008, 12, 32, Math.PI), MAT.darkSteel(), g, s * 0.18, 0.14, 0); h.rotation.y = s * Math.PI / 2; }
-  const syrup = mesh(new THREE.CylinderGeometry(0.152, 0.152, 0.005, 48), new THREE.MeshPhysicalMaterial({ color: '#f1e7c8', roughness: 0.05, transmission: 0.4, thickness: 0.05, clearcoat: 1 }), g, 0, 0.13, 0);
+  const syrup = mesh(new THREE.CylinderGeometry(0.152, 0.152, 0.005, 48), new THREE.MeshPhysicalMaterial({ color: '#e9c98e', roughness: 0.65, transmission: 0.1, thickness: 0.05 }), g, 0, 0.13, 0);
   // wooden spoon
   const spoon = new THREE.Group(); spoon.position.set(0.03, 0.13, 0); g.add(spoon);
   const handle = mesh(new THREE.CylinderGeometry(0.008, 0.01, 0.32, 16), MAT.wood('#c9a77c'), spoon, 0, 0.12, 0); handle.rotation.z = -0.5; handle.position.x = 0.06;
@@ -241,11 +241,11 @@ function jar(S, L, T) {
   const glass = new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: 0.04, transmission: 0.95, thickness: 0.004, transparent: true, opacity: 0.4, envMapIntensity: 1.3, side: THREE.DoubleSide });
   const prof = [[0, 0.0], [0.0, 0.055], [0.006, 0.06], [0.14, 0.06], [0.155, 0.05], [0.17, 0.048], [0.175, 0.05]];
   const shell = new THREE.Mesh(new THREE.LatheGeometry(prof.map(([y, r]) => new THREE.Vector2(r, y)), 48), glass); g.add(shell);
-  const syrup = mesh(new THREE.CylinderGeometry(0.056, 0.056, 0.12, 48), new THREE.MeshPhysicalMaterial({ color: '#f3ead0', roughness: 0.05, transmission: 0.7, thickness: 0.1, transparent: true, opacity: 0.55 }), g, 0, 0.065, 0);
+  const syrup = mesh(new THREE.CylinderGeometry(0.056, 0.056, 0.12, 48), new THREE.MeshPhysicalMaterial({ color: '#f4e2b0', roughness: 0.03, transmission: 0.9, thickness: 0.1, transparent: true, opacity: 0.32 }), g, 0, 0.065, 0);
   syrup.castShadow = false;
   // a pencil across the mouth, a string hanging into the syrup
   const pencil = mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.16, 16), flat('#e2c45a'), g, 0, 0.18, 0); pencil.rotation.z = Math.PI / 2;
-  const str = mesh(new THREE.CylinderGeometry(0.0012, 0.0012, 0.15, 8), flat('#efe9da'), g, 0, 0.105, 0);
+  const str = mesh(new THREE.CylinderGeometry(0.0028, 0.0028, 0.15, 12), flat('#f2ead6'), g, 0, 0.105, 0);
   // crystals along the string: pink faceted prisms that grow with the plan's 'grow' value
   const m = new THREE.MeshPhysicalMaterial({ color: '#e8a3b8', roughness: 0.15, clearcoat: 1, flatShading: true, envMapIntensity: 1.3 });
   const cr = [];
@@ -312,7 +312,7 @@ export function build(world, plan) {
     const st = candyStick(cols[q], 11 + q * 7, 0.15 + (q % 3) * 0.02); st.position.y = 0.02; st.rotation.z = (q - 2) * 0.06; cup.add(st);
   }
   // the stick the cop holds (roadside), and its sparks
-  const held = candyStick('#e8a3b8', 91, 0.13); S.add(held);
+  const held = candyStick('#e8a3b8', 91, 0.13); held.scale.setScalar(1.5); S.add(held);
   const sparks = Array.from({ length: 14 }, () => { const s = haloSprite('#8fb7ff', 0.06, 0); S.add(s); return s; });
   const sparkCore = Array.from({ length: 14 }, () => { const s = haloSprite('#e8f0ff', 0.02, 0); S.add(s); return s; });
 
@@ -333,11 +333,34 @@ export function build(world, plan) {
     for (const m of [].concat(o.material)) if (m && m.emissive && m.emissive.getHex() === 0) m.emissive.setRGB(0.012, 0.012, 0.014);
   });
   const St = L.stop;
+  const D = L.dark;
+  const dark = new THREE.Group(); dark.position.set(D[0], 0, D[2]); S.add(dark);
+  mesh(new THREE.BoxGeometry(0.9, 0.04, 0.6), smooth('#3a2a22', { roughness: 0.85 }), dark, 0, 0.88, 0);
+  for (const [x, z] of [[-0.4, -0.25], [0.4, -0.25], [-0.4, 0.25], [0.4, 0.25]]) mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.86, 16), smooth('#2e221c'), dark, x, 0.43, z);
+  const crystM = new THREE.MeshPhysicalMaterial({ color: '#f2c6d2', roughness: 0.1, clearcoat: 1, flatShading: true, envMapIntensity: 1.2, emissive: '#f2c6d2', emissiveIntensity: 0.05 });
+  const halves = [-1, 1].map(sd => {
+    const h = new THREE.Group(); h.position.y = 0.92; dark.add(h);
+    let q = sd > 0 ? 5 : 9; const R = () => ((q = (q * 1664525 + 1013904223) >>> 0) / 4294967296);
+    for (let n = 0; n < 9; n++) {
+      const c = new THREE.Mesh(crystalGeo(0.018 + R() * 0.014, 0.008 + R() * 0.005), crystM);
+      c.position.set(sd * (0.004 + R() * 0.022), -0.005 + R() * 0.02, (R() - 0.5) * 0.03); c.rotation.set(R() * 3, R() * 3, R() * 3);
+      c.castShadow = true; h.add(c);
+    }
+    h.side = sd; return h;
+  });
+  mesh(new THREE.BoxGeometry(2.4, 1.6, 0.05), smooth('#1a2030', { roughness: 0.95, emissive: '#1d2538', emissiveIntensity: 1 }), dark, 0, 0.9, -0.6);
+  const darkKey = new THREE.SpotLight('#ffe2c4', 0, 2.0, 0.5, 0.6); darkKey.position.set(D[0] + 0.35, 1.35, D[2] + 0.45); darkKey.target.position.set(D[0], 0.92, D[2]); S.add(darkKey, darkKey.target);
+  const arcM = MAT.emissive('#cfe0ff', 6);
+  const arc = mesh(new THREE.CylinderGeometry(0.0009, 0.0009, 0.016, 8), arcM, dark, 0, 0.928, 0); arc.rotation.z = Math.PI / 2;
+  const arcGlow = haloSprite('#8fb7ff', 0.05, 0); arcGlow.position.set(D[0], 0.928, D[2]); S.add(arcGlow);
+  const darkLight = new THREE.PointLight('#9fc0ff', 0, 0.6); darkLight.position.set(D[0], 0.95, D[2] + 0.03); S.add(darkLight);
+
   // headlight pools at the stop (night): the police car's beams on the road
   const beam = new THREE.SpotLight('#fff1d6', 0, 30, 0.5, 0.6, 1.4); S.add(beam); S.add(beam.target);
   const torchBeam = new THREE.SpotLight('#fff4dc', 0, 8, 0.32, 0.5, 1.2); S.add(torchBeam); S.add(torchBeam.target);
   const fill = new THREE.PointLight('#9fb4ff', 0, 10, 1.6); S.add(fill);
 
+  const S_room = Tm.crack2 + 3.55;
   const fp = i => F.focal_pt[Math.min(i, F.focal_pt.length - 1)];
   const setOf = i => F.set[Math.min(i, F.set.length - 1)];
   const zCar = t => Tm.z0 - Tm.speed * (t - Tm.t_run);
@@ -362,6 +385,8 @@ export function build(world, plan) {
         place(nyx, K.nyx, -0.75); cop.visible = false; held.visible = false;
       } else if (set === 'road') {
         wiz.visible = nyx.visible = cop.visible = false; held.visible = false;
+      } else if (set === 'dark') {
+        wiz.visible = nyx.visible = cop.visible = false; held.visible = false;
       } else {
         place(wiz, St.wizard, L.yaw.wizard); place(nyx, St.nyx, L.yaw.nyx); place(cop, St.cop, L.yaw.cop);
         held.visible = true;
@@ -374,7 +399,7 @@ export function build(world, plan) {
       pt.spoon.rotation.y = t * 2.2;
       for (const { s, ph } of pt.steam) {
         const u = (ph + t * 0.35) % 1; s.position.set(Math.sin(ph * 17 + t) * 0.05, 0.16 + u * 0.45, Math.cos(ph * 11) * 0.05);
-        s.scale.setScalar(0.04 + u * 0.09); s.material.opacity = 0.12 * F.steam[k] * Math.sin(Math.PI * u);
+        s.scale.setScalar(0.03 + u * 0.06); s.material.opacity = 0.045 * F.steam[k] * Math.sin(Math.PI * u);
       }
       const gr = F.grow[k];
       for (const c of jr.cr) { const v = Math.max(0, (gr - c.userData.start) / (1 - c.userData.start)); c.visible = v > 0.01; c.scale.setScalar(Math.max(0.01, v)); }
@@ -406,6 +431,15 @@ export function build(world, plan) {
       theirs.visible = cop2.visible = (set === 'road' || set === 'stop');
       cop2.setLights(t + 0.37, cop2.visible ? 1 : 0);
       theirs.setBrake(set === 'stop' ? 0.5 : 0.15);
+      // the payoff close-up: the crystal splits on "Crack", a spark jumps the gap a few times
+      dark.visible = set === 'dark';
+      darkKey.intensity = set === 'dark' ? (t < S_room ? 1.6 : 0.7) : 0;   // dimmer for "a really dark room"
+      const sp = F.split[k];
+      for (const h of halves) { h.position.x = h.side * 0.009 * sp; h.rotation.z = -h.side * 0.12 * sp; }
+      let fl = 0;
+      if (set === 'dark') for (const te of Tm.tribo_sparks) { const age = t - te; if (age >= 0 && age < 0.12) fl = Math.max(fl, 1 - age / 0.12); }
+      arc.visible = fl > 0.02; arc.scale.set(1, 0.4 + 1.1 * sp, 1); arcM.emissiveIntensity = 6 * fl;
+      arcGlow.material.opacity = 0.85 * fl; arcGlow.scale.setScalar(0.03 + 0.05 * fl); darkLight.intensity = 0.25 * fl;
       // sparks when the cop bites (a few quick bluish flashes at the crack)
       const mouthP = cop.rig.head.localToWorld(new THREE.Vector3(0, 0.05, 0.12));
       for (let q = 0; q < sparks.length; q++) {
@@ -420,7 +454,7 @@ export function build(world, plan) {
       const nightStop = set === 'stop';
       beam.intensity = nightStop ? 40 : 0; beam.position.set(St.cop_car[0], 0.8, St.cop_car[2] - 2.2); beam.target.position.set(St.car[0] + 0.5, 0.3, St.car[2] - 3);
       const torchOn = nightStop && shot !== plan.shots[12] && shot !== plan.shots[11] ? 1 : (shot === plan.shots[11] ? 1 : 0);
-      torchBeam.intensity = 18 * torchOn; cop.rig.lens.material.emissiveIntensity = 3 * torchOn;
+      torchBeam.intensity = (shot === plan.shots[11] ? 7 : 18) * torchOn; cop.rig.lens.material.emissiveIntensity = 3 * torchOn;
       cop.updateMatrixWorld(true);
       torchBeam.position.copy(cop.rig.lens.getWorldPosition(new THREE.Vector3()));
       torchBeam.target.position.copy(held.position);
@@ -429,7 +463,7 @@ export function build(world, plan) {
         lastShot = shot;
         const f = fp(i);
         world.setLighting(shot.lighting ?? 'key', new THREE.Vector3(f[0], 0, f[2]));
-        moon.intensity = (shot.lighting === 'night') ? (set === 'stop' ? 0.85 : 0.4) : (set === 'road' ? 0.35 : 0);
+        moon.intensity = (shot.lighting === 'night') ? (set === 'stop' ? 0.85 : set === 'dark' ? 0.55 : 0.4) : (set === 'road' ? 0.35 : 0);
         if (plan.bloom_threshold) world.bloom.threshold = plan.bloom_threshold;
         const sc = world.sun.shadow.camera, e2 = set === 'road' ? 46 : set === 'house' ? 17 : 7;
         sc.left = -e2; sc.right = e2; sc.top = e2; sc.bottom = -e2; sc.far = 90; sc.updateProjectionMatrix();
@@ -446,8 +480,8 @@ export function build(world, plan) {
     focal(i) { return new THREE.Vector3(...fp(i)); },
     probes(i) {
       const f = fp(i), set = setOf(i);
-      const entity = set === 'road' ? 'cars' : (f[1] < 1.2 && set === 'kitchen') ? (plan.shots.find(s => i / plan.fps >= s.start && i / plan.fps < s.end)?.lighting === 'golden' ? 'candy' : (Math.abs(f[0] - L.kitchen.jar[0]) < 0.1 ? 'jar' : 'pot')) : 'wizard';
-      return [{ entity, part: 'subject', kind: 'thickness', p: f, size: set === 'road' ? 1.5 : (f[1] < 1.2 ? 0.15 : 0.4) }];
+      const entity = set === 'dark' ? 'candy' : set === 'road' ? 'cars' : (f[1] < 1.2 && set === 'kitchen') ? (plan.shots.find(s => i / plan.fps >= s.start && i / plan.fps < s.end)?.lighting === 'golden' ? 'candy' : (Math.abs(f[0] - L.kitchen.jar[0]) < 0.1 ? 'jar' : 'pot')) : 'wizard';
+      return [{ entity, part: 'subject', kind: 'thickness', p: f, size: set === 'dark' ? 0.05 : set === 'road' ? 1.5 : (f[1] < 1.2 ? 0.15 : 0.4) }];
     },
     vars() { return {}; },
   };

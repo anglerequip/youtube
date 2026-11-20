@@ -176,6 +176,21 @@ def lock(seed=17, pitch=1.0):
     return _norm(_lp(y, 7000), 0.8)
 
 
+def crack(seed=23, size=1.0):
+    """A brittle snap (a sugar crystal breaking): a sharp broadband click, a few tiny secondary cracks and a
+    short dry crunch. Original synthesis; `size` scales body and length."""
+    rng = np.random.default_rng(seed)
+    dur = 0.22 + 0.1 * size
+    n = int(dur * SR); t = _t(n)
+    y = _hp(rng.standard_normal(n), 2500) * _env(n, 0.0003, 0.006) * 1.0
+    for k in range(5 + int(4 * size)):                    # crumbs: tiny clicks over the first 120 ms
+        i = int(rng.uniform(0.004, 0.12) * SR); m = int(0.003 * SR)
+        if i + m < n:
+            y[i:i + m] += _hp(rng.standard_normal(m), 3500) * rng.uniform(0.15, 0.5)
+    body = _bp(rng.standard_normal(n), 900, 4000) * np.exp(-t / (0.03 * size))
+    return _norm(y + 0.5 * body, 0.75)
+
+
 def siren(dur=2.0, seed=19, near=0.6):
     """A two-tone police siren (original synthesis): alternating 650/880 Hz tones with a few harmonics,
     band-limited like a horn speaker; `near` (0..1) sets how close it sounds (more highs, less muffling)."""
@@ -191,7 +206,7 @@ def siren(dur=2.0, seed=19, near=0.6):
     return _norm(y * fade, 0.8)
 
 
-ONE_SHOTS = {"siren": siren, "blip": blip, "lock": lock, "latch": latch, "pop": latch, "impact": impact, "thud": impact, "tink": tink, "tick": tink,
+ONE_SHOTS = {"siren": siren, "crack": crack, "blip": blip, "lock": lock, "latch": latch, "pop": latch, "impact": impact, "thud": impact, "tink": tink, "tick": tink,
              "swish": swish, "whoosh": rewind, "rewind": rewind, "rise": rise, "ding": ding}
 
 
@@ -331,6 +346,8 @@ def render_cue(name: str, p: dict, t: float) -> np.ndarray:
         kw.update({k: p[k] for k in ("pitch", "ring") if k in p})
     if name in ("blip", "lock"):
         kw.update({k: p[k] for k in ("pitch", "seed") if k in p})
+    if name == "crack":
+        kw.update({k: p[k] for k in ("seed", "size") if k in p})
     if name == "siren":
         kw.update({k: p[k] for k in ("dur", "near", "seed") if k in p})
     if name in ("rise", "swish") and "dur" in p:
