@@ -152,8 +152,9 @@ Every new or edited model uses at least these segment counts. Prefer more on any
 | Icosahedron detail (faceted crowns, hair locks) | 2 | 1 |
 | Torus (tube x radial) | 12 x 32 | 8 x 20 |
 | Lathe (segments x profile points) | 24 x 24 | 16 x 12 |
-- Keep `flatShading: true` on clothing and props so it still reads as a stylised diorama; skin may be smooth.
-- Presenters come from `renderer/characters.js` (`man()`, `woman()`), already at this budget. Use them in place of
+- Props and scenery may stay flat-shaded (stylised diorama). Presenters and other close-up characters are smooth-shaded
+  high-poly: continuous lathe/tube bodies (40+ radial segments), heads 72 x 54, hair and beards built from tapered strands.
+- Presenters come from `renderer/characters.js` (`man()` = the wizard, `woman()` = the young woman), already at this budget. Use them in place of
   the old wooden toy figure. They are original designs: never restyle them, or any other model, to look like an
   existing character, celebrity or actor.
 - Check render time after raising detail: a full 3D render must still finish in a reasonable time on Caesar's PC.
