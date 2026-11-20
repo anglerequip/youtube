@@ -74,7 +74,11 @@ def body(pkg: dict) -> dict:
         status["publishAt"] = f["publish_at"]
     return {
         "snippet": {"title": f["title"], "description": f["description"], "tags": f["tags"],
-                    "categoryId": f["category_id"]},
+                    "categoryId": f["category_id"],
+                    # Language of the title/description and of the spoken audio. Without these YouTube has to
+                    # guess, which affects search, auto-captions, auto-dubbing and who the Short is shown to.
+                    "defaultLanguage": f.get("language", "en"),
+                    "defaultAudioLanguage": f.get("audio_language", f.get("language", "en"))},
         "status": status,
     }
 

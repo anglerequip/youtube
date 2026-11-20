@@ -23,7 +23,7 @@ def _cfg():
     page, tok = os.environ.get("FACEBOOK_PAGE_ID"), os.environ.get("FACEBOOK_PAGE_TOKEN")
     if not page or not tok:
         raise NotConfigured("Facebook: set FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN in .env (see docs/PUBLISHING.md)")
-    return page, tok, os.environ.get("FACEBOOK_GRAPH_VERSION", "v21.0")
+    return page, tok, os.environ.get("FACEBOOK_GRAPH_VERSION", "v25.0")   # v21.0 expires 2027-01-21; v25.0 runs to 2028-07-29
 
 
 def _ok(r: requests.Response, what: str) -> dict:

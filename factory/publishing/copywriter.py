@@ -95,7 +95,8 @@ def youtube(sb) -> dict:
         "title": title[:YOUTUBE_TITLE_MAX],
         "description": desc,
         "tags": tags,
-        "category_id": "28",                      # Science & Technology
+        "category_id": str(pub.get("category_id", "28")),   # 28 Science & Technology, 27 Education, 15 Pets & Animals
+        "language": str(pub.get("language", "en")),
         "made_for_kids": False,
         "contains_synthetic_media": settings_ai_label(),
     }
