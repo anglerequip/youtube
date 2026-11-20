@@ -118,12 +118,12 @@ entities:
     type: hero_object
     category: A
     importance: primary
-    visual_contract: {must_read_as: "a scruffy tan-and-white mid-size dog with floppy ears lying on the duvet over the wizard's feet; eyes, nose, ears and tail visible"}
+    visual_contract: {must_read_as: "a tan-and-white mid-size dog with floppy ears lying on the duvet at the wizard's feet, rump against his toes, facing the foot of the bed; eyes, nose, ears and tail visible"}
   - id: wizard
     type: hero_object
     category: A
     importance: primary
-    visual_contract: {must_read_as: "the wizard presenter (hat, beard) sitting up in bed against his pillows, the duvet over his legs, the dog across his feet"}
+    visual_contract: {must_read_as: "the wizard presenter (hat, beard) sitting up in bed against his pillows, the duvet over his legs, the dog lying at his feet"}
   - id: woman
     type: hero_object
     category: A
@@ -138,7 +138,7 @@ entities:
     type: support
     category: C
     importance: secondary
-    visual_contract: {must_read_as: "a wolf family resting together in a snowy clearing: two grey adults and three pups"}
+    visual_contract: {must_read_as: "first, four unrelated adult wolves kept apart in a fenced pen (captive); then, in the wild, a family resting together in the snow: two grey adults and three pups"}
   - id: puppies
     type: support
     category: C

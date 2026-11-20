@@ -23,13 +23,15 @@ BED_TOP = 0.55
 WIZ = [-0.9, BED_TOP + 0.09 - 1.0, 0.0]   # wizard root: sitting up against the headboard, hips just above the mattress
 WIZ_FACE = 1.27                     # he faces down the bed (+x), turned a little toward the open front of the room
 HEAD = [-0.9, 1.32, 0.0]            # his face
-DOG = [0.4, BED_TOP + 0.04, -0.02] # dog lies across his feet (body along z), facing +z
-DOG_HEAD = [0.4, 0.75, 0.38]
+DOG = [0.54, BED_TOP + 0.04, 0.0]  # dog lies at his feet, his rump against the wizard's toes, facing the foot end (+x)
+DOG_YAW = math.pi / 2              # the dog model faces +z; turned to face +x
+DOG_HEAD = [0.92, 0.75, 0.0]
 WOMAN = [1.45, 0.0, 1.2]            # woman stands past the foot end, at the front corner, facing the wizard
 WOMAN_FACE = -1.5                   # turned between the wizard and the front of the room
 DOOR = [2.28, 0.0, -0.75]           # door in the right wall
 WINDOW = [0.55, 1.45, -1.6]         # window in the back wall
-WOLF = [40.0, 0.0, 0.0]             # wolf family cutaway
+WOLF = [40.0, 0.0, 0.0]             # captive wolves: unrelated adults in a fenced pen
+WILD = [40.0, 0.0, -30.0]           # a wild pack: a family, parents and pups
 PUPS = [-40.0, 0.0, 0.0]            # puppy pile cutaway
 SPEAKER = {"hook": "wizard", "myth": "woman", "which": "wizard", "pack": "woman",
            "wake": "woman", "bark": "woman", "guard": "wizard", "light": "woman", "feet": "wizard",
@@ -86,12 +88,12 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
 
     # ---- key moments
     lovely_t = at("myth", "Cute") - 0.25          # cut to the woman for the verdict
-    fam_t = at("pack", "families") - 0.3            # closer on the wolf pups
-    bark_t = at("bark", "That") - 0.42             # the bark outside, in the pause after "outside?"
+    fam_t = at("pack", "Wild") - 0.2                # cut from the captive pen to a wild family
+    bark_t = 27.99 if abs(S("bark") - 26.56) < 0.05 else at("bark", "That") - 0.35   # in the measured pause after "outside?" (voice.wav)
     yawn_t = at("light", "Not") - 0.1            # the dog yawns and flops back down
     pups_t = at("pile", "Puppies") - 0.25           # cut to the puppy pile
     pile_back = at("pile", "you're") - 0.25         # match cut from the puppy pile back to the dog
-    roll_t = at("draught", "He") - 0.15             # the dog rolls over to face the wall
+    roll_t = at("draught", "He") - 0.15             # the dog gives up on the door and puts his chin back down
     # the illustrated wake-ups during "woke up about twenty-three times": quick head lifts
     lifts = [S("wake") + 0.8 + k * 2.0 for k in range(3)]   # slow, eased lifts (fast snaps read as flicker)
 
@@ -115,7 +117,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         if S("wake") <= t < S("guard") - 0.1:
             lw = "dog"
         frames["look_w"].append(lw)
-        frames["wiz_point"].append(round(_bump(t, S("guard") - 0.05, 0.3, max(0.1, E("guard") - S("guard") - 0.2), 0.45), 4))
+        frames["wiz_point"].append(0.0)
         frames["wiz_pitch"].append(0.0)
         frames["wiz_yaw"].append(0.0)
         wb = 1.0 if (t % 3.9) < 0.12 else 0.0
@@ -135,19 +137,20 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         up = max(up, b)
         if up > 0:
             rest, pitch, blink, ears = 1.0 - up, 0.25 - 0.45 * up, 1.0 - up, max(ears, 0.45 * up + 0.4 * b)
-            yaw = -0.5 * b                               # toward the window
+            yaw = 0.95 * b                               # toward the window
+        h_ = _bump(t, at("hook", "guarding") - 0.35, 0.6, max(0.3, E("hook") - at("hook", "guarding") + 0.1), 0.6)
+        if h_ > 0:                                       # the hook: he opens his eyes and lifts his head at "guarding me?"
+            rest, pitch, blink, ears = 1.0 - 0.8 * h_, 0.25 - 0.3 * h_, 1.0 - h_, 0.3 * h_
         y_ = _bump(t, yawn_t, 0.4, 0.5, 0.5)             # yawn, then flop back down
         if y_ > 0:
             rest, pitch, blink, mouth = 0.5 * (1 - y_), 0.25 - 0.4 * y_, 0.3 * y_, y_
         d_ = _bump(t, S("door") - 0.1, 0.4, max(0.2, roll_t - S("door") - 0.3), 0.3)   # looks to the door
         if d_ > 0:
-            rest, pitch, blink, yaw, ears = 1.0 - d_, 0.25 - 0.35 * d_, 1.0 - d_, 1.15 * d_, 0.3 * d_
-        if t >= roll_t:                                  # rolls over, curls up facing the wall
-            turn = cam.ease((t - roll_t) / 0.7)
-            if turn > 0.5:
-                mode, blink, rest, pitch, yaw = "curl", 1.0, 1.0, 0.0, 0.0
-        if S("hook") <= t < S("myth") or t >= E("pillow"):
-            tail = 0.0
+            rest, pitch, blink, yaw, ears = 1.0 - d_, 0.25 - 0.35 * d_, 1.0 - d_, 0.45 * d_, 0.3 * d_
+        # the payoff: on "pillow" he half-opens his eyes and thumps his tail on the duvet
+        p_ = _bump(t, at("pillow", "pillow") - 0.3, 0.3, 0.9, 0.5)
+        if p_ > 0:
+            blink, tail, ears, rest, pitch = 1.0 - 0.6 * p_, p_, 0.25 * p_, 1.0 - 0.55 * p_, 0.25 - 0.25 * p_
         frames["dog_mode"].append(mode); frames["dog_pitch"].append(round(pitch, 4)); frames["dog_yaw"].append(round(yaw, 4))
         frames["dog_rest"].append(round(rest, 4)); frames["dog_blink"].append(round(blink, 3)); frames["dog_mouth"].append(round(mouth, 3))
         frames["dog_ears"].append(round(ears, 3)); frames["dog_tail"].append(round(tail, 3)); frames["dog_turn"].append(round(turn, 4))
@@ -162,29 +165,31 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     dx, dy, dz = DOG
     hx, hy, hz = HEAD
     wx, wy, wz = WOLF
+    fx, fy, fz = WILD
     px, py, pz = PUPS
     dh = DOG_HEAD
     E_ = lambda t0, t1, p0, p1, look, fov, light="moonroom", p1look=None: cam.shot(
         t0, t1, [(t0, p0, look, fov), (t1, p1, p1look or look, fov)], fps, light)
-    wake_look = K(dx, dy + 0.14, dz + 0.05)
-    est_look = K(-0.2, 0.92, 0.0)
+    R = lambda ox, oy, oz: [dx + oz, dy + oy, dz - ox]   # offset from the dog, written as if he faced +z
+    wake_look = R(0.0, 0.14, 0.05)
+    est_look = K(-0.3, 1.0, 0.0)
     shots = cam.chain([
         # hook: the premise in one picture: the wizard sitting up in bed, the dog asleep across his feet; slow push-in
-        E_(0.0, S("myth") - 0.1, K(2.3, 1.62, 0.32), K(2.08, 1.56, 0.3), est_look, 38),
+        E_(0.0, S("myth") - 0.1, K(1.9, 0.9, 0.15), K(1.75, 0.9, 0.14), est_look, 40),
         # myth: wide three-quarter of the whole room with the woman
         E_(S("myth") - 0.1, lovely_t, K(2.25, 2.7, 4.3), K(2.15, 2.62, 4.1), K(0.05, 0.9, 0.1), 42),
         # myth (b): the woman, amused, on "Cute story. Half wrong."
         E_(lovely_t, E("myth") - 0.1, K(-0.05, 1.62, 0.5), K(0.1, 1.61, 0.57), K(1.45, 1.42, 1.2), 40),
         # which: the wizard, face on
         E_(E("myth") - 0.1, S("pack") - 0.1, K(0.2, 1.42, 0.75), K(0.1, 1.41, 0.66), K(hx, hy - 0.05, hz), 36),
-        # pack (a): the wolf family resting in a moonlit clearing, wide
+        # pack (a): captive wolves: unrelated adults kept in a fenced pen, wide
         E_(S("pack") - 0.1, fam_t, K(wx + 2.4, 1.5, wz + 3.6), K(wx + 2.0, 1.3, wz + 3.1), K(wx, 0.25, wz), 40),
-        # pack (b): closer on the parents and pups: a family
-        E_(fam_t, S("wake") - 0.1, K(wx - 0.9, 0.7, wz + 1.9), K(wx - 0.75, 0.65, wz + 1.7), K(wx + 0.1, 0.25, wz), 36),
+        # pack (b): a wild pack: parents and their pups resting together
+        E_(fam_t, S("wake") - 0.1, K(fx - 0.9, 0.85, fz + 2.1), K(fx - 0.75, 0.8, fz + 1.9), K(fx + 0.1, 0.25, fz), 38),
         # wake: the whole dog, three-quarter front: he lifts his head again and again
-        E_(S("wake") - 0.1, S("bark") - 0.1, K(dx + 0.95, dy + 0.62, dz + 1.45), K(dx + 0.85, dy + 0.58, dz + 1.3), wake_look, 42),
+        E_(S("wake") - 0.1, S("bark") - 0.1, R(-0.95, 0.62, 1.45), R(-0.85, 0.58, 1.3), wake_look, 42),
         # bark: close on his face; the head snaps up toward the window
-        E_(S("bark") - 0.1, S("guard") - 0.1, K(dx + 0.85, dy + 0.5, dz + 0.95), K(dx + 0.78, dy + 0.48, dz + 0.88), K(dx, dy + 0.2, dz + 0.15), 38),
+        E_(S("bark") - 0.1, S("guard") - 0.1, R(-0.85, 0.5, 0.95), R(-0.78, 0.48, 0.88), R(0.0, 0.2, 0.15), 38),
         # guard: the wizard points at the dog, triumphant (dog in the foreground)
         E_(S("guard") - 0.1, S("light") - 0.1, K(0.75, 1.2, 1.05), K(0.68, 1.2, 0.97), K(-0.55, 1.05, 0.0), 40),
         # light: over the wizard's shoulder, the woman and the dog in one frame: he yawns and flops back down
@@ -192,20 +197,20 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # feet: over the wizard's shoulder, down the duvet to the dog on his feet
         E_(S("feet") - 0.1, S("pile") - 0.1, K(0.3, 1.32, -0.6), K(0.24, 1.3, -0.55), K(-0.8, 1.12, 0.0), 38),
         # pile (a): "warmth, your smell": low and close, the dog pressed against his toes
-        E_(S("pile") - 0.1, pups_t, K(1.05, 1.05, 1.05), K(0.98, 1.02, 0.97), K(0.2, 0.7, 0.0), 38),
+        E_(S("pile") - 0.1, pups_t, K(0.3, 1.0, 1.15), K(0.32, 0.98, 1.05), K(0.28, 0.72, 0.0), 38),
         # pile (b): the puppy pile in its basket
         E_(pups_t, pile_back, K(px + 0.7, 0.85, pz + 1.0), K(px + 0.55, 0.75, pz + 0.85), K(px, 0.15, pz), 36, "golden"),
         # pile (c): match back to the bed from high up: the wizard and the dog, one pile
         E_(pile_back, S("door") - 0.1, K(1.25, 2.95, 2.1), K(1.15, 2.85, 1.95), K(-0.25, 0.75, 0.0), 40),
         # door: from behind the wizard's side of the bed toward the door with light round it, the dog in between
         E_(S("door") - 0.1, roll_t - 0.3, K(-0.55, 1.55, 1.0), K(-0.48, 1.52, 0.92), K(1.6, 0.8, -0.5), 42),
-        # draught: on the dog: he rolls over and curls up
-        E_(roll_t - 0.3, S("pillow") - 0.1, K(dx + 0.95, dy + 0.75, dz + 1.15), K(dx + 0.86, dy + 0.7, dz + 1.05), K(dx + 0.08, dy + 0.1, dz), 40),
+        # draught: on the dog: he looks to the door, then lays his chin back down
+        E_(roll_t - 0.3, S("pillow") - 0.1, R(-0.95, 0.75, 1.15), R(-0.86, 0.7, 1.05), R(0.08, 0.1, 0.0), 40),
         # pillow: back to the opening picture, pushing in on the wizard with his dog on his feet, then easing back
         # out to the opening composition (loops into the hook)
-        cam.shot(S("pillow") - 0.1, dur + 0.05, [(S("pillow") - 0.1, K(2.08, 1.56, 0.3), est_look, 38),
-                                                (E("pillow") + 0.3, K(1.45, 1.42, 0.15), K(-0.45, 1.0, 0.0), 38),
-                                                (dur + 0.05, K(2.3, 1.62, 0.32), est_look, 38)], fps, "moonroom"),
+        cam.shot(S("pillow") - 0.1, dur + 0.05, [(S("pillow") - 0.1, K(1.75, 0.9, 0.14), est_look, 40),
+                                                (E("pillow") + 0.3, K(1.65, 0.95, 0.13), K(-0.35, 1.08, 0.0), 40),
+                                                (dur + 0.05, K(1.9, 0.9, 0.15), est_look, 40)], fps, "moonroom"),
     ])
     focal = []
     for s_ in shots:
@@ -226,17 +231,16 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         {"start": at("draught", "Nobody"), "end": S("pillow") - 0.12, "big": "Not measured", "small": "no study found", "y": 0.16},
     ]
     events = [(round(S("pack") - 0.1, 3), "whoosh", {"gain": 0.16}),
-              (round(bark_t, 3), "bark", {"gain": 0.2, "seed": 19}),
-              (round(S("pile") - 0.1, 3), "whoosh", {"gain": 0.14})]
+              (round(bark_t, 3), "bark", {"gain": 0.28, "seed": 19, "distant": 1.0})]
     timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [lovely_t, bark_t, roll_t], "events": events,
                "mutes": [], "swells": [S("pile")]}
     facts = {"wakeups_per_night": 23,
              "events": {"head_up_at_bark": {"t": bark_t + 0.4, "observe": "dog_rest", "expect": 0.0, "tol": 0.05},
-                        "curled_at_end": {"t": E("pillow"), "observe": "dog_turn", "expect": 1.0, "tol": 0.02}}}
+                        "asleep_at_end": {"t": E("pillow") + 1.1, "observe": "dog_rest", "expect": 1.0, "tol": 0.02}}}
     return {"scene": SCENE, "W": W, "H": H, "fps": fps, "n_frames": n, "seed": 29, "supersample": 1.0,
             "bloom_threshold": 2.6, "end_hold_s": 1.6,
             "layout": {"bed_top": BED_TOP, "wiz": WIZ, "wiz_face": WIZ_FACE, "head": HEAD, "dog": DOG, "woman": WOMAN, "woman_face": WOMAN_FACE,
-                       "door": DOOR, "window": WINDOW, "wolf": WOLF, "pups": PUPS},
+                       "door": DOOR, "window": WINDOW, "wolf": WOLF, "wild": WILD, "pups": PUPS, "dog_yaw": DOG_YAW},
             "shots": shots, "cards": cards, "frames": frames, "timing": timing_, "wordmark": None, "facts": facts}
 
 

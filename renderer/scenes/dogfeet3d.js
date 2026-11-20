@@ -110,8 +110,8 @@ function bed(S, L) {
   const bodyH = (x, z) => {
     const k = smooth((x + 0.62) / 0.3);                                             // 0 at the waist .. 1 along the legs
     const w = 0.44 - 0.14 * k, across = Math.exp(-Math.pow(Math.abs(z) / w, 4));
-    const along = (0.19 - 0.08 * k) * (1 - smooth((x - 0.16) / 0.14));
-    const toes = 0.075 * Math.exp(-Math.pow((x - 0.16) / 0.08, 2)) * Math.exp(-Math.pow(Math.abs(z) / 0.24, 4));   // his feet poke it up
+    const along = (0.19 - 0.08 * k) * (1 - smooth((x + 0.02) / 0.13));
+    const toes = 0.075 * Math.exp(-Math.pow((x - 0.02) / 0.08, 2)) * Math.exp(-Math.pow(Math.abs(z) / 0.24, 4));   // his feet poke it up
     return along * across + toes;
   };
   for (let i = 0; i < P.count; i++) {
@@ -147,7 +147,7 @@ function nightstand(S, L) {
   const base = new THREE.Mesh(new THREE.LatheGeometry([[0.0, 0], [0.07, 0], [0.075, 0.02], [0.03, 0.06], [0.04, 0.16], [0.012, 0.24], [0.0, 0.24]].map(p => new THREE.Vector2(...p)), 32), std('#3f5a52', { roughness: 0.4 }));
   base.position.y = 0.5; g.add(base);
   const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.13, 0.17, 48, 1, true),
-    new THREE.MeshStandardMaterial({ color: '#ffe4b5', emissive: '#ffbf70', emissiveIntensity: 2.0, side: THREE.DoubleSide, roughness: 0.8 }));
+    new THREE.MeshStandardMaterial({ color: '#ffe4b5', emissive: '#ffbf70', emissiveIntensity: 1.25, side: THREE.DoubleSide, roughness: 0.8 }));
   shade.position.y = 0.82; g.add(shade);
   const bulb = new THREE.PointLight('#ffc27a', 2.4, 5.0, 2); bulb.position.y = 0.8; bulb.castShadow = false; g.add(bulb);
   // a book and a glass of water
@@ -242,7 +242,7 @@ export function build(world, plan) {
   // a soft key on her from the bed side, for the reverse shots
   const keyW = new THREE.PointLight('#ffe2c4', 2.2, 3.5, 2); keyW.position.set(0.5, 1.9, 0.75); S.add(keyW);
   // the dog across his feet
-  const rex = dog(); rex.position.set(...L.dog); S.add(rex);
+  const rex = dog(); rex.position.set(...L.dog); rex.rotation.y = L.dog_yaw; S.add(rex);
 
   // outside the window: trees in the dark garden and a big pale moon
   for (const [x, z, s] of [[-2.5, -6, 1.6], [2.8, -7.5, 1.9], [0.3, -11, 2.2], [5.5, -5.5, 1.5], [-6, -9, 2.0]]) world.roundTree(x, z, s);
@@ -257,14 +257,37 @@ export function build(world, plan) {
   for (const [dx, dz, s] of [[-3.2, -2.5, 2.2], [3.0, -3.5, 2.6], [-4.5, 1.5, 1.9], [4.2, 0.8, 2.3], [0.5, -5.5, 2.8], [-1.5, -4.8, 2.1], [6.5, -2, 2.4]])
     world.contactShadow(world.conifer(L.wolf[0] + dx, L.wolf[2] + dz, s), L.wolf[0] + dx, L.wolf[2] + dz, s * 0.7);
   const grey = { coat: '#8d8a84', light: '#dcd8cf', dark: '#55524d', iris: '#c99a3a', pointy: true };
+  // captive wolves: four unrelated adults spread round a fenced pen, each on its own
+  const pen = new THREE.Group(), wire = std('#6d6f72', { metalness: 0.4, roughness: 0.6 }), postM = MAT.wood('#5a4632');
+  const PR = 2.4;
+  for (let k = 0; k < 28; k++) {
+    const a = k / 28 * Math.PI * 2;
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 1.3, 16), postM); post.position.set(Math.cos(a) * PR, 0.65, Math.sin(a) * PR); pen.add(post);
+  }
+  for (const y of [0.3, 0.65, 1.0, 1.25]) {
+    const rail = new THREE.Mesh(new THREE.TorusGeometry(PR, 0.008, 8, 160), wire); rail.rotation.x = Math.PI / 2; rail.position.y = y; pen.add(rail);
+  }
+  for (let k = 0; k < 120; k++) {                         // the wire mesh: thin uprights between the posts
+    const a = k / 120 * Math.PI * 2;
+    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 1.25, 6), wire); w.position.set(Math.cos(a) * PR, 0.63, Math.sin(a) * PR); pen.add(w);
+  }
+  pen.position.set(L.wolf[0], 0, L.wolf[2]); S.add(shadowed(pen));
   const wolves = [
-    Object.assign(dog({ ...grey, scale: 1.3 }), { _p: [-0.45, 0, -0.2], _y: 0.5, _mode: 'lie' }),
-    Object.assign(dog({ ...grey, coat: '#a39c90', scale: 1.22 }), { _p: [0.55, 0, -0.35], _y: -0.6, _mode: 'lie' }),
-    Object.assign(dog({ ...grey, coat: '#9a958c', scale: 0.62 }), { _p: [0.05, 0, 0.35], _y: 0.2, _mode: 'curl' }),
-    Object.assign(dog({ ...grey, coat: '#7d7a74', scale: 0.6 }), { _p: [-0.3, 0, 0.62], _y: 2.4, _mode: 'curl' }),
-    Object.assign(dog({ ...grey, coat: '#a8a296', scale: 0.64 }), { _p: [0.45, 0, 0.5], _y: -0.3, _mode: 'lie' }),
+    Object.assign(dog({ ...grey, scale: 1.25 }), { _p: [-1.0, 0, -0.9], _y: 0.9, _mode: 'lie', _set: L.wolf }),
+    Object.assign(dog({ ...grey, coat: '#a39c90', scale: 1.2 }), { _p: [1.1, 0, -0.6], _y: -2.2, _mode: 'lie', _set: L.wolf }),
+    Object.assign(dog({ ...grey, coat: '#7d7a74', scale: 1.22 }), { _p: [-0.6, 0, 1.1], _y: 2.6, _mode: 'curl', _set: L.wolf }),
+    Object.assign(dog({ ...grey, coat: '#9a958c', scale: 1.18 }), { _p: [1.0, 0, 1.0], _y: -0.4, _mode: 'lie', _set: L.wolf }),
+    // a wild pack: the two parents lying side by side with their three pups tucked in between and around them
+    Object.assign(dog({ ...grey, scale: 1.3 }), { _p: [-0.45, 0, -0.2], _y: 0.5, _mode: 'lie', _set: L.wild }),
+    Object.assign(dog({ ...grey, coat: '#a39c90', scale: 1.22 }), { _p: [0.55, 0, -0.35], _y: -0.6, _mode: 'lie', _set: L.wild }),
+    Object.assign(dog({ ...grey, coat: '#9a958c', scale: 0.62 }), { _p: [0.05, 0, 0.35], _y: 0.2, _mode: 'curl', _set: L.wild }),
+    Object.assign(dog({ ...grey, coat: '#7d7a74', scale: 0.6 }), { _p: [-0.3, 0, 0.62], _y: 2.4, _mode: 'curl', _set: L.wild }),
+    Object.assign(dog({ ...grey, coat: '#a8a296', scale: 0.64 }), { _p: [0.45, 0, 0.5], _y: -0.3, _mode: 'lie', _set: L.wild }),
   ];
-  for (const w of wolves) { w.position.set(L.wolf[0] + w._p[0], 0.03, L.wolf[2] + w._p[2]); w.rotation.y = w._y; S.add(w); }
+  for (const w of wolves) { w.position.set(w._set[0] + w._p[0], 0.03, w._set[2] + w._p[2]); w.rotation.y = w._y; S.add(w); }
+  snowField(S, L.wild[0], L.wild[2], 9);
+  for (const [dx, dz, s] of [[-3.2, -2.5, 2.2], [3.0, -3.5, 2.6], [-4.5, 1.5, 1.9], [4.2, 0.8, 2.3], [0.5, -5.5, 2.8], [-1.5, -4.8, 2.1], [6.5, -2, 2.4]])
+    world.contactShadow(world.conifer(L.wild[0] + dx, L.wild[2] + dz, s), L.wild[0] + dx, L.wild[2] + dz, s * 0.7);
 
   // puppy pile in a basket
   basket(S, L.pups[0], L.pups[2]);
@@ -284,7 +307,7 @@ export function build(world, plan) {
     if (!o.isMesh || !o.castShadow) return;
     o.getWorldPosition(wp);
     const inRoom = wp.x > -1.9 && wp.x < 2.7 && wp.z > -1.9 && wp.z < 2.2;
-    const nearSet = Math.hypot(wp.x - L.wolf[0], wp.z - L.wolf[2]) < 12 || Math.hypot(wp.x - L.pups[0], wp.z - L.pups[2]) < 12;
+    const nearSet = Math.hypot(wp.x - L.wolf[0], wp.z - L.wolf[2]) < 12 || Math.hypot(wp.x - L.wild[0], wp.z - L.wild[2]) < 12 || Math.hypot(wp.x - L.pups[0], wp.z - L.pups[2]) < 12;
     if (!inRoom && !nearSet) o.castShadow = false;
   });
   const focalPt = i => F.focal_pt[Math.min(i, F.focal_pt.length - 1)];
@@ -297,7 +320,7 @@ export function build(world, plan) {
     return { headYaw: Math.max(-maxYaw, Math.min(maxYaw, w)), headPitch: Math.max(-0.3, Math.min(0.45, pitch)) };
   };
   const wizHead = [L.head[0], L.head[1] + 0.05, L.head[2]];
-  const dogHead = [L.dog[0], L.dog[1] + 0.25, L.dog[2] + 0.35];
+  const dogHeadV = new THREE.Vector3(), dogHead = [0, 0, 0];
   const womHead = [L.woman[0], 1.55, L.woman[2]], doorPt = [L.door[0], 1.0, L.door[2]];
   const camPos0 = () => world.camera.position.toArray();
   // the wizard's head turn toward a point, relative to the way his body faces (he leans back 0.14 rad)
@@ -317,19 +340,20 @@ export function build(world, plan) {
       const lw = F.look_w[k], tw = lw === 'woman' ? womHead : lw === 'door' ? doorPt : lw === 'camera' ? camPos0() : dogHead;
       const wl = wizLook(tw);
       wiz.pose({ talk: F.talk_w[k], blink: F.wiz_blink[k], t, headPitch: wl.pitch, headYaw: wl.yaw, headTilt: 0.04 * Math.sin(t * 0.7), point: F.wiz_point[k] });
+      rex.updateMatrixWorld(true); rex.headWorld(dogHeadV); dogHead[0] = dogHeadV.x; dogHead[1] = dogHeadV.y; dogHead[2] = dogHeadV.z;
       const camPos = world.camera.position.toArray();
       const lk = F.look_m[k], lm = headLook(wom, lk === 'camera' ? camPos : lk === 'dog' ? dogHead : wizHead);
       wom.pose({ talk: F.talk_m[k], blink: F.woman_blink[k], t, ...lm, headTilt: 0.05 * Math.sin(t * 0.9 + 1) });
       // the dog: asleep on the feet; rolls over to face the wall near the end
       const turn = F.dog_turn[k];
-      rex.rotation.y = 0.8 * Math.PI * turn;
-      rex.position.set(L.dog[0] + 0.1 * turn, L.dog[1] + 0.06 * Math.sin(Math.PI * turn) + 0.015 * turn, L.dog[2] - 0.05 * turn);
+      rex.rotation.y = L.dog_yaw + 0.8 * Math.PI * turn;
+      rex.position.set(L.dog[0] + 0.06 * turn, L.dog[1] + 0.06 * Math.sin(Math.PI * turn) + 0.015 * turn, L.dog[2]);
       rex.pose({ mode: F.dog_mode[k], t, pitch: F.dog_pitch[k], yaw: F.dog_yaw[k], rest: F.dog_rest[k], blink: F.dog_blink[k],
                  mouth: F.dog_mouth[k], ears: F.dog_ears[k], tail: F.dog_tail[k], breath: 1, breathRate: 1.2 });
       // wolves rest; one parent lifts its head, the pups breathe
       const wt = F.wolf[k];
-      wolves.forEach((w, q) => w.pose({ mode: w._mode, t: t + q * 1.7, pitch: q === 0 ? 0.1 - 0.15 * Math.min(1, wt / 1.5) : 0.25, rest: q === 0 ? 0.0 : (q === 1 ? 0.6 : 1.0),
-                                        blink: q === 0 ? 0 : 1, ears: 0.3, breathRate: 1.5 + 0.3 * q }));
+      wolves.forEach((w, q) => w.pose({ mode: w._mode, t: t + q * 1.7, pitch: 0.25, rest: q < 4 ? (q % 2 ? 0.0 : 0.7) : (q === 4 ? 0.8 : 1.0),
+                                        blink: q < 4 ? (q % 2 ? 0 : 1) : 1, ears: 0.3, breathRate: 1.5 + 0.3 * q }));
       pups.forEach((p, q) => p.pose({ mode: q === 4 ? 'lie' : 'curl', t: t + q, blink: 1, rest: 1, pitch: 0.2, breath: 1.4, breathRate: 2.2 + 0.2 * q }));
       if (shot !== lastShot) {
         lastShot = shot;
@@ -347,7 +371,7 @@ export function build(world, plan) {
     focal(i) { return new THREE.Vector3(...focalPt(i)); },
     probes(i) {
       const fp = focalPt(i);
-      const ent = Math.abs(fp[0] - L.wolf[0]) < 10 ? 'wolves' : Math.abs(fp[0] - L.pups[0]) < 10 ? 'puppies' : 'dog';
+      const ent = Math.abs(fp[0] - L.wolf[0]) < 10 && Math.abs(fp[2]) < 40 ? 'wolves' : Math.abs(fp[0] - L.pups[0]) < 10 ? 'puppies' : 'dog';
       return [{ entity: ent, part: 'subject', kind: 'thickness', p: fp, size: 0.25 }];
     },
     vars() { return {}; },
