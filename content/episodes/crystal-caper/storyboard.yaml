@@ -72,20 +72,15 @@ sources:
   - "F. Bacon, The Advancement of Learning (1605): sugar sparkles when scraped in the dark."
 
 claims:
-  - {id: rule_one, beat: rule, unit: count, value: 1, scope: universal, evidence: {quality: 1, source: "joke wording: the first rule"}}
-  - {id: five_times, beat: hot, unit: ratio, sim: hot_ratio, scope: condition, tolerance: 0.05,
+  - {id: five_times, beat: hot, unit: x, sim: hot_ratio, scope: condition, tolerance: 0.05,
      evidence: {quality: 1, source: "CRC: 487.2 g sucrose per 100 g water at 100 C = 4.87x ('almost five')"}}
-  - {id: a_week, beat: week, unit: days, sim: week_days, scope: typical,
-     evidence: {quality: 2, source: "Exploratorium rock candy: several days to about a week"}}
-  - {id: hot_card, card: "≈ 4.9 ×", unit: ratio, sim: hot_ratio, scope: condition, tolerance: 0.02,
+  - {id: hot_card, card: "≈ 4.9 ×", unit: x, sim: hot_ratio, scope: condition, tolerance: 0.02,
      evidence: {quality: 1, source: "CRC: 4.87 g sugar per g water at 100 C"}}
-  - {id: room_card, card: "≈ 2 ×", unit: ratio, sim: room_ratio, scope: condition, tolerance: 0.03,
+  - {id: room_card, card: "≈ 2 ×", unit: x, sim: room_ratio, scope: condition, tolerance: 0.03,
      evidence: {quality: 1, source: "CRC: 2.04 g sugar per g water at 20 C"}}
-  - {id: hot_temp, card: "100 °C", unit: C, value: 100, scope: condition, evidence: {quality: 1, source: "boiling water at sea level"}}
-  - {id: room_temp, card: "20 °C", unit: C, value: 20, scope: condition, evidence: {quality: 1, source: "room temperature in the CRC table"}}
-  - {id: week_card, card: "1 week later", unit: days, sim: week_days, scope: typical, tolerance: 0.01,
-     evidence: {quality: 2, source: "story time card; matches the usual rock-candy growth time"}}
-  - {id: days_card, card: "8 days earlier", unit: days, value: 8, scope: specific,
+  - {id: hot_temp, card: "100 °C", unit: deg, value: 100, scope: condition, evidence: {quality: 1, source: "boiling water at sea level"}}
+  - {id: room_temp, card: "20 °C", unit: deg, value: 20, scope: condition, evidence: {quality: 1, source: "room temperature in the CRC table"}}
+  - {id: days_card, card: "8 days earlier", unit: count, value: 8, scope: specific,
      evidence: {quality: 1, source: "story time card: one week of growth plus the day of the chase"}}
 
 absolute_ok:

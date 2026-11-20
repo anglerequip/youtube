@@ -176,7 +176,22 @@ def lock(seed=17, pitch=1.0):
     return _norm(_lp(y, 7000), 0.8)
 
 
-ONE_SHOTS = {"blip": blip, "lock": lock, "latch": latch, "pop": latch, "impact": impact, "thud": impact, "tink": tink, "tick": tink,
+def siren(dur=2.0, seed=19, near=0.6):
+    """A two-tone police siren (original synthesis): alternating 650/880 Hz tones with a few harmonics,
+    band-limited like a horn speaker; `near` (0..1) sets how close it sounds (more highs, less muffling)."""
+    rng = np.random.default_rng(seed)
+    n = int(dur * SR); t = _t(n)
+    period = 0.62
+    f = np.where((t % (2 * period)) < period, 650.0, 880.0)
+    f = signal.lfilter([0.02], [1, -0.98], f)                      # soft glide between the tones
+    ph = 2 * np.pi * np.cumsum(f) / SR + rng.uniform(0, 6.28)
+    y = np.sin(ph) + 0.45 * np.sin(2 * ph) + 0.25 * np.sin(3 * ph) + 0.12 * np.sin(5 * ph)
+    y = _bp(y, 400, 1500 + 3500 * near)
+    fade = np.clip(t / 0.25, 0, 1) * np.clip((dur - t) / 0.35, 0, 1)
+    return _norm(y * fade, 0.8)
+
+
+ONE_SHOTS = {"siren": siren, "blip": blip, "lock": lock, "latch": latch, "pop": latch, "impact": impact, "thud": impact, "tink": tink, "tick": tink,
              "swish": swish, "whoosh": rewind, "rewind": rewind, "rise": rise, "ding": ding}
 
 
@@ -316,6 +331,8 @@ def render_cue(name: str, p: dict, t: float) -> np.ndarray:
         kw.update({k: p[k] for k in ("pitch", "ring") if k in p})
     if name in ("blip", "lock"):
         kw.update({k: p[k] for k in ("pitch", "seed") if k in p})
+    if name == "siren":
+        kw.update({k: p[k] for k in ("dur", "near", "seed") if k in p})
     if name in ("rise", "swish") and "dur" in p:
         kw["dur"] = float(p["dur"])
     return fn(**kw)
