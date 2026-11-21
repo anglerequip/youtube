@@ -220,6 +220,10 @@ Four Shorts made public within 7 h on 20 Nov (two in the same minute) got almost
 - **Comments:** the last beat may end on one specific question a viewer can answer in a word or two, drawn
   from the video ("Would you have guessed the dog or the cat?"). Never "like and subscribe". It counts inside
   the normal beat budget, not as extra length.
+- **Hook (Studio "stayed to watch", 21 Nov):** openings that show the strange thing moving in the first second kept
+  most viewers (head clock 64%, falling cat 63%, dog tongue 57%). Openings that set up a claim to argue against
+  ("A viral theory says...") or state a plain fact lost most (cat stare 39%, banana 46%). Show the phenomenon first,
+  say the claim over it. Every Short so far stalled at about 1,100-1,400 views (the first test audience); aim for 70%+ stayed.
 - **Loop:** the final shot and line should lead back into the hook frame so a replay feels seamless.
 - **Playlists:** the job adds every Short to a series playlist picked from its tags (`tagline.playlist`), or
   `playlist` in the package.
