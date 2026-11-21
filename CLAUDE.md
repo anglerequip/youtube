@@ -197,3 +197,29 @@ These rules keep the hands-free pipeline cheap. They don't override the rules ab
    cheaper model (Sonnet or Haiku) for routine work: packaging, topic-ledger checks, QA summaries.
 4. **Fewer chat messages.** Post to the project chat only for a result, a blocker or a question that
    needs Caesar. Routine progress goes on the checklist.
+
+## YouTube packaging (audit 2026-11-21)
+
+Evidence: our first 11 Shorts (public counts 21 Nov). Like ratio was best on animal "how/why" topics with
+slow motion (falling cat 3.5%, dog drinking 2.2%, cat stare 2.0%) and worst on gadget facts (touchscreen 0.6%).
+Four Shorts made public within 7 h on 20 Nov (two in the same minute) got almost no views; the next three,
+4-5 h apart, each reached 700-1,100. Sources: YouTube Help "Disclosing use of altered or synthetic content"
+(answer 14328491), vidIQ "How does the YouTube Shorts algorithm work in 2026".
+
+- **Spacing:** the cloud job (`factory/autopilot/cloud_post.py`) moves any publish time that is within 4 h of
+  another Short on the channel. Plan at most 2-3 Shorts a day while the channel is new.
+- **Title:** about 40-60 characters, the plain thing people search for plus the surprise ("Why Your Cat
+  Stares While You Eat"). It must be true to the video; no bait the video doesn't pay off.
+- **Description:** first line restates the hook as a question, then the answer in one or two sentences,
+  sources, the how-it's-made line, the tagline, then 3-5 topical hashtags. More than 15 hashtags and YouTube
+  ignores all of them (the job trims to 5). Tags are minor; the job dedupes them and keeps them under 500 chars.
+- **Settings:** category 28 (Science & Technology), not made for kids, language en. Keep
+  `contains_synthetic_media: true` because the voices are AI; YouTube says the label alone does not limit reach.
+- **Comments:** the last beat may end on one specific question a viewer can answer in a word or two, drawn
+  from the video ("Would you have guessed the dog or the cat?"). Never "like and subscribe". It counts inside
+  the normal beat budget, not as extra length.
+- **Loop:** the final shot and line should lead back into the hook frame so a replay feels seamless.
+- **Playlists:** the job adds every Short to a series playlist picked from its tags (`tagline.playlist`), or
+  `playlist` in the package.
+- **Studio only (no API):** the Shorts "related video" link and pinning a comment. Do these in Studio when a
+  signed-in browser is available; link each Short to the best-performing Short in the same series.
