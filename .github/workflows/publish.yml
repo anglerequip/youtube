@@ -1,0 +1,37 @@
+name: publish
+
+# Posts queued videos to YouTube as scheduled (private until their publish time). Uses only the
+# repository's Actions secrets; no PC is involved. Runs on a schedule and on demand.
+on:
+  schedule:
+    - cron: "15 * * * *"        # hourly, at :15
+  workflow_dispatch:
+
+permissions:
+  contents: write               # to commit the queue clean-up
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install the YouTube client only
+        run: pip install "google-api-python-client>=2.100" "google-auth>=2.23" "google-auth-oauthlib>=1.1"
+      - name: Post due videos
+        env:
+          YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+        run: python -m factory.autopilot.cloud_post
+      - name: Remove posted queue folders from the repository
+        run: |
+          git config user.name "autopilot"
+          git config user.email "autopilot@users.noreply.github.com"
+          git add -A autopilot_queue content/ledger
+          git diff --cached --quiet || (git commit -m "autopilot: clean up posted videos and update the topic ledger" && git push)
