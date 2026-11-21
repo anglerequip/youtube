@@ -81,14 +81,14 @@ const FinishShader = {
         // nothing; the trade-off is that a blurred foreground edge bleeds only ~3 px over a sharp subject
         vec3 acc = col; float tot = 1.0; float r = 1.2; float ang = 0.0;
         float rmax = min(maxCoc, max(c0 + 1.0, 3.0));
-        for (int k = 0; k < 32; k++) {
+        for (int k = 0; k < 48; k++) {
           if (r >= rmax) break;
           vec2 tc = vUv + vec2(cos(ang), sin(ang)) * r / res;
           float d = depthAt(tc); float cs = coc(d);
           if (d > d0) cs = min(cs, c0 * 2.0);
           float m = smoothstep(r - 0.5, r + 0.5, cs);
           acc += mix(acc / tot, shade(tc, d), m); tot += 1.0;
-          ang += 2.39996; r += 2.2 / r;
+          ang += 2.39996; r += 1.5 / r;
         }
         col = acc / tot;
       }
@@ -319,7 +319,7 @@ export function groundCover(world, plan, opts = {}) {
   const per = Math.ceil(target / centres.length);
   const mats = [], cols = [];
   const grassCols = ['#6d7a33', '#7c8a3c', '#5f6b2b', '#8b9550', '#717d36', '#9aa05a'].map(c => new THREE.Color(c));
-  const flowerCols = ['#efe8d2', '#e9cf63', '#b9a5d6', '#e8e4f0'].map(c => new THREE.Color(c));
+  const flowerCols = ['#d9d2bc', '#d8bd55', '#a594c4', '#cfc9d8'].map(c => new THREE.Color(c));
   const flowers = [], pebbles = [];
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(), p3 = new THREE.Vector3();
   for (const c of centres) {
@@ -332,7 +332,7 @@ export function groundCover(world, plan, opts = {}) {
       sc.set(s * (0.8 + R() * 0.5), s, s * (0.8 + R() * 0.5)); p3.set(x, y - 0.005, z);
       mats.push(m4.compose(p3, q, sc).clone());
       cols.push(grassCols[Math.floor(R() * grassCols.length)].clone().multiplyScalar(0.85 + R() * 0.3));
-      if (opts.flowers !== false && R() < 0.035) flowers.push([x + (R() - 0.5) * 0.05, y + s * 0.85, z + (R() - 0.5) * 0.05, R()]);
+      if (opts.flowers !== false && R() < 0.022) flowers.push([x + (R() - 0.5) * 0.05, y + s * 0.85, z + (R() - 0.5) * 0.05, R()]);
       else if (R() < 0.02) pebbles.push([x + 0.06, y, z + 0.04, R()]);
     }
   }
@@ -343,7 +343,7 @@ export function groundCover(world, plan, opts = {}) {
   S.add(im);
   const out = { tufts: im, uTime };
   if (flowers.length) {
-    const fg = new THREE.IcosahedronGeometry(0.018, 1), fm = new THREE.MeshStandardMaterial({ roughness: 0.7 });
+    const fg = new THREE.IcosahedronGeometry(0.011, 1), fm = new THREE.MeshStandardMaterial({ roughness: 0.7 });
     fm.userData.noVariation = true;
     const fi = new THREE.InstancedMesh(fg, fm, flowers.length);
     flowers.forEach(([x, y, z, u], i) => { m4.makeTranslation(x, y, z); fi.setMatrixAt(i, m4); fi.setColorAt(i, flowerCols[Math.floor(u * flowerCols.length)]); });
