@@ -1,6 +1,6 @@
 """Layer 8 (audio QA): measurable properties of the narration and the final mix.
 
-Measured: duration (TikTok rule), clipping, true peak, loudness against the target, narration
+Measured: narration completeness and end (nothing cut, nothing padded), clipping, true peak, loudness against the target, narration
 completeness (every beat voiced, no dead air inside the narration), and that physical sound events
 exist for the declared on-screen events. Not measurable here, and therefore reported as NOT performed:
 perceptual listening (pronunciation, naturalness, music taste). The gate never counts those as passed.
@@ -35,9 +35,18 @@ def check(ctx, cfg: dict, final: Path | None = None) -> tuple[list[Finding], dic
     voice = out / "voice.wav"
     final = final or (out / "final.mp4")
     if ctx.tl is not None:
-        if ctx.tl.duration < c["min_duration_s"]:
-            F.append(Finding("audio.too_short", "audio", 0, "BLOCKED_AUDIO",
-                             f"narration timeline is {ctx.tl.duration:.1f}s; videos must be over 60 s"))
+        if final.exists() and ctx.tl.lines:          # the video must not cut the last word
+            try:
+                vd = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of",
+                                           "csv=p=0", str(final)], capture_output=True, text=True).stdout.strip())
+            except ValueError:
+                vd = None
+            last = ctx.tl.lines[-1].end
+            if vd is not None:
+                m["video_s"], m["tail_s"] = round(vd, 2), round(vd - last, 2)
+                if vd < last + 0.15:
+                    F.append(Finding("audio.cut_narration", "audio", 0, "BLOCKED_AUDIO",
+                                     f"video ends at {vd:.2f}s but the last word ends at {last:.2f}s", t=last))
         voiced = {ln.id for ln in ctx.tl.lines if ln.end - ln.start > 0.3}
         missing = [b.id for b in ctx.sb.beats if b.id not in voiced]
         if missing:

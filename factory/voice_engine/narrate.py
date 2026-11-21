@@ -23,7 +23,15 @@ def _delivery() -> dict:
     return yaml.safe_load(p.read_text(encoding="utf-8")).get("delivery", {}) if p.exists() else {}
 
 LEAD_IN = 0.35   # silence before the first line
-TAIL = 1.2       # silence after the last line, so the video doesn't cut mid-breath
+TAIL = 1.2       # default silence after the last line, so the video doesn't cut mid-breath
+
+
+def tail_for(ep) -> float:
+    """Time the video holds after the last word. A storyboard sets `end_hold_s` to what its final
+    picture needs (a landing, the last label); otherwise the default breath + music fade."""
+    extra = getattr(ep, "extra", None) or {}
+    v = extra.get("end_hold_s")
+    return max(0.5, float(v)) if v is not None else TAIL
 
 
 @dataclass
@@ -82,6 +90,7 @@ def narrate(ep, out_wav: Path, provider: str | None = None) -> Timeline:
     timed: list[TimedLine] = []
     sr_ref = None
     t = LEAD_IN
+    last = ep.lines[-1].id if ep.lines else None
     for ln in ep.lines:
         pace = delivery.get(getattr(ln, "pace", "calm") or "calm", {})
         speed = ep.speed * (getattr(ln, "speed", None) or pace.get("speed", 1.0))
@@ -105,10 +114,12 @@ def narrate(ep, out_wav: Path, provider: str | None = None) -> Timeline:
         timed.append(TimedLine(ln.id, clean(ln.text), round(t, 3), round(t + dur, 3)))
         chunks.append(samples)
         pause = ln.pause_after + pace.get("pause", 0.0)
+        if ln.id == last and (getattr(ep, "extra", None) or {}).get("end_hold_s") is not None:
+            pause = 0.0                           # the end hold replaces the last pause (no double gap)
         chunks.append(np.zeros(int(pause * sr), dtype=np.float32))
         t += dur + pause
         print(f"  [{timed[-1].start:6.2f}-{timed[-1].end:6.2f}] {ln.id}", flush=True)
-    chunks.append(np.zeros(int(TAIL * sr_ref), dtype=np.float32))
+    chunks.append(np.zeros(int(tail_for(ep) * sr_ref), dtype=np.float32))
     audio = np.concatenate(chunks)
     peak = float(np.max(np.abs(audio))) or 1.0
     audio = audio * (0.89 / peak)  # normalise to about -1 dBFS

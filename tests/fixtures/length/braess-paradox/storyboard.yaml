@@ -1,0 +1,41 @@
+# Length fixture (~55 s): a genuinely complex topic. Not a production episode.
+title: "The New Road That Made Traffic Worse"
+topic: "Braess's paradox: adding a road can slow every driver down"
+description: "Length-planning fixture: four steps, a strong build-up and two extra layers."
+tags: [test, traffic, game theory]
+voice: af_bella
+speed: 1.1
+end_hold_s: 1.0
+story:
+  core_idea: "When every driver picks their own fastest route, a new shortcut can make everyone slower."
+  fascination: "removing a road has actually sped up real cities"
+  steps: 4
+  buildup: high
+  extras: [real_world, history]
+  payoff: why
+  cut: ["Nash equilibrium formal definition", "electrical and spring versions: a second video"]
+beats:
+  - id: hook
+    text: "A city opened a new road... and every single commute got slower."
+  - id: history
+    text: "The mathematician Dietrich Braess predicted exactly this in nineteen sixty eight. Here's his puzzle."
+  - id: setup
+    text: "Four thousand drivers, two routes from A to B. Each route is a narrow street, then a wide highway."
+  - id: rules
+    text: "A narrow street takes one minute for every hundred cars on it. A highway always takes forty five minutes."
+  - id: before
+    text: "Drivers split evenly. Two thousand each way, and everyone gets there in sixty five minutes."
+  - id: shortcut
+    text: "Now the city adds a free shortcut joining the two narrow streets, skipping both highways."
+  - id: choice
+    text: "Whatever the others do, that route can never take you longer than forty minutes. Of course you take it."
+  - id: jam
+    text: "But every other driver thinks the same. All four thousand cars pile onto both narrow streets."
+  - id: worse
+    text: "Forty minutes, plus forty minutes. Every trip now takes eighty. Fifteen minutes *worse* for everyone."
+  - id: why
+    text: "And nobody can fix it alone. Switch back to a highway and your trip gets even longer."
+  - id: real
+    text: "Seoul tore down a six lane highway in two thousand five, and traffic around it flowed better."
+caveats: ["test fixture: textbook network numbers; the Seoul effect has several causes"]
+sources: ["D. Braess, 'Über ein Paradoxon aus der Verkehrsplanung', Unternehmensforschung 12 (1968)"]

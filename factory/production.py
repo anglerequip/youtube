@@ -53,7 +53,8 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
     timings = {}
 
     t0 = time.time()
-    vkey = _key([(b.id, b.text, b.pause_after) for b in sb.beats], sb.voice, sb.speed, provider, "expressive-v1")
+    vkey = _key([(b.id, b.text, b.pause_after) for b in sb.beats], sb.voice, sb.speed, provider, "expressive-v1",
+                *([voice.tail_for(sb)] if sb.extra.get("end_hold_s") is not None else []))
     if force or not _cached(out, "voice.wav", vkey) or not (out / "timeline.json").exists():
         log.info("[%s] voice (%s)", sb.slug, provider)
         tl = voice.narrate(sb, out / "voice.wav", provider)
@@ -63,11 +64,18 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
         log.info("[%s] voice: cached", sb.slug)
         tl = voice.Timeline.load(out / "timeline.json")
     timings["voice_s"] = round(time.time() - t0, 1)
+    # Length comes from the story (factory/story_length.py): no target, no padding, no trimming. Only a
+    # technical ceiling and a broken-output floor are enforced here; padding checks are in the report.
     if tl.duration > settings.max_seconds:
-        raise ValueError(f"narration is {tl.duration:.1f}s; limit is {settings.max_seconds:.0f}s. Trim the script.")
-    if tl.duration + 0.8 < settings.min_seconds:
-        raise ValueError(f"narration is {tl.duration:.1f}s; every video must be at least {settings.min_seconds:.0f}s. "
-                         "Extend the script with real content (not filler).")
+        raise ValueError(f"narration is {tl.duration:.1f}s; the ceiling for a Short is {settings.max_seconds:.0f}s. "
+                         "Cut beats that don't earn their place.")
+    if tl.duration < settings.min_seconds:
+        raise ValueError(f"narration is {tl.duration:.1f}s: shorter than any real story ({settings.min_seconds:.0f}s); "
+                         "the voice step probably failed.")
+    from . import story_length
+    (out / "length.md").write_text(story_length.report(sb, tl), encoding="utf-8")
+    log.info("[%s] length %.1fs from the narration (%s); see %s", sb.slug, tl.duration,
+             story_length.guide_band(tl.duration), out / "length.md")
 
     t0 = time.time()
     if sb.renderer == "three":

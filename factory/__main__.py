@@ -1,6 +1,8 @@
 """Command line.
 
   python -m factory produce <slug> [--previews] [--force] [--tts kokoro|elevenlabs]
+  python -m factory length <slug>         plan the story's natural length and check the script for padding
+                                          (before any voice or render; uses real narration timings if they exist)
   python -m factory status                show every video and its state
   python -m factory history <slug>        state changes for one video
   python -m factory qc <slug>             re-run quality checks on an existing render
@@ -43,6 +45,8 @@ def main(argv=None) -> int:
     pr.add_argument("--previews", action="store_true", help="save a PNG every 2s to out/<slug>/previews")
     pr.add_argument("--force", action="store_true", help="ignore cached voice/visual steps")
     pr.add_argument("--tts", default=None)
+    ln = sub.add_parser("length", help="natural length and padding check for one storyboard")
+    ln.add_argument("slug")
     sub.add_parser("status")
     h = sub.add_parser("history")
     h.add_argument("slug")
@@ -56,6 +60,15 @@ def main(argv=None) -> int:
     qg.add_argument("slug")
     args = p.parse_args(argv)
     _logging()
+
+    if args.cmd == "length":
+        from . import story_length
+        from .storyboard_engine import load
+        from .voice_engine.narrate import Timeline
+        sb = load(args.slug)
+        tlp = settings.out_dir / sb.slug / "timeline.json"
+        print(story_length.report(sb, Timeline.load(tlp) if tlp.exists() else None))
+        return 0
 
     from .database import DB
     db = DB()
