@@ -41,7 +41,7 @@ class Settings:
     tts_provider: str = _env("TTS_PROVIDER", "kokoro")
     kokoro_voice: str = _env("KOKORO_VOICE", "af_bella")
     fps: int = int(_env("FPS", "30"))
-    min_seconds: float = float(_env("MIN_SECONDS", "61"))
+    min_seconds: float = float(_env("MIN_SECONDS", "3"))   # Caesar 2026-11-20: no 61 s rule; length follows content
     max_seconds: float = float(_env("MAX_SECONDS", "90"))
 
     @property
