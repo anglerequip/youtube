@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { World, drawCard, drawWordmark, drawBadge } from './world.js';
 import { inspectFrame, staticChecks } from './inspect.js';
+import { loadPresenters } from './characters.js';
 import { drawOverlays } from './overlays.js';
 
 export async function boot(sceneName, plan) {
@@ -12,7 +13,9 @@ export async function boot(sceneName, plan) {
   const ctx = out.getContext('2d');
   const world = new World(gl, W, H, plan.seed ?? 7, { supersample: plan.supersample ?? 1 });
   const mod = await import(`/renderer/scenes/${sceneName}.js`);
-  const scene = mod.build(world, plan);
+  // Blender presenters for man()/woman() (falls back if missing). v7 by default; plan.presenters = 'v6' loads the older pair
+  if (plan.presenters !== false) await loadPresenters(plan.presenters === 'v6' ? '/assets/characters/v6/' : undefined);
+  const scene = await mod.build(world, plan);
 
   window.__meta = {};
   const pose = i => {           // put the world in its state for frame i (shared by render and inspect)
