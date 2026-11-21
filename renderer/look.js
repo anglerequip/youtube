@@ -99,11 +99,11 @@ const GradeShader = {
     tDiffuse: { value: null }, res: { value: new THREE.Vector2(1080, 1920) }, frame: { value: 0 },
     contrast: { value: 0.10 }, saturation: { value: 1.06 }, warm: { value: new THREE.Vector3(1.02, 1.0, 0.965) },
     cool: { value: new THREE.Vector3(0.975, 0.995, 1.03) }, vignette: { value: 0.22 }, grain: { value: 0.012 },
-    sharpen: { value: 0.32 },
+    sharpen: { value: 0.32 }, lift: { value: 0.055 },
   },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
   fragmentShader: `
-    uniform sampler2D tDiffuse; uniform vec2 res; uniform float frame, contrast, saturation, vignette, grain, sharpen;
+    uniform sampler2D tDiffuse; uniform vec2 res; uniform float frame, contrast, saturation, vignette, grain, sharpen, lift;
     uniform vec3 warm, cool; varying vec2 vUv;
     float hash(vec2 p){ p = fract(p * vec2(443.897, 441.423)); p += dot(p, p.yx + 19.19); return fract((p.x + p.y) * p.x); }
     void main(){
@@ -128,7 +128,10 @@ const GradeShader = {
       // fine luminance grain, fixed per frame (deterministic renders), weaker in the highlights
       float n = hash(vUv * res + frame * 17.0) - 0.5;
       c += n * grain * (1.0 - l * 0.6);
-      gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
+      // black lift: the blueprint never shows pure black (and QA blocks solid black regions), so the darkest
+      // tone is a deep grey (~14/255) even under vignette, AO and contrast
+      c = lift + clamp(c, 0.0, 1.0) * (1.0 - lift);
+      gl_FragColor = vec4(c, 1.0);
     }`,
 };
 

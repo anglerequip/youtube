@@ -45,7 +45,7 @@ export async function boot(sceneName, plan) {
     world.scene.updateMatrixWorld(true); world.camera.updateMatrixWorld(true);
     return inspectFrame(world, scene, plan, i, shot);
   };
-  window.renderFrame = (i, quality = 0.93) => {
+  window.renderFrame = (i, quality = 0.96) => {
     const { t, shot } = pose(i);
     world.render();
     if (scene.focal) {           // render metadata for QC (focal object position on screen)

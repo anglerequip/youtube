@@ -95,7 +95,9 @@ def mux(video: Path, audio: Path, ass: Path, out: Path):
         "ffmpeg", "-y", "-loglevel", "error",
         "-i", str(video), "-i", str(audio),
         "-vf", f"subtitles='{ass_arg}':fontsdir='{fonts}'",
-        "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p",
+        # delivery encode (quality overhaul v3): YouTube re-encodes everything, so give it a clean master.
+        # CRF 17 + slow preset + aq-mode 3 keeps sky gradients and dark scenes free of banding and blocking.
+        "-c:v", "libx264", "-preset", "slow", "-crf", "17", "-x264-params", "aq-mode=3", "-pix_fmt", "yuv420p",
         "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
         "-shortest", "-movflags", "+faststart", str(out),
     ]
