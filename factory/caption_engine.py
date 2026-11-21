@@ -120,7 +120,51 @@ def timed_chunks(tl: Timeline) -> list[tuple[float, float, str]]:
     return events
 
 
-def write_ass(tl: Timeline, path: Path):
+# Caption styles. "house" is the Blueprint default (section 6). "duo" and "build" are the opt-in style
+# modules (docs/styles/DUO.md, docs/styles/BUILD.md); pick one with `caption_style:` in storyboard.yaml.
+STYLES = {
+    # bold rounded words, thick dark outline, one stressed word coloured by speaker
+    "duo": {"font": "Poppins ExtraBold", "cap": 0.040, "center_y": 0.66, "outline": 7, "shadow": 2, "upper": False,
+            "max_words": 3, "colors": {"woman": "#ffb547", "man": "#8ecbff", None: "#ffb547"}},
+    # one word at a time, ALL CAPS, white with a dark outline (the "build" explainer look)
+    "build": {"font": "Poppins ExtraBold", "cap": 0.024, "center_y": 0.73, "outline": 5, "shadow": 2, "upper": True,
+              "max_words": 1, "colors": {}},
+}
+
+
+def _ass_color(hex_rgb: str) -> str:
+    h = hex_rgb.lstrip("#")
+    return f"&H00{h[4:6]}{h[2:4]}{h[0:2]}".upper()
+
+
+def _stressed(beat) -> set[str]:
+    """Words the writer stressed: *word* in the beat text plus the beat's `emphasis:` list."""
+    if beat is None:
+        return set()
+    words = {w.lower() for w in re.findall(r"\*([^*]+)\*", beat.text)}
+    words |= {str(w).lower() for w in (getattr(beat, "emphasis", None) or [])}
+    return {w.strip(",.;:!?") for w in words}
+
+
+def timed_chunks_styled(tl: Timeline, max_words: int) -> list[tuple[float, float, str, str]]:
+    """Like timed_chunks but with a fixed max words per chunk; returns (start, end, text, line_id)."""
+    out = []
+    for ln in tl.lines:
+        chunks = chunk(ln.text, max_words=max_words, max_chars=40 if max_words == 1 else None)
+        weights = [sum(syllables(w) for w in c.split()) for c in chunks]
+        total = sum(weights) or 1
+        t = ln.start
+        for c, w in zip(chunks, weights):
+            d = (ln.end - ln.start) * w / total
+            out.append((t, t + d, _display(c), ln.id))
+            t += d
+    return out
+
+
+def write_ass(tl: Timeline, path: Path, style: str | None = None, beats: dict | None = None):
+    style = style or rules().get("style", "house")
+    if style in STYLES:
+        return _write_ass_styled(tl, path, STYLES[style], beats or {})
     r = rules()
     cy = int(r.get("center_y", 0.73) * H)
     size = int(r.get("cap_height_frac", 0.03) * H / 0.70)   # Poppins cap height is ~0.70 em
@@ -147,6 +191,42 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         halo = rf"{{\pos({W // 2},{cy})\bord11\blur14\1a&HFF&\3a&HA8&\4a&HFF&\fad(80,80)}}"
         lines.append(f"Dialogue: 0,{_ts(s)},{_ts(e)},Cap,,0,0,0,,{halo}{text}")
         lines.append(f"Dialogue: 1,{_ts(s)},{_ts(e)},Cap,,0,0,0,,{tag}{text}")
+    path.write_text(header + "\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _write_ass_styled(tl: Timeline, path: Path, st: dict, beats: dict):
+    cy = int(st["center_y"] * H)
+    size = int(st["cap"] * H / 0.70)
+    header = f"""[Script Info]
+ScriptType: v4.00+
+PlayResX: {W}
+PlayResY: {H}
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Cap,{st["font"]},{size},&H00FFFFFF,&H00FFFFFF,&H001A1615,&H60000000,0,0,0,0,100,100,0,0,1,{st["outline"]},{st["shadow"]},5,60,60,0,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+"""
+    events = timed_chunks_styled(tl, st["max_words"])
+    lines = []
+    for k, (s, e, text, lid) in enumerate(events):
+        e = min(e, events[k + 1][0]) if k + 1 < len(events) else e + 0.15
+        beat = beats.get(lid)
+        stressed = _stressed(beat)
+        speaker = (beat.extra.get("speaker") if beat is not None else None)
+        col = st["colors"].get(speaker, st["colors"].get(None))
+        words = []
+        for w in text.split():
+            shown = w.upper() if st["upper"] else w
+            if col and w.lower().strip(",.;:!?") in stressed:
+                shown = rf"{{\1c{_ass_color(col)}}}{shown}{{\1c&H00FFFFFF}}"
+            words.append(shown)
+        tag = rf"{{\pos({W // 2},{cy})}}"
+        lines.append(f"Dialogue: 1,{_ts(s)},{_ts(e)},Cap,,0,0,0,,{tag}{' '.join(words)}")
     path.write_text(header + "\n".join(lines) + "\n", encoding="utf-8")
 
 
