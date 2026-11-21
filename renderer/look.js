@@ -145,6 +145,20 @@ export class Look {
     const setAO = this.gtao.setSize.bind(this.gtao);
     this.gtao.setSize = (w, h) => setAO(Math.round(w * aoScale), Math.round(h * aoScale));
     this.gtao.output = GTAOPass.OUTPUT.Off; this.gtao.needsSwap = false;
+    // the depth/normal pre-pass must only see solid surfaces: transparent water, glass, glows, halos and the
+    // sky dome would otherwise put AO rings on water and make the depth of field focus on a see-through sheet
+    const g = this.gtao;
+    g.overrideVisibility = function () {
+      const cache = this._visibilityCache;
+      this.scene.traverse(o => {
+        cache.set(o, o.visible);
+        if (o.isPoints || o.isLine || o.isSprite) { o.visible = false; return; }
+        if (o.isMesh) {
+          const ms = Array.isArray(o.material) ? o.material : [o.material];
+          if (ms.some(m => m && (m.transparent || m.depthWrite === false || m.blending === THREE.AdditiveBlending))) o.visible = false;
+        }
+      });
+    };
     if (opts.aoDebug) { this.gtao.output = GTAOPass.OUTPUT.Denoise; this.gtao.needsSwap = true; }
     this.finish = new ShaderPass(FinishShader);
     this.finish.uniforms.res.value.set(W * ss, H * ss);
