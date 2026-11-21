@@ -9,7 +9,8 @@ Queue layout (committed by the render job, one folder per video):
                                           "contains_synthetic_media": true}
   autopilot_queue/<slug>/video.mp4
   autopilot_queue/<slug>/cover.jpg      optional
-After a successful upload the folder is deleted (the video lives on YouTube; Caesar's rule: clean up).
+After a successful upload the video moves on to the Facebook queue (autopilot_queue_facebook/, one reel a
+day, see facebook_post.py; Caesar 2026-11-21: new videos go to Facebook too) and the folder is deleted.
 A video with no publish_at is skipped, so an unfinished render is never posted by accident.
 """
 from __future__ import annotations
@@ -94,7 +95,14 @@ def run(dry_run: bool = False) -> int:
             vid = post_one(f, yt)
             print(f"scheduled {f.name}: https://youtube.com/shorts/{vid}")
             Ledger().set_status(f.name, "scheduled", f"queued by cloud job, YouTube https://youtube.com/shorts/{vid}")
-            shutil.rmtree(f)            # clean-up: the file now lives on YouTube
+            try:
+                from . import facebook_post
+                pkg = json.loads((f / "package.json").read_text(encoding="utf-8"))
+                if facebook_post.enqueue(f, pkg):
+                    print(f"queued {f.name} for Facebook")
+            except Exception as e:   # noqa: BLE001  YouTube already has it; never fail the run over Facebook
+                print(f"could not queue {f.name} for Facebook: {type(e).__name__}: {str(e)[:200]}")
+            shutil.rmtree(f)            # clean-up: the file now lives on YouTube (and in the Facebook queue)
         except Exception as e:   # noqa: BLE001  keep the folder so the next run retries it
             failures += 1
             print(f"FAILED {f.name}: {type(e).__name__}: {str(e)[:200]}")
