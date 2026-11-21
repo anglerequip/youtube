@@ -238,6 +238,123 @@ def music_bed(duration: float, mutes: list[tuple[float, float]] = (), bpm: float
     return np.stack([L, Rr], axis=1)[: int(duration * SR)]
 
 
+
+# ------------------------------------------------------------------ ambience beds (quality overhaul v3)
+# A quiet, place-specific background under everything (the music ducks; this only dips a little), so a
+# scene sounds like somewhere instead of a voice in a vacuum. All synthesised, decorrelated left/right,
+# deterministic by seed. Choose with `ambience:` in storyboard.yaml (or plan["ambience"]):
+#   lake      soft water lapping on a shore, the odd tiny drip, light wind, a distant bird now and then
+#   outdoor   light wind in grass and leaves, distant birds
+#   room      quiet indoor room tone
+#   night     soft wind and a cricket field
+#   underwater muffled low rumble with slow pressure swells and the odd bubble
+AMBIENCES = ("lake", "outdoor", "room", "night", "underwater")
+
+
+def _pink(n, rng):
+    w = np.fft.rfft(rng.standard_normal(n))
+    f = np.arange(len(w)); f[0] = 1
+    return np.fft.irfft(w / np.sqrt(f), n)
+
+
+def _slow(n, rng, rate=0.3, depth=0.5):
+    """smooth random amplitude movement (0..1 + depth wobble)"""
+    k = max(4, int(n / SR * rate * 4))
+    pts = rng.uniform(1 - depth, 1, k + 3)
+    x = np.linspace(0, k, n)
+    i = np.floor(x).astype(int); f = x - i; f = f * f * (3 - 2 * f)
+    return pts[i] * (1 - f) + pts[i + 1] * f
+
+
+def _bird(rng):
+    notes = rng.integers(2, 5); y = []
+    f0 = rng.uniform(2600, 4200)
+    for k in range(notes):
+        d = rng.uniform(0.06, 0.14); n = int(d * SR); t = _t(n)
+        f = f0 * (1 + rng.uniform(-0.15, 0.25)) ; sweep = rng.uniform(-0.35, 0.35)
+        ph = 2 * np.pi * np.cumsum(f * (1 + sweep * t / d) + 120 * np.sin(2 * np.pi * 38 * t)) / SR
+        y.append(np.sin(ph) * np.sin(np.pi * t / d) ** 2)
+        y.append(np.zeros(int(rng.uniform(0.03, 0.09) * SR)))
+    return np.concatenate(y)
+
+
+def _drip(rng):
+    n = int(0.06 * SR); t = _t(n); f = rng.uniform(900, 1800)
+    return np.sin(2 * np.pi * f * (1 + 1.8 * t / 0.06) * t) * np.exp(-t / 0.012)
+
+
+def _u(x):
+    """unit RMS (so the mix proportions below are real level ratios)"""
+    return x / (float(np.sqrt(np.mean(x * x))) or 1e-9)
+
+
+def ambience_bed(kind: str, duration: float, seed: int = 31) -> np.ndarray:
+    """Stereo ambience normalised to about -36 dBFS RMS (mixed under voice and music)."""
+    rng = np.random.default_rng(seed)
+    n = int(duration * SR) + 1
+    ch = []
+    for side in range(2):
+        r = np.random.default_rng(seed * 7 + side)
+        if kind == "room":
+            y = _u(_lp(_pink(n, r), 380)) + _u(_bp(r.standard_normal(n), 900, 2400)) * 0.04
+        elif kind == "underwater":
+            y = _u(_lp(_pink(n, r), 220)) * _slow(n, r, 0.15, 0.6)
+        else:
+            wind = _u(_bp(_pink(n, r), 150, 1200)) * _slow(n, r, 0.12, 0.7)
+            leaves = _u(_bp(r.standard_normal(n), 2500, 7000)) * _slow(n, r, 0.25, 0.9) * 0.12
+            y = wind * 0.6 + leaves
+            if kind == "lake":
+                lap = _u(_bp(_pink(n, r), 220, 1000))
+                # irregular laps: short swells every ~1.2-2.6 s
+                env = np.zeros(n); t = r.uniform(0, 1.0)
+                while t < duration:
+                    i = int(t * SR); m = int(r.uniform(0.5, 1.1) * SR)
+                    e = np.sin(np.linspace(0, np.pi, m)) ** 2 * r.uniform(0.5, 1.0)
+                    j = min(n, i + m); env[i:j] += e[: j - i]; t += r.uniform(1.2, 2.6)
+                y = y * 0.5 + lap * (0.3 + env) * 1.1
+            if kind == "night":
+                y = y * 0.5
+        ch.append(y)
+    L, R = ch
+    # sparse events, placed in both channels with a pan
+    def place(y, t, g, pan):
+        i = int(t * SR); j = min(n, i + len(y))
+        if i >= n: return
+        L[i:j] += y[: j - i] * g * (1 - pan); R[i:j] += y[: j - i] * g * (1 + pan)
+    rms = lambda a: float(np.sqrt(np.mean(a * a)) or 1e-9)
+    base = (rms(L) + rms(R)) / 2
+    if kind in ("lake", "outdoor"):
+        t = rng.uniform(1.5, 4.0)
+        while t < duration - 1:
+            place(_lp(_bird(rng), 6000), t, base * rng.uniform(0.6, 1.2) * (0.5 if kind == "lake" else 1.0), rng.uniform(-0.7, 0.7))
+            t += rng.uniform(4.0, 9.0) if kind == "outdoor" else rng.uniform(6.0, 12.0)
+    if kind == "lake":
+        t = rng.uniform(0.5, 2.0)
+        while t < duration:
+            place(_drip(rng), t, base * rng.uniform(0.5, 1.1), rng.uniform(-0.6, 0.6)); t += rng.uniform(1.5, 4.5)
+    if kind == "underwater":
+        t = rng.uniform(1.0, 3.0)
+        while t < duration:
+            m = int(0.04 * SR); tt = _t(m); f = rng.uniform(400, 900)
+            place(np.sin(2 * np.pi * f * (1 + 4 * tt) * tt) * np.exp(-tt / 0.01), t, base * 0.8, rng.uniform(-0.5, 0.5))
+            t += rng.uniform(0.6, 3.0)
+    if kind == "night":
+        # cricket field: 4.6 kHz chirps in pulse trains, two insects
+        for k, (f, period) in enumerate(((4600, 0.9), (4950, 1.3))):
+            t = rng.uniform(0, period)
+            while t < duration:
+                for p in range(3):
+                    m = int(0.018 * SR); tt = _t(m)
+                    place(np.sin(2 * np.pi * f * tt) * np.sin(np.pi * tt / 0.018), t + p * 0.03, base * 0.35, 0.6 if k else -0.6)
+                t += period * rng.uniform(0.9, 1.1)
+    out = np.stack([L, R], axis=1)[: int(duration * SR)]
+    nf = int(min(0.8, duration / 4) * SR)
+    if nf:
+        out[:nf] *= np.linspace(0, 1, nf)[:, None]; out[-nf:] *= np.linspace(1, 0, nf)[:, None]
+    target = 10 ** (-36 / 20)
+    return out * (target / (np.sqrt(np.mean(out * out)) or 1e-9))
+
+
 # ------------------------------------------------------------------ assembly + master
 def _place(buf, t, y, gain=1.0, pan=0.0):
     i = int(t * SR)
@@ -296,8 +413,8 @@ def render_cue(name: str, p: dict, t: float) -> np.ndarray:
 
 
 def stems(voice_wav: Path, events: list, duration: float | None = None, music: dict | None = None,
-          sfx_gain: float = 0.5) -> dict:
-    """voice / sfx / music stems exactly as they are summed into the mix (factory/qa/sound.py measures
+          sfx_gain: float = 0.5, ambience: str | None = None) -> dict:
+    """voice / sfx / music / ambience stems exactly as they are summed into the mix (factory/qa/sound.py measures
     these: repetition, density, masking of the voice, music balance)."""
     v, sr = sf.read(voice_wav, dtype="float64")
     if v.ndim > 1:
@@ -328,14 +445,22 @@ def stems(voice_wav: Path, events: list, duration: float | None = None, music: d
         nf = int(1.2 * SR)                       # fade the music out over the last 1.2 s (clean loop)
         if n > nf:
             bed[-nf:] *= np.linspace(1.0, 0.0, nf)[:, None]
-    return {"voice": v, "fx": fx, "bed": bed, "sr": SR, "duration": duration}
+    amb = np.zeros((n, 2))
+    if ambience:
+        if ambience not in AMBIENCES:
+            raise ValueError(f"unknown ambience {ambience!r}; choose one of {AMBIENCES}")
+        a = ambience_bed(ambience, duration)
+        env = np.abs(v); rel = np.exp(-1 / (0.5 * SR))
+        e = signal.lfilter([1 - rel], [1, -rel], env); e = e / (np.percentile(e, 99) or 1)
+        amb = a[:n] * (1 - 0.35 * np.clip(e, 0, 1))[:, None]          # dips ~4 dB under the voice
+    return {"voice": v, "fx": fx, "bed": bed, "amb": amb, "sr": SR, "duration": duration}
 
 
 def build_mix(voice_wav: Path, events: list, out_wav: Path, duration: float | None = None,
-              music: dict | None = None, sfx_gain: float = 0.5) -> dict:
-    """Mix voice + designed SFX + music and master. `events`: (t, name) or (t, name, params)."""
-    st = stems(voice_wav, events, duration, music, sfx_gain)
-    mix = st["fx"] + st["bed"]
+              music: dict | None = None, sfx_gain: float = 0.5, ambience: str | None = None) -> dict:
+    """Mix voice + designed SFX + music + ambience and master. `events`: (t, name) or (t, name, params)."""
+    st = stems(voice_wav, events, duration, music, sfx_gain, ambience)
+    mix = st["fx"] + st["bed"] + st["amb"]
     mix[:, 0] += st["voice"]; mix[:, 1] += st["voice"]
     tmp = out_wav.with_suffix(".premaster.wav")
     sf.write(tmp, (mix / max(1.0, np.max(np.abs(mix)))).astype(np.float32), SR)

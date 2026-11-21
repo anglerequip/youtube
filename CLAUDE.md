@@ -225,3 +225,36 @@ Four Shorts made public within 7 h on 20 Nov (two in the same minute) got almost
   `playlist` in the package.
 - **Studio only (no API):** the Shorts "related video" link and pinning a comment. Do these in Studio when a
   signed-in browser is available; link each Short to the best-performing Short in the same series.
+
+## 13. Look v3 and shot craft (quality overhaul, Caesar 2026-11-21: "make the quality 5x better")
+Every 3D render now goes through `renderer/look.js` automatically (opt out per plan with `look: legacy`):
+- **Sky-matched lighting:** an environment map built from the shot's lighting preset (sky, horizon, ground, sun),
+  so materials get soft fill and real reflections. Soft procedural clouds in the sky dome (`clouds` per preset).
+- **Ambient occlusion** (half-res GTAO, solid surfaces only): contact shading under feet, props and furniture.
+- **Depth of field** with auto-focus on what the camera aims at. Strength follows optics: close-ups get soft
+  backgrounds, wide shots stay sharp. Steer it with `scene.focus(i, t, shot)`, `shot.focus` ([x,y,z] or metres),
+  `shot.dof` (0 = off for this shot, 1.5 = stronger) or plan `dof:` (number or false).
+- **Grade:** gentle filmic contrast, warm highlights / cool shadows, slight saturation, sharpening, vignette, fine
+  grain (plan `grade:` overrides or false).
+- **Camera float:** every shot drifts very slightly like an operated camera (plan `drift: 0` or `shot.drift: 0`
+  for a locked-off view).
+- **Surface variation:** large matte surfaces get subtle world-space colour variation, so walls and floors
+  don't read as flat CG fills (`material.userData.noVariation = true` to opt one out).
+- **Ground cover:** grass tufts, wild flowers and pebbles grow on `world.ground()` meshes around where the shots
+  look, never on top of roads, paths, decks or floors. Plan `ground_cover: false`, or `{density, radius, height}`.
+- **Ambience:** set `ambience:` in storyboard.yaml (`lake`, `outdoor`, `room`, `night`, `underwater`) for a quiet
+  place-specific bed under voice and music.
+
+Shot craft (what reviewers marked us down for, rounds 1-2 of the last batch):
+1. The subject fills 30-60 % of the frame height in a close or medium shot. A ball or fish that is a dot in a
+   big empty lawn is a wide shot: hold it at most 2 s, then cut closer.
+2. Never crop a head at the top edge or cut a character at the neck, elbows or knees. A presenter close-up shows
+   head and shoulders with a little headroom; a two-shot shows both faces.
+3. Three depth layers in most shots: something near the lens (grass, a post, a reed, a shoulder), the subject,
+   and a background. Depth of field and ground cover now make this read.
+4. Things touch the world: feet on the ground, objects in hands, props sitting on surfaces (AO shows it now;
+   a floating object looks worse than before).
+5. Show the event, don't hold a static frame while the narration explains it: each beat gets motion on the
+   subject or a new angle, and no shot holds still for more than about 3 s.
+6. The hook frame (0-2 s) is the most interesting picture in the video, already in motion, subject large.
+7. Night and underwater shots: lift exposure so faces and the hero object read at phone brightness.

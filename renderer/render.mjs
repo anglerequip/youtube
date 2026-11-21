@@ -74,7 +74,7 @@ if (args.inspect) {
   const n = info.frames;
   const f0 = args.from ? parseInt(args.from) : 0, f1 = args.to ? Math.min(n, parseInt(args.to)) : n;
   const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(plan.fps), '-c:v', 'mjpeg',
-    '-i', '-', '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', args.out], { stdio: ['pipe', 'inherit', 'inherit'] });
+    '-i', '-', '-c:v', 'libx264', '-preset', 'medium', '-crf', '15', '-pix_fmt', 'yuv420p', args.out], { stdio: ['pipe', 'inherit', 'inherit'] });
   for (let i = f0; i < f1; i++) {
     const url = await page.evaluate(i => window.renderFrame(i), i);
     if (!ff.stdin.write(Buffer.from(url.split(',')[1], 'base64'))) await new Promise(r => ff.stdin.once('drain', r));
