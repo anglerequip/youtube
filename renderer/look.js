@@ -77,9 +77,12 @@ const FinishShader = {
       if (cocScale > 0.0) {
         // single-pass scatter-as-gather bokeh (golden-angle spiral); background taps may not bleed over a
         // sharper foreground (clamped to 2x the centre's circle)
+        // the gather radius follows this pixel's own blur (+ a small margin), so in-focus pixels cost almost
+        // nothing; the trade-off is that a blurred foreground edge bleeds only ~3 px over a sharp subject
         vec3 acc = col; float tot = 1.0; float r = 1.2; float ang = 0.0;
-        for (int k = 0; k < 40; k++) {
-          if (r >= maxCoc) break;
+        float rmax = min(maxCoc, max(c0 + 1.0, 3.0));
+        for (int k = 0; k < 32; k++) {
+          if (r >= rmax) break;
           vec2 tc = vUv + vec2(cos(ang), sin(ang)) * r / res;
           float d = depthAt(tc); float cs = coc(d);
           if (d > d0) cs = min(cs, c0 * 2.0);
@@ -143,7 +146,7 @@ export class Look {
     // GTAO at half resolution (AO is low-frequency; this keeps the cloud render cost sane)
     const aoScale = 0.5;
     this.gtao = new GTAOPass(world.scene, world.camera, W * ss * aoScale, H * ss * aoScale,
-      undefined, { radius: 0.9, distanceExponent: 1.6, thickness: 1.6, scale: 1.0, samples: 16, distanceFallOff: 1.0 },
+      undefined, { radius: 0.9, distanceExponent: 1.6, thickness: 1.6, scale: 1.0, samples: 12, distanceFallOff: 1.0 },
       { lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 9, rings: 2, samples: 16 });
     const setAO = this.gtao.setSize.bind(this.gtao);
     this.gtao.setSize = (w, h) => setAO(Math.round(w * aoScale), Math.round(h * aoScale));
