@@ -11,7 +11,9 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
 2. Research it. Put real, checkable sources and honest caveats in the storyboard. Never invent data
    or overstate a result to make it more dramatic.
 3. Create `content/episodes/<slug>/storyboard.yaml` (copy the structure of `falling-slinky`):
-   - 8-14 beats, 61-75 s total (hard rule: every video must be longer than 60 s; QC rejects anything shorter). Extend with real content, never filler. Beat 1 is the hook: a surprising claim in under 3 s.
+   - 5-14 beats. Beat 1 is the hook: a surprising claim in under 3 s.
+   - Length follows the story (Caesar, 2026-11-19): typically 18-45 s, up to 60 s only when the story earns it.
+     Never pad, recap or stretch to hit a length. QC allows 15-60 s (`MIN_SECONDS`, `MAX_SECONDS`).
    - Short spoken sentences; spell numbers the way they should be read.
    - `on_screen` for an occasional key phrase or equation, `sfx` (whoosh, thud, pop, tick, rise, ding).
    - Write for the voice (factory/voice_engine/expressive.py turns this into delivery, free):
@@ -197,3 +199,78 @@ These rules keep the hands-free pipeline cheap. They don't override the rules ab
    cheaper model (Sonnet or Haiku) for routine work: packaging, topic-ledger checks, QA summaries.
 4. **Fewer chat messages.** Post to the project chat only for a result, a blocker or a question that
    needs Caesar. Routine progress goes on the checklist.
+
+## YouTube packaging (audit 2026-11-21)
+
+Evidence: our first 11 Shorts (public counts 21 Nov). Like ratio was best on animal "how/why" topics with
+slow motion (falling cat 3.5%, dog drinking 2.2%, cat stare 2.0%) and worst on gadget facts (touchscreen 0.6%).
+Four Shorts made public within 7 h on 20 Nov (two in the same minute) got almost no views; the next three,
+4-5 h apart, each reached 700-1,100. Sources: YouTube Help "Disclosing use of altered or synthetic content"
+(answer 14328491), vidIQ "How does the YouTube Shorts algorithm work in 2026".
+
+- **Spacing:** the cloud job (`factory/autopilot/cloud_post.py`) moves any publish time that is within 4 h of
+  another Short on the channel. Plan at most 2-3 Shorts a day while the channel is new.
+- **Title:** about 40-60 characters, the plain thing people search for plus the surprise ("Why Your Cat
+  Stares While You Eat"). It must be true to the video; no bait the video doesn't pay off.
+- **Description:** first line restates the hook as a question, then the answer in one or two sentences,
+  sources, the how-it's-made line, the tagline, then 3-5 topical hashtags. More than 15 hashtags and YouTube
+  ignores all of them (the job trims to 5). Tags are minor; the job dedupes them and keeps them under 500 chars.
+- **Settings:** category 28 (Science & Technology), not made for kids, language en. Keep
+  `contains_synthetic_media: true` because the voices are AI; YouTube says the label alone does not limit reach.
+- **Comments:** the last beat may end on one specific question a viewer can answer in a word or two, drawn
+  from the video ("Would you have guessed the dog or the cat?"). Never "like and subscribe". It counts inside
+  the normal beat budget, not as extra length.
+- **Loop:** the final shot and line should lead back into the hook frame so a replay feels seamless.
+- **Playlists:** the job adds every Short to a series playlist picked from its tags (`tagline.playlist`), or
+  `playlist` in the package.
+- **Studio only (no API):** the Shorts "related video" link and pinning a comment. Do these in Studio when a
+  signed-in browser is available; link each Short to the best-performing Short in the same series.
+
+### Write every title and caption on purpose (Caesar, 2026-11-21)
+Never copy a title or caption across without thinking. For each one, check these five points and note the
+reasoning in one line in the package (`packaging_notes`) or the PR:
+1. **Hook:** the first ~100 characters (all Facebook shows before "See more", and what YouTube shows under the
+   Short) carry the surprise on their own.
+2. **Search words:** the plain words people type ("falling cat", "zipper merge", "slow motion").
+3. **Curiosity gap:** the title raises the question; the video, not the title, gives the answer. Still true to it.
+4. **Comment prompt:** one specific question answerable in a word or two, from the video. No "like and share".
+5. **Hashtags:** 3-5 specific ones (topic + niche), not broad filler.
+
+**Facebook reels** (`autopilot_queue_facebook/<slug>/package.json`) follow the same rules, adapted: no `#shorts`,
+at most one emoji on the hook line and one on the comment question, the question before sources, sources shortened to one line,
+then "Animated with real physics by Counterphysical. AI voice." Sources: light research 2026-11-21 (Opus Clip,
+ContentStudio, Neal Schaffer guides on Facebook Reels captions); the percentages those guides quote are vendor
+claims, so judge by our own numbers once reels have views.
+
+## 13. Look v3 and shot craft (quality overhaul, Caesar 2026-11-21: "make the quality 5x better")
+Every 3D render now goes through `renderer/look.js` automatically (opt out per plan with `look: legacy`):
+- **Sky-matched lighting:** an environment map built from the shot's lighting preset (sky, horizon, ground, sun),
+  so materials get soft fill and real reflections. Soft procedural clouds in the sky dome (`clouds` per preset).
+- **Ambient occlusion** (half-res GTAO, solid surfaces only): contact shading under feet, props and furniture.
+- **Depth of field** with auto-focus on what the camera aims at. Strength follows optics: close-ups get soft
+  backgrounds, wide shots stay sharp. Steer it with `scene.focus(i, t, shot)`, `shot.focus` ([x,y,z] or metres),
+  `shot.dof` (0 = off for this shot, 1.5 = stronger) or plan `dof:` (number or false).
+- **Grade:** gentle filmic contrast, warm highlights / cool shadows, slight saturation, sharpening, vignette, fine
+  grain (plan `grade:` overrides or false).
+- **Camera float:** every shot drifts very slightly like an operated camera (plan `drift: 0` or `shot.drift: 0`
+  for a locked-off view).
+- **Surface variation:** large matte surfaces get subtle world-space colour variation, so walls and floors
+  don't read as flat CG fills (`material.userData.noVariation = true` to opt one out).
+- **Ground cover:** grass tufts, wild flowers and pebbles grow on `world.ground()` meshes around where the shots
+  look, never on top of roads, paths, decks or floors. Plan `ground_cover: false`, or `{density, radius, height}`.
+- **Ambience:** set `ambience:` in storyboard.yaml (`lake`, `outdoor`, `room`, `night`, `underwater`) for a quiet
+  place-specific bed under voice and music.
+
+Shot craft (what reviewers marked us down for, rounds 1-2 of the last batch):
+1. The subject fills 30-60 % of the frame height in a close or medium shot. A ball or fish that is a dot in a
+   big empty lawn is a wide shot: hold it at most 2 s, then cut closer.
+2. Never crop a head at the top edge or cut a character at the neck, elbows or knees. A presenter close-up shows
+   head and shoulders with a little headroom; a two-shot shows both faces.
+3. Three depth layers in most shots: something near the lens (grass, a post, a reed, a shoulder), the subject,
+   and a background. Depth of field and ground cover now make this read.
+4. Things touch the world: feet on the ground, objects in hands, props sitting on surfaces (AO shows it now;
+   a floating object looks worse than before).
+5. Show the event, don't hold a static frame while the narration explains it: each beat gets motion on the
+   subject or a new angle, and no shot holds still for more than about 3 s.
+6. The hook frame (0-2 s) is the most interesting picture in the video, already in motion, subject large.
+7. Night and underwater shots: lift exposure so faces and the hero object read at phone brightness.

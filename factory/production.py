@@ -66,8 +66,8 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
     if tl.duration > settings.max_seconds:
         raise ValueError(f"narration is {tl.duration:.1f}s; limit is {settings.max_seconds:.0f}s. Trim the script.")
     if tl.duration + 0.8 < settings.min_seconds:
-        raise ValueError(f"narration is {tl.duration:.1f}s; every video must be at least {settings.min_seconds:.0f}s. "
-                         "Extend the script with real content (not filler).")
+        raise ValueError(f"narration is {tl.duration:.1f}s; the minimum is {settings.min_seconds:.0f}s. "
+                         "Add real content only if the story needs it (never filler).")
 
     t0 = time.time()
     if sb.renderer == "three":
@@ -84,7 +84,8 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
         from . import sound_design
         music_cfg = getattr(sb, "_music_cfg", None)
         stats = sound_design.build_mix(out / "voice.wav", events, out / "mix.wav",
-                                       duration=tl.duration + 0.8, music=music_cfg)
+                                       duration=tl.duration + 0.8, music=music_cfg,
+                                       ambience=getattr(sb, "_ambience", None))
         (out / "audio_stats.json").write_text(json.dumps(stats))
         log.info("[%s] audio master: %s", sb.slug, stats)
     else:
@@ -150,6 +151,7 @@ def _render_three(sb: Storyboard, tl, out: Path, previews: bool, force: bool):
         log.info("[%s] 3D render: cached", sb.slug)
     report = mod.self_checks() if hasattr(mod, "self_checks") else None
     sb._music_cfg = mod.music(plan) if hasattr(mod, "music") else None
+    sb._ambience = sb.extra.get("ambience") or plan.get("ambience")      # sound_design.AMBIENCES
     return mod.sfx_events(plan), report
 
 def produce(slug: str, db: DB | None = None, provider: str | None = None, previews: bool = False,
