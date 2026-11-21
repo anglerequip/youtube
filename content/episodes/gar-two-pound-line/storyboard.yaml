@@ -84,11 +84,15 @@ claims:
      evidence: {quality: 2, source: "Outdoor Life 2025: 153-pound alligator gar, pending IGFA record"}}
   - {id: line_lb, beat: hook, unit: count, value: 2, scope: history, match: "two",
      evidence: {quality: 2, source: "Outdoor Life 2025: 2-pound test line"}}
+  - {id: lift_weight, beat: lift, unit: ref, value: 1, scope: universal, match: "one of those",
+     evidence: {quality: 2, source: "out of the water the line would carry the fish's full weight (153 lb, Outdoor Life 2025); 'every single one of those pounds' refers back to it"}}
 
 absolute_ok:
   - {word: "impossible", beat: what, why: "the wizard's naive objection, refuted by the next beats"}
   - {word: "instantly", beat: what, why: "the wizard's naive objection, refuted by the next beats"}
   - {word: "never", beat: pull, why: "in water the line does not support the fish's weight; it carries pull, which the drag caps"}
+  - {word: "never", beat: lift, why: "handling advice, literally right here: lifting by the line would put the full 153 lb on a 2 lb line"}
+  - {word: "only", beat: pull, why: "in water buoyancy carries the fish's weight, so the line carries its pull (and the drag caps that)"}
   - {word: "every", beat: lift, why: "out of water the fish's full weight (153 lb) hangs on the line, far above its 2 lb rating"}
 
 entities:
@@ -124,6 +128,7 @@ publish:
   youtube:
     title: "How a 153-Pound Fish Was Caught on 2-Pound Line"
     description: |
+      How do you land a 153-pound fish on line rated for 2 pounds?
       In 2025 an angler on Lake Livingston, Texas, landed a 153-pound alligator gar on line rated for just 2 pounds. How? In the water, a fish is about as dense as water, so it weighs almost nothing: the line only has to handle its pull, not its weight. And the reel's drag lets line slip out before it can snap. The fish tires itself out. Just never lift it by the line.
 
       Source: Outdoor Life, April 2025 (reported as a pending IGFA line-class world record). The gar in the video is our own 3D model.

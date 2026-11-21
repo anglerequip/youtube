@@ -96,6 +96,7 @@ absolute_ok:
   - {word: "whole", beat: hook, why: "the entire above-water hemisphere maps into the window (Snell's law), literally true"}
   - {word: "everything", beat: cone, why: "every direction above the water, horizon to horizon, maps inside the 97-degree cone"}
   - {word: "everywhere", beat: what, why: "the wizard's own naive objection, answered in the next beats"}
+  - {word: "only", beat: size, why: "compares sizes ('only a little over two metres across' for the whole sky), not an absolute claim"}
 
 entities:
   - id: window
@@ -133,8 +134,9 @@ publish:
   hashtags: [fishing, physics, light, science]
   tagline: "fishing physics that breaks your intuition."
   youtube:
-    title: "A Fish Sees the Whole Sky Through One Tiny Circle"
+    title: "What a Fish Sees: The Whole Sky in One Small Circle"
     description: |
+      What does a fish actually see when it looks up?
       Underwater, a fish sees everything above the surface, from horizon to horizon, squeezed into one circle about 97 degrees wide. Light bends as it enters water, so even light skimming flat across the lake gets bent steeply down. One metre down, that window is only about 2.3 metres across. Outside it, the surface works like a mirror and reflects the bottom. And an angler on the bank? Squashed at the edge of the circle. That's why careful anglers keep low.
 
       It's called Snell's window. The clean circle needs calm water; ripples break it up.

@@ -180,6 +180,29 @@ def mentions(text: str) -> list[dict]:
         out.append({"value": float(val), "unit": "parts", "qualifier": _qualifier(before), "text": m.group(0).strip(),
                     "absolute": [w for w in ABSOLUTE if re.search(rf"\b{w}\b", sent.lower())],
                     "sentence": sent, "pos": m.start()})
+    for m in _HALF_SCALE.finditer(t):            # "three and a half thousand times" = 3,500
+        n = _words_to_number([w for w in m.group(1).lower().replace("-", " ").split() if w])
+        if n is None:
+            continue
+        val = (n + 0.5) * _SCALES[m.group(2).lower()]
+        after = t[m.end(): m.end() + 40]
+        um = re.match(rf"\s*(?:{_UNIT_RE})\b", after, re.I)
+        word = um.group(0).strip().lower() if um else ""
+        unit = next((c for u, c in UNITS if re.fullmatch(u, word, re.I)), "count") if um else "count"
+        before = t[max(0, m.start() - 30): m.start()].lower()
+        sent = _sentence_of(t, m.start())
+        out = [o for o in out if not (m.start() <= o["pos"] < m.end())]
+        out.append({"value": float(val), "unit": unit, "qualifier": _qualifier(before), "text": m.group(0),
+                    "absolute": [w for w in ABSOLUTE if re.search(rf"\b{w}\b", sent.lower())],
+                    "sentence": sent, "pos": m.start()})
+    for m in _PCT_FRACTION.finditer(t):          # "a tenth of one percent" = 0.1 %
+        val = _PCT_PART[m.group(1).lower()]
+        before = t[max(0, m.start() - 30): m.start()].lower()
+        sent = _sentence_of(t, m.start())
+        out = [o for o in out if not (m.start() <= o["pos"] < m.end())]
+        out.append({"value": val, "unit": "%", "qualifier": _qualifier(before), "text": m.group(0),
+                    "absolute": [w for w in ABSOLUTE if re.search(rf"\b{w}\b", sent.lower())],
+                    "sentence": sent, "pos": m.start()})
     for rx, val, unit in _SPECIAL:
         for m in rx.finditer(t):
             if any(abs(o["pos"] - m.start()) < 3 for o in out):
@@ -221,6 +244,9 @@ _FULL = re.compile(r"\b(?:a|one) full (turn|rotation|one)\b", re.I)
 _ORDINAL = re.compile(r"\b(half|a quarter|a|one) (?:a |an )?(thousandth|millionth|billionth)s? of a second\b", re.I)
 _ORDSCALE = {"thousandth": 1e-3, "millionth": 1e-6, "billionth": 1e-9}
 _PARTS_IN = re.compile(rf"\b(?:one|a) part in ((?:\b(?:{_NUMWORD})\b[\s-]*)+)", re.I)
+_HALF_SCALE = re.compile(rf"\b((?:\b(?:{'|'.join(sorted(list(_ONES) + list(_TENS), key=len, reverse=True))})\b[\s-]*)+) and a half (thousand|hundred|million|billion)\b", re.I)
+_PCT_PART = {"tenth": 0.1, "hundredth": 0.01, "half": 0.5, "quarter": 0.25, "third": 1 / 3}
+_PCT_FRACTION = re.compile(r"\b(?:a|one) (tenth|hundredth|half|quarter|third) of (?:a|one) (?:percent|per cent)\b", re.I)
 _SPECIAL = [(re.compile(r"\b(?:in|into) (two|half)\b(?!\s+(?:thousand|hundred|million|point))", re.I), 2.0, "pieces"),     # "breaks in two"
             (re.compile(r"\bdoubles?\b", re.I), 2.0, "x"),                       # "the arch doubles"
             (re.compile(r"\btriples?\b", re.I), 3.0, "x")]

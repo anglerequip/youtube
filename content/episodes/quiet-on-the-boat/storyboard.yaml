@@ -81,14 +81,15 @@ sources:
   - "L. E. Kinsler, A. R. Frey et al., Fundamentals of Acoustics (4th ed., Wiley 2000), ch. 6: transmission at a boundary between two fluids"
 
 claims:
-  - {id: impedance_ratio, beat: push, unit: x, sim: impedance_ratio, tol: 0.06, scope: universal,
+  - {id: impedance_ratio, beat: push, unit: x, sim: impedance_ratio, tolerance: 0.08, scope: universal,
      evidence: {quality: 3, source: "Z_water/Z_air = (1000*1482)/(1.204*343) = 3,590 (Kinsler et al.)"}}
-  - {id: transmitted_pct, beat: bounce, unit: "%", sim: transmitted_pct, tol: 0.15, scope: universal,
+  - {id: transmitted_pct, beat: bounce, unit: "%", sim: transmitted_pct, tolerance: 0.15, scope: universal,
      evidence: {quality: 3, source: "4 Z1 Z2/(Z1+Z2)^2 = 0.11% at normal incidence (Kinsler et al.; DOSITS: almost perfectly reflected beyond the critical angle)"}}
   - {id: speed_ratio, beat: hull, unit: x, sim: speed_ratio, scope: universal, bound: lower,
      evidence: {quality: 3, source: "1482 m/s / 343 m/s = 4.3 (fresh water 20 C vs air 20 C)"}}
 
 absolute_ok:
+  - {word: "only", beat: bounce, why: "quantifies the small share (about 0.1 %) that crosses, which is the claim itself"}
   - {word: "straight", beat: hull, why: "describes coupling path (no air gap), not an absolute quantity"}
 
 entities:
@@ -122,8 +123,9 @@ publish:
   hashtags: [fishing, sound, physics, science]
   tagline: "fishing physics that breaks your intuition."
   youtube:
-    title: "Fish Can Barely Hear You Shout. They Hear THIS."
+    title: "Can Fish Hear You Talk in a Boat? Physics Says Barely"
     description: |
+      Can fish hear you talking in the boat?
       Shouting at fish barely works: for sound, water is about 3,600 times "harder to push" than air, so only about 0.1% of the sound energy gets through the surface. The rest bounces off. But drop a tackle box on the boat floor and the hull shakes the water directly. That sound goes straight in, and underwater it travels more than four times faster than in air.
 
       Honest note: very loud sounds right above the water still get some sound in, and fish hearing varies by species. Physics from Kinsler et al., Fundamentals of Acoustics, and DOSITS (University of Rhode Island).

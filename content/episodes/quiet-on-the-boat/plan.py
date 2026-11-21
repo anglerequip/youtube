@@ -194,7 +194,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
 
     cards = [
         {"start": at("bounce", "tenth") - 0.1, "end": S("sing") - 0.15, "big": "≈ 0.1 %", "small": "of the sound gets in", "y": 0.16},
-        {"start": at("hull", "four") - 0.1, "end": S("gone") - 0.15, "big": "× 4.3", "small": "faster in water", "y": 0.16},
+        {"start": at("hull", "four") - 0.1, "end": S("gone") - 0.15, "big": "4.3×", "small": "faster in water", "y": 0.16},
     ]
     events = [(round(hook_c, 3), "whoosh", {"gain": 0.07}),
               (round(t_imp, 3), "thud", {"gain": 0.2}),

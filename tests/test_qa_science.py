@@ -107,3 +107,11 @@ def test_claim_bound_accepts_the_same_bound_only():
     unbound = dict(weights, bound=None)
     bad = science.check(sb("Peak forces over two thousand five hundred times its body weight.", claims=[unbound]), {})
     assert blockers(bad), "without a declared bound, 'over N' is a stronger claim than N"
+
+
+def test_spoken_fractions_and_half_scales_are_parsed():
+    from factory.qa.science import mentions
+    m = mentions("For sound, water is about three and a half thousand times harder to push than air.")
+    assert [(x["value"], x["unit"], x["qualifier"]) for x in m] == [(3500.0, "x", "approx")]
+    m = mentions("Only about a *tenth* of one percent gets in.")
+    assert [(x["value"], x["unit"]) for x in m] == [(0.1, "%")]

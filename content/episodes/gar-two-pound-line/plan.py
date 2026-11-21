@@ -141,10 +141,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         ("xray", E_(S("float") - 0.1, S("pull") - 0.1, K(fA(S("float"))[0] + 0.2, -0.5, fA(S("float"))[2] - 3.6),
                     K(fA(S("float"))[0] + 0.1, -0.55, fA(S("float"))[2] - 3.2), K(fA(S("float"))[0], -0.9, fA(S("float"))[2]), 46)),
         # pull: under water off the fish's flank: the line tight from its jaw
-        ("under", E_(S("pull") - 0.1, at("drag", "Pull") - 0.2, K(fA(S("pull"))[0] + 0.6, -1.15, fA(S("pull"))[2] - 3.0),
+        ("under", E_(S("pull") - 0.1, S("drag") - 0.1, K(fA(S("pull"))[0] + 0.6, -1.15, fA(S("pull"))[2] - 3.0),
                      K(fA(S("pull"))[0] + 0.5, -1.1, fA(S("pull"))[2] - 2.7), K(fA(S("pull"))[0], -1.0, fA(S("pull"))[2]), 48, UL)),
         # drag: close on the reel as the line slips out
-        ("out", E_(at("drag", "Pull") - 0.2, S("swims") - 0.1, K(bx - 0.75, 0.7, bz - 1.05), K(bx - 0.73, 0.68, bz - 0.98), K(bx - 0.62, 0.42, bz - 0.25), 30)),
+        ("out", E_(S("drag") - 0.1, S("swims") - 0.1, K(bx - 0.75, 0.7, bz - 1.05), K(bx - 0.73, 0.68, bz - 0.98), K(bx - 0.62, 0.42, bz - 0.25), 30)),
         # swims: the wizard, worried, the woman behind him
         ("out", E_(S("swims") - 0.1, S("tired") - 0.1, K(bx - 1.6, 1.15, bz - 2.1), K(bx - 1.45, 1.1, bz - 1.95), K(bx - 0.1, 0.85, bz), 42)),
         # tired (a): along the line again: run, reel, run
@@ -152,7 +152,9 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # tired (b): high three-quarter view from the side as the fish comes in
         ("xray", E_(tired_c, S("lift") - 0.1, K(bx - 1.9, 3.3, bz - 4.6), K(bx - 1.6, 3.0, bz - 4.1), K(fA(tired_c)[0], -0.5, fA(tired_c)[2]), 48, "key", K(fA(S("lift"))[0], -0.4, fA(S("lift"))[2]))),
         # lift: both in the boat, the fish alongside; he starts to lift, she stops him
-        ("out", E_(S("lift") - 0.1, S("payoff") - 0.1, K(bx - 1.2, 1.35, bz - 3.2), K(bx - 1.1, 1.3, bz - 2.9), K(bx - 0.7, 0.35, bz - 0.6), 46)),
+        ("out", E_(S("lift") - 0.1, at("lift", "Out") - 0.1, K(bx - 1.2, 1.35, bz - 3.2), K(bx - 1.1, 1.3, bz - 2.9), K(bx - 0.7, 0.35, bz - 0.6), 46)),
+        # lift (b): low by the water, the huge fish alongside the boat, the thin line from its jaw up to the rod
+        ("out", E_(at("lift", "Out") - 0.1, S("payoff") - 0.1, K(SIDE[0] - 1.9, 0.35, SIDE[2] - 1.5), K(SIDE[0] - 1.7, 0.32, SIDE[2] - 1.35), K(SIDE[0] - 0.2, 0.05, SIDE[2]), 48)),
         # payoff: the tiny net next to the huge fish
         ("out", cam.shot(S("payoff") - 0.1, dur + 0.05, [(S("payoff") - 0.1, K(bx - 1.75, 1.95, bz - 2.75), K(bx - 1.0, 0.3, bz - 0.55), 46),
                                                          (dur + 0.05, K(bx - 1.65, 1.85, bz - 2.5), K(bx - 1.0, 0.3, bz - 0.55), 46)], fps, "key")),
@@ -213,6 +215,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                  "text": "water pushes up", "dx": 0.12, "dy": -0.07}]
     cards = [{"start": at("hook", "two") - 0.1, "end": S("what") - 0.15, "big": "153 lb", "small": "on 2 lb line", "y": 0.16}]
     events = [(round(hook_b, 3), "whoosh", {"gain": 0.07}),
+              (round(at("pull", "only") - 0.1, 3), "rise", {"gain": 0.06}),
+              (round(t_lift0 + 0.5, 3), "ding", {"gain": 0.08}),
               (round(at("drag", "slips") - 0.1, 3), "tick", {"gain": 0.08}),
               (round(t_net + 0.4, 3), "pop", {"gain": 0.07})]
     timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [at("hook", "two"), at("float", "dense"), at("drag", "slips")],

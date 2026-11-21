@@ -97,7 +97,9 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # what: the wizard, arms out at the big sky
         ("out", E_(S("what") - 0.1, S("bend") - 0.1, K(0.35, 1.95, 0.9), K(0.3, 1.95, 1.05), K(0.0, 1.85, 3.1), 38)),
         # bend: the diagram, side-on above the water: sky rays come down, bend at the surface, meet at the eye
-        ("xray", E_(S("bend") - 0.1, S("cone") - 0.1, K(ex + 3.0, 0.6, ez + 0.3), K(ex + 2.8, 0.7, ez + 0.5), K(ex, 0.05, ez + 0.2), 54)),
+        ("xray", E_(S("bend") - 0.1, at("bend", "Even") - 0.1, K(ex + 3.0, 0.6, ez + 0.3), K(ex + 2.8, 0.7, ez + 0.5), K(ex, 0.05, ez + 0.2), 54)),
+        # bend (b): low at the surface where the flattest rays enter and kink steeply down to the eye
+        ("xray", E_(at("bend", "Even") - 0.1, S("cone") - 0.1, K(ex + 1.6, 0.18, ez - 0.4), K(ex + 1.45, 0.16, ez - 0.25), K(ex - 0.2, -0.35, ez + 0.4), 50)),
         # cone: the rays become a cone; the window ring on the surface
         ("xray", E_(S("cone") - 0.1, S("size") - 0.1, K(ex + 2.3, 1.25, ez - 1.9), K(ex + 2.15, 1.35, ez - 1.6), K(ex, -0.4, ez), 44)),
         # size: higher, looking down on the ring; 1 m deep, 2.3 m across
