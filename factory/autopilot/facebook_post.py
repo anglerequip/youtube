@@ -148,7 +148,9 @@ def post_reel(folder: Path, page: str, token: str) -> str:
     return vid
 
 
-def run(dry_run: bool = False, now: datetime | None = None) -> int:
+def run(dry_run: bool = False, now: datetime | None = None, now_slug: str = "") -> int:
+    """Post the day's reel. `now_slug` (from a manual run, Caesar's explicit ask) posts that queued
+    video immediately and skips the daily slot rule; it still refuses anything already on Facebook."""
     now = now or datetime.now(timezone.utc)
     log = posted()
     for f in queue_folders():           # drop anything that is already on the Page
@@ -160,7 +162,14 @@ def run(dry_run: bool = False, now: datetime | None = None) -> int:
     if not folders:
         print("Facebook queue is empty")
         return 0
-    ok, why = slot_open(now, log)
+    if now_slug:
+        picked = [f for f in folders if f.name == now_slug]
+        if not picked:
+            print(f"{now_slug} is not waiting in the Facebook queue (or is already on Facebook); nothing posted")
+            return 1
+        folders, ok, why = picked, True, "posted now on request"
+    else:
+        ok, why = slot_open(now, log)
     print(f"Facebook queue: {len(folders)} waiting, next {folders[0].name}; {why}")
     if not ok or dry_run:
         return 0
@@ -181,4 +190,4 @@ def run(dry_run: bool = False, now: datetime | None = None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(run(dry_run="--dry-run" in sys.argv))
+    sys.exit(run(dry_run="--dry-run" in sys.argv, now_slug=os.environ.get("FACEBOOK_POST_NOW", "").strip()))

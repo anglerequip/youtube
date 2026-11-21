@@ -82,3 +82,17 @@ def test_missing_secrets_post_nothing(q, monkeypatch):
 def test_repo_log_lists_every_reel_already_on_the_page():
     slugs = set(fb.posted())
     assert {"touchscreen-field", "banana-radioactive", "cat-stare", "cat-loaf", "why-ocean-blue", "dog-feet"} <= slugs
+
+
+def test_post_now_skips_the_slot_but_needs_a_queued_video(q, monkeypatch):
+    fb.log_post("today", "1", utc("2026-11-21T19:33:00"))
+    _add(q, "first", "2026-11-21T20:00:01Z")
+    _add(q, "falling-cat", "2026-11-21T20:00:02Z")
+    sent = []
+    monkeypatch.setenv("FACEBOOK_PAGE_ID", "p")
+    monkeypatch.setenv("FACEBOOK_PAGE_TOKEN", "t")
+    monkeypatch.setattr(fb, "post_reel", lambda f, page, token: sent.append(f.name) or "99")
+    assert fb.run(now=utc("2026-11-21T20:55:00"), now_slug="falling-cat") == 0
+    assert sent == ["falling-cat"] and "falling-cat" in fb.posted()
+    assert fb.run(now=utc("2026-11-21T21:00:00"), now_slug="falling-cat") == 1     # already posted
+    assert fb.run(now=utc("2026-11-21T21:00:00")) == 0 and sent == ["falling-cat"]  # slot closed today
