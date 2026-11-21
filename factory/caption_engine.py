@@ -120,6 +120,18 @@ def timed_chunks(tl: Timeline) -> list[tuple[float, float, str]]:
     return events
 
 
+def _emphasise(text: str, words: set[str], mode: str) -> str:
+    """Mark stressed words in one caption chunk (retention feature `caption_emphasis`).
+    'weight' only: Blueprint 6 forbids colour highlighting and pop-in, so emphasis is a heavier weight."""
+    if mode != "weight" or not words:
+        return text
+    out = []
+    for tok in text.split(" "):
+        bare = re.sub(r"[^\w%°/.-]", "", tok.lower()).strip(".")
+        out.append(rf"{{\b1}}{tok}{{\b0}}" if bare and bare in words else tok)
+    return " ".join(out)
+
+
 # Caption styles. "house" is the Blueprint default (section 6). "duo" and "build" are the opt-in style
 # modules (docs/styles/DUO.md, docs/styles/BUILD.md); pick one with `caption_style:` in storyboard.yaml.
 STYLES = {
@@ -161,7 +173,9 @@ def timed_chunks_styled(tl: Timeline, max_words: int) -> list[tuple[float, float
     return out
 
 
-def write_ass(tl: Timeline, path: Path, style: str | None = None, beats: dict | None = None):
+def write_ass(tl: Timeline, path: Path, emphasis: dict | None = None, mode: str = "none",
+              style: str | None = None, beats: dict | None = None):
+    """emphasis: {beat id: {lower-case words}} (from the storyboard's *stars* and retention keywords)."""
     style = style or rules().get("style", "house")
     if style in STYLES:
         return _write_ass_styled(tl, path, STYLES[style], beats or {})
@@ -183,7 +197,11 @@ Style: Cap,Poppins SemiBold,{size},&H00FFFFFF,&H00FFFFFF,&H48000000,&H70000000,0
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     lines = []
+    beat_at = [(ln.start, ln.end + 0.3, ln.id) for ln in tl.lines]
     for s, e, text in timed_chunks(tl):
+        if emphasis and mode != "none":
+            bid = next((b for a, z, b in beat_at if a - 0.01 <= s < z), None)
+            text = _emphasise(text, emphasis.get(bid, set()), mode)
         # soft shadow: blurred semi-transparent outline + offset shadow, no box (Blueprint 6)
         tag = rf"{{\pos({W // 2},{cy})\blur4\fad(80,80)}}"
         # wide, faint dark halo underneath (picture review, round 7: white words got lost over the silver

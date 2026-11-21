@@ -27,6 +27,10 @@ def attention_events(plan: dict, module=None) -> list[tuple[float, str]]:
                 ev.append((float(e[0]), f"sfx:{e[1]}"))
     for t in (plan.get("timing") or {}).get("reveals", []):
         ev.append((float(t), "reveal"))
+    # HUD state changes (factory/retention): a widget appearing, a number landing, a threshold, an answer
+    for name, t in ((plan.get("hud") or {}).get("events") or {}).items():
+        if name.rsplit(".", 1)[-1] in ("appear", "settle", "cross", "answer") or ".step" in name:
+            ev.append((float(t), name))
     return sorted(ev)
 
 

@@ -1,0 +1,160 @@
+slug: mantis-shrimp-punch
+title: "The Shrimp That Punches Twice"
+topic: "the peacock mantis shrimp's spring-loaded strike reaches up to 23 m/s underwater and makes cavitation bubbles whose collapse hits the prey a second time (Patek et al. 2004, Patek lab)"
+component: custom   # spring-latch strike and cavitation; the scene is renderer/scenes/shrimp3d.js
+renderer: three
+scene: shrimp3d
+hook_family: 1          # an impossible-sounding animal ability
+structure: D            # duo: claim -> speed -> how (spring) -> cavitation -> second hit -> duration/force -> payoff
+voice_clips: content/episodes/mantis-shrimp-punch/voice
+max_inner_pause_s: 0.3
+speakers: {wizard: zYcjlYFOd3taleS0gkk3, woman: 0ggs85h7hrWz8ExXnsBc}
+description: |
+  The peacock mantis shrimp smashes snail shells with a punch. Its club swings at up to 23 metres per
+  second, underwater, because it doesn't use muscle speed: it latches the arm, loads a saddle-shaped spring
+  and lets go. The club moves so fast that the water in front of it tears into vapour bubbles, and when
+  they collapse they hit the shell a second time, with sound, heat and even faint flashes of light.
+
+  Sources: Patek, Korff & Caldwell, Nature 2004; Patek lab, Duke University; UC Berkeley news release 2004.
+
+  #shorts #animals #oceanlife #science #physics
+tags: [animals, mantis shrimp, ocean life, cavitation, physics, science, shorts]
+voice: elevenlabs-duo
+speed: 1.0
+story:
+  core_idea: "A mantis shrimp punches so fast the water tears into bubbles, and their collapse strikes a second time."
+  fascination: "every punch lands twice, and the second hit is made of collapsing bubbles"
+  steps: 4            # 23 m/s underwater; spring and latch; cavitation bubbles; collapse = second hit
+  buildup: medium
+  extras: [scale]     # under a thousandth of a second, 2500 x body weight
+  payoff: payoff
+  cut:
+    - "'boils the water': the bubbles form from low pressure, not high temperature; we say 'tears into vapour bubbles'"
+    - "'world's fastest punch': popular superlative; trap-jaw ants are faster"
+    - "acceleration in g: sources disagree (6,300-8,000 g vs 10,000 g)"
+    - "the eyes (16 photoreceptor types): a different video"
+    - "temperature of the collapsing bubble: no measured value in the sources we read"
+end_hold_s: 1.6
+beats:
+  - id: hook
+    speaker: wizard
+    text: "This shrimp can break a snail shell... with a *punch*."
+    pause_after: 0.25
+  - id: speed
+    speaker: woman
+    text: "The peacock mantis shrimp. Its club swings at up to twenty-three metres a second. *Underwater*."
+    pause_after: 0.2
+  - id: kmh
+    speaker: wizard
+    text: "That's over eighty kilometres an hour!"
+    pause_after: 0.15
+  - id: muscle
+    speaker: wizard
+    text: "How? Muscles can't move that fast."
+    pause_after: 0.15
+  - id: spring
+    speaker: woman
+    text: "They don't have to. It latches the arm, loads a spring shaped like a *saddle*... then lets go."
+    pause_after: 0.2
+  - id: crossbow
+    speaker: wizard
+    text: "Like a crossbow."
+    pause_after: 0.15
+  - id: bubbles
+    speaker: woman
+    text: "Now it gets weird. The club moves so fast, the water in front of it tears open into tiny *bubbles*."
+    pause_after: 0.2
+  - id: collapse
+    speaker: woman
+    text: "Those bubbles collapse... and hit the shell a *second* time. With a crack of sound, heat, even a flash of light."
+    pause_after: 0.2
+  - id: twice
+    speaker: wizard
+    text: "So every punch lands twice?"
+    pause_after: 0.15
+  - id: fast
+    speaker: woman
+    text: "Club, then bubble. All over in less than a thousandth of a second."
+    pause_after: 0.2
+  - id: force
+    speaker: woman
+    text: "One lab measured peak forces over two thousand five hundred times its own body weight."
+    pause_after: 0.2
+  - id: payoff
+    speaker: wizard
+    text: "Note to self... never shake hands with a *shrimp*."
+    pause_after: 0.0
+
+caveats:
+  - "Speed: Patek, Korff & Caldwell (2004) filmed peak appendage speeds of 14 to 23 m/s in Odontodactylus scyllarus (UC Berkeley release); the Patek lab gives 12-23 m/s. 23 m/s is about 83 km/h, the top of the measured range."
+  - "Mechanism: a latch holds the appendage while a saddle-shaped (hyperbolic paraboloid) part of the exoskeleton stores elastic energy; release drives the strike (Patek 2004; Patek lab: latch-mediated spring actuation). Muscles alone cannot produce these movements."
+  - "Cavitation: the bubbles form where the water pressure drops near the fast-moving club. The Patek lab describes four force peaks per strike (appendage impact, bubble collapse, and the same again for the second appendage) and says the collapse produces heat, light and sound; the 2004 release was more cautious about light ('perhaps even light'). The light is faint and brief; no temperature figure is claimed here."
+  - "'Less than a thousandth of a second': the Patek lab says the whole sequence of impacts and bubble collapses happens in less than 800 microseconds."
+  - "Force: the Patek lab reports peak forces of about 1500 N, over 2500 times the animal's body weight; the 2004 release, from earlier experiments, said 'well over a hundred times'. Forces depend on the individual and the setup."
+  - "The shrimp, the snail and the bubbles are our own 3D illustration, slowed down enormously; no footage is used. The wizard and the woman are original 3D characters."
+sources:
+  - "S. N. Patek, W. L. Korff and R. L. Caldwell, 'Deadly strike mechanism of a mantis shrimp', Nature 428, 819-820 (2004). doi:10.1038/428819a"
+  - "Patek Lab, Duke University, 'Mechanics of movement: mantis shrimp', pateklab.biology.duke.edu (accessed 2026-11-20)."
+  - "UC Berkeley News, 'Mantis shrimp's powerful punch ...', 21 Apr 2004, newsarchive.berkeley.edu/news/media/releases/2004/04/21_shrimp.shtml"
+
+claims:
+  - {id: club_speed, beat: speed, unit: m/s, value: 23, scope: history,
+     evidence: {quality: 1, source: "Patek, Korff & Caldwell 2004 (Nature 428): peak speeds 14-23 m/s"}}
+  - {id: club_kmh, beat: kmh, unit: km/h, value: 82.8, scope: derived,
+     evidence: {quality: 1, source: "23 m/s x 3.6 = 82.8 km/h, so 'over eighty'"}}
+  - {id: duration, beat: fast, unit: s, value: 0.0008, scope: history,
+     evidence: {quality: 2, source: "Patek lab: the full sequence happens in less than 800 microseconds"}}
+  - {id: body_weights, beat: force, unit: x, value: 2500, bound: lower, scope: history,
+     evidence: {quality: 2, source: "Patek lab: peak forces of 1500 N, over 2500 times body weight"}}
+
+absolute_ok:
+  - {word: "never", beat: payoff, why: "the wizard's joke about his own hands, not a factual claim"}
+  - {word: "every", beat: twice, why: "each strike produces the impact plus a bubble-collapse peak in the Patek lab's force traces"}
+
+entities:
+  - id: shrimp
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "a colourful peacock mantis shrimp (green body, orange legs, stalked eyes) on a sandy reef floor, folded club arms that snap forward"}
+  - id: snail
+    type: support
+    category: B
+    importance: primary
+    visual_contract: {must_read_as: "a sea snail in a spiral shell; the shell cracks on the strike"}
+  - id: bubbles
+    type: support
+    category: B
+    importance: secondary
+    visual_contract: {must_read_as: "a cloud of small silvery bubbles appearing in front of the club, then shrinking to nothing with a brief tiny flash"}
+  - id: wizard
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the wizard presenter (hat, beard) at the glass of a big aquarium reef tank, wide-eyed"}
+  - id: woman
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the young woman presenter (long black hair with a fringe, black outfit) at the aquarium glass, explaining"}
+  - id: reef
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "a dim aquarium gallery with a glowing reef tank, and a calm shallow reef close-up: sand, rocks, low-poly corals, sunbeams through blue-green water; no holes"}
+
+hero: shrimp
+
+publish:
+  cover_at_s: 1.0
+  cover_headline: "This shrimp punches twice"
+  cover_label: {big: "23 m/s", small: "underwater"}
+  hashtags: [animals, mantisshrimp, oceanlife, science]
+  tagline: "animal science that breaks your intuition."
+  youtube:
+    title: "The Shrimp That Punches Twice (Mantis Shrimp Explained)"
+    description: |
+      The peacock mantis shrimp breaks snail shells with a punch: its club swings at up to 23 metres a second, underwater. It can't do that with muscle alone, so it latches the arm, loads a saddle-shaped spring, and lets go.
+
+      The club moves so fast that the water tears into tiny vapour bubbles. When they collapse, they hit the shell a second time, with sound, heat and even faint flashes of light. All in under a thousandth of a second.
+  how_made: "How it's made: original 3D characters and scenes, animated by us. The voices are AI voices (ElevenLabs)."

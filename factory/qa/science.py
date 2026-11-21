@@ -32,7 +32,8 @@ _ONES = {"zero": 0, "one": 1, "a": 1, "an": 1, "two": 2, "three": 3, "four": 4, 
          "fourteen": 14, "fifteen": 15, "sixteen": 16, "seventeen": 17, "eighteen": 18, "nineteen": 19}
 _TENS = {"twenty": 20, "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60, "seventy": 70, "eighty": 80,
          "ninety": 90}
-_SCALES = {"hundred": 100, "thousand": 1000, "million": 1_000_000}
+_SCALES = {"hundred": 100, "thousand": 1000, "million": 1_000_000, "billion": 1_000_000_000,
+           "trillion": 1_000_000_000_000}
 _FRACTIONS = {"half": 0.5, "quarter": 0.25, "third": 1 / 3, "three quarters": 0.75}
 
 # unit words -> canonical unit
@@ -41,9 +42,12 @@ UNITS = [
     (r"centimet(?:re|er)s?|cm", "cm"),
     (r"millimet(?:re|er)s?|mm", "mm"),
     (r"kilomet(?:re|er)s? per second|km/s", "km/s"),
-    (r"met(?:re|er)s? per second|m/s", "m/s"),
+    (r"kilomet(?:re|er)s? (?:per|an|a) hour|km/h", "km/h"),
+    (r"met(?:re|er)s? (?:per|a) second|m/s", "m/s"),
     (r"kilomet(?:re|er)s?|km", "km"),
     (r"met(?:re|er)s?(?! per)|m(?![a-z/])", "m"),
+    (r"microseconds?|µs", "µs"),
+    (r"nanoseconds?|ns", "ns"),
     (r"seconds?|s(?![a-z])", "s"),
     (r"percent|per cent|%", "%"),
     (r"degrees?|°", "deg"),
@@ -57,7 +61,7 @@ _UNIT_RE = "|".join(f"(?:{u})" for u, _ in UNITS)
 APPROX = ("about", "around", "roughly", "approximately", "≈", "~", "some", "close to", "nearly", "almost")
 AT_LEAST = ("or more", "at least", "or even more", "and up", "plus")
 MORE_THAN = ("more than", "over", "upwards of")
-AT_MOST = ("at most", "up to", "or fewer", "or less", "no more than")
+AT_MOST = ("at most", "up to", "or fewer", "or less", "no more than", "less than", "fewer than", "under")
 
 ABSOLUTE = ("always", "never", "exactly", "impossible", "guaranteed", "every", "only", "proves",
             "perfectly", "instantly")
@@ -72,8 +76,12 @@ def _words_to_number(tokens: list[str]) -> float | None:
             cur += _TENS[w]; seen = True
         elif w == "hundred":
             cur = (cur or 1) * 100; seen = True
-        elif w in ("thousand", "million"):
-            total += (cur or 1) * _SCALES[w]; cur = 0; seen = True
+        elif w in ("thousand", "million", "billion", "trillion"):
+            if cur == 0 and total > 0:             # stacked scales: "ten million billion" = 10^16
+                total *= _SCALES[w]
+            else:
+                total += (cur or 1) * _SCALES[w]
+            cur = 0; seen = True
         elif w == "and":
             continue
         else:
@@ -153,6 +161,25 @@ def mentions(text: str) -> list[dict]:
                     "qualifier": _qualifier(before), "text": m.group(0),
                     "absolute": [w for w in ABSOLUTE if re.search(rf"\b{w}\b", sent.lower())],
                     "sentence": sent, "pos": m.start()})
+    for m in _ORDINAL.finditer(t):
+        k = m.group(1).lower()
+        val = (0.5 if k == "half" else 0.25 if k == "a quarter" else 1.0) * _ORDSCALE[m.group(2).lower()]
+        before = t[max(0, m.start() - 30): m.start()].lower()
+        sent = _sentence_of(t, m.start())
+        out = [o for o in out if not (m.start() <= o["pos"] < m.end())]
+        out.append({"value": val, "unit": "s", "qualifier": _qualifier(before), "text": m.group(0),
+                    "absolute": [w for w in ABSOLUTE if re.search(rf"\b{w}\b", sent.lower())],
+                    "sentence": sent, "pos": m.start()})
+    for m in _PARTS_IN.finditer(t):
+        val = _words_to_number([w for w in m.group(1).lower().replace("-", " ").split() if w])
+        if val is None:
+            continue
+        before = t[max(0, m.start() - 30): m.start()].lower()
+        sent = _sentence_of(t, m.start())
+        out = [o for o in out if not (m.start() <= o["pos"] < m.end())]
+        out.append({"value": float(val), "unit": "parts", "qualifier": _qualifier(before), "text": m.group(0).strip(),
+                    "absolute": [w for w in ABSOLUTE if re.search(rf"\b{w}\b", sent.lower())],
+                    "sentence": sent, "pos": m.start()})
     for rx, val, unit in _SPECIAL:
         for m in rx.finditer(t):
             if any(abs(o["pos"] - m.start()) < 3 for o in out):
@@ -170,12 +197,18 @@ def _has(text: str, phrase: str) -> bool:
     return re.search(rf"(?<![\w]){re.escape(phrase)}(?![\w])", text) is not None
 
 
+def _last(text: str, phrase: str) -> int:
+    ms = list(re.finditer(rf"(?<![\w]){re.escape(phrase)}(?![\w])", text))
+    return ms[-1].start() if ms else -1
+
+
 def _qualifier(before: str) -> str:
     near = before[-22:]
-    if any(_has(near, a) for a in MORE_THAN):
-        return "more_than"
-    if any(_has(near, a) for a in AT_MOST):
-        return "at_most"
+    # the bound word nearest the number wins: "all over in less than a thousandth" is an upper bound
+    more = max(_last(near, a) for a in MORE_THAN)
+    less = max(_last(near, a) for a in AT_MOST)
+    if more >= 0 or less >= 0:
+        return "more_than" if more > less else "at_most"
     if _has(near, "almost") or _has(near, "nearly"):
         return "almost"
     if any(_has(near, a) for a in APPROX):
@@ -184,6 +217,10 @@ def _qualifier(before: str) -> str:
 
 
 _FULL = re.compile(r"\b(?:a|one) full (turn|rotation|one)\b", re.I)
+# "half a millionth of a second" = 5e-7 s; "one part in ten million billion" = a ratio of 1e16
+_ORDINAL = re.compile(r"\b(half|a quarter|a|one) (?:a |an )?(thousandth|millionth|billionth)s? of a second\b", re.I)
+_ORDSCALE = {"thousandth": 1e-3, "millionth": 1e-6, "billionth": 1e-9}
+_PARTS_IN = re.compile(rf"\b(?:one|a) part in ((?:\b(?:{_NUMWORD})\b[\s-]*)+)", re.I)
 _SPECIAL = [(re.compile(r"\b(?:in|into) (two|half)\b(?!\s+(?:thousand|hundred|million|point))", re.I), 2.0, "pieces"),     # "breaks in two"
             (re.compile(r"\bdoubles?\b", re.I), 2.0, "x"),                       # "the arch doubles"
             (re.compile(r"\btriples?\b", re.I), 3.0, "x")]
@@ -211,6 +248,18 @@ def absolutes(text: str) -> list[tuple[str, str]]:
 
 
 # ----------------------------------------------------------------------------- consistency
+
+def agrees_claim(m: dict, truth: float, c: dict) -> tuple[bool, str]:
+    """agrees(), plus a claim's declared bound: a source that itself only gives a bound ("over 2,500 times")
+    supports the same bound (or a weaker one), never a stricter statement."""
+    ok, why = agrees(m, truth, float(c.get("tolerance", 0.12)))
+    bound = c.get("bound")
+    if not ok and bound == "lower" and m["qualifier"] in ("more_than", "at_least") and m["value"] <= truth + 1e-9:
+        return True, ""
+    if not ok and bound == "upper" and m["qualifier"] == "at_most" and m["value"] >= truth - 1e-9:
+        return True, ""
+    return ok, why
+
 def agrees(mention: dict, truth: float, tol: float = 0.12) -> tuple[bool, str]:
     """Does the wording of `mention` correctly describe the true value?"""
     n, q = mention["value"], mention["qualifier"]
@@ -276,7 +325,7 @@ def check(sb, facts: dict, cards: list | None = None, badges: list | None = None
             continue
         i, m = ms[0]
         used.add((where, i))
-        ok, why = agrees(m, truth, float(c.get("tolerance", 0.12)))
+        ok, why = agrees_claim(m, truth, c)
         m = dict(m, absolute=sorted({w for w, _ in absolutes(m["sentence"]) if (where, w) not in allowed}))
         rng = ev.get("range")
         if ok and rng and m["qualifier"] == "exact" and c.get("scope") in ("typical", "universal") and \
@@ -322,7 +371,7 @@ def check(sb, facts: dict, cards: list | None = None, badges: list | None = None
             continue                    # filled from live simulation values at render time (checked by events)
         for m in mentions(f"{card.get('big', '')} {card.get('small', '')}"):
             truths = [(c, _truth(c, facts)) for c in claims if _unit_ok(m["unit"], c.get("unit"))]
-            hit = [c for c, tv in truths if tv is not None and agrees(m, tv, float(c.get("tolerance", 0.12)))[0]]
+            hit = [c for c, tv in truths if tv is not None and agrees_claim(m, tv, c)[0]]
             if not hit:
                 F.append(Finding(f"science.card_mismatch.{card.get('big')}", "science", 0, "BLOCKED_VISUAL_CONTRADICTION",
                                  f"on-screen card '{card.get('big')} {card.get('small', '')}' matches no claim",

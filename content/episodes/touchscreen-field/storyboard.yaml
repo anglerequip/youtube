@@ -1,0 +1,127 @@
+slug: touchscreen-field
+title: "Your Phone Can't Feel You Press It"
+topic: "projected-capacitive touchscreens sense a conductor disturbing their electric field, not force"
+component: custom   # physics: factory/simulation_engine/physics/capacitive.py (2D Laplace solve of one electrode pair)
+renderer: three
+scene: touch3d
+hook_family: 7          # mistaken assumption: "the screen feels my press"
+structure: C            # familiar thing -> hidden mechanism -> counter-example (glove) -> twist (sausage)
+description: |
+  Your phone's screen doesn't measure force. Under the glass is a grid of transparent electrodes; where they
+  cross, a small electric field arcs up through the glass. A fingertip conducts, so it pulls part of that
+  field away, and the chip sees the dip. A thick glove keeps the skin too far away. A sausage works.
+  The field lines on screen come from a real electrostatics model of one electrode pair.
+
+  #shorts #physics #touchscreen #science #electricity
+tags: [touchscreen, capacitive, electric field, physics, smartphone, science, shorts]
+voice: af_bella
+speed: 1.1
+story:
+  core_idea: "A touchscreen notices a conductor stealing part of its electric field; force plays no part."
+  fascination: "you have never once pressed your phone in a way it could feel, and a sausage works as a finger"
+  steps: 3            # grid of crossings with a field; a conductor diverts it; the chip sees the dip
+  buildup: low
+  extras: [counter_example, history]   # the glove proves it is distance, the 2010 sausage makes it memorable
+  payoff: sausage
+  cut:
+    - "resistive screens and 3D Touch force sensors: true exceptions, kept in the caveats"
+    - "self- vs mutual-capacitance sensing: a detail that slows the build"
+    - "touch sampling rates in hertz: varies by phone, adds a number nobody needs"
+    - "pressing harder flattens the fingertip and raises the signal: in the caveats"
+end_hold_s: 1.0
+beats:
+  - id: hook
+    text: "Your phone can't feel you press it. It senses a *field*."
+    pause_after: 0.2
+  - id: grid
+    text: "Under the glass sits a grid of see-through wires, scanned over and over."
+  - id: field
+    text: "Where two wires cross, a tiny electric field arcs up through the glass."
+  - id: finger
+    text: "Your finger is mostly salty water, so it conducts. Bring it close... and it pulls part of that field *away*."
+  - id: detect
+    text: "The chip sees less charge reaching that crossing. That's your touch. No pressure involved."
+  - id: glove
+    text: "A thick wool glove holds your skin about two millimetres back. The dip is too small, so nothing happens."
+  - id: sausage
+    text: "In two thousand and ten, in a freezing Korean winter, people kept their gloves on... and tapped their phones with *sausages*. It worked."
+
+caveats:
+  - "This is how projected-capacitive screens work, which almost every modern phone uses. Old resistive screens did sense pressure, and some phones (for example iPhone 3D Touch, 2015-2018) added separate force sensors; those are extras, not how a touch is found."
+  - "Pressing harder can raise the signal a little, because the fingertip flattens and covers more of the grid: that is contact area, not force."
+  - "The field lines and the size of the dip come from our 2D model of one drive/sense electrode pair under 0.7 mm of glass (relative permittivity 7), with a grounded fingertip. Real sensors use diamond-patterned electrodes, and the controller's touch threshold is set in firmware; we assume a touch counts above a third of a full contact's signal."
+  - "Thin gloves can work, and touchscreen gloves have conductive thread in the fingertips. The 2 mm is an assumed thick knitted glove."
+  - "The 2010 sausage story was reported by The Register and others from Korean press: users of CJ's Max snack sausages. A sausage is salty and wet, so it conducts. Whether it registers on a given phone depends on its size and the phone's firmware."
+  - "On screen the electrode grid and the field are drawn far larger than real (electrode spacing is a few millimetres)."
+sources:
+  - "Corning / 3M and TI application notes on projected-capacitive touch: mutual-capacitance sensing measures a drop in drive-to-sense coupling when a grounded conductor approaches (e.g. Texas Instruments SLAA576 'Capacitive Touch Hardware Design Guide'; Microchip AN1478 'mTouch Sensing Solution Acquisition Methods')."
+  - "G. Walker, 'Fundamentals of projected-capacitive touch technology', SID Display Week short course (2014)."
+  - "R. Myslewski, 'Frosty fanbois navigate iPhone with sausage', The Register, 12 Feb 2010 (Korean users and CJ Max sausages, sales up 39% year on year per inews24)."
+  - "Electrostatics: our finite-difference Laplace solver, factory/simulation_engine/physics/capacitive.py (self-checks: monotonic drop with height, grid convergence)."
+
+claims:
+  - {id: glove_gap, beat: glove, unit: mm, sim: glove_mm, scope: condition,
+     evidence: {quality: 3, source: "assumed thick knitted wool glove (2 mm); our model: at that distance the dip is about 6% vs about 39% for bare skin, below the assumed one-third threshold"}}
+  - {id: glove_card, card: "2 mm", unit: mm, sim: glove_mm, scope: condition,
+     evidence: {quality: 3, source: "same assumption, drawn as a measuring line"}}
+  - {id: sausage_year, beat: sausage, unit: year, value: 2010, scope: history,
+     evidence: {quality: 2, source: "The Register, 12 Feb 2010; Engadget, 12 Feb 2010; Popular Science, Feb 2010"}}
+  - {id: two_wires, beat: field, unit: count, value: 2, scope: universal,
+     evidence: {quality: 1, source: "a mutual-capacitance node is the crossing of one drive and one sense electrode"}}
+
+absolute_ok:
+  - {beat: hook, word: "can't", why: "a projected-capacitive sensor has no force sensor: its signal depends only on where conductors are (caveat names the phones that added separate force sensors)"}
+  - {beat: glove, word: nothing, why: "in our model the gloved dip stays under the touch threshold, so no touch is reported (caveat: thin gloves can work)"}
+
+entities:
+  - id: phone
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "a large modern phone lying flat on a wooden table, glass face up"}
+  - id: grid
+    type: hero_object
+    category: B
+    importance: primary
+    visual_contract: {must_read_as: "a grid of thin glowing lines under the glass; one crossing lights red when touched"}
+  - id: field
+    type: hero_object
+    category: B
+    importance: primary
+    visual_contract: {must_read_as: "soft glowing arcs from one wire to the next, bending into the fingertip when it comes close"}
+  - id: finger
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "a stylised fingertip with a nail, then the same finger in a knitted wool glove"}
+  - id: sausage
+    type: hero_object
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "a small snack sausage held like a stylus, touching the glass"}
+  - id: ground
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "table top, grass and hazy sky; no holes or seams"}
+
+hero: field
+
+publish:
+  cover_headline: "Your phone can't feel you"
+  cover_label: {big: "it sees your field", small: "not your pressure"}
+  hashtags: ["#shorts", "#physics", "#touchscreen", "#science", "#electricity"]
+
+retention:
+  hud:
+    - id: gap
+      type: dimension
+      label: skin to glass
+      from: glass_mark
+      to: skin_mark
+      value: {fact: glove_mm}
+      format: "{v:.0f} mm"
+      show: [glove@holds, glove.end]
+      claims: [{claim: glove_card, at: glove.end-0.3}]
+  cues:
+    - {at: "detect@touch", sfx: lock, gain: 0.18}

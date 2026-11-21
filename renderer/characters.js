@@ -1,4 +1,8 @@
-// Counterphysical presenters (v5): two original, smooth high-poly characters that sit in the diorama world.
+// Counterphysical presenters. v6 (default): Blender-built models from tools/blender/presenters.py, exported to
+// assets/characters/{wizard,woman}.glb and preloaded by boot.js (loadPresenters). If the GLBs are not loaded,
+// man()/woman() fall back to the procedural v5 models below (same pose API).
+//
+// v5: two original, smooth high-poly characters that sit in the diorama world.
 // Bodies are continuous lathe/tube surfaces (no stacked blocks), heads are 72x54 sculpted ellipsoids with
 // layered eyes, lips and strand-built hair. They replace the faceless wooden toy figure.
 //
@@ -9,6 +13,87 @@
 // Both stand on y = 0, face +z and are real-world size. Joints are pivot groups in p.rig. Both are original
 // designs, not modelled on any real person or existing character (see CLAUDE.md section 11).
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+
+// ---------- v6: Blender GLB presenters ----------
+const GLB = {};
+export async function loadPresenters(base = '/assets/characters/') {
+  const loader = new GLTFLoader();
+  await Promise.all(['wizard', 'woman'].map(async k => {
+    try { GLB[k] = (await loader.loadAsync(`${base}${k}.glb`)).scene; } catch (e) { console.warn(`presenter ${k}.glb not loaded`, e); }
+  }));
+  return Object.keys(GLB);
+}
+export const presentersLoaded = () => !!(GLB.wizard && GLB.woman);
+
+function fromGLB(kind, name) {
+  const root = new THREE.Group(); root.name = name;
+  const model = SkeletonUtils.clone(GLB[kind]); root.add(model);
+  const find = (pre) => { let f = null; model.traverse(o => { if (!f && o.name === pre) f = o; }); return f; };
+  const all = (pre) => { const r = []; model.traverse(o => { if (o.name.startsWith(pre)) r.push(o); }); return r; };
+  model.traverse(o => {
+    if (o.isMesh) {
+      o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false;
+      // plain standard materials: Blender sheen exports as MeshPhysicalMaterial with zero sheen roughness, which
+      // renders NaN pixels (black blooms) in this pipeline, and standard is cheaper anyway
+      const m = o.material;
+      if (m && m.isMeshPhysicalMaterial) {
+        o.material = new THREE.MeshStandardMaterial({ name: m.name, color: m.color, roughness: m.roughness, metalness: m.metalness,
+          emissive: m.emissive, emissiveIntensity: m.emissiveIntensity, map: m.map, normalMap: m.normalMap, side: m.side });
+      }
+    }
+  });
+  model.updateMatrixWorld(true);
+  // bones are named after the joint at their END (e.g. 'elbow_L' = shoulder->elbow, the upper arm)
+  const B = { head: 'head', neck: 'neck', armL: 'elbow_L', armR: 'elbow_R', elbowL: 'wrist_L', elbowR: 'wrist_R',
+              legL: 'thigh_L', legR: 'thigh_R', kneeL: 'calf_L', kneeR: 'calf_R', spine: 'chest' };
+  const rig = {}, rest = {};
+  const rootInv = new THREE.Quaternion();
+  for (const [k, n] of Object.entries(B)) {
+    const b = find(n); if (!b) continue; rig[k] = b;
+    const pq = new THREE.Quaternion(); b.parent.getWorldQuaternion(pq);
+    rest[k] = { q0: b.quaternion.clone(), pq, pqi: pq.clone().invert() };
+  }
+  rig.staff = find('z_staff'); rig.crystal = find('z_stone');
+  const tmpQ = new THREE.Quaternion(), tmpE = new THREE.Euler();
+  // rotate a bone by Euler angles expressed in the character's own frame (x right->left, y up, z forward)
+  const rot = (k, x = 0, y = 0, z = 0, order = 'XYZ') => {
+    const r = rest[k]; if (!r) return;
+    tmpQ.setFromEuler(tmpE.set(x, y, z, order));
+    rig[k].quaternion.copy(r.pqi).multiply(tmpQ).multiply(r.pq).multiply(r.q0);
+  };
+  const lower = find('lip_lower') ?? all('lip_lower')[0];
+  const lowerRest = lower ? lower.position.clone() : null, lowerDown = new THREE.Vector3();
+  if (lower) {
+    const pq = new THREE.Quaternion(), ps = new THREE.Vector3(); lower.parent.getWorldQuaternion(pq); lower.parent.getWorldScale(ps);
+    lowerDown.set(0, -1, 0).applyQuaternion(pq.invert()).divide(ps);
+  }
+  const eyes = [...all('eye_'), ...all('iris'), ...all('pupil')];
+  const headBone = rig.head; const hp = new THREE.Vector3(); if (headBone) headBone.getWorldPosition(hp);
+  root.rig = rig; root.height = kind === 'wizard' ? 2.0 : 1.69; root.faceY = kind === 'wizard' ? 1.69 : 1.585;
+  root.pose = (p = {}) => {
+    const talk = p.talk ?? 0, wave = p.wave ?? 0, point = p.point ?? 0, t = p.t ?? 0;
+    if (lower) lower.position.copy(lowerRest).addScaledVector(lowerDown, 0.007 * talk);
+    const closed = (p.blink ?? 0) > 0.5; for (const e of eyes) e.visible = !closed;
+    rot('head', p.headPitch ?? 0, p.headYaw ?? 0, p.headTilt ?? 0, 'YXZ');
+    rot('armR', -0.15 * wave, 0, -2.4 * wave);
+    rot('elbowR', 0, 0, -0.9 * wave - 0.25 * Math.sin(t * 9) * wave);
+    rot('armL', -1.15 * point, 0, 0.45 * point);
+    rot('elbowL', -0.2 * point, 0, 0);
+    const w = p.walk;
+    if (w !== undefined) {
+      const robe = kind === 'wizard', sw = Math.sin(w) * (robe ? 0.12 : 0.3), kb = robe ? 0.2 : 0.55;   // legs stay inside the robe
+      rot('legL', -sw); rot('legR', sw);
+      rot('kneeL', Math.max(0, -Math.sin(w + 0.6)) * kb); rot('kneeR', Math.max(0, Math.sin(w + 0.6)) * kb);
+      if (!wave) rot('armR', sw * 0.5);
+      if (!point && kind !== 'wizard') rot('armL', -sw * 0.5);
+      model.position.y = Math.abs(Math.cos(w)) * 0.015;
+    } else { for (const j of ['legL', 'legR', 'kneeL', 'kneeR']) rot(j); model.position.y = 0; }
+  };
+  root.pose();
+  return root;
+}
 
 const mat = (c, x = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.75, metalness: 0, ...x });
 
@@ -222,6 +307,10 @@ function makePerson(o) {
 // hat with a gentle bend and a gold band, a chestnut beard and moustache greying at the edges, and a gnarled
 // wooden staff topped with a small glowing amber crystal (the only emissive, so it blooms).
 export function man(opt = {}) {
+  if (GLB.wizard && !opt.procedural) return fromGLB('wizard', 'presenter-wizard');
+  return manV5(opt);
+}
+function manV5(opt = {}) {
   const skin = mat(opt.skin ?? '#dcab8c', { roughness: 0.62 }), skinShade = mat('#c99173', { roughness: 0.7 });
   const robe = mat(opt.robe ?? '#2c3a5c', { roughness: 0.82 }), robeDark = mat('#233049', { roughness: 0.85 });
   const robeDS = robe.clone(); robeDS.side = THREE.DoubleSide;
@@ -305,6 +394,10 @@ export function man(opt = {}) {
 // Slim, friendly and polished: long glossy black hair with a soft side-swept fringe, warm hazel eyes with a
 // subtle wing, natural rose lips; fitted plum knit top, dark slim jeans, white trainers.
 export function woman(opt = {}) {
+  if (GLB.woman && !opt.procedural) return fromGLB('woman', 'presenter-woman');
+  return womanV5(opt);
+}
+function womanV5(opt = {}) {
   const skin = mat(opt.skin ?? '#f0cdb6', { roughness: 0.55 }), skinShade = mat('#e0b096', { roughness: 0.6 });
   const hairM = mat(opt.hair ?? '#241a1a', { roughness: 0.38, side: THREE.DoubleSide }), hairHi = mat('#3d2b26', { roughness: 0.35 });
   const top = mat(opt.top ?? '#6a4466', { roughness: 0.85 });

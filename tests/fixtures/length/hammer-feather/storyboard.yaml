@@ -1,0 +1,27 @@
+# Length fixture (~20 s): a single surprising event. Not a production episode.
+title: "A Hammer and a Feather Land Together"
+topic: "free fall without air: all objects fall at the same rate"
+description: "Length-planning fixture: one event, one step of explanation, one payoff."
+tags: [test, gravity, free fall]
+voice: af_bella
+speed: 1.1
+end_hold_s: 1.0
+story:
+  core_idea: "Without air, a hammer and a feather fall at exactly the same rate."
+  fascination: "everyday experience says the feather should lose by a mile"
+  steps: 1
+  buildup: low
+  extras: []
+  payoff: land
+  cut: ["Galileo's Pisa story: disputed, and it slows the opening", "the equation for g: not needed to get it"]
+beats:
+  - id: hook
+    text: "Drop a hammer and a feather on the Moon... they hit the ground together."
+  - id: why
+    text: "On Earth the feather loses because air pushes it back. Gravity pulls both of them down at the same rate."
+  - id: apollo
+    text: "In nineteen seventy one, astronaut Dave Scott tried it on live TV."
+  - id: land
+    text: "Same height, same moment, side by side, all the way down."
+caveats: ["test fixture"]
+sources: ["NASA, Apollo 15 hammer-feather drop (1971)"]

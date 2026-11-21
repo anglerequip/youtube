@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { World, drawCard, drawWordmark, drawBadge } from './world.js';
 import { inspectFrame, staticChecks } from './inspect.js';
 import { drawOverlays } from './overlays.js';
+import { drawHud } from './hud.js';
+import { loadPresenters } from './characters.js';
 
 export async function boot(sceneName, plan) {
   await document.fonts.load('800 40px Poppins'); await document.fonts.load('700 40px Poppins');
@@ -12,7 +14,8 @@ export async function boot(sceneName, plan) {
   const ctx = out.getContext('2d');
   const world = new World(gl, W, H, plan.seed ?? 7, { supersample: plan.supersample ?? 1 });
   const mod = await import(`/renderer/scenes/${sceneName}.js`);
-  const scene = mod.build(world, plan);
+  if (plan.presenters !== false) await loadPresenters();     // Blender presenters for man()/woman() (falls back if missing)
+  const scene = await mod.build(world, plan);
 
   window.__meta = {};
   const pose = i => {           // put the world in its state for frame i (shared by render and inspect)
@@ -52,6 +55,7 @@ export async function boot(sceneName, plan) {
       drawCard(ctx, W, H, { ...card, big: fill(card.big), small: fill(card.small) }, a);
     }
     if (plan.overlays) drawOverlays(ctx, W, H, plan.overlays, t, world);   // opt-in building blocks (renderer/overlays.js)
+    if (plan.hud) drawHud(ctx, W, H, plan.hud, i, world.camera);   // retention toolkit (factory/retention)
     if (plan.frames && plan.frames.badge) drawBadge(ctx, W, H, plan.frames.badge[Math.min(i, plan.frames.badge.length - 1)]);
     if (plan.wordmark) drawWordmark(ctx, W, H, plan.wordmark);
     return out.toDataURL('image/jpeg', quality);

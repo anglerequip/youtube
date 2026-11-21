@@ -23,7 +23,10 @@ Phases 3 to 7 are listed at the bottom with what is and isn't built.
                                    PENDING_APPROVAL ─► Telegram: Approve / Reject / Revise
                                                      │ (only on Approve, and only the exact file approved)
                      ┌───────────────────────────────┴──────────── publishing workflow ─┐
-                     │ youtube_publisher  upload + schedule, idempotent, sha256-checked │
+                     │ factory/publishing (docs/PUBLISHING.md)                          │
+                     │   package: per-platform copy + cover, hashed                     │
+                     │   Telegram: Post to YouTube / TikTok / Facebook, per platform    │
+                     │   publisher: YouTube, TikTok, Facebook Reels, hash re-checked    │
                      │ analytics_engine   pull metrics into SQLite, compare formats     │
                      └──────────────────────────────────────────────────────────────────┘
 ```
@@ -101,7 +104,7 @@ These numbers will differ on your PC; `python -m factory produce` prints its own
 | 1 | Structure, config, database + state machine, setup scripts | done |
 | 2 | First original Short end to end, QC, unit + end-to-end tests | done |
 | 3 | Reusable components (traffic waves, pendulums/projectiles, probability/maths), three video types, idea scoring, LLM provider interface | next |
-| 4 | Telegram approval bot (preview, title, topic, duration, caveats; Approve / Reject / Revise) | not started |
-| 5 | YouTube OAuth upload + scheduling, sha256 and idempotency guards | not started |
+| 4 | Telegram approval bot (preview, title, topic, duration, caveats; Approve / Reject / Revise) | per-platform publishing review built (factory/publishing/telegram.py); Reject/Revise of the video itself still to add |
+| 5 | YouTube OAuth upload + scheduling, sha256 and idempotency guards | upload built for YouTube, TikTok and Facebook Reels (docs/PUBLISHING.md); scheduling not yet; needs account setup |
 | 6 | Analytics pull + performance database + format comparisons | not started |
 | 7 | Batch generation, job queue, parallel renders, daily scheduler | not started |
