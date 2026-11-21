@@ -1,5 +1,6 @@
-// Counterphysical presenters. v6 (default): Blender-built models from tools/blender/presenters.py, exported to
-// assets/characters/{wizard,woman}.glb and preloaded by boot.js (loadPresenters). If the GLBs are not loaded,
+// Counterphysical presenters. v7 (default): Blender-built models from tools/blender/presenters_v7.py, exported to
+// assets/characters/{wizard,woman}.glb and preloaded by boot.js (loadPresenters). The older v6 pair is kept in
+// assets/characters/v6/ (plan.presenters = 'v6'). If the GLBs are not loaded,
 // man()/woman() fall back to the procedural v5 models below (same pose API).
 //
 // v5: two original, smooth high-poly characters that sit in the diorama world.
@@ -20,6 +21,7 @@ import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 const GLB = {};
 export async function loadPresenters(base = '/assets/characters/') {
   const loader = new GLTFLoader();
+  GLB.version = base.includes('/v6/') ? 6 : 7;
   await Promise.all(['wizard', 'woman'].map(async k => {
     try { GLB[k] = (await loader.loadAsync(`${base}${k}.glb`)).scene; } catch (e) { console.warn(`presenter ${k}.glb not loaded`, e); }
   }));
@@ -74,7 +76,7 @@ function fromGLB(kind, name) {
   }
   const eyes = [...all('eye_'), ...all('iris'), ...all('pupil')];
   const headBone = rig.head; const hp = new THREE.Vector3(); if (headBone) headBone.getWorldPosition(hp);
-  root.rig = rig; root.height = kind === 'wizard' ? 2.0 : 1.69; root.faceY = kind === 'wizard' ? 1.69 : 1.585;
+  root.rig = rig; root.height = kind === 'wizard' ? 2.0 : 1.69; root.faceY = kind === 'wizard' ? 1.69 : (GLB.version === 6 ? 1.585 : 1.57);
   root.pose = (p = {}) => {
     const talk = p.talk ?? 0, wave = p.wave ?? 0, point = p.point ?? 0, t = p.t ?? 0;
     if (lower) lower.position.copy(lowerRest).addScaledVector(lowerDown, 0.007 * talk);

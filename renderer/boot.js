@@ -12,7 +12,8 @@ export async function boot(sceneName, plan) {
   const ctx = out.getContext('2d');
   const world = new World(gl, W, H, plan.seed ?? 7, { supersample: plan.supersample ?? 1 });
   const mod = await import(`/renderer/scenes/${sceneName}.js`);
-  if (plan.presenters !== false) await loadPresenters();     // Blender presenters for man()/woman() (falls back if missing)
+  // Blender presenters for man()/woman() (falls back if missing). v7 by default; plan.presenters = 'v6' loads the older pair
+  if (plan.presenters !== false) await loadPresenters(plan.presenters === 'v6' ? '/assets/characters/v6/' : undefined);
   const scene = await mod.build(world, plan);
 
   window.__meta = {};
