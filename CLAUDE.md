@@ -226,6 +226,22 @@ Four Shorts made public within 7 h on 20 Nov (two in the same minute) got almost
 - **Studio only (no API):** the Shorts "related video" link and pinning a comment. Do these in Studio when a
   signed-in browser is available; link each Short to the best-performing Short in the same series.
 
+### Write every title and caption on purpose (Caesar, 2026-11-21)
+Never copy a title or caption across without thinking. For each one, check these five points and note the
+reasoning in one line in the package (`packaging_notes`) or the PR:
+1. **Hook:** the first ~100 characters (all Facebook shows before "See more", and what YouTube shows under the
+   Short) carry the surprise on their own.
+2. **Search words:** the plain words people type ("falling cat", "zipper merge", "slow motion").
+3. **Curiosity gap:** the title raises the question; the video, not the title, gives the answer. Still true to it.
+4. **Comment prompt:** one specific question answerable in a word or two, from the video. No "like and share".
+5. **Hashtags:** 3-5 specific ones (topic + niche), not broad filler.
+
+**Facebook reels** (`autopilot_queue_facebook/<slug>/package.json`) follow the same rules, adapted: no `#shorts`,
+at most one emoji on the hook line and one on the comment question, the question before sources, sources shortened to one line,
+then "Animated with real physics by Counterphysical. AI voice." Sources: light research 2026-11-21 (Opus Clip,
+ContentStudio, Neal Schaffer guides on Facebook Reels captions); the percentages those guides quote are vendor
+claims, so judge by our own numbers once reels have views.
+
 ## 13. Look v3 and shot craft (quality overhaul, Caesar 2026-11-21: "make the quality 5x better")
 Every 3D render now goes through `renderer/look.js` automatically (opt out per plan with `look: legacy`):
 - **Sky-matched lighting:** an environment map built from the shot's lighting preset (sky, horizon, ground, sun),
