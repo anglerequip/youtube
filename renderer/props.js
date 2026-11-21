@@ -19,10 +19,13 @@ export function car(color, kind = 'hatch', roofRack = false) {
   const win = new THREE.Mesh(taperedBox(Wd * 0.9 * 0.97, 0.3, cabinL * 0.97, 0.86, 0.88), glass); win.scale.set(1.03, 1, 1.03);
   win.position.set(0, 1.15, cabinZ);
   g.add(lower, cabin, win);
-  const wheelGeo = new THREE.CylinderGeometry(0.33, 0.33, 0.24, 10); wheelGeo.rotateZ(Math.PI / 2);
+  const wheelGeo = new THREE.CylinderGeometry(0.33, 0.33, 0.24, 24); wheelGeo.rotateZ(Math.PI / 2);
   const wheelMat = flat('#1d1d20');
+  const hubGeo = new THREE.CylinderGeometry(0.17, 0.17, 0.012, 24); hubGeo.rotateZ(Math.PI / 2);
+  const hubMat = flat('#9a9ea4');
   for (const [x, z] of [[-0.8, -1.3], [0.8, -1.3], [-0.8, 1.3], [0.8, 1.3]]) {
     const w = new THREE.Mesh(wheelGeo, wheelMat); w.position.set(x, 0.33, z * L / 4.1); g.add(w);
+    const hub = new THREE.Mesh(hubGeo, hubMat); hub.position.set(x + Math.sign(x) * 0.122, 0.33, z * L / 4.1); g.add(hub);
   }
   // tail lights (rear is +Z) and plate
   const tailMat = new THREE.MeshStandardMaterial({ color: '#7a1416', emissive: PALETTE.red, emissiveIntensity: 0.15, roughness: 0.4 });
@@ -86,8 +89,8 @@ export function fence(scene, x, z0, z1, step = 3) {
 
 export function cone(scene, x, z) {
   const g = new THREE.Group();
-  const c = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.6, 8), flat('#e8762c')); c.position.y = 0.3;
-  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.1, 8), flat('#f2f0ea')); band.position.y = 0.34;
+  const c = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.6, 24), flat('#e8762c')); c.position.y = 0.3;
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.1, 24), flat('#f2f0ea')); band.position.y = 0.34;
   const base = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.05, 0.45), flat('#e8762c')); base.position.y = 0.025;
   g.add(c, band, base); g.position.set(x, 0, z); scene.add(shadow(g)); return g;
 }

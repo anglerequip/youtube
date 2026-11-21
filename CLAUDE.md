@@ -40,6 +40,14 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
 - Secrets only in `.env` / environment variables.
 - Run `python -m pytest -q` before committing.
 
+## Voices (Caesar, 2026-11-20)
+
+- **Narrator** (solo episodes): ElevenLabs `TWutjvRaJqAX89preB4e` (`TTS_PROVIDER=elevenlabs`, `ELEVENLABS_VOICE_ID`).
+  It replaces Kokoro `af_bella`, which stays as the free fallback (`TTS_PROVIDER=kokoro`).
+- **Presenters** (two-character DUO episodes, `docs/styles/DUO.md`): man `3iY0r3RaYmOh6WfIwMIH` ("Matt", Caesar, 2026-11-21), woman `vChnJZ1Cu89g2XXumPfT` ("Lara", Caesar, 2026-11-21)
+  (`ELEVENLABS_VOICE_MAN`, `ELEVENLABS_VOICE_WOMAN`).
+- Don't re-voice an episode that is already published or scheduled.
+
 
 ---
 
@@ -58,7 +66,8 @@ and simple chunky vehicles that read instantly at phone size. It feels like a ca
 diorama filmed by a drone, not a diagram and not photorealism.
 
 ## 2. Rendering
-- Real 3D with perspective cameras. Flat-shaded or very lightly smoothed low-poly geometry.
+- Real 3D with perspective cameras. Flat-shaded or very lightly smoothed geometry, at the **higher
+  polygon budget in section 11** (Caesar, 2026-11-20): the faceted look stays, but facets are fine, not chunky.
 - One strong directional "sun" light + soft sky fill. **Hard-edged cast shadows** (cars, trees,
   posts) that are long and diagonal (low sun, roughly 25-35 deg elevation).
 - Subtle ambient occlusion where objects meet the ground (cars sit "in" the world).
@@ -141,6 +150,34 @@ that signals the phenomenon.
 ## 10. Our branding inside this style
 - Small "COUNTERPHYSICAL" wordmark is optional and must stay out of the caption band.
 - Our label cards may use our accent colours, but keep the off-white card + one strong colour rule.
+
+## 11. Polygon budget (Caesar, 2026-11-20: "increase the poly in the videos")
+Every new or edited model uses at least these segment counts. Prefer more on anything the camera gets close to.
+| Geometry | Hero / close-up (presenters, the phenomenon object) | Background props (trees, cars, fences) |
+|---|---|---|
+| Sphere (width x height segments) | 48 x 36 or more | 24 x 16 or more |
+| Cylinder / capsule radial segments | 24 or more (capsule cap segments 6) | 16 or more |
+| Icosahedron detail (faceted crowns, hair locks) | 2 | 1 |
+| Torus (tube x radial) | 12 x 32 | 8 x 20 |
+| Lathe (segments x profile points) | 24 x 24 | 16 x 12 |
+- Props and scenery may stay flat-shaded (stylised diorama). Presenters and other close-up characters are smooth-shaded
+  high-poly: continuous lathe/tube bodies (40+ radial segments), heads 72 x 54, hair and beards built from tapered strands.
+- Presenters come from `renderer/characters.js` (`man()` = the wizard, `woman()` = the young woman), already at this budget. Use them in place of
+  the old wooden toy figure. They are original designs: never restyle them, or any other model, to look like an
+  existing character, celebrity or actor.
+- Check render time after raising detail: a full 3D render must still finish in a reasonable time on Caesar's PC.
+
+
+## 12. Optional style modules (Caesar, 2026-11-20)
+Two extra looks studied from TikToks Caesar shared. Use either one whole when the topic fits, or borrow single blocks
+(an overlay, the weather, a caption style) into a normal episode. Both sit on top of sections 1-11 and the honesty rules.
+- **DUO** (`docs/styles/DUO.md`): our two presenters as skeptic + explainer, fast alternating short lines, punch-in
+  reaction close-ups, speaker-coloured captions (`caption_style: duo`, beat field `speaker: man|woman`), lighting `clear`.
+- **BUILD** (`docs/styles/BUILD.md`): one hero object transforms step by step ("But X... so you Y"), callout labels,
+  pill badges, gauges, shrink/grow arrows, dimension brackets, snow/blizzard, freeze and shatter, one-word ALL-CAPS
+  captions (`caption_style: build`), lighting `blizzard`.
+- Building blocks: `renderer/overlays.js` (2D, plan `overlays:`), `renderer/effects3d.js` (3D), presets in `renderer/world.js`.
+- Copy techniques only. Never copy a reference's characters, creatures, models, scripts, screens or exact shots.
 
 ## Autopilot efficiency (Caesar, 2026-11-20, via the project coordinator)
 
