@@ -19,6 +19,7 @@ description: |
 tags: [fishing, fish vision, Snell's window, refraction, light, physics, science, shorts]
 voice: elevenlabs-duo
 speed: 1.0
+ambience: lake
 story:
   core_idea: "Refraction squeezes the whole sky into a small circle above an underwater eye; outside it is a mirror."
   fascination: "the fish's world above is a bright porthole surrounded by a mirror, and you are squashed at its rim"

@@ -11,28 +11,45 @@ import { lake, fish, rod, BANK_Y } from '../sets/lake.js';
 export function presenters(S, L) {
   const wiz = man(); wiz.position.set(...L.wiz); wiz.rotation.y = L.wiz_face; S.add(wiz);
   const wom = woman(); wom.position.set(...L.woman); wom.rotation.y = L.woman_face; S.add(wom);
-  const lift = new THREE.Color('#3a3640').convertSRGBToLinear();
+  // v7 presenters: keep their own colours (look v3 lights dark cloth properly). Only the wizard's staff, glowing
+  // stone and potion vials go, so his hand is free for the rod and nothing glows by a lake in daylight.
   for (const p of [wiz, wom]) p.traverse(o => {
     if (o.isSprite || o.isPointLight) { o.visible = false; return; }
-    if (!o.isMesh) return;
-    if (/^z_(staff|stone|fork)/.test(o.name)) { o.visible = false; return; }
-    const mats = Array.isArray(o.material) ? o.material : [o.material];
-    if (mats.some(m => m && m.emissive && m.emissiveIntensity > 0 && (m.emissive.r + m.emissive.g + m.emissive.b) > 0.05)) { o.visible = false; return; }
-    for (const m of mats) {
-      if (!m || !m.color || m.isMeshBasicMaterial) continue;
-      if (Math.max(m.color.r, m.color.g, m.color.b) < lift.r) { m.color.r = Math.max(m.color.r, lift.r); m.color.g = Math.max(m.color.g, lift.g); m.color.b = Math.max(m.color.b, lift.b); }
-    }
+    if (o.isMesh && /^z_(staff|stone|fork|vial|cork|cage|knot)/.test(o.name)) o.visible = false;
+    if (o.isMesh && o.material && /potion/.test(o.material.name || '')) o.visible = false;
   });
   return { wiz, wom };
+}
+
+// the wizard's robe is one rigid piece hanging from his hips: when he sits on a low boat seat its lower part would
+// poke through the hull. For seated scenes shorten it to seat level (his trousers show below, as when you sit in a
+// long coat) and drop the hem band and the stars that were on the cut part. Call once, before posing.
+export function seatRobe(wiz, cutY = 0.47) {
+  const hide = [], robe = wiz.getObjectByName('z_robe');
+  if (!robe) return;
+  wiz.updateMatrixWorld(true);
+  const rw = new THREE.Vector3(); robe.getWorldPosition(rw);
+  const cutW = rw.y + cutY - wiz.position.y, v = new THREE.Vector3();
+  robe.geometry = robe.geometry.clone();
+  const P = robe.geometry.attributes.position;
+  for (let i = 0; i < P.count; i++) if (P.getY(i) < cutY) P.setY(i, cutY);
+  P.needsUpdate = true; robe.geometry.computeVertexNormals(); robe.geometry.computeBoundingSphere();
+  wiz.traverse(o => {
+    if (!o.isMesh) return;
+    if (/^z_robe_hem/.test(o.name)) hide.push(o);
+    else if (/^z_star/.test(o.name)) { o.getWorldPosition(v); if (v.y - wiz.position.y < cutW + 0.05) hide.push(o); }
+  });
+  for (const o of hide) o.visible = false;
 }
 
 // the rod rides in the wizard's left hand (where his hidden staff is), tilted forward over the water. Call
 // place(tiltDeg, yawOffset) each frame after posing him, then rod.set(bend, lineEnd).
 export function rodInHand(S, wiz, opt = {}) {
   const r = rod(S, opt.len ?? 2.4);
-  let st = null; wiz.traverse(o => { if (!st && o.isBone && o.name === 'hand_L') st = o; });
+  const hand = opt.hand ?? 'hand_L';
+  let st = null; wiz.traverse(o => { if (!st && o.isBone && o.name === hand) st = o; });
   const hp = new THREE.Vector3(), fwd = new THREE.Vector3(), d = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
-  r.place = (tilt = 55, yaw = 0, back = 0.12) => {
+  r.place = (tilt = 55, yaw = 0, back = 0.12, toward = null) => {
     wiz.updateMatrixWorld(true);
     if (st) st.getWorldPosition(hp); else hp.copy(wiz.position).add(new THREE.Vector3(0, 1.0, 0));
     const a = wiz.rotation.y + yaw;
@@ -41,7 +58,16 @@ export function rodInHand(S, wiz, opt = {}) {
     d.copy(fwd).multiplyScalar(Math.sin(tr)).addScaledVector(up, Math.cos(tr)).normalize();
     r.position.copy(hp).addScaledVector(d, -back);             // the butt sits a little behind the hand
     r.quaternion.setFromUnitVectors(up, d);
-    // keep the reel under the rod (rod's local -z faces down-ish): roll so local z points along the horizontal fwd
+    // roll about the rod so it bends (its local -z) toward `toward` (the line's far end), if given
+    if (toward) {
+      const cur = new THREE.Vector3(0, 0, -1).applyQuaternion(r.quaternion);
+      const want = new THREE.Vector3(...toward).sub(r.position); want.addScaledVector(d, -want.dot(d));
+      if (want.lengthSq() > 1e-6) {
+        want.normalize();
+        const ang = Math.atan2(d.dot(new THREE.Vector3().crossVectors(cur, want)), cur.dot(want));
+        r.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(d, ang));
+      }
+    }
     r.updateMatrixWorld(true);
   };
   return r;
@@ -111,7 +137,7 @@ export function build(world, plan) {
       ring.material.opacity = xr ? 0.95 * F.ring[k] : 0;
       const sit = F.sit[k];
       const lw = F.look_w[k], lm = F.look_m[k];
-      wiz.pose({ talk: F.talk_w[k], blink: F.wiz_blink[k], t, sit, wave: F.wiz_wave[k], point: 0.32, ...headLook(wiz, lw === 'sky' ? sky : lw === 'water' ? water : womHead, 0.9, 1.6), headTilt: 0.04 * Math.sin(t * 0.7) });
+      wiz.pose({ talk: F.talk_w[k], blink: F.wiz_blink[k], t, sit, wave: F.wiz_wave[k], point: 0.12, ...headLook(wiz, lw === 'sky' ? sky : lw === 'water' ? water : womHead, 0.9, 1.6), headTilt: 0.04 * Math.sin(t * 0.7) });
       wom.pose({ talk: F.talk_m[k], blink: F.woman_blink[k], t, point: F.woman_point[k], ...headLook(wom, lm === 'water' ? water : wizHead, 0.5), headTilt: 0.05 * Math.sin(t * 0.9 + 1) });
       fr.place(58 - 18 * sit, 0.15);
       fr.set(0.1, [L.eye[0] + 0.3, -0.02, L.eye[2] + 1.6], 0.3);

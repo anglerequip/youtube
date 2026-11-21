@@ -56,7 +56,7 @@ export function lake(world, opt = {}) {
   // water surface: gentle faceted swell, see-through
   const wG = new THREE.PlaneGeometry(240, 240, 120, 120); wG.rotateX(-Math.PI / 2); wG.translate(0, 0, SHORE + 0.3 - 120);
   const wBase = Float32Array.from(wG.attributes.position.array);
-  const water = new THREE.MeshStandardMaterial({ color: opt.waterColor ?? '#5d7f76', roughness: 0.18, metalness: 0.0, transparent: true,
+  const water = new THREE.MeshStandardMaterial({ color: opt.waterColor ?? '#5d7f76', roughness: opt.waterRoughness ?? 0.34, metalness: 0.0, transparent: true,
     opacity: opt.opacity ?? 0.8, side: THREE.DoubleSide, flatShading: true, depthWrite: false, envMapIntensity: 0.25 });
   const surf = new THREE.Mesh(wG, water); surf.receiveShadow = true; surf.renderOrder = 2; S.add(surf);
   const farW = new THREE.Mesh(new THREE.RingGeometry(118, 2500, 64, 1), water); farW.rotation.x = -Math.PI / 2; farW.position.set(0, -0.01, SHORE - 120); farW.renderOrder = 2; S.add(farW);

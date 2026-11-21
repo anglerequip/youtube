@@ -18,6 +18,7 @@ description: |
 tags: [fishing, alligator gar, fishing line, drag, buoyancy, physics, science, shorts]
 voice: elevenlabs-duo
 speed: 1.0
+ambience: lake
 story:
   core_idea: "In water a fish weighs almost nothing, and the drag slips before the line can snap, so a thin line can tire out a huge fish."
   fascination: "a line that couldn't lift a bag of sugar landed a fish heavier than a person"

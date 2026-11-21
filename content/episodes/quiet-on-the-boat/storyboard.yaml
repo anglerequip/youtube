@@ -18,6 +18,7 @@ description: |
 tags: [fishing, sound, acoustics, boat, fish hearing, physics, science, shorts]
 voice: elevenlabs-duo
 speed: 1.0
+ambience: lake
 story:
   core_idea: "Airborne sound mostly bounces off a water surface, but a knock on the hull goes straight into the water."
   fascination: "the quiet-in-the-boat rule is right, but for the opposite reason people think"
