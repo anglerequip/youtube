@@ -66,8 +66,8 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
     if tl.duration > settings.max_seconds:
         raise ValueError(f"narration is {tl.duration:.1f}s; limit is {settings.max_seconds:.0f}s. Trim the script.")
     if tl.duration + 0.8 < settings.min_seconds:
-        raise ValueError(f"narration is {tl.duration:.1f}s; every video must be at least {settings.min_seconds:.0f}s. "
-                         "Extend the script with real content (not filler).")
+        raise ValueError(f"narration is {tl.duration:.1f}s; the minimum is {settings.min_seconds:.0f}s. "
+                         "Add real content only if the story needs it (never filler).")
 
     t0 = time.time()
     if sb.renderer == "three":
