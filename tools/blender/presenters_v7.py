@@ -213,12 +213,12 @@ def build_woman():
     }
     J = {
         'pelvis': ((0, 0, 0.95), (0.126, 0.09)), 'spine': ((0, 0.005, 1.08), (0.104, 0.07)), 'chest': ((0, 0.0, 1.25), (0.118, 0.08)),
-        'neck': ((0, 0.008, 1.44), (0.041, 0.04)), 'head': ((0, 0.005, 1.51), (0.036, 0.036)),
+        'neck': ((0, 0.008, 1.44), (0.044, 0.043)), 'head': ((0, 0.005, 1.51), (0.036, 0.036)),
     }
     for s, n in ((1, 'L'), (-1, 'R')):
         J.update({
-            f'clav_{n}': ((s * 0.06, 0.005, 1.4), (0.05, 0.045)), f'shoulder_{n}': ((s * 0.163, 0.008, 1.385), (0.042, 0.04)),
-            f'elbow_{n}': ((s * 0.212, 0.02, 1.13), (0.032, 0.032)), f'wrist_{n}': ((s * 0.237, -0.005, 0.895), (0.021, 0.018)),
+            f'clav_{n}': ((s * 0.06, 0.005, 1.4), (0.05, 0.045)), f'shoulder_{n}': ((s * 0.165, 0.008, 1.385), (0.048, 0.046)),
+            f'elbow_{n}': ((s * 0.216, 0.02, 1.13), (0.038, 0.038)), f'wrist_{n}': ((s * 0.24, -0.005, 0.895), (0.024, 0.021)),
             f'hand_{n}': ((s * 0.242, -0.012, 0.825), (0.023, 0.011)), f'thumb_{n}': ((s * 0.233, -0.04, 0.85), (0.009, 0.009)),
             f'hip_{n}': ((s * 0.085, 0.0, 0.88), (0.074, 0.074)), f'thigh_{n}': ((s * 0.088, 0.0, 0.7), (0.064, 0.066)),
             f'knee_{n}': ((s * 0.09, 0.005, 0.49), (0.047, 0.05)), f'calf_{n}': ((s * 0.09, 0.015, 0.33), (0.047, 0.049)),
@@ -231,7 +231,7 @@ def build_woman():
         if b.startswith(('elbow', 'shoulder')): return M['cardi']
         if b.startswith(('ankle', 'toe')) or (b.startswith('calf') and c.z < 0.15): return M['boot']
         if b.startswith(('thigh', 'knee', 'calf', 'hip')): return M['denim']
-        if c.z > 1.405 and b.startswith(('neck', 'chest', 'clav')):
+        if c.z > 1.416 and b.startswith(('neck', 'chest', 'clav')):
             return M['skin'] if (c.y < 0.03 or c.z > 1.418) else M['cardi']
         if c.y < 0 and abs(c.x) < 0.09:                                                       # front gap of the open cardigan
             return M['denim'] if c.z < 1.0 else M['top']
@@ -249,12 +249,12 @@ def build_woman():
         bm.to_mesh(ob.data); bm.free()
     body, rig = build_body('woman', J, E, region, shape)
     C = (0, -0.004, 1.565)
-    P = dict(size=(0.077, 0.089, 0.1), lower=0.86, jaw=0.25, chin=0.15, chinfwd=0.07, cheek=0.055, socket=0.055, ridge=0.014, nose=0.075, alar=0.022,
-             cheekbone=0.04, hollow=0.012, philtrum=0.012, dimple=0.01, tip=0.055, lips=0.04,
+    P = dict(size=(0.077, 0.089, 0.1), lower=0.86, jaw=0.27, chin=0.12, chinfwd=0.08, cheek=0.05, socket=0.06, ridge=0.016, nose=0.1, alar=0.026,
+             cheekbone=0.06, apple_z=-0.16, hollow=0.012, philtrum=0.012, dimple=0.01, tip=0.06, lips=0.045,
              eye_r=0.0134, eye_x=0.43, eye_z=0.05, iris=0.64, lid=0.5, lid_tilt=0.08, lowlid=0.74, lash=0.0015, wing=True, lash_flicks=3,
              brow_x0=0.17, brow_x1=0.8, brow_z=0.27, brow_arch=0.06, brow_w=0.0027,
              paint=dict(blush=(1.0, 0.7, 0.68, 0.6), socket=(0.84, 0.66, 0.64, 0.6), freckles=30, freckle_s=0.3, nose_blush=0.7),
-             mouth_z=-0.56, ulip=(0.0152, 0.0037), llip=(0.0142, 0.0048), smile=0.0024, ear=0)   # ears are under the hair
+             mouth_z=-0.56, ulip=(0.0172, 0.0038), llip=(0.016, 0.005), smile=0.003, ear=0)   # ears are under the hair
     head, hit = build_head7('w_head', P, C, M)
     a, d, h = P['size']
     def ellp(az, zu, k):
@@ -267,14 +267,14 @@ def build_woman():
     bang_fns = []
     for s in (-1, 1):
         def bang(u, v, s=s):
-            zE = 0.3 - 0.8 * u ** 0.85
+            zE = 0.3 - 0.12 * min(1.0, u / 0.45) - 0.72 * max(0.0, (u - 0.45) / 0.55) ** 1.2
             zu = 0.9 + (zE - 0.9) * v
-            az = s * math.radians(3 + 58 * u + 24 * v ** 1.6 * (1 - 0.7 * u))
+            az = s * math.radians(3 + 48 * u + v ** 1.5 * (13 * (1 - u) + 28 * u))
             k = 1.115 + 0.03 * v ** 1.5 + 0.02 * u * v
             return ellp(az, zu, k)
         bang_fns.append(bang)
         hs.append(grid('w_hair_bangs', 40, 16, bang, M['hair'], False, 2, 0.007))
-        hs.append(strands('w_str_bangs', bang, 150, 16, Cv, M['hairs'], 0.0016, 0.0011, 0.003, seed=3 + s))
+        hs.append(strands('w_str_bangs', bang, 190, 16, Cv, M['hairs'], 0.0016, 0.0011, 0.003, seed=3 + s))
     def wave(z, u, amp):
         return amp * math.sin(z * 38 + u * 5.0)
     def back(u, v):
@@ -358,7 +358,7 @@ def build_woman():
     nl = []
     for k in range(17):
         x = -0.072 + 0.144 * k / 16
-        p, n = surface_hit(body, (x, -1.0, 1.401), (0, 1, 0))
+        p, n = surface_hit(body, (x, -1.0, 1.417), (0, 1, 0))
         if p is not None: nl.append(tuple(p + n * 0.0015))
     trims = [tube('w_top_neckline', nl, [0.0025] * len(nl), M['top'], 4, 3)]
     wb = []
@@ -369,12 +369,12 @@ def build_woman():
     trims.append(tube('w_waistband', wb, [0.006] * len(wb), M['denim'], 4, 3))
     rolls = []
     for s, n in ((1, 'L'), (-1, 'R')):
-        rolls.append((ring_tube(f'w_jean_roll_{n}', (s * 0.09, 0.014), 0.05, 0.052, lambda ang: 0.16, 0.012, M['cuff'], 40), f'calf_{n}'))
+        rolls.append((ring_tube(f'w_jean_roll_{n}', (s * 0.09, 0.013), 0.043, 0.045, lambda ang: 0.15, 0.011, M['cuff'], 40), f'calf_{n}'))
     soles = []
     for s, n in ((1, 'L'), (-1, 'R')):
         bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
-        for v in bm.verts: v.co = Vector((v.co.x * 0.084 + s * 0.091, v.co.y * 0.215 - 0.042, v.co.z * 0.035 + 0.0175))
-        so = mesh_obj(f'w_sole_{n}', bm, M['sole'], True, 2); bv = so.modifiers.new('bev', 'BEVEL'); bv.width = 0.01; bv.segments = 3
+        for v in bm.verts: v.co = Vector((v.co.x * 0.074 + s * 0.091, v.co.y * 0.2 - 0.04, v.co.z * 0.026 + 0.013))
+        so = mesh_obj(f'w_sole_{n}', bm, M['sole'], True, 2); bv = so.modifiers.new('bev', 'BEVEL'); bv.width = 0.011; bv.segments = 4
         so.modifiers.move(1, 0); soles.append((so, f'toe_{n}'))
     # jewellery: small gold hoops, a fine necklace with a tiny pendant
     jw = []
@@ -436,7 +436,7 @@ def build_wizard():
     P = dict(size=(0.08, 0.094, 0.104), jaw=0.16, chin=0.08, chinfwd=0.05, cheek=0.08, socket=0.06, ridge=0.02, nose=0.08,
              tip=0.03, lips=0.03, cheekbone=0.075, apple_z=-0.2, dimple=0.012,
              eye_r=0.0138, eye_x=0.4, eye_z=0.07, iris=0.66, lid=0.62, lid_tilt=-0.04, lowlid=0.52, low_tilt=-0.12, lash=0.0009, wing=False,
-             brow_x0=0.16, brow_x1=0.85, brow_z=0.33, brow_arch=0.1, brow_w=0.005, brow_drop=0.02, brow_tilt=0.04, bushy=70,
+             brow_x0=0.16, brow_x1=0.78, brow_z=0.33, brow_arch=0.1, brow_w=0.005, brow_drop=0.02, brow_tilt=0.04, bushy=70,
              paint=dict(blush=(0.95, 0.58, 0.55, 0.85), socket=(0.9, 0.76, 0.72, 0.35), nose_blush=0.2),
              mouth_z=-0.56, ulip=(0.016, 0.0028), llip=(0.0152, 0.004), smile=0.004, ear=1.12)
     head, hit = build_head7('z_head', P, C, M)
@@ -466,7 +466,7 @@ def build_wizard():
         front = max(0.0, math.cos(ang)) ** 1.5
         belly = 0.055 * math.exp(-((z - 1.12) / 0.17) ** 2) * front
         w += 0.02 * math.exp(-((z - 1.12) / 0.2) ** 2)
-        fold = 0.004 * math.sin(ang * 11) * v
+        fold = (0.004 + 0.006 * max(0.0, v - 0.3)) * math.sin(ang * 11 + 0.6 * math.sin(ang * 3)) * v
         return Vector(((w + fold) * math.sin(ang), -(dd + fold + belly) * math.cos(ang) + 0.01, z))
     rb = grid('z_robe', 128, 56, robe, M['robe'], True, 1, 0.008)
     hemband = grid('z_robe_hem', 128, 3, lambda u, v: robe(u, 0.955 + 0.045 * v) * 1.0 + Vector((0.006 * math.sin(u * 2 * math.pi), -0.006 * math.cos(u * 2 * math.pi), 0)), M['trim'], True, 1, 0.006)
@@ -505,10 +505,10 @@ def build_wizard():
         ax = (w - e).normalized()
         q = ax.to_track_quat('Z', 'Y')
         def sl(u, v, e=e, ax=ax, q=q):
-            ang = u * 2 * math.pi; r = 0.05 + 0.045 * v ** 1.5
-            return e + ax * (-0.04 + 0.25 * v) + q @ Vector((r * math.cos(ang), r * math.sin(ang), 0))
+            ang = u * 2 * math.pi; r = 0.056 + 0.04 * v ** 1.5
+            return e + ax * (-0.09 + 0.27 * v) + q @ Vector((r * math.cos(ang), r * math.sin(ang), 0))
         sleeves.append((grid(f'z_sleeve_{n}', 64, 16, sl, M['robe'], True, 1, 0.006), f'wrist_{n}'))
-        c1 = e + ax * 0.21
+        c1 = e + ax * 0.18
         pts = [tuple(c1 + q @ Vector((0.097 * math.cos(t / 40 * 2 * math.pi), 0.097 * math.sin(t / 40 * 2 * math.pi), 0))) for t in range(41)]
         sleeves.append((tube(f'z_sleeve_trim_{n}', pts, [0.007] * 41, M['trim'], 2, 4), f'wrist_{n}'))
     # crooked teal hat: wide wavy brim, a cone that kinks and droops, a patch, a little bell, science goggles on the band
@@ -533,7 +533,7 @@ def build_wizard():
     patch = on_surface('z_hat_patch', hc, hat_base + Vector((-0.4, -0.25, 0.13)), Vector((0.4, 0.25, 0.0)).normalized(), (0.04, 0.034, 0.003), M['patch'], 0.0015, 0.3)
     goggles = []
     for s in (-1, 1):
-        gc = hat_base + Vector((s * 0.03, -0.1, 0.03))
+        gc = hat_base + Vector((s * 0.03, -0.097, 0.03))
         nrm = Vector((s * 0.3, -1, 0.35)).normalized(); q = nrm.to_track_quat('Z', 'Y')
         pts = [tuple(gc + q @ Vector((0.018 * math.cos(t / 32 * 2 * math.pi), 0.018 * math.sin(t / 32 * 2 * math.pi), 0))) for t in range(33)]
         goggles.append(tube('z_goggle_rim', pts, [0.0042] * 33, M['brass'], 2, 6))
