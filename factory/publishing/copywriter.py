@@ -90,7 +90,7 @@ def youtube(sb) -> dict:
     if sb.sources:
         parts.append("Sources:\n" + "\n".join(f"- {s}" for s in sb.sources))
     parts.append(ai_disclosure(sb))
-    parts.append(f"{settings.channel_name}: {settings.channel_tagline}")
+    parts.append(f"{settings.channel_name}: {pub.get('tagline') or settings.channel_tagline}")   # topic-specific tagline (Caesar)
     parts.append(tags_line)
     desc = "\n\n".join(p for p in parts if p)
     tags = _uniq([t.lstrip("#").lower() for t in sb.tags if t.lower() != "shorts"] + [settings.channel_name.lower()])

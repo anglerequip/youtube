@@ -141,7 +141,7 @@ export function build(world, plan) {
   const box = trainer(); box.position.set(Lo.table[0] + Lo.box_dx, TY, Lo.table[2]); S.add(box);
   // monitor on a small stand beside the box, facing the camera side (+z) and turned a little toward the box
   const mon = new THREE.Group();
-  const bez = new THREE.Mesh(softBox(0.4, 0.27, 0.03, 0.2), std('#22262b', { roughness: 0.6 })); bez.position.y = 0.24; mon.add(bez);
+  const bez = new THREE.Mesh(softBox(0.4, 0.27, 0.03, 0.2), std('#3a3e45', { roughness: 0.6 })); bez.position.y = 0.24; mon.add(bez);
   const mtex = monitorTexture(box.userData.pegs);
   const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.235), new THREE.MeshBasicMaterial({ map: mtex, toneMapped: false })); scr.position.set(0, 0.24, 0.017); mon.add(scr);
   const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.12, 16), std('#3a3640')); neck.position.y = 0.07; mon.add(neck);
@@ -157,14 +157,14 @@ export function build(world, plan) {
   // TV on a low stand against the back wall
   const tvg = new THREE.Group();
   const stand = new THREE.Mesh(softBox(0.95, 0.4, 0.38, 0.2), MAT.wood('#6e4f36')); stand.position.y = 0.2; tvg.add(stand);
-  const tvb = new THREE.Mesh(softBox(0.92, 0.55, 0.05, 0.15), std('#1c1f24', { roughness: 0.5 })); tvb.position.y = 0.72; tvg.add(tvb);
+  const tvb = new THREE.Mesh(softBox(0.92, 0.55, 0.05, 0.15), std('#33373e', { roughness: 0.5 })); tvb.position.y = 0.72; tvg.add(tvb);
   const gtex = gameTexture();
   const tvs = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.5), new THREE.MeshBasicMaterial({ map: gtex, toneMapped: false })); tvs.position.set(0, 0.72, 0.027); tvg.add(tvs);
   tvg.position.set(...Lo.tv); tvg.rotation.y = Lo.tv_yaw; S.add(shadowed(tvg));
 
   const wiz = man(); wiz.position.set(...Lo.wiz); wiz.rotation.y = Lo.wiz_face; S.add(wiz);
   const wom = woman(); wom.position.set(...Lo.woman); wom.rotation.y = Lo.woman_face; S.add(wom);
-  const lift = new THREE.Color('#3a3640').convertSRGBToLinear();
+  const lift = new THREE.Color('#3a3640').convertSRGBToLinear(), floorGlow = new THREE.Color('#2a2730');
   for (const p of [wiz, wom]) p.traverse(o => {
     if (o.isSprite || o.isPointLight) { o.visible = false; return; }   // the staff crystal's glow sprite
     if (!o.isMesh) return;
@@ -173,7 +173,9 @@ export function build(world, plan) {
     if (mats.some(m => m && m.emissive && m.emissiveIntensity > 0 && (m.emissive.r + m.emissive.g + m.emissive.b) > 0.05)) { o.visible = false; return; }   // the staff crystal blooms; no staff here
     for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
       if (!m || !m.color || m.isMeshBasicMaterial) continue;
-      if (Math.max(m.color.r, m.color.g, m.color.b) < lift.r) { m.color.r = Math.max(m.color.r, lift.r); m.color.g = Math.max(m.color.g, lift.g); m.color.b = Math.max(m.color.b, lift.b); }
+      if (Math.max(m.color.r, m.color.g, m.color.b) < lift.r) {
+        m.color.r = Math.max(m.color.r, lift.r); m.color.g = Math.max(m.color.g, lift.g); m.color.b = Math.max(m.color.b, lift.b);
+      }
     }
   });
 
@@ -192,11 +194,16 @@ export function build(world, plan) {
   const wizHead = [Lo.wiz[0], 1.65, Lo.wiz[2]], womHead = [Lo.woman[0], 1.55, Lo.woman[2]];
   const boxPt = [box.position.x, TY + 0.2, box.position.z], tvPt = [Lo.tv[0], 0.72, Lo.tv[2]];
   const U = box.userData, tipL = new THREE.Vector3(), tipR = new THREE.Vector3();
-  let lastShot = null;
+  let lastShot = null, glowDone = false;
   return {
     lightCenter: new THREE.Vector3(1.0, 0, 0.0),
     groundY: 0,
     update(i, t, shot) {
+      if (!glowDone) {         // her black outfit and hair crush to pure black on the shadow side; a faint emissive floor keeps their folds visible
+        glowDone = true;
+        wom.traverse(o => { if (!o.isMesh) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+          if (m && m.color && 'emissive' in m && Math.max(m.color.r, m.color.g, m.color.b) < 0.1) { m.emissive = floorGlow.clone(); m.emissiveIntensity = 1; m.needsUpdate = true; } } });
+      }
       const k = Math.min(i, F.talk_w.length - 1);
       const live = F.tools_live[k] > 0;
       const tp = tips(t, live);
@@ -214,9 +221,9 @@ export function build(world, plan) {
       if (shot !== lastShot) {
         lastShot = shot;
         const fp = focalPt(i);
-        world.setLighting(shot.lighting ?? 'key', new THREE.Vector3(fp[0], 0, fp[2]));
+        world.setLighting(shot.lighting ?? 'key', new THREE.Vector3(0.9, 0, 0));   // one shadow box over the whole room (focal-centred boxes cut far shadows)
         if (plan.bloom_threshold) world.bloom.threshold = plan.bloom_threshold;   // setLighting resets it
-        const sc = world.sun.shadow.camera, e2 = 5;
+        const sc = world.sun.shadow.camera, e2 = 7;
         sc.left = -e2; sc.right = e2; sc.top = e2; sc.bottom = -e2; sc.far = 80; sc.updateProjectionMatrix();
       }
     },

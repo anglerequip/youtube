@@ -69,6 +69,8 @@ export function build(world, plan) {
     for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
       if (!m || !m.color || m.isMeshBasicMaterial) continue;
       if (Math.max(m.color.r, m.color.g, m.color.b) < lift.r) { m.color.r = Math.max(m.color.r, lift.r); m.color.g = Math.max(m.color.g, lift.g); m.color.b = Math.max(m.color.b, lift.b); }
+      // her black outfit and hair crush to pure black on the shadow side; a faint emissive floor keeps their folds visible
+      if (p === wom && 'emissive' in m && Math.max(m.color.r, m.color.g, m.color.b) < 0.1) { m.emissive = new THREE.Color('#2a2730'); m.emissiveIntensity = 1; }
     }
   });
   // only the kick area casts shadows (distant trees would fall off the shadow box)

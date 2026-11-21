@@ -128,7 +128,7 @@ entities:
 hero: ball
 
 publish:
-  cover_at_s: 9.0
+  cover_at_s: 21.5
   cover_headline: "Why games need 60 fps"
   cover_label: {big: "24 fps", small: "smooth or choppy?"}
   hashtags: [videogames, gaming, fps, science]
