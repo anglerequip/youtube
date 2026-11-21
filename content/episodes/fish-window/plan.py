@@ -171,7 +171,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
               (round(at("cone", "ninety") - 0.1, 3), "ding", {"gain": 0.1}),
               (round(S("mirror") - 0.05, 3), "whoosh", {"gain": 0.08}),
               (round(sit_t + 0.9, 3), "thud", {"gain": 0.08})]
-    timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [hook_c, at("cone", "ninety"), S("mirror")],
+    cuts_ = [s_["start"] for s_ in shots[1:]]
+    # a reveal that lands just before a cut is shown by that cut: mark it there (QC no_cut_in_reveal)
+    reveals_ = [next((c for c in cuts_ if -0.05 < c - r < 1.5), r) for r in [hook_c, at("cone", "ninety"), S("mirror")]]
+    timing_ = {"cuts": cuts_, "reveals": reveals_,
                "events": events, "mutes": [], "swells": [S("payoff")]}
     facts = {"window_cone_deg": round(2 * CRIT, 2), "window_width_1m": round(2 * R_WIN, 3),
              "events": {"underwater_hook": {"t": 0.8, "observe": "underwater", "expect": 1, "tol": 0},

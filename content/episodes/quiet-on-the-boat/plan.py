@@ -200,7 +200,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
               (round(t_imp, 3), "thud", {"gain": 0.2}),
               (round(t_bounce2, 3), "thud", {"gain": 0.09}),
               (round(t_bolt, 3), "whoosh", {"gain": 0.09})]
-    timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [hook_c, at("bounce", "tenth"), t_imp],
+    cuts_ = [s_["start"] for s_ in shots[1:]]
+    # a reveal that lands just before a cut is shown by that cut: mark it there (QC no_cut_in_reveal)
+    reveals_ = [next((c for c in cuts_ if -0.05 < c - r < 1.5), r) for r in [hook_c, at("bounce", "tenth"), t_imp]]
+    timing_ = {"cuts": cuts_, "reveals": reveals_,
                "events": events, "mutes": [], "swells": [S("payoff")]}
     facts = {"impedance_ratio": round(Z_WATER / Z_AIR, 1), "transmitted_pct": round(100 * T_NORMAL, 3),
              "speed_ratio": round(SPEED_RATIO, 2),

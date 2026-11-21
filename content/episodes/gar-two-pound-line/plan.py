@@ -219,7 +219,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
               (round(t_lift0 + 0.5, 3), "ding", {"gain": 0.08}),
               (round(at("drag", "slips") - 0.1, 3), "tick", {"gain": 0.08}),
               (round(t_net + 0.4, 3), "pop", {"gain": 0.07})]
-    timing_ = {"cuts": [s_["start"] for s_ in shots[1:]], "reveals": [at("hook", "two"), at("float", "dense"), at("drag", "slips")],
+    cuts_ = [s_["start"] for s_ in shots[1:]]
+    # a reveal that lands just before a cut is shown by that cut: mark it there (QC no_cut_in_reveal)
+    reveals_ = [next((c for c in cuts_ if -0.05 < c - r < 1.5), r) for r in [at("hook", "two"), at("float", "dense"), at("drag", "slips")]]
+    timing_ = {"cuts": cuts_, "reveals": reveals_,
                "events": events, "mutes": [], "swells": [S("payoff")]}
     i_end = n - 1
     facts = {"fish_lb": FISH_LB, "line_lb": LINE_LB, "drag_lb": DRAG_LB, "weight_over_rating": round(FISH_LB / LINE_LB, 1),
