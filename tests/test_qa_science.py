@@ -72,3 +72,38 @@ def test_number_parsing():
 def test_almost_never_is_qualified():
     assert science.absolutes("You almost never can.") == []
     assert science.absolutes("You never can.") != []
+
+
+def test_large_scales_ordinal_times_and_parts_in():
+    """head-ages-faster wording: stacked scales, 'half a millionth of a second', 'one part in ...', µs/ns."""
+    from factory.qa.science import mentions
+    m = mentions("About one part in ten million billion... per metre.")
+    assert [(x["value"], x["unit"]) for x in m] == [(1e16, "parts")]
+    m = mentions("your head ends up about half a millionth of a second older")
+    assert [(x["value"], x["unit"], x["qualifier"]) for x in m] == [(5e-7, "s", "approx")]
+    assert [(x["value"], x["unit"]) for x in mentions("gain about forty-five microseconds a day")] == [(45.0, "µs")]
+    assert mentions("two million three thousand cars")[0]["value"] == 2_003_000
+
+
+def test_speed_units_parse_in_words():
+    (m,) = science.mentions("Its club swings at up to twenty-three metres a second.")
+    assert (m["value"], m["unit"], m["qualifier"]) == (23, "m/s", "at_most")
+    (m,) = science.mentions("That's over eighty kilometres an hour!")
+    assert (m["value"], m["unit"], m["qualifier"]) == (80, "km/h", "more_than")
+
+
+def test_nearest_bound_word_wins():
+    """'All over in less than a thousandth' is an upper bound, though 'over' also appears."""
+    (m,) = science.mentions("All over in less than a thousandth of a second.")
+    assert m["qualifier"] == "at_most"
+
+
+def test_claim_bound_accepts_the_same_bound_only():
+    weights = {"id": "w", "beat": "setup", "unit": "x", "value": 2500, "bound": "lower", "scope": "history",
+               "evidence": {"quality": 2, "source": "lab paper"}}
+    ok = science.check(sb("Peak forces over two thousand five hundred times its body weight.", claims=[weights]), {},
+                       cards=[{"big": "over 2,500×", "small": "body weight"}])
+    assert blockers(ok) == []
+    unbound = dict(weights, bound=None)
+    bad = science.check(sb("Peak forces over two thousand five hundred times its body weight.", claims=[unbound]), {})
+    assert blockers(bad), "without a declared bound, 'over N' is a stronger claim than N"

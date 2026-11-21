@@ -1,0 +1,126 @@
+slug: why-ocean-blue
+title: "Why The Ocean Is Blue"
+topic: "water is intrinsically blue: its molecules absorb red light weakly, so long paths through water remove red"
+component: custom   # physics: factory/simulation_engine/physics/water_color.py (Beer-Lambert with Pope & Fry 1997 data, CIE colour)
+renderer: three
+scene: ocean3d
+hook_family: 7          # mistaken assumption: "it just reflects the sky"
+structure: C            # familiar thing -> hidden mechanism -> numbers -> consequence
+description: |
+  The sea isn't only reflecting the sky. Water itself is very slightly blue: its molecules' vibrations absorb red
+  light, a little in every metre, and blue hardly at all. A glass looks clear, but after a few metres the red is
+  going, and ten metres down it's almost gone. Every colour on screen is computed from measured absorption data
+  for pure water (Pope & Fry 1997).
+
+  #shorts #physics #ocean #science #light
+tags: [ocean, water, colour, light absorption, physics, science, shorts]
+voice: af_bella
+speed: 1.1
+story:
+  core_idea: "Water absorbs red light, weakly, so after metres of water only blue is left."
+  fascination: "the familiar answer (the sky) is only part of it, and the proof is that red objects turn black underwater"
+  steps: 3            # water absorbs red weakly; it needs metres; the light that comes back is blue
+  buildup: low
+  extras: [twist]     # deep-sea animals are red because red turns black down there
+  payoff: red
+  cut:
+    - "Rayleigh scattering by water molecules: real but second-order; mentioned in the caveats"
+    - "why the molecules absorb red (O-H stretch overtones): one word, 'wobble', is enough"
+    - "heavy water would be less blue: fun, but a second video"
+    - "green coastal water from plankton and silt: in the caveats"
+end_hold_s: 1.0
+beats:
+  - id: hook
+    text: "The sea isn't just reflecting the sky. Water is *blue*."
+    pause_after: 0.2
+  - id: glass
+    text: "A glass of it looks clear. You need metres of water before the colour shows."
+  - id: absorb
+    text: "Water molecules wobble, and that wobble soaks up red light... just a little at a time."
+  - id: metres
+    text: "In every metre, the deepest red loses almost half its brightness. Blue loses about one percent."
+  - id: dive
+    text: "So ten metres down, red is almost *gone*."
+  - id: back
+    text: "The light that bounces back up to you has lost its red. What's left looks blue."
+  - id: red
+    text: "That's why so many deep-sea animals are red. Down there, red looks *black*."
+
+caveats:
+  - "Both effects are real: the sea's colour is the light that comes back out of the water (blue, because water absorbs red) plus sky reflected off the surface, which matters most near the horizon and on calm days (Braun & Smirnov 1993: 'any simple answer is bound to mislead')."
+  - "'The deepest red' is 700 nm, where pure water absorbs 0.624 per metre (46% lost per metre). Orange-red at 620 nm loses about 24% per metre. Blue at 450 nm absorbs 0.0092 per metre (about 0.9%). Pope & Fry 1997."
+  - "'Ten metres down, red is almost gone': at 700 nm, 0.2% of the light is left after 10 m of pure water. Longer reds (600-650 nm) keep more (a few to 10%), so at 10 m a red object looks a murky dark brown-grey rather than pitch black (on screen its colour is shown relative to the light around it, as an adapted eye sees it)."
+  - "Real seawater also contains plankton, dissolved matter and particles, which make coastal water green or brown; our colours are for clear water."
+  - "The colours on screen are computed from the absorption data (5800 K sunlight, CIE 1931 colour matching, sRGB); the sea surface also mixes in a little sky, and brightness is adjusted for display."
+  - "NOAA Ocean Exploration: red light does not reach the deep ocean (by about 100 m), so red animals look black there."
+sources:
+  - "R. M. Pope and E. S. Fry, 'Absorption spectrum (380-700 nm) of pure water. II. Integrating cavity measurements', Applied Optics 36, 8710-8723 (1997); data via OMLC (omlc.org/spectra/water) and NASA Ocean Optics Protocols Rev 4 Vol IV, Table 1.1."
+  - "C. L. Braun and S. N. Smirnov, 'Why is water blue?', Journal of Chemical Education 70, 612-614 (1993)."
+  - "A. Morel and L. Prieur, 'Analysis of variations in ocean color', Limnology and Oceanography 22, 709-722 (1977): R = 0.33 b_b/a; pure seawater scattering 0.00288 per metre at 500 nm, exponent -4.3."
+  - "NOAA Ocean Exploration, 'Why are so many deep-sea animals red in color?' (oceanexplorer.noaa.gov/facts/red-color.html)."
+  - "C. Wyman, P.-P. Sloan and P. Shirley, 'Simple analytic approximations to the CIE XYZ color matching functions', JCGT 2(2), 2013."
+
+claims:
+  - {id: blue_loss, beat: metres, unit: "%", sim: blue_loss_pct, scope: universal, tolerance: 0.15,
+     evidence: {quality: 1, source: "Pope & Fry 1997: a(450 nm) = 0.00922 per metre -> 0.92% lost per metre"}}
+  - {id: dive_depth, beat: dive, unit: m, sim: dive_m, scope: condition}
+  - {id: red_left_card, card: "≈ 0.2%", unit: "%", sim: red_left_10m_pct, scope: universal, tolerance: 0.15,
+     evidence: {quality: 1, source: "exp(-0.624 x 10) = 0.19% of 700 nm light left after 10 m of pure water"}}
+  - {id: red_card, card: "46%", unit: "%", sim: red_loss_pct, scope: universal, tolerance: 0.02,
+     evidence: {quality: 1, source: "Pope & Fry 1997, 700 nm"}}
+  - {id: blue_card, card: "≈ 0.9%", unit: "%", sim: blue_loss_pct, scope: universal, tolerance: 0.05,
+     evidence: {quality: 1, source: "Pope & Fry 1997, 450 nm"}}
+  - {id: depth_hud, card: "10 m", unit: m, sim: dive_m, scope: condition}
+
+absolute_ok: []
+
+entities:
+  - id: sea
+    type: environment
+    category: E
+    importance: primary
+    visual_contract: {must_read_as: "a calm low-poly sea beside a wooden pier and a sandy beach, coloured from the absorption model"}
+  - id: glass
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "a clear drinking glass of water next to a long glass tank of water that looks clearly blue"}
+  - id: beams
+    type: hero_object
+    category: B
+    importance: primary
+    visual_contract: {must_read_as: "three light beams (red, green, blue) going down into the water; the red fades out within a few metres"}
+  - id: ball
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "a red ball on a rope sinking, turning dull brown-black as it goes deeper"}
+  - id: molecule
+    type: support
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "a simple water molecule (one big, two small balls) wobbling"}
+  - id: fish
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "a red low-poly fish in a lamp beam, then black when the lamp goes off"}
+
+hero: beams
+
+publish:
+  cover_headline: "Water itself is blue"
+  cover_label: {big: "red fades first", small: "water is blue"}
+  hashtags: ["#shorts", "#physics", "#ocean", "#science", "#light"]
+
+retention:
+  hud:
+    - id: depth
+      type: counter
+      label: depth
+      value: {frames: depth}
+      format: "{v:.0f} m"
+      at: [0.27, 0.31]
+      show: [dive, dive.end+0.3]
+      claims: [{claim: depth_hud, at: dive.end+0.2}]
+  cues: []

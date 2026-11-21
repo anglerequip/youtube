@@ -1,0 +1,131 @@
+slug: banana-radioactive
+title: "Your Banana Is Radioactive"
+topic: "bananas contain potassium-40, so about fifteen atoms in one decay each second; a person is far more radioactive, and eating one changes almost nothing"
+component: custom   # physics: factory/simulation_engine/physics/potassium.py (activity from half-life and abundance; Poisson decays)
+renderer: three
+scene: banana3d
+hook_family: 1          # impossible-sounding claim that is literally true
+structure: B            # surprising fact -> mechanism -> twist (you) -> reassurance
+description: |
+  A banana holds about half a gram of potassium, and about one potassium atom in 8,500 is radioactive
+  potassium-40. That's roughly fifteen decays every second, and every flash on screen is a real-rate random
+  sample. Your own body, with about 140 g of potassium, does over four thousand a second. Eating a banana
+  barely changes that, because your body keeps its potassium level steady.
+
+  #shorts #physics #radiation #science #banana
+tags: [banana, radioactive, potassium-40, radiation, physics, science, shorts]
+voice: af_bella
+speed: 1.1
+story:
+  core_idea: "Bananas contain radioactive potassium-40, but you are far more radioactive, and eating one changes nothing."
+  fascination: "a fruit on your table is decaying fifteen times a second, and you are a bigger source than it is"
+  steps: 3            # potassium-40 is unstable; it decays slowly, firing an electron; it happens in you too
+  buildup: low
+  extras: [twist]     # you are more radioactive than the banana; eating one is flushed out
+  payoff: eat
+  cut:
+    - "banana equivalent dose (0.1 microsievert): a contested unit, and the honest ending makes it moot; in the caveats"
+    - "electron capture and the 1.46 MeV gamma ray: true, the electron is enough"
+    - "carbon-14 in the body: a second radioactive source, a different video"
+    - "how many bananas would be dangerous: a famous but misleading number"
+end_hold_s: 1.0
+beats:
+  - id: hook
+    text: "This banana is *radioactive*: about fifteen decays a second."
+    pause_after: 0.2
+  - id: why
+    text: "Bananas are full of potassium, and a tiny share of that potassium is unstable."
+  - id: slow
+    text: "It's patient. Half of it takes over a billion years to decay."
+  - id: what
+    text: "When one does go, it usually fires out a fast electron... and the atom becomes calcium."
+  - id: you
+    text: "But you're more radioactive than the banana. Inside you, it's over four thousand decays a second."
+  - id: eat
+    text: "And eating one barely changes that. Your body keeps its potassium steady, and simply flushes out the extra."
+
+caveats:
+  - "Activity from first principles: natural potassium is 0.0117% potassium-40, half-life 1.248 billion years, which gives about 31.7 becquerel per gram of potassium (ORAU and Bin Samat et al. quote about 31)."
+  - "We assume 0.45 g of potassium in a medium banana (Chiquita: 422 mg; Wikipedia: about half a gram), so about 14 decays a second; 'about fifteen' is rounded. Bigger bananas have more."
+  - "The flashes on the banana are a random sample at that real rate (a Poisson process with a fixed seed). In the body, only some decays are drawn; the counter shows the real total."
+  - "The body figure uses 140 g of potassium (ICRP Reference Man, a 70 kg adult): about 4,400 decays a second from potassium-40 alone."
+  - "Eating a banana briefly adds its potassium, and the kidneys remove the excess within hours to keep the body's level steady (Eisenbud & Gesell 1997: 'under strict homeostatic control'). That is why the often-quoted 0.1 microsievert per banana is contested."
+  - "About 89% of potassium-40 decays emit an electron and leave calcium-40; the other 11% capture an electron and become argon-40, usually with a gamma ray."
+  - "The atom close-ups are not to scale."
+sources:
+  - "Banana equivalent dose (Wikipedia, accessed 2026-11-19): about 15 Bq per banana, about half a gram of potassium, 31 Bq/g, body potassium and homeostasis references."
+  - "P. Frame, 'Radioactivity in bananas', Oak Ridge Associated Universities (ORAU) Health Physics Historical Instrumentation Museum."
+  - "M. S. Bin Samat, S. Green and A. H. Beddoe, 'The 40K activity of one gram of potassium', Physics in Medicine and Biology 42, 407-413 (1997)."
+  - "ICRP Publication 23, Report of the Task Group on Reference Man (1975): 140 g of potassium in a 70 kg adult."
+  - "M. Eisenbud and T. Gesell, Environmental Radioactivity, 4th ed. (1997), pp. 171-172."
+  - "NNDC / LNHB decay data for K-40: half-life 1.248e9 years; beta-minus 89.3%, electron capture 10.7%."
+
+claims:
+  - {id: banana_rate, beat: hook, unit: count, sim: banana_bq, scope: typical, tolerance: 0.12,
+     evidence: {quality: 2, source: "31.7 Bq/g x 0.45 g = 14.3 decays per second; Wikipedia: roughly 15 Bq per banana"}}
+  - {id: half_life, beat: slow, unit: count, sim: half_life_y, scope: universal,
+     evidence: {quality: 1, source: "NNDC: K-40 half-life 1.248e9 years ('over a billion')"}}
+  - {id: body_rate, beat: you, unit: count, sim: body_bq, scope: typical,
+     evidence: {quality: 2, source: "140 g (ICRP Reference Man) x 31.7 Bq/g = 4,440 per second ('over four thousand'); Wikipedia's 175 g gives 5,400"}}
+  - {id: body_card, card: "≈ 4,400", unit: count, sim: body_bq, scope: typical, tolerance: 0.02,
+     evidence: {quality: 2, source: "same calculation, shown on screen"}}
+  - {id: k40_card, card: "potassium-40", unit: count, sim: k40_mass, scope: universal,
+     evidence: {quality: 1, source: "isotope name"}}
+  - {id: ca40_card, card: "calcium-40", unit: count, sim: k40_mass, scope: universal,
+     evidence: {quality: 1, source: "beta-minus decay keeps the mass number: K-40 -> Ca-40"}}
+  - {id: half_card, card: "over a billion years", unit: count, sim: half_life_y, scope: universal,
+     evidence: {quality: 1, source: "NNDC: 1.248e9 years"}}
+
+  - {id: one_in_card, card: "1 atom in 8,500", unit: count, sim: one_in, scope: universal, tolerance: 0.02,
+     evidence: {quality: 1, source: "isotopic abundance 0.0117% = 1 in 8,547"}}
+  - {id: one_atom, card: "1 atom", unit: count, value: 1, scope: universal, evidence: {quality: 1, source: "ratio wording: one atom in 8,500"}}
+
+absolute_ok: []
+
+entities:
+  - id: banana
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "one ripe low-poly banana on a wooden picnic table, with small bright flashes popping on it at random"}
+  - id: atoms
+    type: support
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "a cluster of grey balls (potassium atoms), one highlighted red; it shoots out a small fast particle and turns white"}
+  - id: figure
+    type: hero_object
+    category: C
+    importance: primary
+    visual_contract: {must_read_as: "a faceless wooden toy figure standing by the table, flickering with many tiny flashes"}
+  - id: ground
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "garden grass, table and hazy sky; no holes"}
+
+hero: banana
+
+publish:
+  cover_headline: "Your banana is radioactive"
+  cover_label: {big: "≈ 15 decays", small: "every second"}
+  hashtags: ["#shorts", "#physics", "#radiation", "#science", "#banana"]
+
+retention:
+  hud:
+    - id: count
+      type: counter
+      label: decays counted
+      value: {frames: count}
+      format: "{v:.0f}"
+      at: [0.27, 0.2]
+      show: [hook+0.2, why@unstable-0.45]
+    - id: bodyk
+      type: counter
+      label: potassium in your body
+      value: {frames: body_k}
+      format: "{v:.1f} g"
+      at: [0.30, 0.2]
+      show: [eat+0.3, end]
+  cues:
+    - {at: "what@electron", sfx: swish, gain: 0.16}

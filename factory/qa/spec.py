@@ -61,7 +61,8 @@ def load(sb, build_plan: bool = True) -> Context:
     else:
         ctx.notes.append("no timeline yet (narration not generated): plan-level checks skipped")
     if build_plan and ctx.tl is not None and (sb.path / "plan.py").exists():
-        ctx.module = sb.load_module("plan.py")
+        from .. import retention
+        ctx.module = retention.load_plan_module(sb)
         ctx.plan = ctx.module.build_plan(ctx.tl, fps=settings.fps)
     elif (out / "plan.json").exists() and ctx.tl is not None:
         ctx.plan = json.loads((out / "plan.json").read_text())
@@ -73,8 +74,9 @@ def check(ctx: Context) -> list[Finding]:
     sb, F = ctx.sb, []
     sbf = [str(sb.path / "storyboard.yaml")]
     n = len(sb.beats)
-    if not 8 <= n <= 14:
-        F.append(Finding("spec.beat_count", "spec", 2, None, f"{n} beats (house rule 8-14)", files=sbf))
+    if n < 2:      # no beat-count target: a story takes the beats it needs (factory/story_length.py)
+        F.append(Finding("spec.beat_count", "spec", 2, None, f"{n} beat(s): a hook and a payoff need at least two",
+                         files=sbf))
     ents = sb.extra.get("entities") or []
     if not ents:
         F.append(Finding("spec.no_entities", "spec", 1, "BLOCKED_SPEC",
@@ -95,12 +97,7 @@ def check(ctx: Context) -> list[Finding]:
         F.append(Finding("spec.no_sources", "spec", 1, "BLOCKED_MISSING_EVIDENCE", "storyboard lists no sources",
                          files=sbf))
     if ctx.tl is not None:
-        d = ctx.tl.duration
-        if d <= 60.0:
-            F.append(Finding("spec.too_short", "spec", 0, "BLOCKED_SPEC",
-                             f"narration is {d:.1f}s; every video must be over 60 s (TikTok rule)", files=sbf))
-        elif d > 75.5:
-            F.append(Finding("spec.too_long", "spec", 3, None, f"narration is {d:.1f}s (target 61-75 s)"))
+        # no duration target here: length is checked for padding in the length layer (story_length.py)
         hook = next((b for b in ctx.tl.lines if b.id == sb.beats[0].id), None)
         if hook is not None and hook.end - hook.start > 3.6:
             F.append(Finding("spec.slow_hook", "spec", 2, None,

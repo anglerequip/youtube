@@ -1,0 +1,174 @@
+slug: dog-feet
+title: "Why Your Dog Sleeps On Your Feet"
+topic: "the viral claim that a dog sleeping at your feet has taken the pack's 'night watch', checked against dog sleep and wolf research"
+component: custom   # behaviour, not physics: the evidence is in sources/caveats; the scene is renderer/scenes/dogfeet3d.js
+renderer: three
+scene: dogfeet3d
+hook_family: 2          # a familiar moment with a popular explanation that is half wrong
+structure: D            # duo: claim -> which half is wrong -> which half is true -> the likely real reasons -> joke payoff
+voice_clips: content/episodes/dog-feet/voice   # duo voiced with ElevenLabs (wizard zYcjlYFOd3taleS0gkk3, woman 0ggs85h7hrWz8ExXnsBc), eleven_v4, English
+max_inner_pause_s: 0.3   # trims the TTS model's long gaps between sentences (not a speed change)
+speakers: {wizard: zYcjlYFOd3taleS0gkk3, woman: 0ggs85h7hrWz8ExXnsBc}
+description: |
+  Your dog sleeps on your feet, so it must be guarding you on "night watch", right? Half right.
+  The pack-rank story came from captive wolves; wild packs are mostly families. But dogs really are
+  light sleepers: filmed overnight, they woke about 23 times in 8 hours, and a bark outside gets more
+  reaction than other sounds. The likely reasons for your feet: warmth, your smell, and a puppy-pile habit.
+
+  Sources: Adams & Johnson 1993 and 1994 (Applied Animal Behaviour Science), Mech 1999 (Canadian Journal of Zoology).
+
+  #shorts #dogs #dogbehavior #science #mythbusting
+tags: [dogs, dog behavior, dog sleep, wolves, alpha wolf myth, science, shorts]
+voice: elevenlabs-duo
+speed: 1.0
+story:
+  core_idea: "Your dog isn't on pack night-watch duty; dogs are just light sleepers who like your warmth and smell."
+  fascination: "the viral story is half true: dogs really do wake about every twenty minutes, but the 'pack job' part is a myth from captive wolves"
+  steps: 4            # the pack myth; dogs wake ~23 times a night (cycles of ~16 min asleep, 5 awake, in the caveat); barks get extra attention; warmth/smell/social sleeping
+  buildup: low
+  extras: [twist]     # the 'facing the door' detail nobody has measured
+  payoff: pillow
+  cut:
+    - "dog REM sleep and dreaming paws: fun, but a tangent from why the feet"
+    - "whether to let dogs sleep in your bed (sleep-quality studies): advice, not the myth-bust"
+    - "Mech withdrawing his own 1970 book: a nice story, but slows the pack beat"
+    - "breed differences in sleep: no solid numbers for the claim"
+    - "the 16-min asleep / 5-min awake split: true, but the 23 wake-ups already make the point; kept in the caveat"
+    - "'mum, dad and the kids' and 'strangers thrown together': the picture of the wolf family says it"
+end_hold_s: 1.6
+beats:
+  - id: hook
+    speaker: wizard
+    text: "Every night, my dog sleeps on my *feet*. Is he guarding me?"
+    pause_after: 0.25
+  - id: myth
+    speaker: woman
+    text: "The internet says yes. Night watch, for the pack. Cute story. Half *wrong*."
+    pause_after: 0.2
+  - id: which
+    speaker: wizard
+    text: "Which half?"
+    pause_after: 0.15
+  - id: pack
+    speaker: woman
+    text: "The pack part. That \"top dog\" idea came from captive wolves. Wild packs are mostly just *families*."
+    pause_after: 0.25
+  - id: wake
+    speaker: woman
+    text: "Here's the *true* half. Dogs filmed overnight woke up about twenty-three times in eight hours."
+    pause_after: 0.2
+  - id: bark
+    speaker: woman
+    text: "And a bark outside? That gets more *reaction* than other noises."
+    pause_after: 0.15
+  - id: guard
+    speaker: wizard
+    text: "So he *is* on guard!"
+    pause_after: 0.15
+  - id: light
+    speaker: woman
+    text: "Light sleeper, yes. Bodyguard? Not really."
+    pause_after: 0.2
+  - id: feet
+    speaker: wizard
+    text: "Then why my feet?"
+    pause_after: 0.15
+  - id: pile
+    speaker: woman
+    text: "Warmth. Your smell. And dogs are social sleepers. Puppies sleep in a big pile... and you're his *pile* now."
+    pause_after: 0.25
+  - id: door
+    speaker: wizard
+    text: "And the facing-the-door thing?"
+    pause_after: 0.15
+  - id: draught
+    speaker: woman
+    text: "Nobody's measured that one. He might just like the draught."
+    pause_after: 0.2
+  - id: pillow
+    speaker: wizard
+    text: "So I'm not his boss. I'm his... *pillow*."
+    pause_after: 0.0
+
+caveats:
+  - "Sleep figures: 24 pet dogs observed overnight in their homes (18 on video) averaged 23 sleep-wake episodes in 8 hours, about 16 minutes asleep and 5 minutes awake per cycle (Adams & Johnson 1993). A small sample; individual dogs vary."
+  - "Barking: in a playback test with 12 dogs at night, dogs were more likely to bark or become more alert in response to recorded barking than to other sounds (owner-concern sounds, common urban sounds), and responded less when asleep than when alert (Adams & Johnson 1994). 'More reaction than other noises' summarises that comparison."
+  - "Wolves: the alpha/dominance-rank picture came from captive wolves that were unrelated adults housed together; wild packs are usually a breeding pair and their offspring (Mech 1999). Some wild packs have more than one breeding pair, and dogs are not wolves, so neither model maps exactly onto a pet dog."
+  - "Warmth, scent and social contact are the explanations behaviourists usually give for dogs sleeping against their owners; they are likely reasons, not measured motives. Young puppies huddle because they cannot yet regulate their body temperature well."
+  - "We found no study of whether dogs sleeping on beds face the door; the video says so. Whether a dog 'thinks' it has a job is unknown."
+  - "Our own wording; the topic came from a viral clip, whose explanation we test rather than repeat. The wizard, the woman and the dogs are original 3D characters."
+sources:
+  - "G. J. Adams and K. G. Johnson, 'Sleep-wake cycles and other night-time behaviours of the domestic dog Canis familiaris', Applied Animal Behaviour Science 36(2-3), 233-248 (1993). doi:10.1016/0168-1591(93)90013-F"
+  - "G. J. Adams and K. G. Johnson, 'Behavioural responses to barking and other auditory stimuli during night-time sleeping and waking in the domestic dog (Canis familiaris)', Applied Animal Behaviour Science 39(2), 151-162 (1994). doi:10.1016/0168-1591(94)90135-X"
+  - "L. D. Mech, 'Alpha status, dominance, and division of labor in wolf packs', Canadian Journal of Zoology 77, 1196-1203 (1999)."
+  - "Scientific American, 'Is the Alpha Wolf Idea a Myth?' (accessed 2026-11-20)."
+
+claims:
+  - {id: wakeups, beat: wake, unit: x, value: 23, scope: history,
+     evidence: {quality: 2, source: "Adams & Johnson 1993: on average 23 sleep-wake episodes during 8 h, 24 dogs"}}
+  - {id: night_hours, beat: wake, unit: count, value: 8, scope: history,
+     evidence: {quality: 2, source: "Adams & Johnson 1993: the 8-hour night-time observation window"}}
+
+absolute_ok:
+  - {word: "every", beat: hook, why: "'every night' is the wizard's own anecdote about his dog"}
+  - {word: "nobody", beat: draught, why: "we searched and found no study of dogs facing the door; the caveat says so"}
+
+entities:
+  - id: dog
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "a tan-and-white mid-size dog with floppy ears lying on the duvet at the wizard's feet, rump against his toes, facing the foot of the bed; eyes, nose, ears and tail visible"}
+  - id: wizard
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the wizard presenter (hat, beard) sitting up in bed against his pillows, the duvet over his legs, the dog lying at his feet"}
+  - id: woman
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the young woman presenter (long black hair with a fringe, black outfit) standing beside the bed, explaining"}
+  - id: bedroom
+    type: support
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "a cosy cut-away bedroom at night: bed, bedside lamp, moonlit window, a door with light under it"}
+  - id: wolves
+    type: support
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "first, four unrelated adult wolves kept apart in a fenced pen (captive); then, in the wild, a family resting together in the snow: two grey adults and three pups"}
+  - id: puppies
+    type: support
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "a pile of sleeping puppies in a basket on a blanket"}
+  - id: ground
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "wooden bedroom floor and walls; outside, snow and trees; no holes"}
+
+hero: dog
+
+publish:
+  cover_at_s: 1.0
+  cover_headline: "Why your dog sleeps here"
+  cover_label: {big: "23 times", small: "awake a night"}
+  hashtags: [dogs, dogbehavior, science, mythbusting]
+  youtube:
+    title: "Why Your Dog Sleeps On Your Feet (It's Not Night Watch)"
+    description: |
+      The internet says your dog sleeps on your feet because it took the pack's "night watch". That's half wrong.
+
+      The "top dog" pack idea came from captive wolves; wild packs are mostly families. But dogs really are light sleepers: filmed overnight, they woke about 23 times in 8 hours, and a bark outside gets more reaction than other sounds. Why your feet? Warmth, your smell, and an old puppy-pile habit.
+  how_made: "How it's made: original 3D characters and scenes, animated by us. The voices are AI voices (ElevenLabs)."
+  tiktok:
+    caption: "Your dog isn't on night watch. It's a light sleeper that likes your warm, smelly feet."
+  facebook:
+    title: "Why Your Dog Sleeps On Your Feet"
+    caption: |
+      Is your dog guarding you at night? Half right. Dogs wake about 23 times a night and react to barks outside, but the "pack job" story is a myth from captive wolves. The real reasons: warmth, your smell, and puppy piles.
+
+      #dogs #dogbehavior #science
