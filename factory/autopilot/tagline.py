@@ -30,3 +30,26 @@ def tagline(tags: list[str], title: str, override: str | None = None) -> str:
         if words & set(keys):
             return line
     return GENERIC_TAGLINE
+
+
+# Series playlists (2026-11-21 YouTube audit): a playlist per topic family keeps a viewer who liked one Short
+# watching the next one, and gives the Shorts "related video" link a home. First match wins.
+TOPIC_PLAYLISTS = (
+    (("game", "games", "gaming", "gamer", "gamers", "videogame", "fps", "frame"), "Video game science"),
+    (("fish", "fishing", "angler", "angling", "lure", "boat"), "Fishing science"),
+    (TOPIC_TAGLINES[0][0] + ("shrimp", "insect", "insects"), "Animal science"),
+    (TOPIC_TAGLINES[1][0], "Your body, explained"),
+    (TOPIC_TAGLINES[4][0] + ("traffic", "car", "cars", "slinky"), "Physics that breaks your intuition"),
+)
+GENERIC_PLAYLIST = "Surprising science"
+
+
+def playlist(tags: list[str], title: str, override: str | None = None) -> str:
+    """The package's own playlist wins; otherwise the tags and title pick a series."""
+    if override:
+        return override.strip()
+    words = set(re.findall(r"[a-z]+", " ".join([*map(str, tags), str(title)]).lower()))
+    for keys, name in TOPIC_PLAYLISTS:
+        if words & set(keys):
+            return name
+    return GENERIC_PLAYLIST
