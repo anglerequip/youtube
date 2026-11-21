@@ -89,6 +89,9 @@ function fromGLB(kind, name) {
       if (!wave) rot('armR', sw * 0.5);
       if (!point && kind !== 'wizard') rot('armL', -sw * 0.5);
       model.position.y = Math.abs(Math.cos(w)) * 0.015;
+    } else if (p.sit) {                    // sitting on a seat about 0.45 m high (thighs forward, shins down)
+      const s = p.sit; rot('legL', -1.45 * s); rot('legR', -1.45 * s); rot('kneeL', 1.45 * s); rot('kneeR', 1.45 * s);
+      model.position.y = -(kind === 'wizard' ? 0.46 : 0.42) * s;
     } else { for (const j of ['legL', 'legR', 'kneeL', 'kneeR']) rot(j); model.position.y = 0; }
   };
   root.pose();

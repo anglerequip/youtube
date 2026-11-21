@@ -51,6 +51,10 @@ export const LIGHTING = {
   reef: { sun: '#d8f4ff', sunI: 2.4, elev: 62, az: 30, hemiSky: '#7cc9d8', hemiGround: '#3b5a52', hemiI: 1.25,
           rim: '#bfe8ff', rimI: 1.2, rimElev: 30, rimAz: 200, env: 0.3, bloomT: 3.0,
           sky: '#1d6a80', skyTop: '#0c3a50', fog: '#2b7f93', fogNear: 6, fogFar: 34, exposure: 1.0 },
+  // under a calm lake (sets/lake.js): soft green-teal light from above, haze that closes in within ~20 m
+  underlake: { sun: '#e4f6ee', sunI: 2.0, elev: 60, az: 30, hemiSky: '#8cc4b8', hemiGround: '#3f5246', hemiI: 1.3,
+               rim: '#cfeee6', rimI: 0.9, rimElev: 30, rimAz: 200, env: 0.25, bloomT: 3.5,
+               sky: '#cfe0e4', skyTop: '#9fc0d0', fog: '#3f6f66', fogNear: 1.5, fogFar: 18, exposure: 1.05 },
   night: { sun: '#a9bcff', sunI: 0.7, elev: 40, az: 160, hemiSky: '#2a3552', hemiGround: '#141c14', hemiI: 0.9,
            sky: '#111826', skyTop: '#080b16', fog: '#111826', fogNear: 40, fogFar: 170, exposure: 1.25 },
 };
