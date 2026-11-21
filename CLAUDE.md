@@ -44,7 +44,7 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
 
 - **Narrator** (solo episodes): ElevenLabs `TWutjvRaJqAX89preB4e` (`TTS_PROVIDER=elevenlabs`, `ELEVENLABS_VOICE_ID`).
   It replaces Kokoro `af_bella`, which stays as the free fallback (`TTS_PROVIDER=kokoro`).
-- **Presenters** (two-character DUO episodes, `docs/styles/DUO.md`): man `zYcjlYFOd3taleS0gkk3`, woman `0ggs85h7hrWz8ExXnsBc`
+- **Presenters** (two-character DUO episodes, `docs/styles/DUO.md`): man `3iY0r3RaYmOh6WfIwMIH` ("Matt", Caesar, 2026-11-21), woman `vChnJZ1Cu89g2XXumPfT` ("Lara", Caesar, 2026-11-21)
   (`ELEVENLABS_VOICE_MAN`, `ELEVENLABS_VOICE_WOMAN`).
 - Don't re-voice an episode that is already published or scheduled.
 
