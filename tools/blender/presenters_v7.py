@@ -21,7 +21,7 @@ Both are our own original designs. They are not modelled on any real person, act
 import bpy, bmesh, math, sys, os, argparse, random
 from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from presenters import (reset, link, mat, mesh_obj, sphere, grid, tube, strands, parent_keep, surface_hit, build_body,
+from presenters import (reset, link, mat, mesh_obj, sphere, grid, tube, strands, parent_keep, surface_hit, build_body, apply_mods,
                         g2, scalp_cap, stage, look)
 
 # ---------------------------------------------------------------- head (v6 head, denser and more expressive)
@@ -40,7 +40,7 @@ def build_head7(name, P, center, mats):
         for s in (-1, 1):
             y += P['socket'] * g2(x, z, s * 0.37, 0.06, 0.16, 0.12) * front
             y -= P['ridge'] * g2(x, z, s * 0.33, 0.26, 0.22, 0.07) * front
-        y -= P['nose'] * g2(x, z, 0, -0.14, 0.085, 0.24) * front
+        y -= P['nose'] * g2(x, z, 0, P.get('nose_z', -0.14), P.get('nose_sx', 0.085), P.get('nose_sz', 0.24)) * front
         y -= P['tip'] * g2(x, z, 0, -0.33, 0.085, 0.07) * front
         for s in (-1, 1):
             y -= P.get('alar', 0) * g2(x, z, s * 0.1, -0.36, 0.05, 0.05) * front
@@ -51,8 +51,34 @@ def build_head7(name, P, center, mats):
         y -= P['lips'] * g2(x, z, 0, -0.55, 0.22, 0.1) * front
         y += 0.05 * g2(x, z, 0, -0.68, 0.2, 0.05) * front
         v.co = Vector((x * a, y * d, z * h)) + Vector(center)
-    head = mesh_obj(name, bm, mats['skin'], True, 1)
     C = Vector(center)
+    sculpt = P.get('sculpt_lips', False)
+    head = mesh_obj(name, bm, mats['skin'], True, 2 if sculpt else 1)
+    def sig(t):
+        return 1.0 / (1.0 + math.exp(-max(-40.0, min(40.0, t))))
+    if sculpt:
+        # v7.3: lips are sculpted into the (denser) head surface and painted, instead of separate lip shapes
+        apply_mods(head)
+        for pl in head.data.polygons: pl.use_smooth = True
+        zm = P['mouth_z'] * P.get('lower', 1.0); wu = P['lipw']; wl = wu * 0.9; hU, hL = P['lip_h']; smu = P.get('smile_u', 0.0)
+        def lipmask(x, z):
+            ax = abs(x); zc = zm + smu * (x / wu) ** 2
+            fu = max(0.0, 1 - (x / wu) ** 2); fl = max(0.0, 1 - (x / wl) ** 2)
+            zt = zc + hU * fu ** 0.5 * (1 + 0.3 * math.exp(-((ax - 0.35 * wu) / (0.22 * wu)) ** 2)) - 0.25 * hU * math.exp(-(x / (0.12 * wu)) ** 2)
+            zb = zc - hL * fl ** 0.6
+            mu = sig((z - zc) / 0.004) * sig((zt - z) / 0.006) * sig((wu - ax) / 0.012)
+            ml = sig((zc - z) / 0.004) * sig((z - zb) / 0.007) * sig((wl - ax) / 0.012)
+            groove = math.exp(-((z - zc) / 0.007) ** 2) * sig((wu * 1.02 - ax) / 0.01)
+            return mu, ml, groove, fu, fl
+        P['_lipmask'] = lipmask
+        vol = P.get('lip_vol', 0.035)
+        for v in head.data.vertices:
+            x, y, z = (v.co.x - C.x) / a, (v.co.y - C.y) / d, (v.co.z - C.z) / h
+            if y > -0.5: continue
+            mu, ml, gr, fu, fl = lipmask(x, z)
+            y -= vol * (0.65 * mu * fu ** 0.5 + 0.9 * ml * fl ** 0.5)
+            y += 0.012 * gr
+            v.co.y = C.y + y * d
     mats.setdefault('glint', mat('glint', '#ffffff', 0.1, emit='#ffffff', emit_s=0.6))
     paint = P.get('paint')
     if paint:
@@ -74,6 +100,14 @@ def build_head7(name, P, center, mats):
             for fx, fz in freckles:
                 f = paint.get('freckle_s', 0.6) * g2(x, z, fx, fz, 0.018, 0.016) * front
                 if f > 0.01: col = col.lerp(Vector((0.72, 0.5, 0.4)), min(1, f))
+            if sculpt:
+                for sd in (-1, 1):
+                    col *= 1 - 0.35 * g2(x, z, sd * 0.075, -0.36, 0.03, 0.022) * front                       # nostrils
+                    col *= 1 - 0.18 * g2(x, z, sd * P['eye_x'], P['eye_z'] + 0.17, 0.12, 0.022) * front       # lid crease
+                mu, ml, gr, fu, fl = P['_lipmask'](x, z)
+                lm = min(1.0, (mu + ml) * front * 1.4)
+                col = col.lerp(Vector(P['lip_mul']), lm)
+                col *= 1 - 0.55 * gr * front
             ca.data[i].color = (*col, 1.0)
         head.data.color_attributes.active_color = ca
     def hit(x, z, depth=0.0):
@@ -145,9 +179,33 @@ def build_head7(name, P, center, mats):
             dx = (v.co.x - C.x) / w
             v.co.z += sm * dx * dx
             v.co.y += 0.25 * sm * dx * dx * 0.0   # keep depth
-    ul = sphere('lip_upper', 1, 48, 24, (C.x, p.y + 0.0025, mz + P['ulip'][1] * 0.8), (P['ulip'][0], 0.0042, P['ulip'][1]), mats['lip']); lipshape(ul, P['ulip'][0]); parts.append(ul)
-    ll = sphere('lip_lower', 1, 48, 24, (C.x, p.y + 0.0022, mz - P['llip'][1] * 1.0), (P['llip'][0], 0.0046, P['llip'][1]), mats['lip']); lipshape(ll, P['ulip'][0]); parts.append(ll)
-    mi = sphere('mouth_inside', 1, 32, 12, (C.x, p.y + 0.004, mz), (P['ulip'][0] * 0.85, 0.004, 0.0008), mats['mouth']); lipshape(mi, P['ulip'][0]); parts.append(mi)
+    if sculpt:
+        # lower lip: a copy of the sculpted lower-lip surface (moves down to talk), dark mouth layer under it
+        def lip_copy(nm, thr, lift, m):
+            bm = bmesh.new(); bm.from_mesh(head.data)
+            keep = set()
+            for f in bm.faces:
+                ok = True
+                for vv in f.verts:
+                    x, z = (vv.co.x - C.x) / a, (vv.co.z - C.z) / h
+                    if vv.co.y > C.y - 0.5 * d or P['_lipmask'](x, z)[1] < thr: ok = False; break
+                if ok: keep.add(f)
+            bmesh.ops.delete(bm, geom=[f for f in bm.faces if f not in keep], context='FACES')
+            bm.normal_update()
+            for vv in bm.verts: vv.co += vv.normal * lift
+            me = bpy.data.meshes.new(nm); bm.to_mesh(me); bm.free()
+            for at in list(me.color_attributes): me.color_attributes.remove(at)
+            me.materials.clear(); me.materials.append(m)
+            o = link(bpy.data.objects.new(nm, me))
+            for pl in me.polygons: pl.use_smooth = True
+            return o
+        parts.append(lip_copy('mouth_inside', 0.62, 0.00008, mats['mouth']))
+        parts.append(lip_copy('lip_lower', 0.45, 0.0003, mats['lip']))
+    ul = None if sculpt else sphere('lip_upper', 1, 48, 24, (C.x, p.y + 0.0025, mz + P['ulip'][1] * 0.8), (P['ulip'][0], 0.0042, P['ulip'][1]), mats['lip'])
+    if not sculpt:
+        lipshape(ul, P['ulip'][0]); parts.append(ul)
+        ll = sphere('lip_lower', 1, 48, 24, (C.x, p.y + 0.0022, mz - P['llip'][1] * 1.0), (P['llip'][0], 0.0046, P['llip'][1]), mats['lip']); lipshape(ll, P['ulip'][0]); parts.append(ll)
+        mi = sphere('mouth_inside', 1, 32, 12, (C.x, p.y + 0.004, mz), (P['ulip'][0] * 0.85, 0.004, 0.0008), mats['mouth']); lipshape(mi, P['ulip'][0]); parts.append(mi)
     # ears
     for s in ((-1, 1) if P['ear'] > 0 else ()):
         p2, n2 = surface_hit(head, (C.x + s * 1.0, C.y + 0.01, C.z - 0.01 * h), (-s, 0, 0))
@@ -210,23 +268,27 @@ def build_woman():
         'hair': mat('w_hair', '#0f0e11', 0.42), 'hairs': mat('w_hair_str', '#19171b', 0.36), 'streak': mat('w_hair_streak', '#5a2140', 0.4),
         'eyewhite': mat('w_eyewhite', '#f3eee8', 0.12), 'iris': mat('w_iris', '#5a6a4a', 0.2), 'irisring': mat('w_iris_ring', '#2a170e', 0.3),
         'pupil': mat('w_pupil', '#050506', 0.1), 'lash': mat('w_lash', '#120c0a', 0.5), 'brow': mat('w_brow', '#2a1d17', 0.7),
-        'lidc': mat('w_lidshadow', '#7a5866', 0.55), 'lip': mat('w_lip', '#84424f', 0.45), 'mouth': mat('w_mouth', '#3a1518', 0.8),
+        'lidc': mat('w_lidshadow', '#7a5866', 0.55), 'lip': mat('w_lip', '#c47676', 0.4), 'mouth': mat('w_mouth', '#3a1518', 0.8),
         'gold': mat('w_gold', '#c9ccd2', 0.28, metal=0.35), 'earin': mat('w_earin', '#e3a996', 0.5, sss=0.2),
     }
     # v7.2 body: slim, natural proportions, arms relaxed close to the body (Caesar: the v7.1 body looked goofy)
     J = {
         'pelvis': ((0, 0, 0.95), (0.136, 0.096)), 'spine': ((0, 0.006, 1.08), (0.092, 0.066)), 'chest': ((0, 0.0, 1.25), (0.112, 0.078)),
-        'neck': ((0, 0.008, 1.44), (0.043, 0.042)), 'head': ((0, 0.005, 1.51), (0.036, 0.036)),
+        'neck': ((0, 0.008, 1.44), (0.037, 0.037)), 'head': ((0, 0.005, 1.51), (0.033, 0.033)),
     }
     for s, n in ((1, 'L'), (-1, 'R')):
         J.update({
-            f'clav_{n}': ((s * 0.058, 0.005, 1.4), (0.048, 0.044)), f'shoulder_{n}': ((s * 0.158, 0.008, 1.385), (0.047, 0.045)),
-            f'elbow_{n}': ((s * 0.208, 0.025, 1.13), (0.036, 0.036)), f'wrist_{n}': ((s * 0.226, 0.0, 0.9), (0.025, 0.021)),
-            f'hand_{n}': ((s * 0.229, -0.008, 0.83), (0.022, 0.011)), f'thumb_{n}': ((s * 0.218, -0.035, 0.855), (0.0085, 0.0085)),
+            f'clav_{n}': ((s * 0.058, 0.005, 1.398), (0.048, 0.044)), f'shoulder_{n}': ((s * 0.158, 0.01, 1.378), (0.047, 0.045)),
+            f'elbow_{n}': ((s * 0.2, 0.045, 1.135), (0.036, 0.036)), f'wrist_{n}': ((s * 0.2, -0.04, 0.92), (0.025, 0.021)),
+            f'hand_{n}': ((s * 0.193, -0.062, 0.858), (0.022, 0.011)), f'thumb_{n}': ((s * 0.178, -0.08, 0.89), (0.0085, 0.0085)),
             f'hip_{n}': ((s * 0.088, 0.0, 0.88), (0.086, 0.084)), f'thigh_{n}': ((s * 0.083, 0.0, 0.7), (0.075, 0.077)),
             f'knee_{n}': ((s * 0.08, 0.005, 0.49), (0.051, 0.053)), f'calf_{n}': ((s * 0.079, 0.018, 0.34), (0.056, 0.058)),
             f'ankle_{n}': ((s * 0.078, 0.012, 0.085), (0.028, 0.03)), f'toe_{n}': ((s * 0.08, -0.095, 0.03), (0.029, 0.022)),
         })
+    # relaxed stance: weight on her left leg, right knee soft and slightly forward, right foot out
+    J['knee_R'] = ((-0.074, -0.018, 0.495), J['knee_R'][1]); J['calf_R'] = ((-0.083, -0.002, 0.345), J['calf_R'][1])
+    J['ankle_R'] = ((-0.102, 0.004, 0.088), J['ankle_R'][1]); J['toe_R'] = ((-0.125, -0.085, 0.03), J['toe_R'][1])
+    J['ankle_L'] = ((0.07, 0.012, 0.085), J['ankle_L'][1]); J['toe_L'] = ((0.083, -0.094, 0.03), J['toe_L'][1])
     E = standard_edges()
     def neckline(c):
         return (1.345 + 0.6 * c.x * c.x) if c.y < 0.02 else 1.375
@@ -252,12 +314,13 @@ def build_woman():
         bm.to_mesh(ob.data); bm.free()
     body, rig = build_body('woman', J, E, region, shape)
     C = (0, -0.004, 1.565)
-    P = dict(size=(0.078, 0.097, 0.111), lower=0.93, jaw=0.38, chin=0.2, chinfwd=0.08, cheek=0.02, socket=0.065, ridge=0.016, nose=0.1, alar=0.024,
-             cheekbone=0.075, apple_z=-0.08, hollow=0.035, philtrum=0.012, dimple=0.008, tip=0.06, lips=0.045,
+    P = dict(size=(0.078, 0.097, 0.111), lower=0.93, jaw=0.38, chin=0.2, chinfwd=0.08, cheek=0.02, socket=0.065, ridge=0.016, nose=0.06, alar=0.02,
+             cheekbone=0.075, apple_z=-0.08, hollow=0.035, philtrum=0.012, dimple=0.008, tip=0.075, lips=0.045, nose_z=-0.22, nose_sx=0.07, nose_sz=0.14,
              eye_r=0.0145, eye_x=0.44, eye_z=0.05, iris=0.64, lid=0.46, lid_tilt=0.13, lowlid=0.74, lash=0.0021, wing=True, lash_flicks=3,
              brow_x0=0.17, brow_x1=0.8, brow_z=0.27, brow_arch=0.06, brow_w=0.003,
              paint=dict(blush=(1.0, 0.74, 0.72, 0.45), socket=(0.7, 0.58, 0.62, 0.55), freckles=10, freckle_s=0.25, nose_blush=0.7),
-             mouth_z=-0.56, ulip=(0.0152, 0.0033), llip=(0.0143, 0.0044), smile=0.0015, ear=0)   # ears are under the hair
+             mouth_z=-0.56, ulip=(0.0152, 0.0033), llip=(0.0143, 0.0044), smile=0.0015, ear=0,
+             sculpt_lips=True, lipw=0.23, lip_h=(0.058, 0.08), lip_vol=0.034, smile_u=0.016, lip_mul=(0.7, 0.38, 0.42))   # ears are under the hair
     head, hit = build_head7('w_head', P, C, M)
     a, d, h = P['size']
     def ellp(az, zu, k):
@@ -353,7 +416,11 @@ def build_woman():
     soles = []
     for s, n in ((1, 'L'), (-1, 'R')):
         bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
-        for v in bm.verts: v.co = Vector((v.co.x * 0.058 + s * 0.079, v.co.y * 0.165 - 0.035, v.co.z * 0.02 + 0.01))
+        an, to = Vector(J[f'ankle_{n}'][0]), Vector(J[f'toe_{n}'][0])
+        dv = Vector((to.x - an.x, to.y - an.y)); ang = math.atan2(dv.x, -dv.y); mid = an.lerp(to, 0.5)
+        for v in bm.verts:
+            x0, y0 = v.co.x * 0.046, v.co.y * 0.12
+            v.co = Vector((mid.x + x0 * math.cos(ang) - y0 * math.sin(ang), mid.y + x0 * math.sin(ang) + y0 * math.cos(ang), v.co.z * 0.02 + 0.01))
         so = mesh_obj(f'w_sole_{n}', bm, M['sole'], True, 2); bv = so.modifiers.new('bev', 'BEVEL'); bv.width = 0.008; bv.segments = 4
         so.modifiers.move(1, 0); soles.append((so, f'toe_{n}'))
     jw = [tube('w_hoop', [(s * (a + 0.004), C[1] + 0.006 + 0.007 * math.cos(t / 20 * 2 * math.pi), C[2] - 0.035 * h / 0.108 - 0.008 + 0.007 * math.sin(t / 20 * 2 * math.pi)) for t in range(21)], [0.0009] * 21, M['gold'], 2, 3) for s in (-1, 1)]
@@ -379,7 +446,7 @@ def build_wizard():
         'cork': mat('z_cork', '#a8835a', 0.8),
         'eyewhite': mat('z_eyewhite', '#f2ede6', 0.15), 'iris': mat('z_iris', '#4c8a5a', 0.2), 'irisring': mat('z_iris_ring', '#1f3a26', 0.3),
         'pupil': mat('z_pupil', '#050506', 0.1), 'lash': mat('z_lash', '#8a7a6c', 0.6), 'brow': mat('z_brow', '#f3f0ea', 0.7),
-        'lip': mat('z_lip', '#b8715f', 0.5), 'mouth': mat('z_mouth', '#3a1518', 0.8), 'earin': mat('z_earin', '#d99a82', 0.5),
+        'lip': mat('z_lip', '#b46e64', 0.5), 'mouth': mat('z_mouth', '#3a1518', 0.8), 'earin': mat('z_earin', '#d99a82', 0.5),
     }
     J = {
         'pelvis': ((0, 0, 1.0), (0.14, 0.1)), 'spine': ((0, 0.01, 1.14), (0.14, 0.11)), 'chest': ((0, 0.005, 1.32), (0.15, 0.1)),
@@ -388,8 +455,8 @@ def build_wizard():
     for s, n in ((1, 'L'), (-1, 'R')):
         J.update({
             f'clav_{n}': ((s * 0.07, 0.01, 1.47), (0.06, 0.055)), f'shoulder_{n}': ((s * 0.195, 0.012, 1.455), (0.052, 0.05)),
-            f'elbow_{n}': ((s * 0.245, 0.03, 1.19), (0.038, 0.038)), f'wrist_{n}': ((s * 0.27, 0.0, 0.95), (0.027, 0.022)),
-            f'hand_{n}': ((s * 0.275, -0.01, 0.87), (0.03, 0.014)), f'thumb_{n}': ((s * 0.264, -0.045, 0.9), (0.011, 0.011)),
+            f'elbow_{n}': ((s * 0.245, 0.04, 1.19), (0.038, 0.038)), f'wrist_{n}': ((s * 0.262, -0.035, 0.96), (0.027, 0.022)),
+            f'hand_{n}': ((s * 0.262, -0.055, 0.885), (0.03, 0.014)), f'thumb_{n}': ((s * 0.248, -0.085, 0.915), (0.011, 0.011)),
             f'hip_{n}': ((s * 0.095, 0.0, 0.93), (0.08, 0.08)), f'thigh_{n}': ((s * 0.098, 0.0, 0.74), (0.068, 0.07)),
             f'knee_{n}': ((s * 0.1, 0.005, 0.52), (0.05, 0.052)), f'calf_{n}': ((s * 0.1, 0.015, 0.35), (0.05, 0.052)),
             f'ankle_{n}': ((s * 0.1, 0.012, 0.09), (0.034, 0.036)), f'toe_{n}': ((s * 0.102, -0.11, 0.04), (0.036, 0.026)),
@@ -406,7 +473,8 @@ def build_wizard():
              eye_r=0.0138, eye_x=0.4, eye_z=0.07, iris=0.66, lid=0.62, lid_tilt=-0.04, lowlid=0.52, low_tilt=-0.12, lash=0.0009, wing=False,
              brow_x0=0.16, brow_x1=0.78, brow_z=0.33, brow_arch=0.1, brow_w=0.005, brow_drop=0.02, brow_tilt=0.04, bushy=70,
              paint=dict(blush=(0.95, 0.58, 0.55, 0.85), socket=(0.9, 0.76, 0.72, 0.35), nose_blush=0.2),
-             mouth_z=-0.56, ulip=(0.016, 0.0028), llip=(0.0152, 0.004), smile=0.004, ear=1.12)
+             mouth_z=-0.56, ulip=(0.016, 0.0028), llip=(0.0152, 0.004), smile=0.004, ear=1.12,
+             sculpt_lips=True, lipw=0.21, lip_h=(0.042, 0.06), lip_vol=0.03, smile_u=0.03, lip_mul=(0.82, 0.64, 0.66))
     head, hit = build_head7('z_head', P, C, M)
     a, d, h = P['size']
     # round rosy nose
@@ -615,6 +683,20 @@ if __name__ == '__main__':
         for k, r in rigs.items(): export(r, os.path.join(A.out, f'{k}.glb'), A.budget)
     if A.preview:
         os.makedirs(A.preview, exist_ok=True)
+        # Cycles previews: multiply the painted face colours into the skin, like three.js does (vertexColors)
+        done = set()
+        for o in bpy.data.objects:
+            if o.type != 'MESH' or 'Col' not in o.data.color_attributes: continue
+            for i, m in enumerate(o.data.materials):
+                if m is None: continue
+                if m.name not in done:
+                    m2 = m.copy(); m2.name = m.name + '_paint'; nt = m2.node_tree; bsdf = nt.nodes['Principled BSDF']
+                    at = nt.nodes.new('ShaderNodeAttribute'); at.attribute_name = 'Col'
+                    mx = nt.nodes.new('ShaderNodeMix'); mx.data_type = 'RGBA'; mx.blend_type = 'MULTIPLY'; mx.inputs['Factor'].default_value = 1.0
+                    mx.inputs[6].default_value = bsdf.inputs['Base Color'].default_value
+                    nt.links.new(at.outputs['Color'], mx.inputs[7]); nt.links.new(mx.outputs[2], bsdf.inputs['Base Color'])
+                    done.add(m.name); bpy.data.materials[m.name]['paint'] = m2.name
+                o.data.materials[i] = bpy.data.materials[bpy.data.materials[m.name]['paint']]
         cam = stage(); sc = bpy.context.scene; sc.cycles.samples = A.samples
         sc.render.resolution_x, sc.render.resolution_y = map(int, A.res.split('x'))
         if 'woman' in rigs and 'wizard' in rigs:
