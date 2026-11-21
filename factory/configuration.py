@@ -41,8 +41,8 @@ class Settings:
     tts_provider: str = _env("TTS_PROVIDER", "kokoro")
     kokoro_voice: str = _env("KOKORO_VOICE", "af_bella")
     fps: int = int(_env("FPS", "30"))
-    min_seconds: float = float(_env("MIN_SECONDS", "61"))
-    max_seconds: float = float(_env("MAX_SECONDS", "90"))
+    min_seconds: float = float(_env("MIN_SECONDS", "15"))
+    max_seconds: float = float(_env("MAX_SECONDS", "60"))
 
     @property
     def db_path(self) -> Path:

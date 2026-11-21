@@ -2,8 +2,8 @@
 # Sources: SCRIPT_ENGINE_SPECIFICATION (SC-*), TEXT_AND_CAPTION_DESIGN_SYSTEM (TX-*, CP-*),
 #          MOTION_DESIGN_SYSTEM (MD-*, CAM-*), HOOK_ENGINE_SPECIFICATION (HK-*).
 script:
-  length_s: [61, 75]             # Caesar's rule (2026-11-19): > 60 s, hard fail below 61 (settings.min_seconds)
-  beats: [8, 14]                 # SC-1 warn
+  length_s: [18, 45]             # Caesar (2026-11-19): content-driven, typically 18-45 s, up to 60 s when earned (settings.min/max_seconds)
+  beats: [5, 14]                 # SC-1 warn (short stories need fewer beats)
   wpm_target: [150, 185]         # SC-2
   wpm_warn: [140, 200]
   beat_wpm_max: 210              # SC-3

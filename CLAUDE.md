@@ -11,7 +11,9 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
 2. Research it. Put real, checkable sources and honest caveats in the storyboard. Never invent data
    or overstate a result to make it more dramatic.
 3. Create `content/episodes/<slug>/storyboard.yaml` (copy the structure of `falling-slinky`):
-   - 8-14 beats, 61-75 s total (hard rule: every video must be longer than 60 s; QC rejects anything shorter). Extend with real content, never filler. Beat 1 is the hook: a surprising claim in under 3 s.
+   - 5-14 beats. Beat 1 is the hook: a surprising claim in under 3 s.
+   - Length follows the story (Caesar, 2026-11-19): typically 18-45 s, up to 60 s only when the story earns it.
+     Never pad, recap or stretch to hit a length. QC allows 15-60 s (`MIN_SECONDS`, `MAX_SECONDS`).
    - Short spoken sentences; spell numbers the way they should be read.
    - `on_screen` for an occasional key phrase or equation, `sfx` (whoosh, thud, pop, tick, rise, ding).
    - Write for the voice (factory/voice_engine/expressive.py turns this into delivery, free):
