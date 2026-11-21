@@ -43,7 +43,7 @@ class Settings:
     fps: int = int(_env("FPS", "30"))
     # Length is decided by each story (factory/story_length.py), never by a target. These are only
     # technical sanity limits: a floor that catches a broken render and a ceiling for a Short.
-    min_seconds: float = float(_env("MIN_SECONDS", "5"))
+    min_seconds: float = float(_env("MIN_SECONDS", "10"))
     max_seconds: float = float(_env("MAX_SECONDS", "90"))
 
     @property

@@ -1,5 +1,6 @@
 // Loads a scene module, builds it, and exposes renderFrame(i) -> JPEG data URL.
 import * as THREE from 'three';
+import { enrichMaterials, groundCover } from './look.js';
 import { World, drawCard, drawWordmark, drawBadge } from './world.js';
 import { inspectFrame, staticChecks } from './inspect.js';
 import { drawOverlays } from './overlays.js';
@@ -12,11 +13,15 @@ export async function boot(sceneName, plan) {
   const gl = document.createElement('canvas'); gl.width = W; gl.height = H;
   const out = document.createElement('canvas'); out.width = W; out.height = H; document.body.appendChild(out);
   const ctx = out.getContext('2d');
-  const world = new World(gl, W, H, plan.seed ?? 7, { supersample: plan.supersample ?? 1 });
+  const world = new World(gl, W, H, plan.seed ?? 7, { supersample: plan.supersample ?? 1, look: plan.look, dof: plan.dof, ao: plan.ao, grade: plan.grade, drift: plan.drift, aoDebug: plan.ao_debug });
   const mod = await import(`/renderer/scenes/${sceneName}.js`);
-  if (plan.presenters !== false) await loadPresenters();     // Blender presenters for man()/woman() (falls back if missing)
+  // Blender presenters for man()/woman() (falls back if missing). v7 by default; plan.presenters = 'v6' loads the older pair
+  if (plan.presenters !== false) await loadPresenters(plan.presenters === 'v6' ? '/assets/characters/v6/' : undefined);
   const scene = await mod.build(world, plan);
 
+  if (world.look && plan.surface_variation !== false) enrichMaterials(world.scene);
+  const cover = world.look && plan.ground_cover !== false
+    ? groundCover(world, plan, typeof plan.ground_cover === 'object' ? plan.ground_cover : {}) : null;
   window.__meta = {};
   const pose = i => {           // put the world in its state for frame i (shared by render and inspect)
     const t = i / plan.fps;
@@ -28,6 +33,13 @@ export async function boot(sceneName, plan) {
     scene.update(i, t, shot);
     world.applyShot(shot, t, i);
     if (scene.afterCamera) scene.afterCamera(i, t, shot);
+    if (world.look) {           // Look v3: auto-focus on the scene's focus target, the shot's focus, or the aim point
+      let f = scene.focus ? scene.focus(i, t, shot) : (shot.focus ?? null);
+      if (Array.isArray(f)) f = new THREE.Vector3(...f);
+      const dist = typeof f === 'number' ? f : world.camera.position.distanceTo(f ?? world.lookTarget);
+      world.look.update(i, dist, shot.dof ?? 1);
+      if (cover) cover.uTime.value = t;
+    }
     return { t, shot };
   };
   window.inspectStatic = () => staticChecks(world);
@@ -37,7 +49,7 @@ export async function boot(sceneName, plan) {
     world.scene.updateMatrixWorld(true); world.camera.updateMatrixWorld(true);
     return inspectFrame(world, scene, plan, i, shot);
   };
-  window.renderFrame = (i, quality = 0.93) => {
+  window.renderFrame = (i, quality = 0.96) => {
     const { t, shot } = pose(i);
     world.render();
     if (scene.focal) {           // render metadata for QC (focal object position on screen)

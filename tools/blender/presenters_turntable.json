@@ -1,0 +1,9 @@
+{
+  "W": 1080, "H": 1920, "fps": 30, "n_frames": 300, "seed": 7,
+  "shots": [
+    {"start": 0, "end": 3.6, "type": "static", "pos0": [0, 1.35, 4.6], "pos1": [0, 1.3, 4.2], "look0": [0, 1.0, 0], "fov": 38, "who": "both", "turn": -20, "spin": 100, "talky": true, "lighting": "day"},
+    {"start": 3.6, "end": 6.0, "type": "static", "pos0": [0.05, 1.67, 0.95], "pos1": [0.0, 1.66, 0.85], "look0": [0, 1.635, 0], "fov": 30, "who": "woman", "turn": -30, "spin": 22, "talky": true, "lighting": "day"},
+    {"start": 6.0, "end": 8.4, "type": "static", "pos0": [-0.05, 1.79, 1.05], "pos1": [0.0, 1.78, 0.95], "look0": [0, 1.74, 0], "fov": 32, "who": "man", "turn": 28, "spin": -22, "talky": true, "lighting": "day"},
+    {"start": 8.4, "end": 10, "type": "static", "pos0": [0.9, 1.25, 3.6], "pos1": [0.7, 1.25, 3.45], "look0": [0, 1.05, 0], "fov": 38, "who": "both", "turn": 10, "pose": {"wave": 1, "headYaw": 0.2}, "lighting": "sunset"}
+  ]
+}

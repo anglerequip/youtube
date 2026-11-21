@@ -6,6 +6,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { Look, skyEnvironment } from './look.js';
 
 export const PALETTE = {
   grass: ['#5a5725', '#64662d', '#676b32', '#5d6329'], grassDark: '#3a4318', grassLight: '#848a4c',
@@ -114,16 +115,40 @@ export class World {
     this.bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.75, 0.55, 0.92);
     this.composer.addPass(this.bloom);
     this.composer.addPass(new OutputPass());
+    // Look v3 (renderer/look.js): sky-matched IBL, AO, depth of field, grade. plan.look = 'legacy' opts out.
+    this.lookName = opts.look ?? 'v3';
+    if (this.lookName !== 'legacy') this.look = new Look(this, opts);
+    this._envCache = new Map(); this.lookTarget = new THREE.Vector3(); this.drift = opts.drift ?? 1;
     this.setLighting('day');
   }
 
   _sky() {
-    const g = new THREE.SphereGeometry(300, 32, 16);
+    // gradient dome; Look v3 adds soft procedural clouds (uniform `clouds`, 0 = clear, set per preset)
+    const g = new THREE.SphereGeometry(300, 48, 24);
     const m = new THREE.ShaderMaterial({
       side: THREE.BackSide, depthWrite: false, fog: false,
-      uniforms: { top: { value: new THREE.Color('#a9b4bf') }, bottom: { value: new THREE.Color('#c9cbc8') } },
-      vertexShader: 'varying float h; void main(){ h = normalize(position).y; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
-      fragmentShader: 'uniform vec3 top; uniform vec3 bottom; varying float h; void main(){ float t = smoothstep(-0.05, 0.6, h); gl_FragColor = vec4(mix(bottom, top, t), 1.0); }',
+      uniforms: { top: { value: new THREE.Color('#a9b4bf') }, bottom: { value: new THREE.Color('#c9cbc8') },
+                  clouds: { value: 0 }, cloudCol: { value: new THREE.Color('#ffffff') }, cloudShade: { value: new THREE.Color('#9aa3ad') } },
+      vertexShader: 'varying vec3 vd; void main(){ vd = normalize(position); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+      fragmentShader: `uniform vec3 top, bottom, cloudCol, cloudShade; uniform float clouds; varying vec3 vd;
+        float hh(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+          return mix(mix(hh(i), hh(i+vec2(1,0)), f.x), mix(hh(i+vec2(0,1)), hh(i+vec2(1,1)), f.x), f.y); }
+        float fbm(vec2 p){ float a = 0.5, s = 0.0; for (int k = 0; k < 5; k++){ s += a * vn(p); p = p * 2.03 + 7.1; a *= 0.5; } return s; }
+        void main(){
+          float h = vd.y; float t = smoothstep(-0.05, 0.6, h);
+          vec3 c = mix(bottom, top, t);
+          if (clouds > 0.0 && h > 0.0) {
+            vec2 p = vd.xz / (h + 0.18) * 1.6;                       // flattened cloud layer
+            float n = fbm(p + 3.0);
+            float cov = smoothstep(0.62 - clouds * 0.22, 0.88 - clouds * 0.15, n);
+            float shade = smoothstep(0.55, 0.95, fbm(p * 1.7 + 11.0));
+            vec3 cc = mix(cloudShade, cloudCol, shade);
+            float fade = smoothstep(0.0, 0.12, h) * (1.0 - smoothstep(0.75, 1.0, h) * 0.5);
+            c = mix(c, cc, cov * fade * 0.85);
+          }
+          gl_FragColor = vec4(c, 1.0);
+        }`,
     });
     return new THREE.Mesh(g, m);
   }
@@ -139,6 +164,18 @@ export class World {
     this.scene.fog.color.set(L.fog); this.scene.fog.near = L.fogNear; this.scene.fog.far = L.fogFar;
     this.renderer.toneMappingExposure = L.exposure;
     this.scene.environmentIntensity = L.env ?? 0.0;
+    if (this.look) {
+      const U = this.skyDome.material.uniforms;
+      U.clouds.value = L.clouds ?? (name === 'night' || name === 'moonroom' || name === 'reef' ? 0 : name === 'blizzard' ? 0.2 : 0.55);
+      U.cloudCol.value.set(L.sun).lerp(new THREE.Color('#ffffff'), 0.55);
+      U.cloudShade.value.set(L.sky).lerp(U.cloudCol.value, 0.25).multiplyScalar(0.94);
+      // sky-matched environment (cached per preset); presets without an env value get a soft default and a
+      // slightly lower hemisphere light, because the environment now supplies part of the fill
+      if (!this._envCache.has(name)) this._envCache.set(name, skyEnvironment(this.renderer, L, this.sun.position.clone().sub(center)));
+      this.scene.environment = this._envCache.get(name);
+      if (L.env === undefined) { this.scene.environmentIntensity = name === 'night' ? 0.35 : 0.55; this.hemi.intensity = L.hemiI * 0.72; }
+      else this.scene.environmentIntensity = L.env * 1.25;
+    }
     this.bloom.threshold = L.bloomT ?? 0.92;
     if (L.rim) {
       const re = THREE.MathUtils.degToRad(L.rimElev), ra = THREE.MathUtils.degToRad(L.rimAz);
@@ -166,7 +203,9 @@ export class World {
   ground(size = 400) {
     const tex = this.grassTexture(); tex.repeat.set(size / 9, size / 9);
     const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshStandardMaterial({ map: tex, roughness: 1 }));
-    m.rotation.x = -Math.PI / 2; m.receiveShadow = true; this.scene.add(m); return m;
+    m.rotation.x = -Math.PI / 2; m.receiveShadow = true; this.scene.add(m);
+    (this.groundMeshes ??= []).push(m);      // Look v3 ground cover grows on these (renderer/look.js groundCover)
+    return m;
   }
 
   roundTree(x, z, s = 1) {
@@ -256,7 +295,8 @@ export class World {
     if (shot.type === 'keys') {            // per-frame camera path computed in Python
       const k = Math.min(Math.max(0, i - shot.i0), shot.pos.length - 1);
       this.camera.fov = shot.fovs ? shot.fovs[k] : (shot.fov ?? 38); this.camera.updateProjectionMatrix();
-      this.camera.position.set(...shot.pos[k]); this.camera.lookAt(...shot.look[k]);
+      this.camera.position.set(...shot.pos[k]); this.lookTarget.set(...shot.look[k]);
+      this._drift(shot, t); this.camera.lookAt(this.lookTarget);
       return;
     }
     if (shot.type === 'orbit') {
@@ -268,7 +308,23 @@ export class World {
       pos = lerp(shot.pos0, shot.pos1 ?? shot.pos0); look = lerp(shot.look0, shot.look1 ?? shot.look0);
     }
     this.camera.fov = shot.fov ?? 38; this.camera.updateProjectionMatrix();
-    this.camera.position.set(...pos); this.camera.lookAt(...look);
+    this.camera.position.set(...pos); this.lookTarget.set(...look);
+    this._drift(shot, t); this.camera.lookAt(this.lookTarget);
+  }
+
+  // Look v3: a slow "operated camera" float on every shot (sum of incommensurate sines, seeded by the shot
+  // start, so renders stay deterministic). Amplitude scales with the distance to the subject: about 0.35 %
+  // of it in position and a little less on the aim point. Never shaky: the fastest component is ~0.4 Hz.
+  // plan.drift = 0 turns it off; shot.drift scales it per shot (e.g. 0 for a locked-off map view).
+  _drift(shot, t) {
+    const a = this.drift * (shot.drift ?? 1); if (!a || this.lookName === 'legacy') return;
+    const d = this.camera.position.distanceTo(this.lookTarget), s = (shot.start ?? 0) * 7.13 + 1.7;
+    const n = (f1, f2, p) => 0.6 * Math.sin(t * f1 * 6.2832 + s * p) + 0.4 * Math.sin(t * f2 * 6.2832 + s * p * 1.7 + 2.1);
+    const k = 0.0035 * d * a;
+    this.camera.position.x += k * n(0.11, 0.29, 1.0); this.camera.position.y += k * 0.7 * n(0.13, 0.37, 2.3);
+    this.camera.position.z += k * n(0.09, 0.23, 3.1);
+    const kl = 0.0025 * d * a;
+    this.lookTarget.x += kl * n(0.07, 0.31, 4.2); this.lookTarget.y += kl * 0.6 * n(0.12, 0.27, 5.3);
   }
 
   prepare() {

@@ -39,6 +39,7 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
    multi-step story with a twist in 35-45 s, and only a genuinely rich topic needs 45-60 s. A video can
    finish at 21.4 or 41.8 s. Never add sentences to reach a length, never cut an explanation until it
    confuses, and fix a long script by cutting beats, not by speeding up the voice.
+   QC hard limits are 10-90 s (`MIN_SECONDS`, `MAX_SECONDS`: technical guards, not targets); typically 18-45 s, up to 60 s only when the story earns it.
    TikTok Creator Rewards (pays only for videos longer than one minute) is opt-in per episode: `platforms: {tiktok: {creator_rewards: true}}`.
    It only reports whether the video qualifies; extend only with real content, never filler.
 4. Create `content/episodes/<slug>/storyboard.yaml` (copy the structure of `falling-slinky`):
@@ -211,8 +212,10 @@ Every new or edited model uses at least these segment counts. Prefer more on any
 - Props and scenery may stay flat-shaded (stylised diorama). Presenters and other close-up characters are smooth-shaded
   high-poly: continuous lathe/tube bodies (40+ radial segments), heads 72 x 54, hair and beards built from tapered strands.
 - Presenters come from `renderer/characters.js` (`man()` = the wizard, `woman()` = the young woman), already at this budget. Use them in place of
-  the old wooden toy figure. Since v6 they are Blender models (`tools/blender/presenters.py` builds and exports
-  `assets/characters/{wizard,woman}.glb`, run with the pip `bpy` module); `renderer/boot.js` preloads them, so scene `build()` may stay
+  the old wooden toy figure. They are Blender models: v7 (default, 2026-11-21) is built by `tools/blender/presenters_v7.py`
+  (playful wizard, stylish art-student woman, about 3x the triangles of v6) and exported to
+  `assets/characters/{wizard,woman}.glb`, run with the pip `bpy` module; the v6 pair (`tools/blender/presenters.py`) stays in
+  `assets/characters/v6/` and a plan can ask for it with `"presenters": "v6"`; `renderer/boot.js` preloads them, so scene `build()` may stay
   synchronous and just call `man()`/`woman()`. Pose API: `p.pose({talk, blink, wave, point, headYaw, headPitch, headTilt, walk, t})`.
   Edit the Blender script and re-export rather than editing the GLBs. They are original designs: never restyle them, or any other model, to look like an
   existing character, celebrity or actor.
@@ -243,3 +246,62 @@ These rules keep the hands-free pipeline cheap. They don't override the rules ab
    cheaper model (Sonnet or Haiku) for routine work: packaging, topic-ledger checks, QA summaries.
 4. **Fewer chat messages.** Post to the project chat only for a result, a blocker or a question that
    needs Caesar. Routine progress goes on the checklist.
+
+## YouTube packaging (audit 2026-11-21)
+
+Evidence: our first 11 Shorts (public counts 21 Nov). Like ratio was best on animal "how/why" topics with
+slow motion (falling cat 3.5%, dog drinking 2.2%, cat stare 2.0%) and worst on gadget facts (touchscreen 0.6%).
+Four Shorts made public within 7 h on 20 Nov (two in the same minute) got almost no views; the next three,
+4-5 h apart, each reached 700-1,100. Sources: YouTube Help "Disclosing use of altered or synthetic content"
+(answer 14328491), vidIQ "How does the YouTube Shorts algorithm work in 2026".
+
+- **Spacing:** the cloud job (`factory/autopilot/cloud_post.py`) moves any publish time that is within 4 h of
+  another Short on the channel. Plan at most 2-3 Shorts a day while the channel is new.
+- **Title:** about 40-60 characters, the plain thing people search for plus the surprise ("Why Your Cat
+  Stares While You Eat"). It must be true to the video; no bait the video doesn't pay off.
+- **Description:** first line restates the hook as a question, then the answer in one or two sentences,
+  sources, the how-it's-made line, the tagline, then 3-5 topical hashtags. More than 15 hashtags and YouTube
+  ignores all of them (the job trims to 5). Tags are minor; the job dedupes them and keeps them under 500 chars.
+- **Settings:** category 28 (Science & Technology), not made for kids, language en. Keep
+  `contains_synthetic_media: true` because the voices are AI; YouTube says the label alone does not limit reach.
+- **Comments:** the last beat may end on one specific question a viewer can answer in a word or two, drawn
+  from the video ("Would you have guessed the dog or the cat?"). Never "like and subscribe". It counts inside
+  the normal beat budget, not as extra length.
+- **Loop:** the final shot and line should lead back into the hook frame so a replay feels seamless.
+- **Playlists:** the job adds every Short to a series playlist picked from its tags (`tagline.playlist`), or
+  `playlist` in the package.
+- **Studio only (no API):** the Shorts "related video" link and pinning a comment. Do these in Studio when a
+  signed-in browser is available; link each Short to the best-performing Short in the same series.
+
+## 13. Look v3 and shot craft (quality overhaul, Caesar 2026-11-21: "make the quality 5x better")
+Every 3D render now goes through `renderer/look.js` automatically (opt out per plan with `look: legacy`):
+- **Sky-matched lighting:** an environment map built from the shot's lighting preset (sky, horizon, ground, sun),
+  so materials get soft fill and real reflections. Soft procedural clouds in the sky dome (`clouds` per preset).
+- **Ambient occlusion** (half-res GTAO, solid surfaces only): contact shading under feet, props and furniture.
+- **Depth of field** with auto-focus on what the camera aims at. Strength follows optics: close-ups get soft
+  backgrounds, wide shots stay sharp. Steer it with `scene.focus(i, t, shot)`, `shot.focus` ([x,y,z] or metres),
+  `shot.dof` (0 = off for this shot, 1.5 = stronger) or plan `dof:` (number or false).
+- **Grade:** gentle filmic contrast, warm highlights / cool shadows, slight saturation, sharpening, vignette, fine
+  grain (plan `grade:` overrides or false).
+- **Camera float:** every shot drifts very slightly like an operated camera (plan `drift: 0` or `shot.drift: 0`
+  for a locked-off view).
+- **Surface variation:** large matte surfaces get subtle world-space colour variation, so walls and floors
+  don't read as flat CG fills (`material.userData.noVariation = true` to opt one out).
+- **Ground cover:** grass tufts, wild flowers and pebbles grow on `world.ground()` meshes around where the shots
+  look, never on top of roads, paths, decks or floors. Plan `ground_cover: false`, or `{density, radius, height}`.
+- **Ambience:** set `ambience:` in storyboard.yaml (`lake`, `outdoor`, `room`, `night`, `underwater`) for a quiet
+  place-specific bed under voice and music.
+
+Shot craft (what reviewers marked us down for, rounds 1-2 of the last batch):
+1. The subject fills 30-60 % of the frame height in a close or medium shot. A ball or fish that is a dot in a
+   big empty lawn is a wide shot: hold it at most 2 s, then cut closer.
+2. Never crop a head at the top edge or cut a character at the neck, elbows or knees. A presenter close-up shows
+   head and shoulders with a little headroom; a two-shot shows both faces.
+3. Three depth layers in most shots: something near the lens (grass, a post, a reed, a shoulder), the subject,
+   and a background. Depth of field and ground cover now make this read.
+4. Things touch the world: feet on the ground, objects in hands, props sitting on surfaces (AO shows it now;
+   a floating object looks worse than before).
+5. Show the event, don't hold a static frame while the narration explains it: each beat gets motion on the
+   subject or a new angle, and no shot holds still for more than about 3 s.
+6. The hook frame (0-2 s) is the most interesting picture in the video, already in motion, subject large.
+7. Night and underwater shots: lift exposure so faces and the hero object read at phone brightness.

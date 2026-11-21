@@ -63,7 +63,8 @@ def _stems(ctx):
     ev = ctx.module.sfx_events(ctx.plan) if hasattr(ctx.module, "sfx_events") else []
     mus = ctx.module.music(ctx.plan) if hasattr(ctx.module, "music") else None
     dur = ctx.plan.get("n_frames", 0) / max(1, ctx.plan.get("fps", 30)) or None
-    return sd.stems(voice, ev, dur, mus)
+    amb = ctx.sb.extra.get("ambience") if getattr(ctx, "sb", None) is not None else None
+    return sd.stems(voice, ev, dur, mus, ambience=amb or ctx.plan.get("ambience"))
 
 
 def _rms_frames(x, sr, hop=0.05):
