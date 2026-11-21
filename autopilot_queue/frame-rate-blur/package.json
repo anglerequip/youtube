@@ -1,0 +1,19 @@
+{
+  "title": "Why 24 FPS Looks Smooth in Movies but Choppy in Games",
+  "description": "Movies run at 24 frames a second and look smooth. A game at 24 looks choppy. A film camera's shutter stays open for half of each frame, so moving things are smeared and your brain blends the smears into motion. A game draws every frame perfectly sharp, so you see the jumps. At 60 fps each jump is less than half as big, and because you're steering, a new frame every 42 milliseconds also feels late.\n\nSources:\n- ARRI / American Cinematographer Manual: 180-degree shutter rule, exposure time = 1/(2 x frame rate).\n- UC Berkeley CS184 (2023), lecture 17 'Intro to animation': motion blur and temporal sampling in rendered vs filmed frames.\n- Game Developer, 'Framerate and refresh: games and movies are not the same' (motion blur in film vs games).\n\nHow it's made: original 3D characters and scenes, animated by us. The voices are AI voices (ElevenLabs).\n\nCounterphysical: gaming science that breaks your intuition.\n\n#shorts #videogames #gaming #fps #science",
+  "tags": [
+    "video games",
+    "gaming",
+    "fps",
+    "frame rate",
+    "motion blur",
+    "physics",
+    "optics",
+    "science",
+    "counterphysical"
+  ],
+  "category_id": "28",
+  "made_for_kids": false,
+  "contains_synthetic_media": true,
+  "publish_at": "2026-11-22T17:00:00Z"
+}
