@@ -203,98 +203,96 @@ def standard_edges():
 # ---------------------------------------------------------------- the woman
 def build_woman():
     M = {
-        'skin': mat('w_skin', '#f0cdb8', 0.46, sss=0.22), 'top': mat('w_top', '#2b2a30', 0.85, sheen=0.2),
+        'skin': mat('w_skin', '#f0cdb8', 0.46, sss=0.22), 'top': mat('w_top', '#1a191d', 0.8, sheen=0.2),
         'cardi': mat('w_cardigan', '#5e2b3e', 0.9, sheen=0.35), 'cardrib': mat('w_cardigan_rib', '#4c2232', 0.9, sheen=0.3),
-        'denim': mat('w_denim', '#25262c', 0.8), 'cuff': mat('w_denim_cuff', '#3a3b43', 0.85),
+        'denim': mat('w_denim', '#4b4b50', 0.82), 'cuff': mat('w_denim_cuff', '#3a3b43', 0.85),
         'boot': mat('w_boot', '#17161a', 0.38, coat=0.4), 'sole': mat('w_sole', '#0e0d10', 0.7),
-        'hair': mat('w_hair', '#121014', 0.45), 'hairs': mat('w_hair_str', '#1c181e', 0.38), 'streak': mat('w_hair_streak', '#5a2140', 0.4),
+        'hair': mat('w_hair', '#0f0e11', 0.42), 'hairs': mat('w_hair_str', '#19171b', 0.36), 'streak': mat('w_hair_streak', '#5a2140', 0.4),
         'eyewhite': mat('w_eyewhite', '#f3eee8', 0.12), 'iris': mat('w_iris', '#5a6a4a', 0.2), 'irisring': mat('w_iris_ring', '#2a170e', 0.3),
         'pupil': mat('w_pupil', '#050506', 0.1), 'lash': mat('w_lash', '#120c0a', 0.5), 'brow': mat('w_brow', '#2a1d17', 0.7),
         'lidc': mat('w_lidshadow', '#7a5866', 0.55), 'lip': mat('w_lip', '#84424f', 0.45), 'mouth': mat('w_mouth', '#3a1518', 0.8),
         'gold': mat('w_gold', '#c9ccd2', 0.28, metal=0.35), 'earin': mat('w_earin', '#e3a996', 0.5, sss=0.2),
     }
+    # v7.2 body: slim, natural proportions, arms relaxed close to the body (Caesar: the v7.1 body looked goofy)
     J = {
-        'pelvis': ((0, 0, 0.95), (0.126, 0.09)), 'spine': ((0, 0.005, 1.08), (0.104, 0.07)), 'chest': ((0, 0.0, 1.25), (0.118, 0.08)),
-        'neck': ((0, 0.008, 1.44), (0.044, 0.043)), 'head': ((0, 0.005, 1.51), (0.036, 0.036)),
+        'pelvis': ((0, 0, 0.95), (0.136, 0.096)), 'spine': ((0, 0.006, 1.08), (0.092, 0.066)), 'chest': ((0, 0.0, 1.25), (0.112, 0.078)),
+        'neck': ((0, 0.008, 1.44), (0.043, 0.042)), 'head': ((0, 0.005, 1.51), (0.036, 0.036)),
     }
     for s, n in ((1, 'L'), (-1, 'R')):
         J.update({
-            f'clav_{n}': ((s * 0.06, 0.005, 1.4), (0.05, 0.045)), f'shoulder_{n}': ((s * 0.165, 0.008, 1.385), (0.048, 0.046)),
-            f'elbow_{n}': ((s * 0.216, 0.02, 1.13), (0.038, 0.038)), f'wrist_{n}': ((s * 0.24, -0.005, 0.895), (0.024, 0.021)),
-            f'hand_{n}': ((s * 0.242, -0.012, 0.825), (0.023, 0.011)), f'thumb_{n}': ((s * 0.233, -0.04, 0.85), (0.009, 0.009)),
-            f'hip_{n}': ((s * 0.085, 0.0, 0.88), (0.074, 0.074)), f'thigh_{n}': ((s * 0.088, 0.0, 0.7), (0.064, 0.066)),
-            f'knee_{n}': ((s * 0.09, 0.005, 0.49), (0.047, 0.05)), f'calf_{n}': ((s * 0.09, 0.015, 0.33), (0.047, 0.049)),
-            f'ankle_{n}': ((s * 0.09, 0.012, 0.085), (0.034, 0.036)), f'toe_{n}': ((s * 0.092, -0.1, 0.035), (0.033, 0.025)),
+            f'clav_{n}': ((s * 0.058, 0.005, 1.4), (0.048, 0.044)), f'shoulder_{n}': ((s * 0.158, 0.008, 1.385), (0.047, 0.045)),
+            f'elbow_{n}': ((s * 0.208, 0.025, 1.13), (0.036, 0.036)), f'wrist_{n}': ((s * 0.226, 0.0, 0.9), (0.025, 0.021)),
+            f'hand_{n}': ((s * 0.229, -0.008, 0.83), (0.022, 0.011)), f'thumb_{n}': ((s * 0.218, -0.035, 0.855), (0.0085, 0.0085)),
+            f'hip_{n}': ((s * 0.088, 0.0, 0.88), (0.086, 0.084)), f'thigh_{n}': ((s * 0.083, 0.0, 0.7), (0.075, 0.077)),
+            f'knee_{n}': ((s * 0.08, 0.005, 0.49), (0.051, 0.053)), f'calf_{n}': ((s * 0.079, 0.018, 0.34), (0.056, 0.058)),
+            f'ankle_{n}': ((s * 0.078, 0.012, 0.085), (0.028, 0.03)), f'toe_{n}': ((s * 0.08, -0.095, 0.03), (0.029, 0.022)),
         })
     E = standard_edges()
+    def neckline(c):
+        return (1.345 + 0.6 * c.x * c.x) if c.y < 0.02 else 1.375
     def region(b, c):
-        if b.startswith(('hand', 'thumb', 'head')): return M['skin']
-        if b.startswith('wrist'): return M['cardi'] if c.z > 1.02 else M['skin']          # sleeves pushed up past the elbow
-        if b.startswith(('elbow', 'shoulder')): return M['cardi']
-        if b.startswith(('ankle', 'toe')) or (b.startswith('calf') and c.z < 0.15): return M['boot']
-        if b.startswith(('thigh', 'knee', 'calf', 'hip')): return M['denim']
-        if c.z > 1.416 and b.startswith(('neck', 'chest', 'clav')):
-            return M['skin'] if (c.y < 0.03 or c.z > 1.418) else M['cardi']
-        if c.y < 0 and abs(c.x) < 0.09:                                                       # front gap of the open cardigan
+        if b.startswith(('hand', 'thumb', 'wrist')) and abs(c.x) < 0.19:                            # thigh skin next to the hands
             return M['denim'] if c.z < 1.0 else M['top']
+        if b.startswith(('hand', 'thumb', 'head', 'wrist', 'elbow', 'shoulder')): return M['skin']     # bare arms (black tank top)
+        if b.startswith('toe') or (b.startswith(('ankle', 'calf')) and c.z < 0.14): return M['boot']
+        if b.startswith(('thigh', 'knee', 'calf', 'ankle', 'hip')): return M['denim']
         if b.startswith('pelvis') and c.z < 1.0: return M['denim']
-        return M['cardi']
+        if c.z > neckline(c):
+            return M['skin']
+        return M['top']
     def shape(ob):
         for v in ob.data.vertices:
             x, y, z = v.co
             if y < 0:
-                for s in (-1, 1): v.co.y -= 0.022 * g2(x, z, s * 0.058, 1.275, 0.05, 0.05)
-        # smooth the skin-modifier branch crease at the top of the sternum (showed as a small triangle on the top)
+                for s in (-1, 1): v.co.y -= 0.02 * g2(x, z, s * 0.056, 1.275, 0.048, 0.048)
+            v.co.x *= 1 - 0.1 * math.exp(-((z - 1.1) / 0.08) ** 2) * (abs(x) < 0.14)                   # waist
         bm = bmesh.new(); bm.from_mesh(ob.data)
         vs = [v for v in bm.verts if v.co.y < 0 and abs(v.co.x) < 0.07 and 1.28 < v.co.z < 1.43]
         for _ in range(12): bmesh.ops.smooth_vert(bm, verts=vs, factor=0.6, use_axis_x=True, use_axis_y=True, use_axis_z=True)
         bm.to_mesh(ob.data); bm.free()
     body, rig = build_body('woman', J, E, region, shape)
     C = (0, -0.004, 1.565)
-    P = dict(size=(0.071, 0.088, 0.101), lower=0.93, jaw=0.38, chin=0.2, chinfwd=0.08, cheek=0.02, socket=0.065, ridge=0.016, nose=0.1, alar=0.024,
+    P = dict(size=(0.078, 0.097, 0.111), lower=0.93, jaw=0.38, chin=0.2, chinfwd=0.08, cheek=0.02, socket=0.065, ridge=0.016, nose=0.1, alar=0.024,
              cheekbone=0.075, apple_z=-0.08, hollow=0.035, philtrum=0.012, dimple=0.008, tip=0.06, lips=0.045,
-             eye_r=0.0132, eye_x=0.44, eye_z=0.05, iris=0.64, lid=0.46, lid_tilt=0.13, lowlid=0.74, lash=0.0019, wing=True, lash_flicks=3,
-             brow_x0=0.17, brow_x1=0.8, brow_z=0.27, brow_arch=0.06, brow_w=0.0027,
+             eye_r=0.0145, eye_x=0.44, eye_z=0.05, iris=0.64, lid=0.46, lid_tilt=0.13, lowlid=0.74, lash=0.0021, wing=True, lash_flicks=3,
+             brow_x0=0.17, brow_x1=0.8, brow_z=0.27, brow_arch=0.06, brow_w=0.003,
              paint=dict(blush=(1.0, 0.74, 0.72, 0.45), socket=(0.7, 0.58, 0.62, 0.55), freckles=10, freckle_s=0.25, nose_blush=0.7),
-             mouth_z=-0.56, ulip=(0.0138, 0.003), llip=(0.013, 0.004), smile=0.0014, ear=0)   # ears are under the hair
+             mouth_z=-0.56, ulip=(0.0152, 0.0033), llip=(0.0143, 0.0044), smile=0.0015, ear=0)   # ears are under the hair
     head, hit = build_head7('w_head', P, C, M)
     a, d, h = P['size']
     def ellp(az, zu, k):
         lat = math.asin(max(-1.0, min(1.0, zu)))
         return Vector((C[0] + a * k * math.cos(lat) * math.sin(az), C[1] - d * k * math.cos(lat) * math.cos(az), C[2] + h * k * math.sin(lat)))
     Cv = Vector(C)
-    # scalp with a centre parting, soft curtain bangs that sweep out to the cheekbones, loose waves past the shoulders
+    # v7.2 hair: long black layers to the waist, a wispy fringe at brow level with longer face-framing pieces
     cap = scalp_cap('w_hair_cap', head, C, P, lambda az: 0.62 - 0.77 * min(1.0, max(0.0, (abs(az) - 0.35) / 1.1)) - 0.4 * min(1.0, max(0.0, (abs(az) - 1.8) / 0.6)), M['hair'], 0.995)
     hs = []
-    bang_fns = []
     for s in (-1, 1):
         def bang(u, v, s=s):
-            # choppy, piecey fringe to the brows (uneven clump lengths), longer face-framing pieces at the sides
-            clump = ((int(u * 11 + 0.5 + 0.3 * s) * 7919) % 13) / 13.0 - 0.5
-            zE = 0.3 + 0.12 * clump - 0.85 * max(0.0, (u - 0.55) / 0.45) ** 1.3
+            clump = ((int(u * 13 + 0.5 + 0.3 * s) * 7919) % 13) / 13.0 - 0.5
+            zE = 0.2 + 0.1 * clump - 0.95 * max(0.0, (u - 0.5) / 0.5) ** 1.25
             zu = 0.9 + (zE - 0.9) * v
-            az = s * math.radians(1 + 52 * u + v ** 1.5 * (3 * (1 - u) + 22 * u))
-            k = 1.105 + 0.025 * v ** 1.5 + 0.02 * u * v
+            az = s * math.radians(1 + 50 * u + v ** 1.5 * (4 * (1 - u) + 26 * u))
+            k = 1.1 + 0.022 * v ** 1.5 + 0.025 * u * v
             return ellp(az, zu, k)
-        bang_fns.append(bang)
-        hs.append(grid('w_hair_bangs', 40, 16, bang, M['hair'], False, 2, 0.007))
-        hs.append(strands('w_str_bangs', bang, 210, 16, Cv, M['hairs'], 0.0016, 0.0011, 0.003, seed=3 + s))
+        hs.append(grid('w_hair_bangs', 40, 16, lambda u, v, f=bang: f(u, 0.75 * v), M['hair'], False, 2, 0.006))   # base under the upper part only
+        hs.append(strands('w_str_bangs', bang, 250, 16, Cv, M['hairs'], 0.0014, 0.0005, 0.003, seed=3 + s))
     def wave(z, u, amp):
-        return amp * math.sin(z * 38 + u * 5.0)
+        return amp * math.sin(z * 30 + u * 5.0)
     def back(u, v):
-        az = math.radians(96 + 168 * u)
-        zt = C[2] + h * 0.55; zb = 1.255
+        az = math.radians(118 + 124 * u)
+        zt = C[2] + h * 0.55; zb = 0.99 + 0.07 * abs(2 * u - 1)                                    # longest in the middle (V layers)
         z = zt + (zb - zt) * v
         jaw = C[2] - h * 0.72
         if z > jaw:
             return ellp(az, max(-0.95, (z - C[2]) / (h * 1.07)), 1.07)
-        t = min(1.0, max(0.0, (jaw - z) / 0.12)); e = t * t * (3 - 2 * t)
+        t = min(1.0, max(0.0, (jaw - z) / 0.14)); e = t * t * (3 - 2 * t)
         top = ellp(az, -0.72, 1.07); top.z = z
-        r = 1.0 + wave(z, u, 0.06) * e + 0.12 * max(0.0, (v - 0.82) / 0.18) ** 2      # waves, ends flick out
-        hang = Vector((0.172 * math.sin(az) * r, 0.03 - 0.12 * math.cos(az) * r, z))
+        r = 1.0 + wave(z, u, 0.035) * e
+        hang = Vector((0.15 * math.sin(az) * r, 0.045 - 0.115 * math.cos(az) * r, z))
         return top.lerp(hang, e)
-    hs.append(grid('w_hair_back', 48, 34, back, M['hair'], False, 2, 0.012))
-    hs.append(strands('w_str_back', back, 360, 34, Cv, M['hairs'], 0.0021, 0.0011, 0.0045, seed=4))
+    hs.append(grid('w_hair_back', 48, 50, back, M['hair'], False, 2, 0.012))
+    hs.append(strands('w_str_back', back, 420, 48, Cv, M['hairs'], 0.002, 0.0008, 0.0045, seed=4))
     def crown(u, v):
         az = math.radians(72 + 216 * u); return ellp(az, 0.98 - 0.42 * v, 1.06)
     hs.append(strands('w_str_crown', crown, 240, 12, Cv, M['hairs'], 0.0019, 0.0017, 0.0035, seed=5))
@@ -303,7 +301,7 @@ def build_woman():
         return Vector((math.cos(lat) * math.sin(az), -math.cos(lat) * math.cos(az), math.sin(lat)))
     for s in (-1, 1):
         def side(u, v, s=s):
-            th = math.radians(40 + 120 * u)                                              # along the parting, front to back
+            th = math.radians(40 + 120 * u)
             st = Vector((s * 0.03, -math.cos(th), math.sin(th))).normalized()
             en = unit(s * math.radians(62 + 110 * u), -0.15 - 0.2 * u)
             q = st.lerp(en, v).normalized()
@@ -311,97 +309,59 @@ def build_woman():
             return Vector((C[0] + a * k * q.x, C[1] + d * k * q.y, C[2] + h * k * q.z))
         hs.append(strands('w_str_side', side, 260, 14, Cv, M['hairs'], 0.0019, 0.0015, 0.003, seed=40 + s))
     for i, sgn in enumerate((-1, 1)):
-        def panel(u, v, sgn=sgn):
-            az = sgn * math.radians(70 + 28 * u)
-            z0 = C[2] + h * 0.15; z = z0 + (1.29 - z0) * v
+        def panel(u, v, sgn=sgn, i=i):
+            az = sgn * math.radians(68 + 50 * u)
+            z0 = C[2] + h * 0.15; zb = 1.07 - 0.05 * u + 0.03 * math.sin(u * 9)                   # uneven layered ends
+            z = z0 + (zb - z0) * v
             jaw = C[2] - h * 0.68
             if z > jaw:
                 return ellp(az, max(-0.95, (z - C[2]) / (h * 1.06)), 1.065 + 0.015 * u)
             t = min(1.0, (jaw - z) / 0.1); e = t * t * (3 - 2 * t)
             top = ellp(az, -0.68, 1.065 + 0.015 * u); top.z = z
-            w = wave(z, u + i, 0.012) * e
-            sh = Vector((sgn * (0.092 + 0.05 * u + w), -0.098 + 0.045 * u + 0.5 * w, z))
+            w = wave(z, u + i, 0.008) * e
+            bust = 0.016 * math.exp(-((z - 1.27) / 0.07) ** 2)
+            sh = Vector((sgn * (0.07 + 0.055 * u + w), -0.072 + 0.03 * u - 1.2 * bust + 0.5 * w, z))
             return top.lerp(sh, e)
-        hs.append(grid('w_hair_front', 12, 30, panel, M['hair'], False, 2, 0.008))
-        hs.append(strands(f'w_str_front{i}', panel, 120, 30, Cv, M['hairs'], 0.0018, 0.001, 0.004, seed=6 + i))
-        hs.append(strands(f'w_str_streak{i}', lambda u, v, pf=panel: pf(u, 0.32 + 0.68 * v), 45, 30, Cv, M['streak'], 0.0021, 0.0012, 0.0058, seed=16 + i))
-    # open cardigan: a shell round the torso, open at the front, ribbed edges, collar behind the neck, cuffs
-    def interp(tab, z):
-        for (z0, v0), (z1, v1) in zip(tab, tab[1:]):
-            if z0 >= z >= z1: return v0 + (v1 - v0) * (z0 - z) / (z0 - z1)
-        return tab[0][1] if z > tab[0][0] else tab[-1][1]
-    Wt = [(1.37, 0.125), (1.25, 0.138), (1.1, 0.13), (0.98, 0.15), (0.86, 0.178)]
-    Ft = [(1.37, 0.085), (1.28, 0.118), (1.18, 0.1), (1.05, 0.092), (0.86, 0.118)]
-    Bt = [(1.37, 0.08), (1.25, 0.092), (1.1, 0.084), (0.86, 0.108)]
-    OPEN = 0.5
-    def cardi(u, v):
-        ang = OPEN + (2 * math.pi - 2 * OPEN) * u
-        z = 1.37 - 0.51 * v
-        w = interp(Wt, z) + 0.004; dd = (interp(Ft, z) if math.cos(ang) > 0 else interp(Bt, z)) + 0.004
-        hang = 0.012 * v * v * max(0.0, math.cos(ang))                                     # fronts hang slightly open
-        fold = 0.0025 * math.sin(ang * 9) * v
-        return Vector(((w + fold) * math.sin(ang) * (1 + 0.15 * hang / 0.012 * 0.2), -(dd + fold + hang) * math.cos(ang) + 0.002, z))
-    cd = grid('w_cardigan', 80, 28, cardi, M['cardi'], False, 1, 0.006)
-    edges = []
+        hs.append(grid('w_hair_front', 14, 40, panel, M['hair'], False, 2, 0.005))
+        hs.append(strands(f'w_str_front{i}', panel, 170, 40, Cv, M['hairs'], 0.0019, 0.0007, 0.003, seed=6 + i))
+    # outfit details: tank-top straps and neckline, jeans waistband, slim boot soles, small hoops
+    trims = []
     for s in (-1, 1):
-        u0 = 0.0 if s > 0 else 1.0
-        pts = [tuple(cardi(u0, k / 14) + Vector((0, -0.003, 0))) for k in range(15)]
-        top = Vector(pts[0])
-        neck_pt = Vector((s * 0.05, -0.02, 1.43))
-        pts = [tuple(neck_pt), tuple(top.lerp(neck_pt, 0.5) + Vector((s * 0.01, -0.01, 0)))] + pts
-        edges.append(tube('w_cardigan_edge', pts, [0.0075] * len(pts), M['cardrib'], 6, 4))
-    collar = ring_tube('w_cardigan_collar', (0, 0.008), 0.056, 0.05, lambda ang: 1.425 + 0.008 * math.cos(ang - math.pi), 0.0085, M['cardrib'], 40, math.radians(60), math.radians(300))
-    hem = ring_tube('w_cardigan_hem', (0, 0.002), interp(Wt, 0.862) + 0.007, interp(Ft, 0.862) + 0.006, lambda ang: 0.862, 0.008, M['cardrib'], 64, OPEN, 2 * math.pi - OPEN)
-    cuffs = []
-    for s, n in ((1, 'L'), (-1, 'R')):
-        e, w = Vector(J[f'elbow_{n}'][0]), Vector(J[f'wrist_{n}'][0])
-        ax = (w - e).normalized(); c0 = e + ax * ((1.02 - e.z) / (w.z - e.z) * (w - e).length)
-        q = ax.to_track_quat('Z', 'Y')
-        pts = [tuple(c0 + q @ Vector((0.03 * math.cos(t / 24 * 2 * math.pi), 0.028 * math.sin(t / 24 * 2 * math.pi), 0))) for t in range(25)]
-        cuffs.append((tube(f'w_cuff_{n}', pts, [0.008] * 25, M['cardrib'], 2, 4), f'wrist_{n}'))
-    # neckline trim of the top, jeans waistband + rolled cuffs, boot soles
+        pts = []
+        for z in (1.35, 1.375, 1.4):
+            p, n = surface_hit(body, (s * 0.072, -1.0, z), (0, 1, 0))
+            if p is not None: pts.append(tuple(p + n * 0.0015))
+        for y in (-0.045, -0.02, 0.005, 0.03, 0.05):
+            p, n = surface_hit(body, (s * 0.072, y, 1.8), (0, 0, -1))
+            if p is not None and p.z < 1.5: pts.append(tuple(p + n * 0.0015))
+        for z in (1.4, 1.38):
+            p, n = surface_hit(body, (s * 0.072, 1.0, z), (0, -1, 0))
+            if p is not None: pts.append(tuple(p + n * 0.0015))
+        trims.append(tube('w_strap', pts, [0.0045] * len(pts), M['top'], 8, 4))
     nl = []
     for k in range(17):
-        x = -0.072 + 0.144 * k / 16
-        p, n = surface_hit(body, (x, -1.0, 1.417), (0, 1, 0))
-        if p is not None: nl.append(tuple(p + n * 0.0015))
-    trims = [tube('w_top_neckline', nl, [0.0025] * len(nl), M['top'], 4, 3)]
+        x = -0.06 + 0.12 * k / 16
+        p, n = surface_hit(body, (x, -1.0, 1.345 + 0.6 * x * x), (0, 1, 0))
+        if p is not None: nl.append(tuple(p + n * 0.0012))
+    trims.append(tube('w_top_neckline', nl, [0.0022] * len(nl), M['top'], 4, 3))
     wb = []
     for k in range(13):
         x = -0.09 + 0.18 * k / 12
         p, n = surface_hit(body, (x, -1.0, 1.0), (0, 1, 0))
         if p is not None: wb.append(tuple(p + n * 0.002))
-    trims.append(tube('w_waistband', wb, [0.006] * len(wb), M['denim'], 4, 3))
-    rolls = []
-    for s, n in ((1, 'L'), (-1, 'R')):
-        rolls.append((ring_tube(f'w_jean_roll_{n}', (s * 0.09, 0.013), 0.043, 0.045, lambda ang: 0.15, 0.011, M['cuff'], 40), f'calf_{n}'))
+    waist = tube('w_waistband', wb, [0.006] * len(wb), M['denim'], 4, 3)
     soles = []
     for s, n in ((1, 'L'), (-1, 'R')):
         bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
-        for v in bm.verts: v.co = Vector((v.co.x * 0.08 + s * 0.091, v.co.y * 0.205 - 0.04, v.co.z * 0.036 + 0.018))
-        so = mesh_obj(f'w_sole_{n}', bm, M['sole'], True, 2); bv = so.modifiers.new('bev', 'BEVEL'); bv.width = 0.011; bv.segments = 4
+        for v in bm.verts: v.co = Vector((v.co.x * 0.058 + s * 0.079, v.co.y * 0.165 - 0.035, v.co.z * 0.02 + 0.01))
+        so = mesh_obj(f'w_sole_{n}', bm, M['sole'], True, 2); bv = so.modifiers.new('bev', 'BEVEL'); bv.width = 0.008; bv.segments = 4
         so.modifiers.move(1, 0); soles.append((so, f'toe_{n}'))
-    # jewellery: small gold hoops, a fine necklace with a tiny pendant
-    jw = []
-    for s in (-1, 1):
-        jw.append(tube('w_hoop', [(s * (a + 0.004), C[1] + 0.006 + 0.007 * math.cos(t / 20 * 2 * math.pi), C[2] - 0.035 * h / 0.108 - 0.008 + 0.007 * math.sin(t / 20 * 2 * math.pi)) for t in range(21)], [0.0009] * 21, M['gold'], 2, 3))
-    neck_pts = []
-    for k in range(49):
-        ang = k / 48 * 2 * math.pi; f = (1 + math.cos(ang)) / 2
-        rr = 0.046 + 0.01 * f ** 2
-        neck_pts.append((rr * math.sin(ang), 0.008 - rr * math.cos(ang) - 0.004 * f, 1.44 - 0.03 * f ** 2))
-    pend = sphere('w_pendant', 1, 24, 16, (0, neck_pts[0][1] - 0.002, neck_pts[0][2] - 0.006), (0.0035, 0.0018, 0.005), M['gold'])
-    jw.append(pend)
-    # alt touch: a thin black choker with a small silver ring
-    chk = ring_tube('w_choker', (0, 0.007), 0.0455, 0.0445, lambda ang: 1.47, 0.0032, M['sole'], 48)
-    ring = ring_tube('w_choker_ring', (0, -0.0395), 0.0045, 0.0, lambda ang: 1.463 + 0.0045 * math.cos(ang), 0.0009, M['gold'], 20)
+    jw = [tube('w_hoop', [(s * (a + 0.004), C[1] + 0.006 + 0.007 * math.cos(t / 20 * 2 * math.pi), C[2] - 0.035 * h / 0.108 - 0.008 + 0.007 * math.sin(t / 20 * 2 * math.pi)) for t in range(21)], [0.0009] * 21, M['gold'], 2, 3) for s in (-1, 1)]
     # attach
-    for o in [head, cap] + hs + jw[:2]: parent_keep(o, rig, 'head')
-    bpy.data.objects.remove(pend)
-    for o in [collar, chk, ring]: parent_keep(o, rig, 'neck')
-    for o in [cd, hem, *edges, trims[0]]: parent_keep(o, rig, 'chest')
-    parent_keep(trims[1], rig, 'spine')
-    for o, b in cuffs + rolls + soles: parent_keep(o, rig, b)
+    for o in [head, cap] + hs + jw: parent_keep(o, rig, 'head')
+    for o in trims: parent_keep(o, rig, 'chest')
+    parent_keep(waist, rig, 'spine')
+    for o, b in soles: parent_keep(o, rig, b)
     return rig
 
 # ---------------------------------------------------------------- the wizard
@@ -662,8 +622,8 @@ if __name__ == '__main__':
         shots = {'front': ((0, -4.9, 1.2), (0, 0, 1.0), 50), 'threeq': ((3.0, -3.7, 1.25), (0, 0, 1.0), 50),
                  'side': ((4.9, 0, 1.2), (0, 0, 1.0), 50), 'back': ((0, 4.9, 1.2), (0, 0, 1.0), 50)}
         for k, r in rigs.items():
-            hx = r.location.x; hz = 1.585 if k == 'woman' else 1.7
-            shots[f'face_{k}'] = ((hx + 0.12, -0.8, hz + 0.02), (hx, 0, hz - 0.01), 85)
+            hx = r.location.x; hz = 1.575 if k == 'woman' else 1.7
+            shots[f'face_{k}'] = ((hx + 0.12, -0.9, hz + 0.02), (hx, 0, hz - 0.01), 85)
             shots[f'face3q_{k}'] = ((hx + 0.55, -0.62, hz + 0.03), (hx, 0, hz - 0.01), 85)
             shots[f'full_{k}'] = ((hx + 0.6, -3.2, 1.1), (hx, 0, 0.98 if k == 'woman' else 1.05), 50)
         for name, (pos, tgt, lens) in shots.items():
