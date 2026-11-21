@@ -8,10 +8,12 @@ renderer/characters.js poses them with the same API. v7 changes:
     nose, a curly handlebar moustache and a big forked white beard with curled tips, a crooked teal hat with a patch,
     a bell on the drooping tip and science goggles on the band, a plum robe with a round belly, gold stars and a
     mustard hem, potion vials on the belt, curly-toed slippers and a gnarled staff with a glowing orb.
-  * Woman: a stylish, laid-back art-student look (family friendly). Dark espresso hair past the shoulders with soft
+  * Woman (v7.1, Caesar: less round face, bangs, alternative look): oval face with higher cheekbones, black hair with a
+    choppy piecey fringe and plum peekaboo streaks, green eyes, winged liner, berry lips, thin black choker, plum
+    cardigan over a charcoal top, black jeans, chunky black boots, silver hoops. (Earlier v7: a stylish, laid-back art-student look. Dark espresso hair past the shoulders with soft
     curtain bangs and loose waves, warm brown eyes, natural makeup, light freckles, a gentle smile; cream ribbed top
     under an open rust cardigan with pushed-up sleeves, high-waisted dark jeans with rolled cuffs, brown ankle boots,
-    small gold hoops and a fine necklace.
+    small gold hoops and a fine necklace.)
   * Higher density everywhere: heads 96 x 72 (+ subdivision), denser strand hair, a larger export budget.
 
 Both are our own original designs. They are not modelled on any real person, actor or existing character.
@@ -201,15 +203,15 @@ def standard_edges():
 # ---------------------------------------------------------------- the woman
 def build_woman():
     M = {
-        'skin': mat('w_skin', '#eec3a9', 0.46, sss=0.22), 'top': mat('w_top', '#e8dfcc', 0.85, sheen=0.2),
-        'cardi': mat('w_cardigan', '#a3532f', 0.9, sheen=0.35), 'cardrib': mat('w_cardigan_rib', '#8f4626', 0.9, sheen=0.3),
-        'denim': mat('w_denim', '#2f3e57', 0.8), 'cuff': mat('w_denim_cuff', '#4a5b78', 0.85),
-        'boot': mat('w_boot', '#5b3a26', 0.42, coat=0.3), 'sole': mat('w_sole', '#2a1d16', 0.7),
-        'hair': mat('w_hair', '#1d1512', 0.45), 'hairs': mat('w_hair_str', '#2a1e18', 0.38),
-        'eyewhite': mat('w_eyewhite', '#f3eee8', 0.12), 'iris': mat('w_iris', '#6a4026', 0.2), 'irisring': mat('w_iris_ring', '#2a170e', 0.3),
+        'skin': mat('w_skin', '#f0cdb8', 0.46, sss=0.22), 'top': mat('w_top', '#2b2a30', 0.85, sheen=0.2),
+        'cardi': mat('w_cardigan', '#5e2b3e', 0.9, sheen=0.35), 'cardrib': mat('w_cardigan_rib', '#4c2232', 0.9, sheen=0.3),
+        'denim': mat('w_denim', '#25262c', 0.8), 'cuff': mat('w_denim_cuff', '#3a3b43', 0.85),
+        'boot': mat('w_boot', '#17161a', 0.38, coat=0.4), 'sole': mat('w_sole', '#0e0d10', 0.7),
+        'hair': mat('w_hair', '#121014', 0.45), 'hairs': mat('w_hair_str', '#1c181e', 0.38), 'streak': mat('w_hair_streak', '#5a2140', 0.4),
+        'eyewhite': mat('w_eyewhite', '#f3eee8', 0.12), 'iris': mat('w_iris', '#5a6a4a', 0.2), 'irisring': mat('w_iris_ring', '#2a170e', 0.3),
         'pupil': mat('w_pupil', '#050506', 0.1), 'lash': mat('w_lash', '#120c0a', 0.5), 'brow': mat('w_brow', '#2a1d17', 0.7),
-        'lidc': mat('w_lidshadow', '#c99a8c', 0.55), 'lip': mat('w_lip', '#b8626a', 0.35), 'mouth': mat('w_mouth', '#3a1518', 0.8),
-        'gold': mat('w_gold', '#e0b860', 0.3, metal=0.35), 'earin': mat('w_earin', '#e3a996', 0.5, sss=0.2),
+        'lidc': mat('w_lidshadow', '#7a5866', 0.55), 'lip': mat('w_lip', '#84424f', 0.45), 'mouth': mat('w_mouth', '#3a1518', 0.8),
+        'gold': mat('w_gold', '#c9ccd2', 0.28, metal=0.35), 'earin': mat('w_earin', '#e3a996', 0.5, sss=0.2),
     }
     J = {
         'pelvis': ((0, 0, 0.95), (0.126, 0.09)), 'spine': ((0, 0.005, 1.08), (0.104, 0.07)), 'chest': ((0, 0.0, 1.25), (0.118, 0.08)),
@@ -249,12 +251,12 @@ def build_woman():
         bm.to_mesh(ob.data); bm.free()
     body, rig = build_body('woman', J, E, region, shape)
     C = (0, -0.004, 1.565)
-    P = dict(size=(0.077, 0.089, 0.1), lower=0.86, jaw=0.27, chin=0.12, chinfwd=0.08, cheek=0.05, socket=0.06, ridge=0.016, nose=0.1, alar=0.026,
-             cheekbone=0.06, apple_z=-0.16, hollow=0.012, philtrum=0.012, dimple=0.01, tip=0.06, lips=0.045,
-             eye_r=0.0134, eye_x=0.43, eye_z=0.05, iris=0.64, lid=0.5, lid_tilt=0.08, lowlid=0.74, lash=0.0015, wing=True, lash_flicks=3,
+    P = dict(size=(0.071, 0.088, 0.101), lower=0.93, jaw=0.38, chin=0.2, chinfwd=0.08, cheek=0.02, socket=0.065, ridge=0.016, nose=0.1, alar=0.024,
+             cheekbone=0.075, apple_z=-0.08, hollow=0.035, philtrum=0.012, dimple=0.008, tip=0.06, lips=0.045,
+             eye_r=0.0132, eye_x=0.44, eye_z=0.05, iris=0.64, lid=0.46, lid_tilt=0.13, lowlid=0.74, lash=0.0019, wing=True, lash_flicks=3,
              brow_x0=0.17, brow_x1=0.8, brow_z=0.27, brow_arch=0.06, brow_w=0.0027,
-             paint=dict(blush=(1.0, 0.7, 0.68, 0.6), socket=(0.84, 0.66, 0.64, 0.6), freckles=30, freckle_s=0.3, nose_blush=0.7),
-             mouth_z=-0.56, ulip=(0.0172, 0.0038), llip=(0.016, 0.005), smile=0.003, ear=0)   # ears are under the hair
+             paint=dict(blush=(1.0, 0.74, 0.72, 0.45), socket=(0.7, 0.58, 0.62, 0.55), freckles=10, freckle_s=0.25, nose_blush=0.7),
+             mouth_z=-0.56, ulip=(0.0138, 0.003), llip=(0.013, 0.004), smile=0.0014, ear=0)   # ears are under the hair
     head, hit = build_head7('w_head', P, C, M)
     a, d, h = P['size']
     def ellp(az, zu, k):
@@ -267,14 +269,16 @@ def build_woman():
     bang_fns = []
     for s in (-1, 1):
         def bang(u, v, s=s):
-            zE = 0.3 - 0.12 * min(1.0, u / 0.45) - 0.72 * max(0.0, (u - 0.45) / 0.55) ** 1.2
+            # choppy, piecey fringe to the brows (uneven clump lengths), longer face-framing pieces at the sides
+            clump = ((int(u * 11 + 0.5 + 0.3 * s) * 7919) % 13) / 13.0 - 0.5
+            zE = 0.3 + 0.12 * clump - 0.85 * max(0.0, (u - 0.55) / 0.45) ** 1.3
             zu = 0.9 + (zE - 0.9) * v
-            az = s * math.radians(3 + 48 * u + v ** 1.5 * (13 * (1 - u) + 28 * u))
-            k = 1.115 + 0.03 * v ** 1.5 + 0.02 * u * v
+            az = s * math.radians(1 + 52 * u + v ** 1.5 * (3 * (1 - u) + 22 * u))
+            k = 1.105 + 0.025 * v ** 1.5 + 0.02 * u * v
             return ellp(az, zu, k)
         bang_fns.append(bang)
         hs.append(grid('w_hair_bangs', 40, 16, bang, M['hair'], False, 2, 0.007))
-        hs.append(strands('w_str_bangs', bang, 190, 16, Cv, M['hairs'], 0.0016, 0.0011, 0.003, seed=3 + s))
+        hs.append(strands('w_str_bangs', bang, 210, 16, Cv, M['hairs'], 0.0016, 0.0011, 0.003, seed=3 + s))
     def wave(z, u, amp):
         return amp * math.sin(z * 38 + u * 5.0)
     def back(u, v):
@@ -319,7 +323,8 @@ def build_woman():
             sh = Vector((sgn * (0.092 + 0.05 * u + w), -0.098 + 0.045 * u + 0.5 * w, z))
             return top.lerp(sh, e)
         hs.append(grid('w_hair_front', 12, 30, panel, M['hair'], False, 2, 0.008))
-        hs.append(strands(f'w_str_front{i}', panel, 140, 30, Cv, M['hairs'], 0.0018, 0.001, 0.004, seed=6 + i))
+        hs.append(strands(f'w_str_front{i}', panel, 120, 30, Cv, M['hairs'], 0.0018, 0.001, 0.004, seed=6 + i))
+        hs.append(strands(f'w_str_streak{i}', lambda u, v, pf=panel: pf(u, 0.32 + 0.68 * v), 45, 30, Cv, M['streak'], 0.0021, 0.0012, 0.0058, seed=16 + i))
     # open cardigan: a shell round the torso, open at the front, ribbed edges, collar behind the neck, cuffs
     def interp(tab, z):
         for (z0, v0), (z1, v1) in zip(tab, tab[1:]):
@@ -373,7 +378,7 @@ def build_woman():
     soles = []
     for s, n in ((1, 'L'), (-1, 'R')):
         bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
-        for v in bm.verts: v.co = Vector((v.co.x * 0.074 + s * 0.091, v.co.y * 0.2 - 0.04, v.co.z * 0.026 + 0.013))
+        for v in bm.verts: v.co = Vector((v.co.x * 0.08 + s * 0.091, v.co.y * 0.205 - 0.04, v.co.z * 0.036 + 0.018))
         so = mesh_obj(f'w_sole_{n}', bm, M['sole'], True, 2); bv = so.modifiers.new('bev', 'BEVEL'); bv.width = 0.011; bv.segments = 4
         so.modifiers.move(1, 0); soles.append((so, f'toe_{n}'))
     # jewellery: small gold hoops, a fine necklace with a tiny pendant
@@ -385,12 +390,15 @@ def build_woman():
         ang = k / 48 * 2 * math.pi; f = (1 + math.cos(ang)) / 2
         rr = 0.046 + 0.01 * f ** 2
         neck_pts.append((rr * math.sin(ang), 0.008 - rr * math.cos(ang) - 0.004 * f, 1.44 - 0.03 * f ** 2))
-    jw.append(tube('w_necklace', neck_pts, [0.0007] * 49, M['gold'], 2, 3))
     pend = sphere('w_pendant', 1, 24, 16, (0, neck_pts[0][1] - 0.002, neck_pts[0][2] - 0.006), (0.0035, 0.0018, 0.005), M['gold'])
     jw.append(pend)
+    # alt touch: a thin black choker with a small silver ring
+    chk = ring_tube('w_choker', (0, 0.007), 0.0455, 0.0445, lambda ang: 1.47, 0.0032, M['sole'], 48)
+    ring = ring_tube('w_choker_ring', (0, -0.0395), 0.0045, 0.0, lambda ang: 1.463 + 0.0045 * math.cos(ang), 0.0009, M['gold'], 20)
     # attach
     for o in [head, cap] + hs + jw[:2]: parent_keep(o, rig, 'head')
-    for o in [collar, jw[2], pend] + edges[:0]: parent_keep(o, rig, 'neck')
+    bpy.data.objects.remove(pend)
+    for o in [collar, chk, ring]: parent_keep(o, rig, 'neck')
     for o in [cd, hem, *edges, trims[0]]: parent_keep(o, rig, 'chest')
     parent_keep(trims[1], rig, 'spine')
     for o, b in cuffs + rolls + soles: parent_keep(o, rig, b)
