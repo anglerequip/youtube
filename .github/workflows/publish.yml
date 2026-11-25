@@ -7,6 +7,11 @@ on:
   schedule:
     - cron: "15 * * * *"        # hourly, at :15
   workflow_dispatch:
+    inputs:
+      facebook_now:
+        description: "Slug of a queued video to post to Facebook right now (skips the daily 18:00 slot)"
+        required: false
+        default: ""
 
 permissions:
   contents: write               # to commit the queue clean-up
@@ -35,6 +40,7 @@ jobs:
         env:
           FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
           FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
+          FACEBOOK_POST_NOW: ${{ github.event.inputs.facebook_now }}
         run: python -m factory.autopilot.facebook_post
       - name: Remove posted queue folders from the repository
         if: always()
