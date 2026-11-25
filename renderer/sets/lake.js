@@ -230,6 +230,13 @@ export function rowboat(color = '#2e8f86') {
   // gunwale rim
   const rimPts = []; for (let k = 0; k <= 96; k++) { const a = k / 96 * Math.PI * 2, z = Math.cos(a), bow = z < 0 ? 1 - 0.55 * Math.pow(-z, 2.2) : 1 - 0.18 * Math.pow(z, 3); rimPts.push(new THREE.Vector3(Math.sin(a) * B / 2 * bow, 0.0, z * L / 2)); }
   const rim = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rimPts, true), 192, 0.035, 12, true), MAT.wood('#7a5a3a')); g.add(rim);
+  // keep the lake out of the boat: an invisible lid over the opening writes depth just before the water is drawn
+  // (transparent queue, lower renderOrder), so the water plane inside the hull fails the depth test while the floor,
+  // seats, people and props already drawn below it stay visible
+  const lidShape = new THREE.Shape(rimPts.map(p => new THREE.Vector2(p.x, p.z)));
+  const lidG = new THREE.ShapeGeometry(lidShape, 24); lidG.rotateX(Math.PI / 2);
+  const lid = new THREE.Mesh(lidG, new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true, transparent: true, side: THREE.DoubleSide }));
+  lid.renderOrder = 1; lid.position.y = 0.0; lid.userData.noAO = true; lid.userData.noVariation = true; lid.castShadow = false; lid.name = 'water_lid'; g.add(lid);
   // seats (thwarts) and a floor board
   const seatM = MAT.wood('#8f6d49'), seats = [];
   for (const z of [-0.55, 0.55]) {
@@ -246,7 +253,8 @@ export function rowboat(color = '#2e8f86') {
   }
   g.position.y = 0.12;            // freeboard: the rim sits 12 cm above the water
   g.userData = { seats, floorY: -0.5 + 0.015, L, B };
-  return shadowed(g);
+  shadowed(g); lid.castShadow = lid.receiveShadow = false;
+  return g;
 }
 
 // Trout- or gar-like fish, `len` metres long, facing +x. fish.swim(t, effort) bends the body (a travelling wave

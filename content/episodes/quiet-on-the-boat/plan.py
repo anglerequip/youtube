@@ -93,7 +93,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     t_bolt = at("gone", "goes") - 0.1
     hook_c = max(2.4, at("hook", "Almost") - 0.15)
     bounce_c = at("bounce", "Only") - 0.15
-    bounce_m = at("bounce", "surface") - 0.1
+    bounce_m = at("bounce", "mostly") - 0.1                  # the closer angle on the waterline, about 2.5 s
     hull_c = at("hull", "That") - 0.1
 
     E_ = duo.shot(fps)
