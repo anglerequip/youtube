@@ -1,21 +1,6 @@
 {
   "title": "What If You Were 100 Times Taller? (Square-Cube Law)",
   "description": "What would really happen if you grew a hundred times taller?\nYour bones would break and you'd overheat, even in Antarctica. Every length grows 100 times, so your weight grows a million times, but your bones' cross-section (their strength) and your skin grow only ten thousand times. Each bit of bone carries 100 times the load, and every square metre of skin has to shed 100 times more heat.\n\nIt's the square-cube law, first worked out by Galileo in 1638. Real big animals cheat it: thicker bones and slower cells (a whale burns far less per kilo than you do).\nWould you rather be ten times taller or ten times smaller?\n\nSources:\n- G. Galileo, Dialogues Concerning Two New Sciences (1638), Second Day: the bone of a giant animal (square-cube law)\n- J. B. S. Haldane, 'On Being the Right Size', Harper's Magazine, March 1926 (giants ten times our height would break their thigh bones at every step; heat loss and surface area)\n- A. A. Biewener, 'Biomechanics of mammalian terrestrial locomotion', Science 250 (1990) 1097-1103 (bone safety factors of about 2-4)\n- D. T. Reilly & A. H. Burstein, 'The elastic and ultimate properties of compact bone tissue', J. Biomechanics 8 (1975) 393-405 (cortical bone compressive strength ~190 MPa)\n- M. Kleiber, 'Body size and metabolism', Hilgardia 6 (1932) 315-353 (metabolic rate ~ mass^0.75 in real animals)\n- Resting heat output of an adult about 80 W, skin area about 1.9 m2 (standard physiology, e.g. Guyton & Hall, Textbook of Medical Physiology)\n\nHow it's made: original 3D characters and scenes, animated by us; the scale factors follow the square-cube law. The voices are AI voices (ElevenLabs).\n\nCounterphysical: physics that breaks your intuition.\n\n#shorts #physics #science #squarecubelaw #whatif",
-  "tags": [
-    "square-cube law",
-    "giant",
-    "scaling",
-    "what if",
-    "physics",
-    "biology",
-    "antarctica",
-    "galileo",
-    "science",
-    "counterphysical"
-  ],
-  "category_id": "28",
-  "made_for_kids": false,
-  "contains_synthetic_media": true,
-  "playlist": "physics",
-  "publish_at": "2026-11-25T21:10:06Z"
+  "queued_at": "2026-11-25T21:10:32Z",
+  "is_ai_generated": true
 }
