@@ -122,15 +122,22 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     K = lambda *a: list(a)
     UL = "underlake"
     f0 = fx_at(0.3); f1 = fx_at(2.5)
+
+    def side_cam(f, off, ahead, y=-1.1):
+        """A point beside the fish (off metres to its left flank) and `ahead` metres toward its nose."""
+        h = f[3]
+        hx, hz = math.cos(h), -math.sin(h)
+        return K(f[0] + off * hz * -1 + ahead * hx, y, f[2] + off * hx + ahead * hz)
     hook_b, hook_c = 2.5, max(4.6, at("hook", "line") - 0.2)
     mid = lambda t: (bx - 1.6 + fx_at(t)[0]) / 2
     tired_c = (S("tired") + E("tired")) / 2
+    drag_c = at("drag", "Pull") - 0.1
     fA = lambda t: fx_at(t)
     line_view = lambda t0, t1, fov=48: E_(t0, t1, K(bx + 1.7, 2.5, bz + 1.0), K(bx + 1.5, 2.35, bz + 0.85),
                                            K(fA(t0)[0], -0.7, fA(t0)[2]), fov, "key", K(fA(t1)[0], -0.7, fA(t1)[2]))
     shots_spec = [
         # hook (a): under water ahead of the fish: the huge gar swims hard, the thin line runs up from its jaw
-        ("under", E_(0.0, hook_b, K(f0[0] - 2.3, -0.8, f0[2] - 2.2), K(f1[0] - 2.0, -0.85, f1[2] - 2.0), K(f0[0] + 0.2, -1.0, f0[2]), 50, UL, K(f1[0] + 0.2, -1.0, f1[2]))),
+        ("under", E_(0.0, hook_b, side_cam(f0, 4.3, 0.7), side_cam(f1, 4.0, 0.7), side_cam(f0, 0, 0.25, -0.95), 62, UL, side_cam(f1, 0, 0.25, -0.95))),
         # hook (b): the wizard side-on, the rod bent hard out over the bow
         ("out", E_(hook_b, hook_c, K(bx - 0.7, 1.15, bz - 2.9), K(bx - 0.75, 1.1, bz - 2.65), K(bx - 0.78, 0.95, bz), 46)),
         # hook (c): from behind and above the boat along the line to the fish (water see-through)
@@ -138,13 +145,15 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # what: the wizard, close
         ("out", E_(S("what") - 0.1, S("float") - 0.1, K(bx - 0.95, 1.08, bz - 1.45), K(bx - 0.92, 1.05, bz - 1.35), K(bx - 0.5, 0.92, bz), 36)),
         # float: side-on to the fish, water clear: weight down, water pushing up, nearly equal
-        ("xray", E_(S("float") - 0.1, S("pull") - 0.1, K(fA(S("float"))[0] + 0.2, -0.5, fA(S("float"))[2] - 3.6),
-                    K(fA(S("float"))[0] + 0.1, -0.55, fA(S("float"))[2] - 3.2), K(fA(S("float"))[0], -0.9, fA(S("float"))[2]), 46)),
+        ("under", E_(S("float") - 0.1, S("pull") - 0.1, K(fA(S("float"))[0] + 0.3, -1.45, fA(S("float"))[2] - 3.9),
+                    K(fA(S("float"))[0] + 0.2, -1.4, fA(S("float"))[2] - 3.5), K(fA(S("float"))[0], -0.85, fA(S("float"))[2]), 48, UL)),
         # pull: under water off the fish's flank: the line tight from its jaw
-        ("under", E_(S("pull") - 0.1, S("drag") - 0.1, K(fA(S("pull"))[0] + 0.6, -1.15, fA(S("pull"))[2] - 3.0),
-                     K(fA(S("pull"))[0] + 0.5, -1.1, fA(S("pull"))[2] - 2.7), K(fA(S("pull"))[0], -1.0, fA(S("pull"))[2]), 48, UL)),
+        ("under", E_(S("pull") - 0.1, S("drag") - 0.1, K(fA(S("pull"))[0] - 1.6, -1.3, fA(S("pull"))[2] - 3.4),
+                     K(fA(S("pull"))[0] - 1.45, -1.25, fA(S("pull"))[2] - 3.1), K(fA(S("pull"))[0] + 0.2, -0.95, fA(S("pull"))[2]), 46, UL)),
         # drag: close on the reel as the line slips out
-        ("out", E_(S("drag") - 0.1, S("swims") - 0.1, K(bx - 0.75, 0.7, bz - 1.05), K(bx - 0.73, 0.68, bz - 0.98), K(bx - 0.62, 0.42, bz - 0.25), 30)),
+        ("out", E_(S("drag") - 0.1, drag_c, K(bx - 1.6, 1.0, bz - 1.75), K(bx - 1.55, 0.97, bz - 1.6), K(bx - 0.55, 0.78, bz - 0.1), 42)),
+        # drag (b): wide from the side, water see-through: the fish surges away and line slips off the reel
+        ("xray", line_view(drag_c, S("swims") - 0.1, 40)),
         # swims: the wizard, worried, the woman behind him
         ("out", E_(S("swims") - 0.1, S("tired") - 0.1, K(bx - 1.6, 1.15, bz - 2.1), K(bx - 1.45, 1.1, bz - 1.95), K(bx - 0.1, 0.85, bz), 42)),
         # tired (a): along the line again: run, reel, run
@@ -152,9 +161,9 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # tired (b): high three-quarter view from the side as the fish comes in
         ("xray", E_(tired_c, S("lift") - 0.1, K(bx - 1.9, 3.3, bz - 4.6), K(bx - 1.6, 3.0, bz - 4.1), K(fA(tired_c)[0], -0.5, fA(tired_c)[2]), 48, "key", K(fA(S("lift"))[0], -0.4, fA(S("lift"))[2]))),
         # lift: both in the boat, the fish alongside; he starts to lift, she stops him
-        ("out", E_(S("lift") - 0.1, at("lift", "Out") - 0.1, K(bx - 1.2, 1.35, bz - 3.2), K(bx - 1.1, 1.3, bz - 2.9), K(bx - 0.7, 0.35, bz - 0.6), 46)),
+        ("out", E_(S("lift") - 0.1, at("lift", "Out") - 0.1, K(bx - 1.5, 1.2, bz - 3.6), K(bx - 1.4, 1.15, bz - 3.3), K(bx - 0.75, 0.75, bz - 0.6), 48)),
         # lift (b): low by the water, the huge fish alongside the boat, the thin line from its jaw up to the rod
-        ("out", E_(at("lift", "Out") - 0.1, S("payoff") - 0.1, K(SIDE[0] - 1.9, 0.35, SIDE[2] - 1.5), K(SIDE[0] - 1.7, 0.32, SIDE[2] - 1.35), K(SIDE[0] - 0.2, 0.05, SIDE[2]), 48)),
+        ("out", E_(at("lift", "Out") - 0.1, S("payoff") - 0.1, K(SIDE[0] - 2.4, 0.75, SIDE[2] - 1.6), K(SIDE[0] - 2.2, 0.7, SIDE[2] - 1.45), K(SIDE[0] + 0.5, 0.05, SIDE[2] + 0.4), 50)),
         # payoff: the tiny net next to the huge fish
         ("out", cam.shot(S("payoff") - 0.1, dur + 0.05, [(S("payoff") - 0.1, K(bx - 1.75, 1.95, bz - 2.75), K(bx - 1.0, 0.3, bz - 0.55), 46),
                                                          (dur + 0.05, K(bx - 1.65, 1.85, bz - 2.5), K(bx - 1.0, 0.3, bz - 0.55), 46)], fps, "key")),
@@ -171,7 +180,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                 return kd
         return kinds[-1]
 
-    net_pos = [SIDE[0] - 0.42 * FISH_LEN, 0.1, SIDE[2] + 0.05]
+    net_pos = [SIDE[0] - 0.42 * FISH_LEN, 0.22, SIDE[2] - 0.3]
     net_yaw = math.atan2(-(WIZ[2] - net_pos[2]), -(WIZ[0] - net_pos[0]))   # handle (local -x) toward the wizard
     frames = {k: [] for k in ("wiz_blink", "woman_blink", "look_w", "look_m", "woman_point", "xray", "fish", "fish_effort",
                               "fish_turn", "tension", "rod_bend", "rod_tilt", "rod_yaw", "line_sag", "spool", "arrows",
@@ -182,9 +191,9 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         a = ln.id if ln else None
         frames["xray"].append(1 if kind_at(t) == "xray" else 0)
         frames["fish"].append(fishp[i])
-        frames["fish_effort"].append(round(0.15 + 0.85 * eff[i], 3))
+        frames["fish_effort"].append(round(0.3 + 0.7 * eff[i], 3))
         frames["fish_turn"].append(round(0.25 * math.sin(t * 0.9) * eff[i], 3))
-        lift = duo.bump(t, t_lift0, 0.5, max(0.1, t_lift1 - t_lift0 - 1.0), 0.5)
+        lift = duo.bump(t, t_lift0, 0.5, max(0.1, E("lift") - 0.6 - t_lift0), 0.5)
         frames["lifted"].append(round(lift, 3))
         frames["water_op"].append(round(0.8 - 0.35 * duo.ramp(t, S("lift") - 0.2, 0.3), 3))
         frames["tension"].append(round(float(ten[i]), 3))
@@ -206,18 +215,24 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
 
     over = [("153 lb if lifted" if frames["lifted"][i] > 0.3 else None) for i in range(n)]
     shown = [(round(LINE_LB * 1.25 if over[i] else frames["tension"][i], 3)) for i in range(n)]
+    # while the drag slips, say how much line has gone out on this run
+    subs, run0 = [], None
+    for i in range(n):
+        slipping = mode[i] == "run" and ten[i] >= DRAG_LB - 1e-9
+        run0 = (paid[i] if run0 is None else run0) if slipping else None
+        subs.append(f"line out +{paid[i] - run0:.1f} m" if slipping and paid[i] - run0 > 0.05 else None)
     overlays = [{"type": "tension", "start": S("pull") - 0.1, "end": E("lift") + 0.1, "xy": [0.5, 0.115], "values": shown,
-                 "over": over, "fps": fps, "max": LINE_LB * 1.25, "label": "pull on the line", "unit": "lb",
+                 "over": over, "subs": subs, "fps": fps, "max": LINE_LB * 1.25, "label": "pull on the line", "unit": "lb",
                  "marks": [{"v": DRAG_LB, "text": "drag slips", "color": "amber"}, {"v": LINE_LB, "text": "line snaps", "color": "red"}]},
                 {"type": "callout", "start": at("float", "dense") + 0.1, "end": S("pull") - 0.3, "at": [fishp[int(at("float", "dense") * fps)][0], -1.6, fishp[int(at("float", "dense") * fps)][2] - 0.25],
                  "text": "its weight", "dx": -0.18, "dy": 0.06},
                 {"type": "callout", "start": at("float", "dense") + 0.3, "end": S("pull") - 0.3, "at": [fishp[int(at("float", "dense") * fps)][0], -0.2, fishp[int(at("float", "dense") * fps)][2] - 0.25],
                  "text": "water pushes up", "dx": 0.12, "dy": -0.07}]
-    cards = [{"start": at("hook", "two") - 0.1, "end": S("what") - 0.15, "big": "153 lb", "small": "on 2 lb line", "y": 0.16}]
+    cards = [{"start": 0.25, "end": S("what") - 0.15, "big": "153 lb", "small": "on 2 lb line", "y": 0.16}]
     events = [(round(hook_b, 3), "whoosh", {"gain": 0.07}),
               (round(at("pull", "only") - 0.1, 3), "rise", {"gain": 0.06}),
-              (round(t_lift0 + 0.5, 3), "ding", {"gain": 0.08}),
-              (round(at("drag", "slips") - 0.1, 3), "tick", {"gain": 0.08}),
+              (round(t_lift0 + 0.5, 3), "thud", {"gain": 0.06}),
+              *[(round(at("drag", "slips") - 0.1 + 0.07 * k, 3), "tick", {"gain": round(0.05 - 0.004 * k, 3)}) for k in range(6)],
               (round(t_net + 0.4, 3), "pop", {"gain": 0.07})]
     cuts_ = [s_["start"] for s_ in shots[1:]]
     # a reveal that lands just before a cut is shown by that cut: mark it there (QC no_cut_in_reveal)

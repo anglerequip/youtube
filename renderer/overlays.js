@@ -112,7 +112,8 @@ const DRAW = {
     label(ctx, o.label ?? '', x - tubeW * 4, top + 4, Math.round(H * 0.018), 'right');
   },
   // a horizontal meter whose level follows a per-frame list from the plan (values[i] at i / fps), with labelled
-  // marks (e.g. the reel's drag setting and the line's breaking strength). `over` (per-frame, optional) draws an
+  // marks (e.g. the reel's drag setting and the line's breaking strength). `subs` (per-frame, optional) is a short note
+  // in the top row, between the label and the value. `over` (per-frame, optional) draws an
   // overflow arrow past the end of the scale with its own text, for "this would be far off the chart".
   tension(ctx, W, H, o, t) {
     const i = Math.max(0, Math.min(o.values.length - 1, Math.round(t * (o.fps ?? 30))));
@@ -136,6 +137,10 @@ const DRAW = {
     ctx.fillStyle = '#3a3a3a'; ctx.font = `700 ${Math.round(H * 0.0145)}px Poppins`; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
     ctx.fillText(o.label ?? '', left, y0 - bh * 0.5);
     ctx.textAlign = 'right'; ctx.fillStyle = ctx.fillStyle;
+    const sub = o.subs ? o.subs[i] : null;          // optional per-frame note under the scale (e.g. line paying out)
+    if (sub) { ctx.fillStyle = '#c58a12'; ctx.font = `800 ${Math.round(H * 0.0145)}px Poppins`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+               ctx.fillText(sub, left + bw * 0.55, y0 - bh * 0.5); }
+    ctx.fillStyle = '#3a3a3a'; ctx.font = `700 ${Math.round(H * 0.0145)}px Poppins`; ctx.textBaseline = 'bottom';
     const ov = o.over ? o.over[i] : null;
     ctx.fillText(ov ? '' : `${v.toFixed(1)} ${o.unit ?? ''}`, left + bw, y0 - bh * 0.5);
     if (ov) {                                         // pegged: an arrow off the end of the scale

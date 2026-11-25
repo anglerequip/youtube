@@ -94,7 +94,7 @@ export function rayTube(points, color, r = 0.012, opacity = 0.95) {
 
 export function build(world, plan) {
   const S = world.scene, F = plan.frames, L = plan.layout;
-  const LK = lake(world, { keepClear: [[-3, 3]] });
+  const LK = lake(world, { keepClear: [[-3, 3]], snellRes: 1536 });
   const trout = fish('trout', 0.5); const len = trout.len;
   trout.rotation.y = -Math.PI / 2;                                  // facing the bank (+z)
   trout.position.set(L.eye[0], L.eye[1] - 0.025 * len, L.eye[2] - 0.36 * len); S.add(trout);
@@ -130,7 +130,10 @@ export function build(world, plan) {
       const xr = F.xray[k] > 0;
       LK.opacity = xr ? 0.32 : 0.8;
       trout.swim(t, F.fish_swim[k]);
-      trout.position.y = L.eye[1] - 0.025 * len + 0.015 * Math.sin(t * 1.3);
+      // the trout's eye sits at fish_xyz; its body follows its heading (yaw: 0 = nose +x, -pi/2 = facing the bank)
+      const fe = F.fish_xyz ? F.fish_xyz[k] : L.eye, fy = F.fish_yaw ? F.fish_yaw[k] : -Math.PI / 2;
+      trout.rotation.y = fy;
+      trout.position.set(fe[0] - 0.36 * len * Math.cos(fy), fe[1] - 0.025 * len + 0.015 * Math.sin(t * 1.3), fe[2] + 0.36 * len * Math.sin(fy));
       fanM.forEach((m, j) => m.setProgress(xr ? F.rays[k] * 1.25 - j * 0.02 : 0));
       headM.setProgress(xr ? F.head_ray[k] : 0);
       cone.material.opacity = xr ? 0.22 * F.cone[k] : 0;

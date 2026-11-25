@@ -7,9 +7,12 @@
 //   const L = lake(world, { jetty: true });      // per frame: L.update(t, world.camera)
 //   const f = fish('trout', 0.35); f.position.set(0, -1, -3); scene.add(f); f.swim(t, 1);
 //
-// Underwater: the water surface is see-through, and a "mirror" sheet hangs just under it everywhere except a
-// circle straight above the camera of radius depth * tan(48.6 deg) (Snell's window), so the view up from below is
-// physically right: sky inside the circle, the reflected lakebed outside it. Use lighting 'underlake' below water.
+// Underwater: the surface is drawn from below by a Snell's-window shader (snellSurface). Every pixel of the
+// underside refracts the view ray with Snell's law (n = 1.333) and looks up the world above the water in a cube map
+// rendered each frame from the surface point over the camera, so the whole bank and sky really are squeezed into a
+// 97-degree circle, people on the bank squashed at its rim. Rays past the critical angle are totally reflected and
+// look up a second cube map of the underwater world (the lakebed mirrored). Use lighting 'underlake' below water.
+// (opt.snell = false falls back to the older flat "mirror" ring sheet.)
 import * as THREE from 'three';
 import { PALETTE } from '../world.js';
 import { MAT } from '../materials.js';
@@ -74,6 +77,7 @@ export function lake(world, opt = {}) {
   mG.setAttribute('color', new THREE.Float32BufferAttribute(mc, 3));
   const mirror = new THREE.Mesh(mG, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: true }));
   mirror.rotation.x = Math.PI / 2; mirror.position.y = -0.02; mirror.visible = false; S.add(mirror);
+  const snell = opt.snell !== false ? snellSurface(world, opt) : null;
   // reeds along the shore, in clumps
   const reedM = flat('#7d8040', { flatShading: false }), headM = flat('#5e4630', { flatShading: false });
   const reedG = new THREE.CylinderGeometry(0.008, 0.014, 1, 16); reedG.translate(0, 0.5, 0);
@@ -109,7 +113,7 @@ export function lake(world, opt = {}) {
 
   const v = new THREE.Vector3();
   return {
-    surface: surf, water, mirror, bed,
+    surface: surf, water, mirror, bed, snell,
     update(t, camera) {
       const P = wG.attributes.position;
       for (let i = 0; i < P.count; i++) {
@@ -117,16 +121,93 @@ export function lake(world, opt = {}) {
         P.setY(i, 0.018 * Math.sin(x * 0.8 + t * 1.1) + 0.012 * Math.sin(z * 1.3 - t * 0.8 + x * 0.3));
       }
       P.needsUpdate = true; wG.computeVertexNormals();
+      if (snell) snell.material.uniforms.t.value = t;
     },
     // call after the camera is placed for this frame (scene.afterCamera): Snell's window around the camera
     afterCamera(camera) {
       camera.getWorldPosition(v);
       const under = v.y < -0.02;
+      if (snell) {
+        mirror.visible = false;
+        surf.visible = farW.visible = !under;
+        water.opacity = this.opacity ?? (opt.opacity ?? 0.8);
+        snell.capture(under, v, [surf, farW, mirror]);
+        return;
+      }
       mirror.visible = under;
       water.opacity = under ? 0.12 : this.opacity ?? (opt.opacity ?? 0.8);
       if (under) { const r = Math.max(0.05, -v.y * Math.tan(CRIT)); mirror.scale.set(r, r, 1); mirror.position.set(v.x, -0.03, v.z); }
     },
   };
+}
+
+// The water surface seen from below (see the header). Two cube maps are rendered each underwater frame: `above`
+// from just over the surface point above the camera, with daylight fog (what the refracted rays see), and `below`
+// from the camera's mirror image above the surface (what the totally reflected rays see; a flat mirror). Both are linear HDR, like the main render target.
+export function snellSurface(world, opt = {}) {
+  const S = world.scene, res = opt.snellRes ?? 512;
+  const mk = () => { const rt = new THREE.WebGLCubeRenderTarget(res, { type: THREE.HalfFloatType, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
+                     const c = new THREE.CubeCamera(0.03, 600, rt); S.add(c); return c; };
+  const above = mk(), below = mk();
+  const mat = new THREE.ShaderMaterial({
+    side: THREE.DoubleSide, fog: false, depthWrite: true,
+    uniforms: { envA: { value: above.renderTarget.texture }, envB: { value: below.renderTarget.texture }, t: { value: 0 },
+                gainA: { value: opt.snellGain ?? 1.15 }, tintB: { value: new THREE.Color(opt.mirrorTint ?? '#cfe6dc') },
+                ripple: { value: opt.ripple ?? 0.012 }, nw: { value: N_WATER } },
+    vertexShader: `varying vec3 wp; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); wp = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `
+      uniform samplerCube envA, envB; uniform float t, gainA, ripple, nw; uniform vec3 tintB; varying vec3 wp;
+      void main(){
+        vec3 d = normalize(wp - cameraPosition);
+        if (d.y <= 0.0) discard;
+        // a calm surface with a faint swell: tilt the normal a little (the rim shimmers, the circle stays sharp)
+        vec2 q = wp.xz;
+        vec2 g = ripple * vec2(cos(q.x * 3.1 + t * 1.3) + 0.6 * cos(q.x * 1.7 - q.y * 2.3 + t * 0.9),
+                               cos(q.y * 2.7 - t * 1.1) + 0.6 * cos(q.y * 1.9 + q.x * 1.2 - t * 0.7));
+        vec3 n = normalize(vec3(g.x, -1.0, g.y));                    // the underside faces down
+        vec3 tr = refract(d, n, nw);                                  // water -> air
+        vec3 rf = reflect(d, n);
+        float c = clamp(dot(-d, n), 0.0, 1.0);
+        vec3 col;
+        if (dot(tr, tr) < 1e-6) {
+          col = textureCube(envB, rf).rgb * tintB;          // total internal reflection
+        } else {
+          float R = 0.02 + 0.98 * pow(1.0 - c, 5.0);
+          float ct = clamp(dot(tr, -n), 0.0, 1.0);                   // near the rim the transmitted light fades too
+          R = max(R, 1.0 - smoothstep(0.0, 0.25, ct));
+          vec3 a = textureCube(envA, tr).rgb * gainA;
+          vec3 b = textureCube(envB, rf).rgb * tintB;
+          col = mix(a, b, R);
+        }
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  });
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(260, 96), mat);
+  disc.rotation.x = Math.PI / 2; disc.position.y = -0.004; disc.renderOrder = 1; disc.visible = false; disc.frustumCulled = false;
+  disc.userData.noVariation = true; disc.userData.noAO = true; S.add(disc);
+  const dayFog = new THREE.Fog('#c9cbc8', 60, 260), waterline = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
+  disc.capture = (under, camPos, hide) => {
+    disc.visible = under;
+    if (!under) return;
+    disc.position.x = camPos.x; disc.position.z = camPos.z;
+    const was = hide.map(o => o.visible); for (const o of hide) o.visible = false;
+    disc.visible = false;
+    const fog = S.fog, sky = world.skyDome.material.uniforms, top = sky.top.value.clone(), bot = sky.bottom.value.clone();
+    // above: daylight sky and no underwater haze
+    S.fog = dayFog; sky.top.value.set(opt.skyTop ?? '#aeb9c4'); sky.bottom.value.set(opt.skyBottom ?? '#cfd1ce');
+    above.position.set(camPos.x, 0.06, camPos.z); above.update(world.renderer, S);
+    S.fog = fog; sky.top.value.copy(top); sky.bottom.value.copy(bot);
+    // a flat mirror: the reflected world is the underwater world seen from the camera's mirror image above the surface
+    const clip = world.renderer.clippingPlanes;
+    world.renderer.clippingPlanes = [waterline];                    // only what is under the water is mirrored
+    sky.top.value.copy(S.fog.color); sky.bottom.value.copy(S.fog.color);   // gaps at the bed's edge read as deep water
+    below.position.set(camPos.x, -camPos.y, camPos.z); below.update(world.renderer, S);
+    sky.top.value.copy(top); sky.bottom.value.copy(bot);
+    world.renderer.clippingPlanes = clip;
+    hide.forEach((o, k) => { o.visible = was[k]; });
+    disc.visible = true;
+  };
+  return disc;
 }
 
 // Wooden rowing boat ~3.2 m long, bow toward -z, sitting in the water (waterline y = 0). .seats: [y, z] seat tops.
@@ -181,7 +262,11 @@ export function fish(kind = 'trout', len = 0.35, opt = {}) {
   for (let k = 0; k <= N; k++) {
     const u = k / N;
     let r;
-    if (gar) r = 0.075 * Math.pow(Math.sin(Math.PI * Math.min(1, u / 0.78) * 0.5 + 0.08), 0.7) * (u < 0.1 ? 0.45 + 5.5 * u : 1) * (u > 0.72 ? Math.max(0.12, 1 - (u - 0.72) * 3.0) : 1);
+    if (gar) {                 // alligator gar: a long round torpedo, a short head, then a long broad flat snout
+      const body = 0.068 * THREE.MathUtils.smoothstep(u, 0.0, 0.3) * 0.62 + 0.068 * 0.38;
+      r = u < 0.66 ? body * (u < 0.08 ? 0.55 + 5.6 * u : 1) : u < 0.78 ? 0.068 - (u - 0.66) / 0.12 * 0.03 : 0.038 - (u - 0.78) / 0.22 * 0.022;
+      if (u > 0.985) r *= Math.sqrt(Math.max(0, (1 - u) / 0.015));
+    }
     else r = 0.115 * Math.pow(Math.sin(Math.PI * (0.06 + 0.88 * u)), 0.8) * (u < 0.15 ? 0.5 + 3.3 * u : 1);
     prof.push(new THREE.Vector2(Math.max(0.002, r), u));
   }
@@ -189,6 +274,13 @@ export function fish(kind = 'trout', len = 0.35, opt = {}) {
   bodyG.rotateZ(-Math.PI / 2);                                   // lathe axis y -> x (nose at +x)
   bodyG.translate(-0.5, 0, 0);
   bodyG.scale(len, len, len * (gar ? 0.85 : 0.62));
+  if (gar) {                                                    // the snout is broad and flat, like an alligator's
+    const P = bodyG.attributes.position;
+    for (let i = 0; i < P.count; i++) {
+      const x = P.getX(i) / len, f = THREE.MathUtils.smoothstep(x, 0.22, 0.32);
+      if (x > 0.22) { P.setY(i, P.getY(i) * (1 - 0.5 * f)); P.setZ(i, P.getZ(i) * (1 + 0.3 * f)); }
+    }
+  }
   const R = seeded(gar ? 7 : 3);
   const spots = Array.from({ length: gar ? 70 : 46 }, () => [R() - 0.5, R() * 2 - 0.3, 0.008 + R() * 0.012]);
   const colour = G => {
@@ -205,7 +297,7 @@ export function fish(kind = 'trout', len = 0.35, opt = {}) {
   };
   colour(bodyG); bodyG.computeVertexNormals();
   const skin = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.42, metalness: 0.08 });
-  const finM = new THREE.MeshStandardMaterial({ color: gar ? '#5c5634' : '#7d7a52', roughness: 0.6, side: THREE.DoubleSide, transparent: true, opacity: 0.92 });
+  const finM = new THREE.MeshStandardMaterial({ color: gar ? '#4f4a2c' : '#5f5c3c', roughness: 0.6, side: THREE.DoubleSide });
   const add = (geo, m) => { const mesh = new THREE.Mesh(geo, m); g.add(mesh); parts.push(mesh); return mesh; };
   add(bodyG, skin);
   // fins: thin shapes in the fish's own frame
@@ -219,8 +311,8 @@ export function fish(kind = 'trout', len = 0.35, opt = {}) {
     const pf = finShape([[0, 0], [-0.09, -0.05], [-0.06, 0.01]]); pf.scale(len, len, 1); pf.rotateX(s * 0.9); pf.translate((gar ? 0.1 : 0.22) * len, -0.045 * len, s * 0.04 * len); add(pf, finM);
   }
   // eyes
-  const eyeW = new THREE.MeshStandardMaterial({ color: '#e9dfb8', roughness: 0.25 }), eyeB = new THREE.MeshStandardMaterial({ color: '#0d0d0d', roughness: 0.1, metalness: 0.2 });
-  const ex = gar ? 0.2 : 0.36, er = (gar ? 0.016 : 0.02) * len;
+  const eyeW = new THREE.MeshStandardMaterial({ color: gar ? '#b8913f' : '#e9dfb8', roughness: 0.25 }), eyeB = new THREE.MeshStandardMaterial({ color: '#0d0d0d', roughness: 0.1, metalness: 0.2 });
+  const ex = gar ? 0.2 : 0.36, er = (gar ? 0.011 : 0.02) * len;
   for (const s of [-1, 1]) {
     const e = new THREE.SphereGeometry(er, 48, 36); e.translate(ex * len, 0.025 * len, s * (gar ? 0.045 : 0.05) * len); add(e, eyeW);
     const p = new THREE.SphereGeometry(er * 0.6, 32, 24); p.translate(ex * len + er * 0.25, 0.025 * len, s * ((gar ? 0.045 : 0.05) * len + er * 0.6)); add(p, eyeB);

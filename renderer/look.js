@@ -158,7 +158,7 @@ export class Look {
       const cache = this._visibilityCache;
       this.scene.traverse(o => {
         cache.set(o, o.visible);
-        if (o.isPoints || o.isLine || o.isSprite) { o.visible = false; return; }
+        if (o.isPoints || o.isLine || o.isSprite || o.userData.noAO) { o.visible = false; return; }
         if (o.isMesh) {
           const ms = Array.isArray(o.material) ? o.material : [o.material];
           if (ms.some(m => m && (m.transparent || m.depthWrite === false || m.blending === THREE.AdditiveBlending))) o.visible = false;

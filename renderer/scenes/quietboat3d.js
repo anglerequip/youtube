@@ -16,11 +16,11 @@ export function ringSheet(z0, w = 16, h = 9) {
   const R = Array.from({ length: MAXR }, () => new THREE.Vector4()), P = Array.from({ length: MAXR }, () => new THREE.Vector4());
   const mat = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, side: THREE.DoubleSide, toneMapped: false,
-    uniforms: { R: { value: R }, P: { value: P }, nR: { value: 0 }, below: { value: 1 },
+    uniforms: { R: { value: R }, P: { value: P }, nR: { value: 0 }, below: { value: 1 }, wl: { value: 0 },
                 C0: { value: new THREE.Color('#fff3d0') }, C1: { value: new THREE.Color('#5ff0d6') }, C2: { value: new THREE.Color('#ffd27a') } },
     vertexShader: `varying vec3 wp; void main(){ vec4 w = modelMatrix * vec4(position,1.0); wp = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
     fragmentShader: `
-      uniform vec4 R[${MAXR}]; uniform vec4 P[${MAXR}]; uniform int nR; uniform float below; uniform vec3 C0, C1, C2;
+      uniform vec4 R[${MAXR}]; uniform vec4 P[${MAXR}]; uniform int nR; uniform float below, wl; uniform vec3 C0, C1, C2;
       varying vec3 wp;
       void main(){
         float a = 0.0; vec3 col = vec3(0.0);
@@ -34,6 +34,9 @@ export function ringSheet(z0, w = 16, h = 9) {
           vec3 c = p.y < 0.5 ? C0 : (p.y < 1.5 ? C1 : C2);
           col += c * v; a += v;
         }
+        // the waterline, drawn as a thin bright line in the diagram shots (where the echo and the leak start)
+        float w = wl * (1.0 - smoothstep(0.004, 0.011, abs(wp.y)));
+        col += vec3(0.85, 0.95, 1.0) * w * 0.8; a += w * 0.8;
         if (a < 0.02) discard;
         gl_FragColor = vec4(col / a, clamp(a, 0.0, 1.0));
       }`,
@@ -64,7 +67,7 @@ export function build(world, plan) {
     let hb = null; p.traverse(o => { if (!hb && o.isBone && o.name === 'head') hb = o; });
     const v = new THREE.Vector3(); if (hb) hb.getWorldPosition(v); else v.copy(p.position).add(new THREE.Vector3(0, 0.9, 0));
     const fwd = new THREE.Vector3(Math.sin(p.rotation.y), 0, Math.cos(p.rotation.y));
-    v.addScaledVector(fwd, 0.1).add(new THREE.Vector3(0, -0.04, 0));
+    v.addScaledVector(fwd, 0.13).add(new THREE.Vector3(0, -0.05, 0));
     mouth[k] = [v.x, v.y];
   }
   S.updateMatrixWorld(true);
@@ -115,6 +118,8 @@ export function build(world, plan) {
       trout.swim(t, F.fish_swim[k], F.fish_turn[k]);
       sheet.material.uniforms.below.value = xr || world.camera.position.y < 0 ? 1 : 0;
       sheet.visible = F.rings_on[k] > 0; sheet.setRings(rings(t, xr));
+      // in the diagram shots the rings and the waterline draw over the hull (it would hide where they meet the water)
+      sheet.material.depthTest = !xr; sheet.material.uniforms.wl.value = xr ? 1 : 0;
       const lw = F.look_w[k], lm = F.look_m[k];
       const tgt = s => s === 'water' ? [L.boat[0] + 0.2, -0.6, L.boat[2] + 0.6] : s === 'box' ? [F.box[k][0], F.box[k][1], F.box[k][2]] : s === 'fish' ? fishPt() : null;
       wiz.pose({ talk: F.talk_w[k], blink: F.wiz_blink[k], t, sit: 1, wave: F.wiz_wave[k], point: F.wiz_point[k],

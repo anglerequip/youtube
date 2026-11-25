@@ -23,7 +23,7 @@ N = 1.333
 CRIT = math.degrees(math.asin(1 / N))          # 48.6 deg
 DEPTH = 1.0                                     # the fish's eye, metres under the surface
 BANK_Y, SHORE = 0.3, 2.0
-EYE = [0.4, -DEPTH, -2.2]                       # fish eye (world); the fish faces the bank (+z)
+EYE = [0.4, -DEPTH, -3.4]                       # fish eye (world); the fish faces the bank (+z)
 WIZ = [0.0, BANK_Y, 3.1]
 WIZ_FACE = math.pi
 WOMAN = [1.35, BANK_Y, 3.35]
@@ -89,9 +89,24 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
 
     E_ = duo.shot(fps)
     K = lambda *a: list(a)
+    _, _, r_st = head_ray([WIZ[0], BANK_Y + WIZ_HEAD_STAND, WIZ[2]])
+    _, _, r_si = head_ray([WIZ[0], BANK_Y + WIZ_HEAD_SIT, WIZ[2]])
+
+    def fish_view(r_deg, dist=3.0, lift=0.0):
+        """Where the fish sees the wizard: the refracted ray's direction at its eye (Snell), as a look-at point."""
+        dx, dz = WIZ[0] - ex, WIZ[2] - ez
+        D = math.hypot(dx, dz)
+        r = math.radians(r_deg - lift)
+        return K(ex + dist * math.sin(r) * dx / D, ey + dist * math.cos(r), ez + dist * math.sin(r) * dz / D)
+
+    eye_cam = K(ex + 0.07, ey + 0.01, ez + 0.02)        # beside the trout's eye
+    mirror_t0 = S("mirror") - 0.1
+    sit_view = at("payoff", "sitting") + 0.45
     shots_spec = [
-        # hook (a): under water beside the trout, looking up: the bright circle of sky, mirror all around it
-        ("under", E_(0.0, hook_c, K(ex + 0.2, ey - 0.75, ez - 0.95), K(ex + 0.15, ey - 0.7, ez - 0.8), K(ex - 0.05, -0.1, ez + 0.35), 64, "underlake")),
+        # hook: under water below the trout, tilting up: the trout against the bright circle of sky, the bank and the
+        # two on it squeezed into the circle's rim, the mirror of the lakebed all around it
+        ("under", E_(0.0, hook_c, K(ex + 0.05, ey - 0.85, ez - 0.75), K(ex + 0.05, ey - 0.8, ez - 0.6), K(ex, ey + 0.15, ez + 0.35), 76,
+                     "underlake", K(ex - 0.05, -0.1, ez + 1.1))),
         # hook (b): above the lake, the two on the bank, the fish a shadow under the surface
         ("out", E_(hook_c, S("what") - 0.1, K(1.6, 1.25, -1.2), K(1.5, 1.3, -0.9), K(0.6, 1.25, 3.2), 40)),
         # what: the wizard, arms out at the big sky
@@ -103,20 +118,24 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         # cone: the rays become a cone; the window ring on the surface
         ("xray", E_(S("cone") - 0.1, S("size") - 0.1, K(ex + 2.3, 1.25, ez - 1.9), K(ex + 2.15, 1.35, ez - 1.6), K(ex, -0.4, ez), 44)),
         # size: higher, looking down on the ring; 1 m deep, 2.3 m across
-        ("xray", E_(S("size") - 0.1, S("outside") - 0.1, K(ex + 0.4, 3.6, ez - 2.6), K(ex + 0.35, 3.8, ez - 2.3), K(ex, -0.2, ez), 40)),
+        ("xray", E_(S("size") - 0.1, S("outside") - 0.1, K(ex + 0.3, 2.7, ez - 1.9), K(ex + 0.28, 2.85, ez - 1.7), K(ex, -0.3, ez), 42)),
         # outside: the wizard asks
-        ("out", E_(S("outside") - 0.1, S("mirror") - 0.1, K(-0.45, 1.9, 1.0), K(-0.4, 1.9, 1.15), K(0.0, 1.85, 3.1), 36)),
-        # mirror: under water again, looking up at a slant: the window, and the mirror reflecting the bed
-        ("under", E_(S("mirror") - 0.1, S("tall") - 0.1, K(ex - 1.4, ey - 0.25, ez - 1.2), K(ex - 1.2, ey - 0.25, ez - 1.0), K(ex + 0.6, -0.1, ez + 0.6), 58, "underlake")),
+        ("out", E_(S("outside") - 0.1, mirror_t0, K(-0.45, 1.9, 1.0), K(-0.4, 1.9, 1.15), K(0.0, 1.85, 3.1), 36)),
+        # mirror: under water, the trout rises just under the surface and its mirror image appears above it: outside
+        # the window the underside of the surface reflects like a mirror
+        ("under", E_(mirror_t0, S("tall") - 0.1, K(ex + 0.05, -1.25, ez - 2.1), K(ex + 0.05, -1.15, ez - 1.85), K(ex, -0.25, ez + 0.05), 52, "underlake")),
         # tall: low from the water, the wizard stands tall on the bank
         ("out", E_(S("tall") - 0.1, S("edge") - 0.1, K(0.9, 0.55, 0.2), K(0.85, 0.5, 0.45), K(0.0, 1.55, 3.1), 40)),
-        # edge (a): the diagram again: the red ray from his eye bends in near the window's edge
-        ("xray", E_(S("edge") - 0.1, keep_c, K(ex + 1.3, 0.55, ez - 1.9), K(ex + 1.2, 0.6, ez - 1.6), K(0.0, 0.7, 2.6), 50)),
-        # edge (b): the woman: careful anglers keep low
-        ("out", E_(keep_c, S("payoff") - 0.1, K(1.0, 1.75, 1.35), K(0.98, 1.75, 1.5), K(1.35, 1.68, 3.35), 36)),
-        # payoff: the wizard sits down with his rod; held to the end
-        ("out", cam.shot(S("payoff") - 0.1, dur + 0.05, [(S("payoff") - 0.1, K(0.6, 1.5, 0.3), K(0.05, 1.2, 3.1), 40),
-                                                         (dur + 0.05, K(0.55, 1.4, 0.55), K(0.05, 1.0, 3.1), 40)], fps, "key")),
+        # edge: the fish's own view toward the bank: the wizard, squashed into the rim of the bright circle
+        ("under", E_(S("edge") - 0.1, keep_c, eye_cam, K(eye_cam[0], eye_cam[1] - 0.02, eye_cam[2] - 0.12), fish_view(r_st, lift=4), 28,
+                     "underlake", fish_view(r_st, lift=2))),
+        # edge (b): the two on the bank from the water: careful anglers keep low
+        ("out", E_(keep_c, S("payoff") - 0.1, K(2.3, 0.6, -0.9), K(2.15, 0.58, -0.65), K(0.75, 1.15, 3.2), 40)),
+        # payoff: the wizard sits down with his rod...
+        ("out", E_(S("payoff") - 0.1, sit_view, K(0.95, 1.3, 0.2), K(0.9, 1.25, 0.4), K(0.05, 1.15, 3.1), 44)),
+        # ...and from the fish's side he is now lower, pressed further into the rim
+        ("under", cam.shot(sit_view, dur + 0.05, [(sit_view, eye_cam, fish_view(r_si, lift=3), 28),
+                                                (dur + 0.05, K(eye_cam[0], eye_cam[1] - 0.02, eye_cam[2] - 0.1), fish_view(r_si, lift=2), 28)], fps, "underlake")),
     ]
     shots = cam.chain([s for _, s in shots_spec])
     kinds = [kd for kd, _ in shots_spec]
@@ -140,7 +159,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     sit_ray, i_sit, r_sit = head_ray([WIZ[0], BANK_Y + WIZ_HEAD_SIT, WIZ[2]])
 
     frames = {k: [] for k in ("wiz_blink", "woman_blink", "look_w", "look_m", "wiz_wave", "woman_point", "xray",
-                              "rays", "cone", "ring", "head_ray", "sit", "fish_swim")}
+                              "rays", "cone", "ring", "head_ray", "sit", "fish_swim",
+                              "fish_xyz", "fish_yaw")}
     frames["talk_w"], frames["talk_m"] = tw, tm
     for i, t in enumerate(T):
         ln = tl.active(t)
@@ -154,7 +174,17 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
                                     + duo.ramp(t, S("edge") - 0.1, 0.5), 3))
         frames["head_ray"].append(round(duo.ramp(t, S("edge") + 0.2, 1.4), 3))
         frames["sit"].append(round(duo.ramp(t, sit_t, 1.0), 3))
-        frames["fish_swim"].append(0.25)
+        # the trout: crosses the hook broadside, hovers facing the bank, rises under the surface for the mirror beat
+        if t < hook_c + 0.2:
+            frames["fish_xyz"].append([round(ex + 0.26 + 0.07 * t, 4), ey, ez]); frames["fish_yaw"].append(0.0)
+            frames["fish_swim"].append(0.45)
+        elif mirror_t0 - 0.05 <= t < S("tall") - 0.1:
+            u = duo.ramp(t, mirror_t0, 0.6)
+            frames["fish_xyz"].append([round(ex - 0.15 + 0.08 * (t - mirror_t0), 4), round(ey + (0.62 - 0.03 * u) , 4), ez]); frames["fish_yaw"].append(0.0)
+            frames["fish_swim"].append(0.4)
+        else:
+            frames["fish_xyz"].append([ex, ey, ez]); frames["fish_yaw"].append(round(-math.pi / 2, 4))
+            frames["fish_swim"].append(0.25)
         frames["look_w"].append("sky" if a in ("what",) else ("water" if a in ("bend", "cone", "size", "mirror", "payoff") else "woman"))
         frames["look_m"].append("wizard" if a in ("hook", "edge", "outside", "what", "tall", "payoff") else "water")
         frames["wiz_wave"].append(round(duo.bump(t, S("what") + 0.1, 0.4, 1.4, 0.5) * 0.55 + duo.bump(t, at("tall", "tall") - 0.4, 0.4, 0.9, 0.5) * 0.35, 3))
@@ -170,7 +200,8 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     events = [(round(hook_c, 3), "whoosh", {"gain": 0.08}),
               (round(at("cone", "ninety") - 0.1, 3), "ding", {"gain": 0.1}),
               (round(S("mirror") - 0.05, 3), "whoosh", {"gain": 0.08}),
-              (round(sit_t + 0.9, 3), "thud", {"gain": 0.08})]
+              (round(sit_t + 0.9, 3), "thud", {"gain": 0.08}),
+              (0.35, "rise", {"gain": 0.05})]
     cuts_ = [s_["start"] for s_ in shots[1:]]
     # a reveal that lands just before a cut is shown by that cut: mark it there (QC no_cut_in_reveal)
     reveals_ = [next((c for c in cuts_ if -0.05 < c - r < 1.5), r) for r in [hook_c, at("cone", "ninety"), S("mirror")]]
