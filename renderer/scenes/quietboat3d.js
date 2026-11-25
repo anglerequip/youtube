@@ -93,7 +93,7 @@ export function build(world, plan) {
           if (xr) out.push([[src[0], 0, (r - h) * plan.speed_ratio, e.a * fade * e.leak], [-1, 1, 0.03, 0]]);   // what gets in
         }
       } else if (e.kind === 'water') {
-        out.push([[src[0], src[1], r, e.a * fade], [-1, 1, 0.045, 0]]);
+        out.push([[src[0], src[1], r, e.a * fade], [-1, 1, 0.09, 0]]);   // wide enough to overlap frame to frame at 4.3x speed (no strobing)
       } else if (e.kind === 'race_air') {
         out.push([[src[0], src[1], r, e.a * fade], [1, 2, 0.035, 0]]);
       }
