@@ -1,0 +1,47 @@
+slug: gps-relativity
+title: "Your GPS Would Be Wrong by 11 km a Day"
+topic: "relativity / GPS: clocks in orbit"
+component: custom   # bespoke sim.py (satellite clocks: special + general relativity), not yet written
+status: draft       # storyboard only; no sim.py, no render, no reviews yet
+description: |
+  Your phone's map needs satellites to keep time to the billionth of a second.
+  Those satellites' clocks run at the wrong speed, on purpose, because of Einstein.
+  Skip the correction and your position drifts by about 11 km every day.
+
+  #shorts #physics #relativity #gps #science
+tags: [physics, relativity, gps, counterintuitive, science, shorts]
+voice: narrator     # ElevenLabs narrator (CLAUDE.md Voices, 2026-11-20)
+beats:
+  - id: hook
+    text: "Your GPS would be wrong by eleven kilometres every single day. If nobody fixed Einstein."
+    pause_after: 0.3
+  - id: setup
+    text: "GPS works by timing light. Each satellite sends a signal stamped with the time, and your phone works out how far away it is."
+  - id: precision
+    text: "To place you within a few metres, those clocks need to agree to within billionths of a second."
+  - id: speed
+    text: "The satellites move fast, about four kilometres every second. A moving clock runs a little slow."
+  - id: gravity
+    text: "But they're also high up, far from Earth's gravity. And a clock higher up in gravity runs a little fast."
+    pause_after: 0.4
+  - id: net
+    text: "Add those two effects together, and the orbiting clocks gain about thirty-eight millionths of a second every day."
+  - id: drift
+    text: "Light covers about eleven kilometres in that time. That's how far the map would drift, every day."
+    pause_after: 0.5
+  - id: fix
+    text: "So engineers set the clocks to tick slightly slower before launch. Then they match the ground."
+  - id: outro
+    text: "Einstein isn't a theory on a shelf. He's in your pocket, correcting your map. Follow for more physics that breaks your intuition."
+    sfx: ding
+
+caveats:
+  - "The +38 microseconds per day is the net of two effects: about -7 us/day from orbital speed (special relativity) and about +45 us/day from altitude (general relativity). The figures are for GPS's roughly 20,200 km orbit."
+  - "The 11 km drift is what you get if the correction is ignored entirely, over one day, assuming ~38 us of clock error and light travelling at c. Real receivers also have other error sources, so the drift is an estimate, not a measured figure."
+  - "'Set the clocks to tick slower' is accurate in outline: the satellite clocks were set to a nominal frequency of 10.22999999543 MHz rather than 10.23 MHz, so they run at the right rate on the ground."
+  - "'Within a few metres' is the civilian standard-positioning ballpark; it varies with receiver, sky view and augmentation. Do not state a specific accuracy as a fixed number."
+  - "Exact altitude and orbital speed vary slightly by satellite and orbit. The 'about four kilometres per second' is the approximate orbital speed for a GPS satellite (~3.9 km/s)."
+sources:
+  - "N. Ashby, 'Relativity in the Global Positioning System', Living Reviews in Relativity 6 (2003), 1. Source of the ~38 us/day net offset and the 10.22999999543 MHz nominal frequency."
+  - "B. Hofmann-Wellenhof, H. Lichtenegger, E. Wasle, GNSS: Global Navigation Satellite Systems (Springer, 2008). Background on GPS timing and receiver error budget."
+  - "US Naval Observatory and GPS.gov pages on satellite clocks and relativity (general background; check current wording before quoting)."
