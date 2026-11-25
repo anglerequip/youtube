@@ -28,8 +28,11 @@ export function ringSheet(z0, w = 16, h = 9) {
           if (k >= nR) break;
           vec4 r = R[k]; vec4 p = P[k];
           if (p.x * wp.y < 0.0) continue;
-          float d = abs(length(wp.xy - r.xy) - r.z);
+          float sd = length(wp.xy - r.xy) - r.z, d = abs(sd);
           float v = r.w * (1.0 - smoothstep(p.z * 0.4, p.z, d)) + r.w * 0.18 * (1.0 - smoothstep(p.z, p.z * 2.6, d));
+          // optional wake inside a fast ring (p.w = its length): the glow fades out behind the front instead of
+          // blinking past, so a big fast ring sweeps smoothly through the frame
+          if (p.w > 0.0 && sd < 0.0) v += r.w * 0.32 * exp(sd / p.w) * smoothstep(0.0, p.w * 0.5, r.z);
           if (wp.y < 0.0) v *= below;
           vec3 c = p.y < 0.5 ? C0 : (p.y < 1.5 ? C1 : C2);
           col += c * v; a += v;
@@ -93,7 +96,8 @@ export function build(world, plan) {
           if (xr) out.push([[src[0], 0, (r - h) * plan.speed_ratio, e.a * fade * e.leak], [-1, 1, 0.03, 0]]);   // what gets in
         }
       } else if (e.kind === 'water') {
-        out.push([[src[0], src[1], r, e.a * fade], [-1, 1, 0.09, 0]]);   // wide enough to overlap frame to frame at 4.3x speed (no strobing)
+        // wide enough to overlap frame to frame at 4.3x speed (no strobing); the big race rings also get a wake
+        out.push([[src[0], src[1], r, e.a * fade], [-1, 1, 0.09, e.src === 'hull' && e.at[1] === 0 ? 0.6 : 0]]);
       } else if (e.kind === 'race_air') {
         out.push([[src[0], src[1], r, e.a * fade], [1, 2, 0.035, 0]]);
       }
