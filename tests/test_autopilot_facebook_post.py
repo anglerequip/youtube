@@ -26,18 +26,41 @@ def utc(s):
     return datetime.fromisoformat(s).replace(tzinfo=timezone.utc)
 
 
-def test_slot_waits_for_18_stockholm(q):
-    assert fb.slot_open(utc("2026-11-22T16:15:00"), {})[0] is False     # 17:15 Stockholm
-    assert fb.slot_open(utc("2026-11-22T17:15:00"), {})[0] is True      # 18:15 Stockholm
+def test_morning_run_schedules_for_18_stockholm(q):
+    when, _ = fb.next_slot(utc("2026-11-22T06:46:00"), {})               # 07:46 Stockholm
+    assert when == utc("2026-11-22T17:00:00")                           # 18:00 Stockholm
 
 
-def test_only_one_reel_per_day_and_20h_gap(q):
-    fb.log_post("a", "1", utc("2026-11-22T17:15:00"))
-    log = fb.posted()
-    assert fb.slot_open(utc("2026-11-22T21:15:00"), log)[0] is False    # same Stockholm day
-    assert fb.slot_open(utc("2026-11-23T17:15:00"), log)[0] is True     # next day, 24 h later
-    fb.log_post("b", "2", utc("2026-11-23T22:30:00"))
-    assert fb.slot_open(utc("2026-11-24T17:15:00"), fb.posted())[0] is False   # 18.75 h < 20 h
+def test_evening_run_posts_now_late_run_waits_for_tomorrow(q):
+    now = utc("2026-11-22T18:30:00")                                    # 19:30 Stockholm
+    assert fb.next_slot(now, {})[0] == now
+    assert fb.next_slot(utc("2026-11-22T21:45:00"), {})[0] == utc("2026-11-23T17:00:00")
+
+
+def test_one_reel_per_day_and_nothing_while_one_is_scheduled(q):
+    fb.log_post("a", "1", utc("2026-11-22T17:00:00"))                   # live today 18:00
+    assert fb.next_slot(utc("2026-11-22T19:00:00"), fb.posted())[0] == utc("2026-11-23T17:00:00")
+    fb.log_post("b", "2", utc("2026-11-23T17:00:00"))                   # scheduled for tomorrow
+    assert fb.next_slot(utc("2026-11-22T23:00:00"), fb.posted())[0] is None
+
+
+def test_gap_after_a_late_post(q):
+    fb.log_post("a", "1", utc("2026-11-24T21:11:00"))                   # 22:11 Stockholm
+    # 25 Nov 18:00 is 19.8 h later: fine with the 18 h minimum
+    assert fb.next_slot(utc("2026-11-25T04:12:00"), fb.posted())[0] == utc("2026-11-25T17:00:00")
+    fb.log_post("b", "2", utc("2026-11-25T03:00:00"))                   # 04:00 Stockholm (manual)
+    assert fb.next_slot(utc("2026-11-25T04:12:00"), fb.posted())[0] == utc("2026-11-26T17:00:00")
+
+
+def test_scheduled_run_uploads_with_publish_time(q, monkeypatch):
+    _add(q, "next", "2026-11-21T20:00:01Z")
+    sent = []
+    monkeypatch.setenv("FACEBOOK_PAGE_ID", "p")
+    monkeypatch.setenv("FACEBOOK_PAGE_TOKEN", "t")
+    monkeypatch.setattr(fb, "post_reel", lambda f, page, token, at=None: sent.append((f.name, at)) or "77")
+    assert fb.run(now=utc("2026-11-25T04:12:00")) == 0
+    assert sent == [("next", utc("2026-11-25T17:00:00"))]
+    assert fb.posted()["next"]["posted_at"] == "2026-11-25T17:00:00Z"
 
 
 def test_oldest_queued_goes_first(q):
@@ -91,8 +114,8 @@ def test_post_now_skips_the_slot_but_needs_a_queued_video(q, monkeypatch):
     sent = []
     monkeypatch.setenv("FACEBOOK_PAGE_ID", "p")
     monkeypatch.setenv("FACEBOOK_PAGE_TOKEN", "t")
-    monkeypatch.setattr(fb, "post_reel", lambda f, page, token: sent.append(f.name) or "99")
+    monkeypatch.setattr(fb, "post_reel", lambda f, page, token, at=None: sent.append(f.name) or "99")
     assert fb.run(now=utc("2026-11-21T20:55:00"), now_slug="falling-cat") == 0
     assert sent == ["falling-cat"] and "falling-cat" in fb.posted()
     assert fb.run(now=utc("2026-11-21T21:00:00"), now_slug="falling-cat") == 1     # already posted
-    assert fb.run(now=utc("2026-11-21T21:00:00")) == 0 and sent == ["falling-cat"]  # slot closed today
+    assert fb.run(now=utc("2026-11-21T21:00:00"), dry_run=True) == 0 and sent == ["falling-cat"]

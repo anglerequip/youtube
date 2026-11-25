@@ -2,8 +2,10 @@
 
 Caesar (2026-11-21): "queue everything we've ever made that's not already on Facebook, including new
 videos". Rules agreed in the project thread "Find out why Facebook reels disappeared":
-  * at most one reel per Stockholm calendar day, at the first hourly run from 18:00 Stockholm time;
-  * at least 20 h between two reels (Meta locked the developer account on 2026-11-20 after five
+  * at most one reel per Stockholm calendar day, going live at 18:00 Stockholm time. GitHub runs the
+    "hourly" schedule only every 6-10 hours, so the job uploads whenever it runs and lets Facebook
+    publish the reel at 18:00 (video_state SCHEDULED); a run between 18:00 and 22:00 posts at once;
+  * at least 18 h between two reels (Meta locked the developer account on 2026-11-20 after five
     API reels in about 12 hours, so the queue is deliberately slow);
   * never the same video twice (content/ledger/facebook.jsonl records every reel on the Page).
 
@@ -33,7 +35,9 @@ QUEUE = ROOT / "autopilot_queue_facebook"
 LOG = ROOT / "content" / "ledger" / "facebook.jsonl"
 TZ = ZoneInfo("Europe/Stockholm")
 SLOT_HOUR = 18              # local Stockholm hour from which the day's reel may go out
-MIN_GAP = timedelta(hours=20)
+MIN_GAP = timedelta(hours=18)
+LEAD = timedelta(minutes=20)    # Facebook wants a scheduled time at least 10 min ahead
+LATEST_HOUR = 22                # after 22:00 Stockholm, wait for tomorrow's 18:00 instead
 GRAPH = "https://graph.facebook.com"
 RUPLOAD = "https://rupload.facebook.com/video-upload"
 VERSION = os.environ.get("FACEBOOK_GRAPH_VERSION", "v25.0")
@@ -61,19 +65,29 @@ def _ts(s: str) -> datetime:
     return datetime.fromisoformat(s.replace("Z", "+00:00"))
 
 
-def slot_open(now: datetime, log: dict[str, dict]) -> tuple[bool, str]:
-    """Is it time for today's reel? Returns (open, reason)."""
-    local = now.astimezone(TZ)
-    if local.hour < SLOT_HOUR:
-        return False, f"before {SLOT_HOUR}:00 Stockholm"
+def next_slot(now: datetime, log: dict[str, dict]) -> tuple[datetime | None, str]:
+    """When should the next reel go live? Returns (time, reason); time None = nothing to do now.
+
+    A time later than `now` means "upload now, Facebook publishes it then"."""
     times = [_ts(d["posted_at"]) for d in log.values() if d.get("posted_at")]
-    if times:
-        last = max(times)
-        if last.astimezone(TZ).date() == local.date():
-            return False, "a reel already went out today"
-        if now - last < MIN_GAP:
-            return False, f"last reel was {(now - last).total_seconds() / 3600:.1f} h ago (minimum 20 h)"
-    return True, "slot open"
+    last = max(times) if times else None
+    if last and last > now:
+        return None, f"a reel is already scheduled for {last.astimezone(TZ):%a %d %b %H:%M} Stockholm"
+    days = {t.astimezone(TZ).date() for t in times}
+    local = now.astimezone(TZ)
+    for add in range(4):
+        day = (local + timedelta(days=add)).date()
+        slot = datetime(day.year, day.month, day.day, SLOT_HOUR, tzinfo=TZ)
+        if day in days:
+            continue
+        if slot - now < LEAD:                    # too close to (or past) 18:00 to schedule
+            if add == 0 and local.hour < LATEST_HOUR and (not last or now - last >= MIN_GAP):
+                return now, "posting now (18:00 slot already passed today)"
+            continue
+        if last and slot - last < MIN_GAP:
+            continue
+        return slot.astimezone(timezone.utc), f"scheduling for {slot:%a %d %b %H:%M} Stockholm"
+    return None, "no open slot in the next days"
 
 
 def queue_folders() -> list[Path]:
@@ -115,7 +129,7 @@ def _ok(r, what: str) -> dict:
     return d
 
 
-def post_reel(folder: Path, page: str, token: str) -> str:
+def post_reel(folder: Path, page: str, token: str, at: datetime | None = None) -> str:
     """Upload and publish one reel through the Graph API Reels endpoints. Returns the reel id."""
     import requests
     pkg = json.loads((folder / "package.json").read_text(encoding="utf-8"))
@@ -130,7 +144,12 @@ def post_reel(folder: Path, page: str, token: str) -> str:
               "title": pkg["title"], "description": pkg.get("description", "")}
     if pkg.get("is_ai_generated", True):
         finish["is_ai_generated"] = "true"
+    if at is not None:
+        finish["video_state"] = "SCHEDULED"
+        finish["scheduled_publish_time"] = str(int(at.timestamp()))
     _ok(requests.post(f"{GRAPH}/{VERSION}/{page}/video_reels", data=finish, timeout=60), "finish")
+    if at is not None:      # Facebook publishes it later; nothing to wait for now
+        return vid
     for _ in range(90):      # wait until Facebook has actually published it, not just received it
         try:                 # after "finish" the reel exists: a flaky status call must not cause a re-post
             st = _ok(requests.get(f"{GRAPH}/{VERSION}/{vid}", params={"fields": "status", "access_token": token},
@@ -167,11 +186,11 @@ def run(dry_run: bool = False, now: datetime | None = None, now_slug: str = "") 
         if not picked:
             print(f"{now_slug} is not waiting in the Facebook queue (or is already on Facebook); nothing posted")
             return 1
-        folders, ok, why = picked, True, "posted now on request"
+        folders, when, why = picked, now, "posted now on request"
     else:
-        ok, why = slot_open(now, log)
+        when, why = next_slot(now, log)
     print(f"Facebook queue: {len(folders)} waiting, next {folders[0].name}; {why}")
-    if not ok or dry_run:
+    if when is None or dry_run:
         return 0
     page, token = os.environ.get("FACEBOOK_PAGE_ID"), os.environ.get("FACEBOOK_PAGE_TOKEN")
     if not page or not token:
@@ -179,12 +198,16 @@ def run(dry_run: bool = False, now: datetime | None = None, now_slug: str = "") 
         return 1
     f = folders[0]
     try:
-        vid = post_reel(f, page, token)
+        vid = post_reel(f, page, token, at=when if when > now else None)
     except Exception as e:   # noqa: BLE001  keep the folder so the next run retries it
         print(f"FAILED {f.name}: {type(e).__name__}: {str(e)[:300]}")
         return 1
-    print(f"posted {f.name}: https://www.facebook.com/reel/{vid}")
-    log_post(f.name, vid, now)
+    if when > now:
+        print(f"scheduled {f.name} for {when.astimezone(TZ):%a %d %b %H:%M} Stockholm: https://www.facebook.com/reel/{vid}")
+        log_post(f.name, vid, when, how="cloud queue, scheduled on Facebook")
+    else:
+        print(f"posted {f.name}: https://www.facebook.com/reel/{vid}")
+        log_post(f.name, vid, now)
     shutil.rmtree(f)
     return 0
 
