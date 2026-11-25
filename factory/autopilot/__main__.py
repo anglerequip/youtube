@@ -11,6 +11,9 @@ from .ledger import Ledger, Topic, slugify
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="factory.autopilot")
     sub = p.add_subparsers(dest="cmd", required=True)
+    sc = sub.add_parser("schedule", help="next posting slots at the configured rate (AUTOPILOT_VIDEOS_PER_DAY)")
+    sc.add_argument("--count", type=int, default=4)
+    sc.add_argument("--per-day", type=int, default=None, help="override the rate for this call only")
     lg = sub.add_parser("ledger", help="the topic ledger")
     ls = lg.add_subparsers(dest="action", required=True)
     l1 = ls.add_parser("list"); l1.add_argument("--status")
@@ -25,6 +28,13 @@ def main(argv=None) -> int:
         c.add_argument("--status", default="idea")
     st = ls.add_parser("status"); st.add_argument("id"); st.add_argument("status"); st.add_argument("--reason", default="")
     a = p.parse_args(argv)
+    if a.cmd == "schedule":
+        from datetime import datetime, timezone
+        from .schedule import TZ, next_slots, rfc3339, videos_per_day
+        per_day = a.per_day or videos_per_day()
+        for dt in next_slots(datetime.now(timezone.utc), a.count, per_day):
+            print(rfc3339(dt), dt.astimezone(TZ).strftime("%a %H:%M Stockholm"))
+        return 0
     led = Ledger()
     if a.action == "list":
         for t in led.topics().values():
