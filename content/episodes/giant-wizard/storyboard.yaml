@@ -1,0 +1,171 @@
+slug: giant-wizard
+title: "What If You Were 100 Times Taller?"
+topic: "The square-cube law: scale a body up a hundred times and its weight grows a million times, but the cross-section of its bones (their strength) and the area of its skin grow only ten thousand times, so the bones are overloaded a hundredfold and, with cells that work like ours, the body could not shed its heat even in Antarctica"
+component: custom   # the scene is renderer/scenes/giantwizard3d.js (new reusable ice set renderer/sets/ice.js)
+renderer: three
+scene: giantwizard3d
+hook_family: 1          # a surprising claim
+structure: D            # duo: claim -> challenge -> weight -> bones -> stress -> crack -> heat -> overheat -> button
+voice_clips: content/episodes/giant-wizard/voice   # duo voiced with ElevenLabs (wizard = Matt 3iY0r3RaYmOh6WfIwMIH, woman = Lara vChnJZ1Cu89g2XXumPfT)
+max_inner_pause_s: 0.3
+speakers: {wizard: 3iY0r3RaYmOh6WfIwMIH, woman: vChnJZ1Cu89g2XXumPfT}
+description: |
+  What would happen if you were a hundred times taller?
+  Every length grows a hundred times, so your volume and weight grow a million times. But a bone's strength
+  depends on its cross-section, which grows only ten thousand times, so every bit of bone carries a hundred times
+  the load. And with a million times more cells making heat but only ten thousand times more skin to lose it,
+  you would overheat, even in Antarctica.
+
+  #shorts #physics #science #squarecubelaw
+tags: [square-cube law, giant, scaling, what if, physics, biology, Antarctica, Galileo, science, shorts]
+voice: elevenlabs-duo
+speed: 1.0
+ambience: outdoor
+story:
+  core_idea: "Weight grows with the cube of size, strength and skin only with the square, so a scaled-up giant breaks and overheats."
+  fascination: "a giant wizard on the Antarctic ice whose own thigh bones crack under him, and who still overheats in the coldest place on Earth"
+  steps: 3            # weight x1,000,000; bone strength x10,000 so stress x100 (crack); heat x1,000,000 vs skin x10,000 (overheat)
+  buildup: low
+  extras: []
+  payoff: button
+  cut:
+    - "Kleiber's law (real big animals burn less per kilogram): kept in the caveats and the description, a second idea"
+    - "slow-motion walking (pendulum legs, steps ten times slower): true but a second idea"
+    - "pressure under the feet and sinking into the snow: a third idea"
+    - "Galileo's 1638 bone drawing: credited in the sources, not on screen"
+end_hold_s: 1.2
+beats:
+  - id: hook
+    speaker: wizard
+    text: "One spell... and I'm a *hundred* times taller!"
+    pause_after: 0.2
+  - id: doom
+    speaker: woman
+    text: "Then you're about to *break*."
+    pause_after: 0.2
+  - id: why
+    speaker: wizard
+    text: "Why? I'm the same wizard, just bigger."
+    pause_after: 0.2
+  - id: weight
+    speaker: woman
+    text: "Every length grew a hundred times. So your weight grew a *million* times."
+    pause_after: 0.2
+  - id: bones
+    speaker: woman
+    text: "But bones hold weight with their cross-section. That grew only ten thousand times."
+    pause_after: 0.2
+  - id: stress
+    speaker: woman
+    text: "So every bit of bone takes a hundred times the load."
+    pause_after: 0.3
+  - id: crack
+    speaker: wizard
+    text: "Is that... *crunching*?"
+    pause_after: 0.3
+  - id: cold
+    speaker: wizard
+    text: "Fine! At least Antarctica keeps me cool."
+    pause_after: 0.2
+  - id: heat
+    speaker: woman
+    text: "Nope. A million times more cells make heat. Only ten thousand times more skin lets it out."
+    pause_after: 0.2
+  - id: cook
+    speaker: woman
+    text: "Even here, you'd *overheat*."
+    pause_after: 0.25
+  - id: smaller
+    speaker: wizard
+    text: "Okay... a *modest* giant, then. Ten times?"
+    pause_after: 0.2
+  - id: button
+    speaker: woman
+    text: "Still too heavy for your bones."
+    pause_after: 0.0
+
+caveats:
+  - "Square-cube law (Galileo, Two New Sciences, 1638; Haldane, 'On Being the Right Size', 1926): scale every length by k = 100 and areas grow by k^2 = 10,000, volumes and so mass and weight by k^3 = 1,000,000. Compressive strength of a bone is proportional to its cross-sectional area, so the stress (force per area) in a geometrically scaled bone grows by k^3 / k^2 = k = 100."
+  - "We assume the giant is the same wizard scaled up exactly (same proportions, same bone and tissue). Real large animals have proportionally thicker bones and a more upright posture; that is the point of the square-cube law, not a counterexample."
+  - "Human femoral cortical bone fails in compression at roughly 170-200 MPa (Reilly & Burstein 1975). Peak bone stresses in vigorous movement leave a safety factor of only about 2-4 (Biewener 1990). A hundredfold stress is far past failure; tenfold (the 'ten times taller' button) is also past that safety margin, which is Haldane's point that a giant ten times our height would break his thigh bones at every step. 'Crunching' is the dramatised version: a real giant would not get the chance to stand up."
+  - "Heat: the overheating line assumes his cells make heat like ours (same watts per kilogram), so heat output grows a million times while skin area grows ten thousand times, so every square metre of skin must shed a hundred times more heat (about 4,200 W/m2 instead of about 42 W/m2 at rest). Our estimate of the most cold Antarctic air (minus 30 C, 10 m/s wind) could carry away by convection plus radiation is about 1,300 W/m2, so he would keep heating up. Real big animals avoid this by burning less per kilogram (Kleiber's law: metabolism ~ mass^0.75; a whale's cells run slower than ours)."
+  - "The steam and the melting snow around him are a visual metaphor for overheating; we do not model his skin temperature on screen."
+sources:
+  - "G. Galileo, Dialogues Concerning Two New Sciences (1638), Second Day: the bone of a giant animal (square-cube law)"
+  - "J. B. S. Haldane, 'On Being the Right Size', Harper's Magazine, March 1926 (giants ten times our height would break their thigh bones at every step; heat loss and surface area)"
+  - "A. A. Biewener, 'Biomechanics of mammalian terrestrial locomotion', Science 250 (1990) 1097-1103 (bone safety factors of about 2-4)"
+  - "D. T. Reilly & A. H. Burstein, 'The elastic and ultimate properties of compact bone tissue', J. Biomechanics 8 (1975) 393-405 (cortical bone compressive strength ~190 MPa)"
+  - "M. Kleiber, 'Body size and metabolism', Hilgardia 6 (1932) 315-353 (metabolic rate ~ mass^0.75 in real animals)"
+  - "Resting heat output of an adult about 80 W, skin area about 1.9 m2 (standard physiology, e.g. Guyton & Hall, Textbook of Medical Physiology)"
+
+claims:
+  - {id: scale_hook, beat: hook, unit: x, sim: scale, tol: 0.01, scope: illustrative,
+     evidence: {quality: 2, source: "the story's chosen scale factor k = 100"}}
+  - {id: scale_len, beat: weight, unit: x, sim: scale, tol: 0.01, scope: illustrative,
+     evidence: {quality: 2, source: "every length times k = 100"}}
+  - {id: weight_x, beat: weight, unit: x, sim: weight_factor, tol: 0.01, scope: universal,
+     evidence: {quality: 2, source: "volume and mass scale as k^3 = 1,000,000 (square-cube law; Galileo 1638, Haldane 1926)"}}
+  - {id: area_x, beat: bones, unit: x, sim: area_factor, tol: 0.01, scope: universal,
+     evidence: {quality: 2, source: "cross-sectional area scales as k^2 = 10,000; bone compressive strength is proportional to it"}}
+  - {id: stress_x, beat: stress, unit: x, sim: stress_factor, tol: 0.01, scope: universal,
+     evidence: {quality: 2, source: "stress = weight / area scales as k^3 / k^2 = k = 100"}}
+  - {id: heat_x, beat: heat, unit: x, sim: heat_factor, tol: 0.01, scope: model,
+     evidence: {quality: 3, source: "cell count and heat output (same W/kg as ours) scale as k^3 = 1,000,000; real big animals burn less per kg (Kleiber 1932), see caveats"}}
+  - {id: skin_x, beat: heat, unit: x, sim: area_factor, tol: 0.01, scope: universal,
+     evidence: {quality: 2, source: "skin area scales as k^2 = 10,000"}}
+  - {id: ten_x, beat: smaller, unit: x, value: 10, scope: illustrative,
+     evidence: {quality: 2, source: "the wizard's smaller suggestion; stress then grows tenfold, past bone's safety factor of about 2-4 (Biewener 1990; Haldane 1926)"}}
+
+absolute_ok:
+  - {word: "every", beat: weight, why: "a uniform scale-up multiplies every length by the same factor, literally true"}
+  - {word: "every", beat: stress, why: "with uniform scaling, the stress in every part of every bone grows by the same factor k"}
+  - {word: "only", beat: bones, why: "compares two scale factors (10,000 versus 1,000,000), not an absolute statement"}
+  - {word: "only", beat: heat, why: "compares two scale factors (10,000 versus 1,000,000)"}
+  - {word: "same", beat: why, why: "the wizard's own naive objection; the scale-up is geometrically the same body, answered in the next beats"}
+
+entities:
+  - id: giant
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the wizard presenter (pointed hat, beard, robe, staff with a glowing stone) grown to a hundred times his height, towering over a flat Antarctic ice plain; tiny penguins and the woman at his feet show the scale"}
+  - id: bones
+    type: hero_object
+    category: B
+    importance: primary
+    visual_contract: {must_read_as: "an x-ray view through the giant's robe: his two thigh bones glow, turn red under load, then show jagged cracks"}
+  - id: woman
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the young woman presenter at normal size on the snow, a few dozen metres in front of the giant's feet, looking up and explaining"}
+  - id: steam
+    type: effect
+    category: F
+    importance: secondary
+    visual_contract: {must_read_as: "the giant glowing warm and steam rising off him in the cold, a dark ring of melting snow around his boots"}
+  - id: ice
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "a sunny Antarctic ice shelf: flat snow with wind ridges, a few penguins, a small red research hut, the shelf edge and dark sea in the distance, low mountains on the horizon"}
+
+hero: giant
+
+publish:
+  cover_at_s: 1.6
+  cover_headline: "100x taller?"
+  cover_label: {big: "100×", small: "taller"}
+  hashtags: [physics, science, squarecubelaw, whatif]
+  tagline: "physics that breaks your intuition."
+  playlist: physics
+  youtube:
+    title: "What If You Were 100 Times Taller? (Square-Cube Law)"
+    description: |
+      What would really happen if you grew a hundred times taller?
+      Your bones would break and you'd overheat, even in Antarctica. Every length grows 100 times, so your weight grows a million times, but your bones' cross-section (their strength) and your skin grow only ten thousand times. Each bit of bone carries 100 times the load, and every square metre of skin has to shed 100 times more heat.
+
+      It's the square-cube law, first worked out by Galileo in 1638. Real big animals cheat it: thicker bones and slower cells (a whale burns far less per kilo than you do).
+      Would you rather be ten times taller or ten times smaller?
+  how_made: "How it's made: original 3D characters and scenes, animated by us; the scale factors follow the square-cube law. The voices are AI voices (ElevenLabs)."
+  packaging_notes: "Hook: the 100x-taller question plus 'bones would break, overheat even in Antarctica' fits the first 100 chars. Search words: '100 times taller', 'square-cube law', 'what if'. Curiosity gap: title asks, video answers (break + overheat). Comment prompt: ten times taller or smaller (one word). Hashtags: 4 topical."

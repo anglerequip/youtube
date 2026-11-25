@@ -197,7 +197,50 @@ def bark(seed=19, distant=1.0):
     return _norm(out + tail, 0.7)
 
 
-ONE_SHOTS = {"bark": bark, "blip": blip, "lock": lock, "latch": latch, "pop": latch, "impact": impact, "thud": impact, "tink": tink, "tick": tink,
+def boom(seed=23, depth=1.0):
+    """A huge, soft landing on snow (a giant's step or fall): a low thump with a long muffled tail, no rattle."""
+    rng = np.random.default_rng(seed)
+    dur = 1.6 + 0.6 * depth; n = int(dur * SR); t = _t(n)
+    thump = np.sin(2 * np.pi * (48 + 10 * rng.uniform()) * t * (1 - 0.2 * t)) * np.exp(-t / (0.22 * depth + 0.08))
+    body = _lp(rng.standard_normal(n), 260) * np.exp(-t / 0.45) * 0.8
+    hiss = _bp(rng.standard_normal(n), 900, 3500) * _env(n, 0.03, 0.5) * 0.12      # snow spray settling
+    return _norm(thump + body + hiss, 0.8)
+
+
+def crunch(seed=29, dur=0.9):
+    """Bone cracking under load: a quick irregular burst of dry snaps over a low creak."""
+    rng = np.random.default_rng(seed)
+    n = int(dur * SR); t = _t(n); y = np.zeros(n)
+    tt = 0.0
+    while tt < dur * 0.7:
+        i = int(tt * SR); m = int(rng.uniform(0.004, 0.012) * SR)
+        if i + m >= n:
+            break
+        y[i:i + m] += _bp(rng.standard_normal(m), 1200, 5200) * np.exp(-np.arange(m) / (0.003 * SR)) * rng.uniform(0.4, 1.0)
+        tt += rng.uniform(0.02, 0.09)
+    creak = np.sin(2 * np.pi * (140 + 30 * np.sin(2 * np.pi * 3 * t)) * t) * _env(n, 0.05, 0.4) * 0.25
+    return _norm(y + _lp(creak, 600), 0.7)
+
+
+def sizzle(seed=37, dur=1.4):
+    """Heat hissing off a hot surface: bright filtered noise with fine random crackle, swelling in and out."""
+    rng = np.random.default_rng(seed)
+    n = int(dur * SR); t = _t(n)
+    hiss = _bp(rng.standard_normal(n), 2500, 7000) * 0.5
+    crackle = np.zeros(n)
+    for _ in range(int(dur * 60)):
+        i = int(rng.uniform(0, n - 200)); m = int(rng.uniform(0.001, 0.004) * SR)
+        crackle[i:i + m] += rng.standard_normal(m) * rng.uniform(0.3, 1.0)
+    y = (hiss + _bp(crackle, 1500, 8000)) * np.sin(np.pi * t / dur) ** 1.5
+    return _norm(y, 0.45)
+
+
+def fall(dur=1.6, seed=11):
+    """The rise played downwards: a falling sweep for something shrinking or powering down."""
+    return np.ascontiguousarray(rise(dur=dur, seed=seed)[::-1])
+
+
+ONE_SHOTS = {"boom": boom, "sizzle": sizzle, "fall": fall, "crunch": crunch, "bark": bark, "blip": blip, "lock": lock, "latch": latch, "pop": latch, "impact": impact, "thud": impact, "tink": tink, "tick": tink,
              "swish": swish, "whoosh": rewind, "rewind": rewind, "rise": rise, "ding": ding}
 
 
@@ -449,12 +492,14 @@ def render_cue(name: str, p: dict, t: float) -> np.ndarray:
     if fn is None:
         raise ValueError(f"unknown sound {name!r}")
     kw = {k: p[k] for k in ("speed", "slow") if k in p and name in ("impact", "thud")}
-    kw.update({k: p[k] for k in ("seed",) if k in p and name in ("tink", "tick", "latch", "pop", "swish", "bark")})
+    kw.update({k: p[k] for k in ("seed",) if k in p and name in ("tink", "tick", "latch", "pop", "swish", "bark", "boom", "crunch", "sizzle")})
+    if name == "boom" and "depth" in p:
+        kw["depth"] = float(p["depth"])
     if name in ("tink", "tick"):
         kw.update({k: p[k] for k in ("pitch", "ring") if k in p})
     if name in ("blip", "lock"):
         kw.update({k: p[k] for k in ("pitch", "seed") if k in p})
-    if name in ("rise", "swish") and "dur" in p:
+    if name in ("rise", "swish", "fall", "sizzle") and "dur" in p:
         kw["dur"] = float(p["dur"])
     return fn(**kw)
 
