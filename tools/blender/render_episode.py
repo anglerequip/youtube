@@ -199,6 +199,16 @@ GARMENT_PAIRS = [   # (outer, inner): inner surface points that end up OUTSIDE t
 #  4. a low sun behind/beside Finn rims the hat and shoulders (finn_v1.host_look)
 
 
+FINN_FINISH = {   # charkit.finish spec for Finn: outer layer first; inner layers lose what the outer one covers
+    'body': 'finn_body',
+    'layers': [('finn_jacket', 'finn_knit'), ('finn_jacket', 'finn_waders'), ('finn_jacket', 'finn_turtleneck'),
+               ('finn_waders', 'finn_knit'), ('finn_boots', 'finn_waders'), ('finn_gloves', 'finn_knit')],
+    # audit: the particle beard reads as sponge and the sculpted-shell retry (charkit.sculpted_beard) read as corduroy
+    # skin on MPFB's coarse face mesh, so the test removes it. Nils is sculpted with mesh sideburns (no strands).
+    'beard': {'mode': 'remove', 'shell': 'finn_beardshell', 'systems': ('beard', 'moustache')},
+    'paint': ['finn_jacket', 'finn_waders', 'finn_knit', 'finn_turtleneck', 'finn_gloves', 'finn_hat', 'finn_hatband', 'finn_boots'],
+}
+
 _PLAIN = {}      # per-keyframe cache, cleared by clipping_report
 
 
@@ -382,6 +392,8 @@ def main():
     ap.add_argument('--scale', type=float, default=float(os.environ.get('RENDER_SCALE', '1.0')))
     ap.add_argument('--samples', type=int, default=int(os.environ.get('RENDER_SAMPLES', '48')))
     ap.add_argument('--engine', default=os.environ.get('RENDER_ENGINE', 'EEVEE'))
+    ap.add_argument('--look', default=os.environ.get('HOST_LOOK', 'v2'), choices=('v1', 'v2'),
+                    help='v2 = the audited look: finishing pass + grade + light ratio (v1 = the 2026-11-26 rough cut)')
     ap.add_argument('--check-clipping', action='store_true', help='pose every shot at its keyframes, test for interpenetration, write a report, render nothing')
     ap.add_argument('--tex', default=os.environ.get('CC0_TEXTURES', r'D:\CounterPhysical\assets-cc0\textures'))
     ap.add_argument('--finn', default=os.environ.get('FINN_BLEND', os.path.join(ROOT, 'assets', 'characters', 'finn.blend')))
@@ -392,7 +404,10 @@ def main():
 
     bpy.ops.wm.read_factory_settings(use_empty=True)
     sc = bpy.context.scene
-    S = finn_set.build_set({'tex_dir': A.tex if os.path.isdir(A.tex) else None, 'sun_az': 160, 'sun_elev': 9})
+    set_opts = {'tex_dir': A.tex if os.path.isdir(A.tex) else None, 'sun_az': 160, 'sun_elev': 9}
+    if A.look == 'v2':      # audit: a dimmer sky and thinner low mist so the key light, not the haze, sets the picture
+        set_opts.update(sky=0.5, mist_low=0.0028)
+    S = finn_set.build_set(set_opts)
     M = prop_materials()
 
     # Finn
@@ -406,6 +421,11 @@ def main():
     fp = plan['finn']['pos']
     rig.location = (fp[0], fp[1], fp[2] + (api.SOLE + 0.007 if api else 0.0))     # boot soles on the deck (clipping check: idle dips ~7 mm)
     rig.rotation_euler = (0, 0, plan['finn'].get('yaw', 0.0))
+    if A.look == 'v2':
+        # character finishing pass (docs/styles/HOST_RENDER_RULES.md): garment layer culling, sculpted beard, macro paint
+        import charkit
+        rep = charkit.finish(rig, FINN_FINISH)
+        print('[finish]', rep, flush=True)
     sock = (lambda s: api.hand_socket(rig, s)) if api else (lambda s: f'hand_{"R" if s == "R" else "L"}')
 
     # props
@@ -433,7 +453,16 @@ def main():
             sc.cycles.device = 'GPU'
         except Exception: pass
     if api:
-        api.host_look(fp, A.samples)          # same light rig and grade as the preview stills
+        lights = api.host_look(fp, A.samples)          # same light rig and grade as the preview stills
+        if A.look == 'v2':
+            # audit 2026-11-26: v1 measured luma 144 / SD 51 / saturation 0.26 against the references' 75-120 / 43-67 /
+            # 0.34-0.48. Darker exposure, harder key:fill ratio (about 5:1), stronger rim, shafts in the mist.
+            import charkit
+            charkit.grade(sc, 'host')
+            for l in lights:
+                l.data.energy *= {'key_warm': 1.3, 'fill_cool': 0.4, 'rim_warm': 1.8}.get(l.name, 1.0)
+            try: sc.eevee.use_volumetric_shadows = True
+            except Exception: pass
     sc.render.resolution_x = int(plan['W'] * A.scale); sc.render.resolution_y = int(plan['H'] * A.scale)
     sc.render.fps = plan['fps']; sc.render.image_settings.file_format = 'PNG'
     cam_data = bpy.data.cameras.new('cam'); cam = bpy.data.objects.new('cam', cam_data); sc.collection.objects.link(cam); sc.camera = cam

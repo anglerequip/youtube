@@ -178,6 +178,30 @@ def _render_chunked(node: list, out: Path, n_frames: int, skey: str):
     (out / "visual.meta.json").write_text(json.dumps(meta))
 
 
+CLIP_GARMENT_VERTS = 200      # garment poke-through below this many vertices per keyframe is a cuff or hem, not visible
+
+
+def clipping_blockers(rows: list) -> list:
+    """Rows of tools/blender/render_episode.py --check-clipping that must block a render: any prop crossing the
+    character, garment poke-through of CLIP_GARMENT_VERTS or more, feet sunk into or floating above the floor."""
+    out = []
+    for r in rows:
+        bad = []
+        for a, b, k in r.get("hits", []):
+            if b.startswith("clear of the hand"):
+                continue                                   # advice (how far to lift), not a finding of its own
+            if " through " in a:
+                if isinstance(k, (int, float)) and k >= CLIP_GARMENT_VERTS:
+                    bad.append(f"{a} ({k} verts)")
+            else:
+                bad.append(f"{a} x {b} ({k} tris)")
+        if r.get("feet") and not str(r["feet"]).startswith("on deck"):
+            bad.append(str(r["feet"]))
+        if bad:
+            out.append(f"shot {r['shot']} {r['at']} t={r['t']}: " + "; ".join(bad))
+    return out
+
+
 def _render_blender(sb: Storyboard, tl, out: Path, previews: bool, force: bool):
     """Character renderer (HOST style, docs/styles/HOST.md): Blender Eevee, run headless on Caesar's PC.
     plan.py builds the per-shot / per-frame plan; tools/blender/render_episode.py renders frames from it.
@@ -199,6 +223,15 @@ def _render_blender(sb: Storyboard, tl, out: Path, previews: bool, force: bool):
         stills = ",".join(f"{t:.1f}" for t in [x * 2.5 for x in range(int(tl.duration / 2.5) + 1)])
         subprocess.run(base + ["--stills", stills, "--out", str(out / "previews")], check=True)
     if force or not _cached(out, "visual.mp4", skey):
+        # clipping gate (docs/styles/HOST_RENDER_RULES.md 2): the 2026-11-26 rough cut rendered with findings in
+        # 54 of 54 keyframes because the check was optional. Now it runs first and blocks the long render.
+        qa = out / "qa"
+        subprocess.run(base + ["--check-clipping", "--out", str(qa)], check=True)
+        blockers = clipping_blockers(json.loads((qa / "clipping.json").read_text()))
+        if blockers and not sb.extra.get("allow_clipping"):
+            raise ValueError(f"clipping gate: {len(blockers)} keyframes with interpenetration, first: {blockers[0]}. "
+                             f"See {qa / 'clipping.md'}. Fix the staging or the layers; `allow_clipping: true` in the "
+                             "storyboard overrides it for a test render only.")
         frames = out / "frames"
         frames.mkdir(parents=True, exist_ok=True)
         log.info("[%s] Blender render (%d frames)", sb.slug, plan["n_frames"])

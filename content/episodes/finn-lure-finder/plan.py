@@ -87,24 +87,24 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     # insert: over the shoulder onto the phone, thumb taps pike / murky / dawn
     phone = [0.12, ey - 0.42, ez - 0.42]
     add(t_tell, S("models") - 0.05, "insert", [phone[0] + 0.12, phone[1] + 0.34, phone[2] + 0.3], [phone[0] + 0.1, phone[1] + 0.3, phone[2] + 0.27],
-        phone, phone, 30, focus=phone, fstop=2.8, note="taps", track="phone_screen", dist=0.17)
+        phone, phone, 40, focus=phone, fstop=2.8, note="taps", track="phone_screen", dist=0.24)
     # models: insert on the result card (top pick 9/10, '756 real models'), then his face as it lands
     t_real = at("models", "real") - 0.05
     add(t_real, S("colour") - 0.05, "close", [-0.12, ey - 0.85, ez - 0.05], [-0.11, ey - 0.8, ez - 0.05], face, face, 62, focus=face,
         fstop=2.0, note="impressed")
     # the result card, then a hard-cut punch-in on the number (HOST: punch-ins are cuts, no shot over ~3 s)
     m_res = (S("models") - 0.05 + t_real) / 2
-    add(S("models") - 0.05, m_res, "insert", [0.15, ey - 0.85, ez - 0.35], [0.14, ey - 0.78, ez - 0.36], phone, phone, 32,
-        focus=phone, fstop=2.8, note="result card", track="phone_screen", dist=0.17)
-    add(m_res, t_real, "insert", [0.15, ey - 0.85, ez - 0.35], [0.14, ey - 0.78, ez - 0.36], phone, phone, 32,
-        focus=phone, fstop=2.8, note="756 punch-in", track="phone_screen", dist=0.12)
+    add(S("models") - 0.05, m_res, "insert", [0.15, ey - 0.85, ez - 0.35], [0.14, ey - 0.78, ez - 0.36], phone, phone, 40,
+        focus=phone, fstop=2.8, note="result card", track="phone_screen", dist=0.24)
+    add(m_res, t_real, "insert", [0.15, ey - 0.85, ez - 0.35], [0.14, ey - 0.78, ez - 0.36], phone, phone, 55,
+        focus=phone, fstop=2.8, note="756 punch-in", track="phone_screen", dist=0.25)
     # colour: medium, he turns the phone to the lens (present), the Firetiger colour call
     t_out = at("colour", "Out") - 0.05
     m_col = (t_out + S("box") - 0.05) / 2
     add(t_out, m_col, "insert", [0.15, ey - 0.85, ez - 0.35], [0.14, ey - 0.78, ez - 0.36], phone, phone, 60,
-        focus=phone, fstop=2.4, note="colour card", track="phone_screen", dist=0.3)
-    add(m_col, S("box") - 0.05, "insert", [0.15, ey - 0.85, ez - 0.35], [0.14, ey - 0.78, ez - 0.36], phone, phone, 60,
-        focus=phone, fstop=2.4, note="4,627 punch-in", track="phone_screen", dist=0.21)
+        focus=phone, fstop=2.4, note="colour card", track="phone_screen", dist=0.45)
+    add(m_col, S("box") - 0.05, "insert", [0.15, ey - 0.85, ez - 0.35], [0.14, ey - 0.78, ez - 0.36], phone, phone, 75,
+        focus=phone, fstop=2.4, note="4,627 punch-in", track="phone_screen", dist=0.45)
     add(S("colour") - 0.05, t_out, "medium", [0.2, ey - 1.5, ez - 0.45], [0.18, ey - 1.35, ez - 0.43], [0.0, ey, ez - 0.35], [0.0, ey, ez - 0.32], 38,
         focus=face, note="present phone")
     # box: wide-ish, he holds the box out over the water... then hugs it
