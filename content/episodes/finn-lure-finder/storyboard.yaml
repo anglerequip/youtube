@@ -38,7 +38,7 @@ beats:
     pause_after: 0.2
   - id: enemy
     text: "You open the box. Every colour on Earth. You pick one... and you wait."
-    pause_after: 0.6
+    pause_after: 1.0
     sfx: pop
   - id: nottoday
     text: "Not today."

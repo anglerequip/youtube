@@ -199,10 +199,10 @@ def light_and_world(opts):
     nt.links.new(tc.outputs['Generated'], mp.inputs['Vector']); nt.links.new(mp.outputs['Vector'], sky.inputs['Vector'])
     ramp = nt.nodes.new('ShaderNodeValToRGB')
     ramp.color_ramp.elements[0].position = 0.5; ramp.color_ramp.elements[0].color = (*_lin('#e9c9a0'), 1)   # warm horizon
-    ramp.color_ramp.elements[1].position = 0.75; ramp.color_ramp.elements[1].color = (*_lin('#6f86a3'), 1)  # cool zenith
+    ramp.color_ramp.elements[1].position = 0.72; ramp.color_ramp.elements[1].color = (*_lin('#58769c'), 1)  # cool zenith
     nt.links.new(sky.outputs['Fac'], ramp.inputs['Fac']); nt.links.new(ramp.outputs['Color'], bg.inputs['Color'])
     bg.inputs['Strength'].default_value = opts.get('sky', 0.9)
-    sun = bpy.data.lights.new('sun', 'SUN'); sun.energy = opts.get('sun', 3.6); sun.color = _lin('#ffc58a'); sun.angle = math.radians(2.0)
+    sun = bpy.data.lights.new('sun', 'SUN'); sun.energy = opts.get('sun', 4.5); sun.color = _lin('#ffc58a'); sun.angle = math.radians(2.0)
     so = bpy.data.objects.new('sun', sun); sc.collection.objects.link(so)
     so.rotation_euler = (math.radians(90 - opts.get('sun_elev', 9)), 0, math.radians(opts.get('sun_az', 200)))
     # the sun disc itself low over the far shore
@@ -216,12 +216,12 @@ def light_and_world(opts):
     mist.scale = (240, 200, 14)
     mv = bpy.data.materials.new('mist'); mv.use_nodes = True; mt = mv.node_tree
     mt.nodes.remove(mt.nodes['Principled BSDF'])
-    vol = mt.nodes.new('ShaderNodeVolumePrincipled'); vol.inputs['Color'].default_value = (*_lin('#c9cdd2'), 1)
+    vol = mt.nodes.new('ShaderNodeVolumePrincipled'); vol.inputs['Color'].default_value = (*_lin('#bfc8d2'), 1)
     vol.inputs['Anisotropy'].default_value = 0.55
     tc2 = mt.nodes.new('ShaderNodeTexCoord'); sep = mt.nodes.new('ShaderNodeSeparateXYZ')
     mt.links.new(tc2.outputs['Generated'], sep.inputs['Vector'])
     cr = mt.nodes.new('ShaderNodeMapRange'); cr.inputs['From Min'].default_value = 0.42; cr.inputs['From Max'].default_value = 0.6
-    cr.inputs['To Min'].default_value = opts.get('mist_low', 0.03); cr.inputs['To Max'].default_value = opts.get('mist_high', 0.004)
+    cr.inputs['To Min'].default_value = opts.get('mist_low', 0.016); cr.inputs['To Max'].default_value = opts.get('mist_high', 0.0015)
     mt.links.new(sep.outputs['Z'], cr.inputs['Value']); mt.links.new(cr.outputs['Result'], vol.inputs['Density'])
     mt.links.new(vol.outputs['Volume'], mt.nodes['Material Output'].inputs['Volume']); mist.data.materials.append(mv)
     return so

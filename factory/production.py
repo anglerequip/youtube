@@ -82,6 +82,8 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
     t0 = time.time()
     if sb.renderer == "three":
         events, sim_report = _render_three(sb, tl, out, previews, force)
+    elif sb.renderer == "blender":
+        events, sim_report = _render_blender(sb, tl, out, previews, force)
     else:
         events, sim_report = _render_matplotlib(sb, tl, out, previews, force)
     timings["render_s"] = round(time.time() - t0, 1)
@@ -92,7 +94,7 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
     caption_engine.write_ass(tl, out / "captions.ass", emphasis=emph, mode=mode,
                              style=sb.extra.get("caption_style"), beats={b.id: b for b in sb.beats})
     events = [(tl.start(b.id), b.sfx) for b in sb.beats if b.sfx] + list(events)
-    if sb.renderer == "three":      # designed SFX + music + mastering (factory/sound_design.py)
+    if sb.renderer in ("three", "blender"):      # designed SFX + music + mastering (factory/sound_design.py)
         from . import sound_design
         music_cfg = getattr(sb, "_music_cfg", None)
         stats = sound_design.build_mix(out / "voice.wav", events, out / "mix.wav",
@@ -173,6 +175,42 @@ def _render_chunked(node: list, out: Path, n_frames: int, skey: str):
     for p in parts:
         meta.update(json.loads(p.with_suffix(".meta.json").read_text()))
     (out / "visual.meta.json").write_text(json.dumps(meta))
+
+
+def _render_blender(sb: Storyboard, tl, out: Path, previews: bool, force: bool):
+    """Character renderer (HOST style, docs/styles/HOST.md): Blender Eevee, run headless on Caesar's PC.
+    plan.py builds the per-shot / per-frame plan; tools/blender/render_episode.py renders frames from it.
+    BLENDER_EXE points at blender(.exe); RENDER_SAMPLES / RENDER_SCALE tune quality for previews."""
+    import os
+    import subprocess
+    from . import retention
+    mod = retention.load_plan_module(sb)
+    plan = mod.build_plan(tl, fps=settings.fps)
+    plan_json = json.dumps(plan, separators=(",", ":"))
+    (out / "plan.json").write_text(plan_json)
+    root = Path(__file__).resolve().parent.parent
+    srcs = sorted((root / "tools" / "blender").glob("*.py"))
+    skey = _key(plan_json, [p.read_text(encoding="utf-8") for p in srcs])
+    exe = os.environ.get("BLENDER_EXE", "blender")
+    script = root / "tools" / "blender" / "render_episode.py"
+    base = [exe, "-b", "--python", str(script), "--", "--plan", str(out / "plan.json"), "--episode", str(sb.path)]
+    if previews:
+        stills = ",".join(f"{t:.1f}" for t in [x * 2.5 for x in range(int(tl.duration / 2.5) + 1)])
+        subprocess.run(base + ["--stills", stills, "--out", str(out / "previews")], check=True)
+    if force or not _cached(out, "visual.mp4", skey):
+        frames = out / "frames"
+        frames.mkdir(parents=True, exist_ok=True)
+        log.info("[%s] Blender render (%d frames)", sb.slug, plan["n_frames"])
+        subprocess.run(base + ["--out", str(frames)], check=True)
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(plan["fps"]), "-i", str(frames / "f%05d.png"),
+                        "-c:v", "libx264", "-preset", "slow", "-crf", "16", "-pix_fmt", "yuv420p", str(out / "visual.mp4")], check=True)
+        _mark(out, "visual.mp4", skey)
+    else:
+        log.info("[%s] Blender render: cached", sb.slug)
+    report = mod.self_checks() if hasattr(mod, "self_checks") else None
+    sb._music_cfg = mod.music(plan) if hasattr(mod, "music") else None
+    sb._ambience = sb.extra.get("ambience") or plan.get("ambience")
+    return mod.sfx_events(plan), report
 
 
 def _render_three(sb: Storyboard, tl, out: Path, previews: bool, force: bool):
