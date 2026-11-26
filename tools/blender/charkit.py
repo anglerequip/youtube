@@ -256,3 +256,38 @@ def finish(rig, spec):
         mats = {m for m in mats if not m.name.endswith('_sculpt')}
         rep['painted'] = macro_paint(mats)
     return rep
+
+
+# ------------------------------------------------------------------------------------------------ style audit
+def style_audit(rig, min_thickness=0.005, max_subsurf=1, scan_dirs=('assets-cc0', 'textures', 'makehuman')):
+    """The measurable parts of HOST_RENDER_RULES.md section 7 (stylised, never photoreal). Returns a list of
+    violation strings; an empty list passes. Checks: particle/curve hair on the character, subdivision deeper than
+    max_subsurf, garment (solidified) layers thinner than min_thickness, image textures loaded from photo/scan asset
+    folders, skin-style pore or clearcoat inputs left on."""
+    bad = []
+    for o in rig.children_recursive:
+        if o.type == 'CURVES':
+            bad.append(f'{o.name}: curve hair (rule 8: sculpt hair as solid locks)')
+        if o.type != 'MESH':
+            continue
+        for md in o.modifiers:
+            if md.type == 'PARTICLE_SYSTEM' and md.show_render and md.particle_system.settings.type == 'HAIR':
+                bad.append(f'{o.name}: particle hair "{md.name}" (rule 8)')
+            if md.type == 'SUBSURF' and md.show_render and md.render_levels > max_subsurf:
+                bad.append(f'{o.name}: subdivision level {md.render_levels} (rule 3: at most {max_subsurf})')
+            if md.type == 'SOLIDIFY' and md.show_render and max(o.dimensions) > 0.1                     and abs(md.thickness) * max(o.scale) < min_thickness:     # garments, not lenses or small trims
+                bad.append(f'{o.name}: {abs(md.thickness) * 1000:.1f} mm thick (rule 6: at least {min_thickness * 1000:.0f} mm)')
+        for m in o.data.materials:
+            if not m or not m.use_nodes:
+                continue
+            for n in m.node_tree.nodes:
+                if n.type == 'TEX_IMAGE' and n.image and any(s in n.image.filepath.replace(chr(92), '/').lower() for s in scan_dirs):
+                    bad.append(f'{o.name}/{m.name}: scanned texture {n.image.name} (rule 9: paint it)')
+                if n.type == 'GROUP':
+                    for i in n.inputs:
+                        if i.name == 'Pore strength' and i.default_value > 0:
+                            bad.append(f'{o.name}/{m.name}: pores on (rule 9)')
+                if n.type == 'BSDF_PRINCIPLED' and 'Coat Weight' in n.inputs and n.inputs['Coat Weight'].default_value > 0.05 \
+                        and 'skin' in m.name.lower():
+                    bad.append(f'{o.name}/{m.name}: clearcoat on skin (rule 11)')
+    return sorted(set(bad))

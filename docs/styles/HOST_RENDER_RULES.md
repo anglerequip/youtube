@@ -87,3 +87,48 @@ The rough cut animates by blending between whole-body pose presets over 0.35 s w
 it feels stiff next to the references, whose hosts act with brows, mouth shapes, head tilts and overlapping hands.
 Nils needs: visemes (at least 6 mouth shapes), brow poses, a head-and-shoulders "talk" layer that never stops, and
 pose transitions with anticipation and overshoot.
+
+## 7. Modeling and texturing rules (audit 2: realistic vs high-poly-but-blocky)
+
+The full reasoning is in the private `AUDIT2_realism_vs_stylised.md`. Sizes assume an adult about 1.8 m tall; scale
+them with the character. `charkit.style_audit(rig)` checks the measurable ones and prints violations.
+
+**Form**
+1. Block the character from a handful of big designed masses (head block, chest barrel, bib, boots, hands) and judge
+   it as a black silhouette at 100 px tall before any detail goes on.
+2. Faces are built from planes: forehead, brow ridge with an underside, temple, cheekbone plane, nose wedge (bridge,
+   side planes, a hard turn underneath), upper-lip overhang, chin block, jaw corner. Each plane must take its own
+   value under one key light at 45 degrees. A face that reads as one smooth gradient fails.
+3. Keep facets. Smooth shading only inside a plane; mark the plane borders sharp (auto-smooth or edge splits around
+   30-40 degrees, or bevel them). Subdivision at most one level on a character, and never as the thing that makes
+   the shape.
+4. Spend polygons on edges and hero details: garment edges, cuffs, collars, buttons, buckles, the cap rim, eyewear,
+   the product. Big flat areas stay light.
+
+**Proportion**
+5. Push it: hands and gloves 10-20 % oversized, buttons, buckles and rivets about 1.5x real, eyewear and headwear
+   rims thick enough to read at thumbnail size, the head slightly large. The model sheet wins where it is specific.
+
+**Garments**
+6. Cloth has visible thickness: outer garments 8-15 mm at the edges, cuffs and rolled hems 20-40 mm, with a rounded
+   bevel on every open edge so it catches a highlight line. Nothing thinner than 5 mm on a hero character.
+7. Folds are designed, not noise: a few big tension folds from a pinch point (knee, elbow, shoulder, under a strap),
+   compression folds where it bunches. No procedural fold noise on top.
+
+**Hair**
+8. Hair, brows, sideburns and beards are sculpted solid locks with sharp tips and painted strand lines. No particle
+   or curve hair on a character (the check fails on any hair particle system).
+
+**Surfaces**
+9. Paint the colour, don't scan it: base colour carries seam lines, fold shadows, edge wear, broad stains and warm/cool
+   zones (skin: warmer nose, ears, cheeks; cooler jaw and temples) at sizes of 1-30 cm. No photo or scanned fabric
+   textures as the look, no pore maps, no texture detail smaller than about 3 mm on a full-height character.
+10. Three or four distinct roughness levels per character: skin and wool matte (0.65-0.85), leather and oilskin satin
+    (0.35-0.5), brass, buckles, eyes and wet things glossy (0.1-0.25). Metal and leather get a painted dark cavity and a
+    bright edge.
+11. Skin: no clearcoat, subsurface only as a warm edge falloff, no realistic skin shader.
+
+**Light for planes**
+12. One strong key at about 45 degrees, semi-hard shadows (cap brim onto the eyes is welcome), a rim from behind, fill
+    about 1/5 of the key. Background darker or more saturated than the face. Soft frontal light flattens planes and is
+    a fail.
