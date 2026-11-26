@@ -1,0 +1,168 @@
+slug: cat-stare
+title: "Why Your Cat Stares While You Eat"
+topic: "the viral claim that a staring cat thinks you're selfish for not sharing your kill, checked against cat behaviour research"
+component: custom   # behaviour, not physics: the evidence is in sources/caveats; the scene is renderer/scenes/catstare3d.js
+renderer: three
+scene: catstare3d
+hook_family: 2          # a familiar moment with a wrong popular explanation
+structure: D            # duo: myth -> bust -> the real mechanism (three steps) -> practical twist
+voice_clips: content/episodes/cat-stare/voice   # duo voiced with ElevenLabs (wizard zYcjlYFOd3taleS0gkk3, woman 0ggs85h7hrWz8ExXnsBc), eleven_v4, English
+max_inner_pause_s: 0.4   # trims the TTS model's long gaps between sentences (not a speed change)
+speakers: {wizard: zYcjlYFOd3taleS0gkk3, woman: 0ggs85h7hrWz8ExXnsBc}
+description: |
+  A viral theory says your cat stares at your food because it thinks you're selfish for not sharing
+  your kill. Cat research says otherwise: adult cats hunt and eat alone, grown cats rarely meow at each
+  other but meow at people, some cats hide a cry in their purr, and the stare is a habit that dropped
+  crumbs keep rewarding. Want a friendlier cat? Try a slow blink.
+
+  Sources: McComb et al. 2009 (Current Biology), Humphrey et al. 2020 (Scientific Reports),
+  Bradshaw, Cat Sense (2013), Merck Veterinary Manual.
+
+  #shorts #cats #catbehavior #science #mythbusting
+tags: [cats, cat behavior, cat staring, meow, purr, slow blink, science, shorts]
+voice: elevenlabs-duo
+speed: 1.0
+story:
+  core_idea: "Your cat isn't judging you for not sharing; staring and meowing are habits it learned work on people."
+  fascination: "the viral explanation is wrong, and the real one is sneakier: cats keep a kitten's meow just for us"
+  steps: 4            # cats don't share food; meowing is for humans; the cry inside the purr; staring is reinforced
+  buildup: low
+  extras: [twist]     # the slow blink, a cat-friendly signal you can try tonight
+  payoff: this
+  cut:
+    - "cats can't taste sugar (broken sweet-receptor gene): true, but a tangent; it lengthens the story without explaining the stare"
+    - "onion and garlic toxicity: important, but it turns a myth-bust into a care leaflet; 'don't share' covers it"
+    - "the frequency of the embedded cry (it sits near a baby's cry range): the study's detail, too technical for the beat"
+    - "feral colonies that share space: in the caveats; it doesn't change the point that adults don't share prey"
+end_hold_s: 1.6
+beats:
+  - id: hook
+    speaker: wizard
+    text: "My cat has stared at my sandwich for ten minutes. Does she think I'm *selfish*?"
+    pause_after: 0.25
+  - id: myth
+    speaker: woman
+    text: "That's the viral theory. Cats share their kill with family, so you're the jerk eating alone... Cute story. Mostly *wrong*."
+    pause_after: 0.2
+  - id: how
+    speaker: wizard
+    text: "Wrong how?"
+    pause_after: 0.15
+  - id: alone
+    speaker: woman
+    text: "Grown cats hunt alone, and they eat alone. The ones who bring food home are *mothers*, feeding kittens."
+    pause_after: 0.25
+  - id: judging
+    speaker: wizard
+    text: "So she's not judging me."
+    pause_after: 0.15
+  - id: meow
+    speaker: woman
+    text: "No. She's doing something sneakier. Adult cats barely meow at each other. Kittens meow at their mother... and grown cats save that meow for *us*."
+    pause_after: 0.2
+  - id: mum
+    speaker: wizard
+    text: "Wait. So I'm basically her mum?"
+    pause_after: 0.15
+  - id: purr
+    speaker: woman
+    text: "Pretty much. And some cats hide a little cry inside their purr. In one study, people rated those purrs as more *urgent*. Even people who'd never owned a cat."
+    pause_after: 0.25
+  - id: stare
+    speaker: wizard
+    text: "And the staring?"
+    pause_after: 0.15
+  - id: crumbs
+    speaker: woman
+    text: "Every crumb you ever dropped taught her that staring works. And a reward that only comes *sometimes* makes a habit stronger, not weaker."
+    pause_after: 0.3
+  - id: blink
+    speaker: woman
+    text: "Want her to stop? Don't share. Want her to like you? Try a slow blink."
+    pause_after: 0.2
+  - id: this
+    speaker: wizard
+    text: "Like... this?"
+    pause_after: 0.0
+
+caveats:
+  - "Adult domestic cats are mainly solitary hunters and usually eat their catch alone; bringing prey home is mostly done by mothers provisioning kittens (Merck Veterinary Manual; Bradshaw 2013). Free-living cats can form colonies around food, but cooperative hunting and adult-to-adult prey sharing are not typical."
+  - "Whether a cat 'thinks' anything about you is unknown; the 'selfish' idea is presented as a viral claim, not as something cats believe."
+  - "Adult cats rarely meow at each other; kittens meow to their mother, and adult cats mostly direct meows at people (Bradshaw 2013; reviewed in Tavernier et al. 2020). 'Save that meow for us' is a simplification: feral and colony cats meow less, and cats do still meow in some cat-cat contexts (e.g. mating)."
+  - "The solicitation-purr study recorded ten cats; people rated food-soliciting purrs as more urgent and less pleasant than ordinary purrs, including people with no cat experience. Not every cat produces it (McComb et al. 2009)."
+  - "That occasional rewards make a learned behaviour more persistent is the partial-reinforcement extinction effect from learning research; we show it as one crumb now and then, not a measured rate."
+  - "Slow blinking: in two experiments, cats slow-blinked back more often and approached an experimenter more after the person slow-blinked (Humphrey et al. 2020). It is an effect on average, not a guarantee."
+  - "Our own wording; the topic came from a viral clip, whose explanation we test rather than repeat. The wizard, the woman and the cat are original 3D characters."
+sources:
+  - "K. McComb, A. M. Taylor, C. Wilson and B. D. Charlton, 'The cry embedded within the purr', Current Biology 19(13), R507-R508 (2009)."
+  - "T. Humphrey, L. Proops, J. Forman, R. Spooner and K. McComb, 'The role of cat eye narrowing movements in cat-human communication', Scientific Reports 10, 16503 (2020)."
+  - "J. Bradshaw, Cat Sense (Basic Books, 2013): solitary hunting, meowing directed at people."
+  - "Merck Veterinary Manual, 'Social Behavior of Cats' (accessed 2026-11-20)."
+  - "C. Tavernier, S. Ahmed, K. A. Houpt and S. C. Yeon, 'Feline vocal communication', Journal of Veterinary Science 21(1), e18 (2020)."
+  - "Partial reinforcement extinction effect: e.g. M. E. Bouton, Learning and Behavior, 2nd ed. (Sinauer, 2016)."
+
+claims:
+  - {id: ten_minutes, beat: hook, unit: count, value: 10, scope: specific,
+     evidence: {quality: 1, source: "the wizard's own scripted anecdote about his cat, not a measurement"}}
+  - {id: one_study, beat: purr, unit: count, value: 1, scope: history,
+     evidence: {quality: 2, source: "McComb et al. 2009, Current Biology: one study, ten cats, human listeners rated solicitation purrs more urgent"}}
+
+absolute_ok:
+  - {word: "every", beat: crumbs, why: "'every crumb you ever dropped' is rhetorical: each rewarded stare reinforces the habit; caveat explains the learning effect"}
+  - {word: "only", beat: crumbs, why: "'a reward that only comes sometimes' describes intermittent reinforcement, not an absolute claim"}
+  - {word: "never", beat: purr, why: "'people who'd never owned a cat' describes the study's inexperienced listeners (McComb et al. 2009)"}
+
+entities:
+  - id: cat
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "an orange tabby house cat sitting on a stool by the table, big eyes fixed on the sandwich; ears, whiskers and tail visible"}
+  - id: wizard
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the wizard presenter (blue robe, hat, beard) standing at a small garden table with a sandwich on a plate"}
+  - id: woman
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the young woman presenter (long black hair with a fringe, black outfit) standing across the table, explaining"}
+  - id: sandwich
+    type: support
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "a sandwich on a white plate, clearly bread with a filling"}
+  - id: field
+    type: support
+    category: C
+    importance: secondary
+    visual_contract: {must_read_as: "cutaways in the long grass: one cat stalking a mouse alone; a mother cat bringing a mouse to two kittens; two cats passing in silence"}
+  - id: ground
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "garden lawn, patio, trees and hazy sky; no holes"}
+
+hero: cat
+
+publish:
+  cover_at_s: 1.2
+  cover_headline: "Why your cat stares"
+  cover_label: {big: "Not selfish", small: "just learned"}
+  hashtags: [cats, catbehavior, science, mythbusting]
+  youtube:
+    title: "Why Your Cat Stares While You Eat (It's Not Judging You)"
+    description: |
+      A viral theory says your cat thinks you're selfish for not sharing your "kill". The research says otherwise.
+
+      Grown cats hunt and eat alone; it's mothers who bring food to kittens. Adult cats barely meow at each other, but they meow at us. Some cats even hide a cry inside their purr that people rate as more urgent. And every dropped crumb teaches the stare that it works. Want a friendlier cat? Try a slow blink.
+  how_made: "How it's made: original 3D characters and scenes, animated by us. The voices are AI voices (ElevenLabs)."
+  tiktok:
+    caption: "Your cat isn't judging you for not sharing. The stare is a habit your crumbs taught it."
+  facebook:
+    title: "Why Your Cat Stares While You Eat"
+    caption: |
+      Is your cat judging you for eating alone? The viral theory says yes. Cat research says no: grown cats eat alone, save their meows for people, and learn that staring pays off. Try a slow blink instead.
+
+      #cats #catbehavior #science

@@ -53,7 +53,10 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
     timings = {}
 
     t0 = time.time()
-    vkey = _key([(b.id, b.text, b.pause_after) for b in sb.beats], sb.voice, sb.speed, provider, "expressive-v1")
+    cd = voice.clip_dir(sb)
+    clips = sorted((p.name, p.stat().st_size) for p in cd.iterdir()) if cd and cd.exists() else None
+    vkey = _key([(b.id, b.text, b.pause_after) for b in sb.beats], sb.voice, sb.speed, provider, "expressive-v1", clips,
+                *([voice.tail_for(sb)] if sb.extra.get("end_hold_s") is not None else []))
     if force or not _cached(out, "voice.wav", vkey) or not (out / "timeline.json").exists():
         log.info("[%s] voice (%s)", sb.slug, provider)
         tl = voice.narrate(sb, out / "voice.wav", provider)
@@ -63,11 +66,18 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
         log.info("[%s] voice: cached", sb.slug)
         tl = voice.Timeline.load(out / "timeline.json")
     timings["voice_s"] = round(time.time() - t0, 1)
+    # Length comes from the story (factory/story_length.py): no target, no padding, no trimming. Only a
+    # technical ceiling and a broken-output floor are enforced here; padding checks are in the report.
     if tl.duration > settings.max_seconds:
-        raise ValueError(f"narration is {tl.duration:.1f}s; limit is {settings.max_seconds:.0f}s. Trim the script.")
-    if tl.duration + 0.8 < settings.min_seconds:
-        raise ValueError(f"narration is {tl.duration:.1f}s; the minimum is {settings.min_seconds:.0f}s. "
-                         "Add real content only if the story needs it (never filler).")
+        raise ValueError(f"narration is {tl.duration:.1f}s; the ceiling for a Short is {settings.max_seconds:.0f}s. "
+                         "Cut beats that don't earn their place.")
+    if tl.duration < settings.min_seconds:
+        raise ValueError(f"narration is {tl.duration:.1f}s: shorter than any real story ({settings.min_seconds:.0f}s); "
+                         "the voice step probably failed.")
+    from . import story_length
+    (out / "length.md").write_text(story_length.report(sb, tl), encoding="utf-8")
+    log.info("[%s] length %.1fs from the narration (%s); see %s", sb.slug, tl.duration,
+             story_length.guide_band(tl.duration), out / "length.md")
 
     t0 = time.time()
     if sb.renderer == "three":
@@ -77,8 +87,10 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
     timings["render_s"] = round(time.time() - t0, 1)
 
     t0 = time.time()
-    caption_engine.write_ass(tl, out / "captions.ass", style=sb.extra.get("caption_style"),
-                             beats={b.id: b for b in sb.beats})
+    from . import retention
+    emph, mode = retention.caption_emphasis(sb)
+    caption_engine.write_ass(tl, out / "captions.ass", emphasis=emph, mode=mode,
+                             style=sb.extra.get("caption_style"), beats={b.id: b for b in sb.beats})
     events = [(tl.start(b.id), b.sfx) for b in sb.beats if b.sfx] + list(events)
     if sb.renderer == "three":      # designed SFX + music + mastering (factory/sound_design.py)
         from . import sound_design
@@ -117,10 +129,57 @@ def _render_matplotlib(sb: Storyboard, tl, out: Path, previews: bool, force: boo
 RENDERER_DIR = Path(__file__).resolve().parent.parent / "renderer"
 
 
+def _render_chunked(node: list, out: Path, n_frames: int, skey: str):
+    """Render the frames in chunks that survive a restart: finished chunks (with their .meta.json) are kept
+    and skipped next time, then joined without re-encoding. RENDER_CHUNK (frames, default 240) and
+    RENDER_JOBS (parallel Chromium processes, default 1) tune it; RENDER_CHUNK=0 renders in one go."""
+    import os
+    import subprocess
+    size = int(os.environ.get("RENDER_CHUNK", "240"))
+    if size <= 0:
+        subprocess.run(node + ["--out", str(out / "visual.mp4")], check=True)
+        return
+    d = out / "chunks" / skey[:12]
+    d.mkdir(parents=True, exist_ok=True)
+    todo = []
+    parts = []
+    for f0 in range(0, n_frames, size):
+        f1 = min(n_frames, f0 + size)
+        mp4 = d / f"c{f0:06d}_{f1:06d}.mp4"
+        parts.append(mp4)
+        if not (mp4.exists() and mp4.with_suffix(".meta.json").exists()):
+            todo.append((f0, f1, mp4))
+    jobs = max(1, int(os.environ.get("RENDER_JOBS", "1")))
+    running = []
+    while todo or running:
+        while todo and len(running) < jobs:
+            f0, f1, mp4 = todo.pop(0)
+            tmp = mp4.with_name("tmp_" + mp4.name)
+            log.info("  chunk %d-%d", f0, f1)
+            running.append((subprocess.Popen(node + ["--out", str(tmp), "--from", str(f0), "--to", str(f1)]), tmp, mp4))
+        for pr in list(running):
+            if pr[0].poll() is not None:
+                running.remove(pr)
+                if pr[0].returncode != 0:
+                    raise RuntimeError(f"chunk render failed: {pr[2].name}")
+                pr[1].with_suffix(".meta.json").replace(pr[2].with_suffix(".meta.json"))
+                pr[1].replace(pr[2])
+        time.sleep(1)
+    lst = d / "list.txt"
+    lst.write_text("".join(f"file '{p.name}'\n" for p in parts))
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy",
+                    str(out / "visual.mp4")], check=True)
+    meta = {}
+    for p in parts:
+        meta.update(json.loads(p.with_suffix(".meta.json").read_text()))
+    (out / "visual.meta.json").write_text(json.dumps(meta))
+
+
 def _render_three(sb: Storyboard, tl, out: Path, previews: bool, force: bool):
     """3D diorama renderer (renderer/, three.js in headless Chromium). plan.py builds the per-frame plan."""
     import subprocess
-    mod = sb.load_module("plan.py")
+    from . import retention
+    mod = retention.load_plan_module(sb)       # plan.py, plus the storyboard's retention block (HUD, cues)
     plan = mod.build_plan(tl, fps=settings.fps)
     scene = sb.extra.get("scene") or plan["scene"]
     plan_json = json.dumps(plan, separators=(",", ":"))
@@ -145,7 +204,7 @@ def _render_three(sb: Storyboard, tl, out: Path, previews: bool, force: bool):
     log.info("[%s] pre-render QA: no blockers (%s)", sb.slug, verdict["state"])
     if force or not _cached(out, "visual.mp4", skey):
         log.info("[%s] 3D render (%d frames)", sb.slug, plan["n_frames"])
-        subprocess.run(node + ["--out", str(out / "visual.mp4")], check=True)
+        _render_chunked(node, out, plan["n_frames"], skey)
         _mark(out, "visual.mp4", skey)
     else:
         log.info("[%s] 3D render: cached", sb.slug)

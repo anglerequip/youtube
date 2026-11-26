@@ -1,0 +1,33 @@
+# Length fixture (~40 s): several steps plus a simulation layer. Not a production episode.
+title: "Always Switch Doors"
+topic: "Monty Hall problem: switching wins two thirds of the time"
+description: "Length-planning fixture: three steps, a build-up and one extra layer."
+tags: [test, probability, monty hall]
+voice: af_bella
+speed: 1.1
+end_hold_s: 1.0
+story:
+  core_idea: "Switching wins two times out of three, because the host's choice isn't random."
+  fascination: "almost everyone, including mathematicians, insists it's fifty-fifty"
+  steps: 3
+  buildup: medium
+  extras: [simulation]
+  payoff: count
+  cut: ["Bayes' theorem derivation: correct but slow", "the Marilyn vos Savant letters: a second video"]
+beats:
+  - id: hook
+    text: "Three doors. One car. You pick one, and switching *doubles* your chances."
+  - id: setup
+    text: "You choose a door. The host, who knows where the car is, opens a different door with a goat behind it."
+  - id: guess
+    text: "Two doors left, so it feels like fifty fifty. It isn't."
+  - id: first
+    text: "Your first pick was right only one time in three. Nothing the host does can change that."
+  - id: host
+    text: "The other two thirds don't vanish. The host has to avoid the car, so they all pile onto the door he left shut."
+  - id: run
+    text: "Let's just play it. A thousand games, always switching."
+  - id: count
+    text: "Six hundred and sixty seven wins. Two out of three, exactly as the logic said."
+caveats: ["test fixture: assumes the host always opens a goat door and always offers the switch"]
+sources: ["S. Selvin, 'A problem in probability', The American Statistician 29 (1975)"]

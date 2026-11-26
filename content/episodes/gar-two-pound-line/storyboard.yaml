@@ -1,0 +1,135 @@
+slug: gar-two-pound-line
+title: "A 153-Pound Fish on 2-Pound Line"
+topic: "how anglers land fish many times heavier than their line's breaking strength: a fish is close to neutrally buoyant, so the line only resists its swimming pull; the reel's drag slips at a set tension below the line's strength, so the fish tires itself pulling line out; e.g. a 153 lb alligator gar on 2 lb test line, Lake Livingston, Texas, 2025 (pending IGFA line-class record)"
+component: custom   # the scene is renderer/scenes/garline3d.js (shared lake set renderer/sets/lake.js)
+renderer: three
+scene: garline3d
+hook_family: 1          # a surprising claim
+structure: D            # duo: claim -> disbelief -> buoyancy -> pull not weight -> drag -> objection -> tiring -> warning -> payoff
+voice_clips: content/episodes/gar-two-pound-line/voice   # duo voiced with ElevenLabs (wizard = Matt 3iY0r3RaYmOh6WfIwMIH, woman = Lara vChnJZ1Cu89g2XXumPfT)
+max_inner_pause_s: 0.3
+speakers: {wizard: 3iY0r3RaYmOh6WfIwMIH, woman: vChnJZ1Cu89g2XXumPfT}
+description: |
+  In 2025 an angler on Lake Livingston, Texas, landed a 153-pound alligator gar on 2-pound test line (a pending IGFA
+  line-class record). It works because a fish is about as dense as water, so in the water it weighs almost nothing,
+  and the reel's drag lets line slip out before the tension reaches the line's breaking strength.
+
+  #shorts #fishing #physics #science
+tags: [fishing, alligator gar, fishing line, drag, buoyancy, physics, science, shorts]
+voice: elevenlabs-duo
+speed: 1.0
+ambience: lake
+story:
+  core_idea: "In water a fish weighs almost nothing, and the drag slips before the line can snap, so a thin line can tire out a huge fish."
+  fascination: "a line that couldn't lift a bag of sugar landed a fish heavier than a person"
+  steps: 4            # buoyancy; pull not weight; the drag slips below breaking strength; the fish tires itself out
+  buildup: low
+  extras: [twist]     # out of the water the full weight returns: never lift by the line
+  payoff: payoff
+  cut:
+    - "the anglers' names and how long the fight took: not in our source, and not needed"
+    - "rod flex as a shock absorber: true, but a fourth idea"
+    - "IGFA rules for line testing: a different video"
+    - "the exact drag setting used: not in our source"
+end_hold_s: 1.4
+beats:
+  - id: hook
+    speaker: woman
+    text: "An angler in Texas landed a hundred and fifty-three pound fish... on line rated for just *two* pounds."
+    pause_after: 0.25
+  - id: what
+    speaker: wizard
+    text: "Impossible. That line would snap instantly!"
+    pause_after: 0.2
+  - id: float
+    speaker: woman
+    text: "Not in water. A fish's body is about as dense as water, so down there it weighs almost nothing."
+    pause_after: 0.2
+  - id: pull
+    speaker: woman
+    text: "The line never has to lift it. It only has to handle the fish's pull."
+    pause_after: 0.2
+  - id: drag
+    speaker: woman
+    text: "And the reel has a brake, called the *drag*. Pull harder than its setting, and line slips out instead of snapping."
+    pause_after: 0.2
+  - id: swims
+    speaker: wizard
+    text: "So the fish just swims off with my line?"
+    pause_after: 0.15
+  - id: tired
+    speaker: woman
+    text: "Until it gets tired. You let it run, reel back in, and repeat. Again and again."
+    pause_after: 0.2
+  - id: lift
+    speaker: woman
+    text: "The one thing you never do is lift it by the line. Out of the water, it weighs every single one of those pounds."
+    pause_after: 0.2
+  - id: payoff
+    speaker: wizard
+    text: "Note to self... bigger net."
+    pause_after: 0.0
+
+caveats:
+  - "The catch: a 153 lb (69 kg), 7 ft 3 in alligator gar on 2 lb test line, Lake Livingston, East Texas, April 2025 (Outdoor Life, 14 Apr 2025). It was reported as a pending IGFA line-class world record, not yet certified at the time of the article; IGFA called it the heaviest freshwater fish ever landed on 2 lb test."
+  - "Near-neutral buoyancy: most bony fish, gars included, have a gas bladder and are close to the density of water, so their apparent weight in water is a small fraction of their weight in air. 'Almost nothing' is a simplification: it is small, not exactly zero."
+  - "The line still feels the fish's swimming pull and the water drag on the fish; the reel's drag caps the tension. Our model fish (and its pull numbers) is illustrative, not data from this catch."
+  - "Not shown: the record fish itself. The gar in the video is our own low-poly model, not footage or a likeness of the real catch."
+sources:
+  - "Outdoor Life, 'Record Alligator Gar Is the Heaviest Freshwater Fish Ever Caught on 2-Pound Test', 14 Apr 2025, outdoorlife.com/fishing/record-gar-heaviest-freshwater-fish-two-pound-test/"
+  - "IGFA International Angling Rules (line-class world records), igfa.org"
+
+claims:
+  - {id: fish_lb, beat: hook, unit: count, value: 153, scope: history, match: "hundred",
+     evidence: {quality: 2, source: "Outdoor Life 2025: 153-pound alligator gar, pending IGFA record"}}
+  - {id: line_lb, beat: hook, unit: count, value: 2, scope: history, match: "two",
+     evidence: {quality: 2, source: "Outdoor Life 2025: 2-pound test line"}}
+  - {id: lift_weight, beat: lift, unit: ref, value: 1, scope: universal, match: "one of those",
+     evidence: {quality: 2, source: "out of the water the line would carry the fish's full weight (153 lb, Outdoor Life 2025); 'every single one of those pounds' refers back to it"}}
+
+absolute_ok:
+  - {word: "impossible", beat: what, why: "the wizard's naive objection, refuted by the next beats"}
+  - {word: "instantly", beat: what, why: "the wizard's naive objection, refuted by the next beats"}
+  - {word: "never", beat: pull, why: "in water the line does not support the fish's weight; it carries pull, which the drag caps"}
+  - {word: "never", beat: lift, why: "handling advice, literally right here: lifting by the line would put the full 153 lb on a 2 lb line"}
+  - {word: "only", beat: pull, why: "in water buoyancy carries the fish's weight, so the line carries its pull (and the drag caps that)"}
+  - {word: "every", beat: lift, why: "out of water the fish's full weight (153 lb) hangs on the line, far above its 2 lb rating"}
+
+entities:
+  - id: gar
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "a long olive-brown gar-like fish with a long toothy snout, under the lake surface, swimming hard away from the boat on the end of a thin line"}
+  - id: gauge
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "a simple tension gauge on screen: the needle rises with the fish's pull but stops at a 'drag' mark well below the red 'snap' mark"}
+  - id: boat
+    type: support
+    category: B
+    importance: secondary
+    visual_contract: {must_read_as: "a small wooden rowing boat with the wizard holding a bent rod and the woman beside him; at the end a small landing net"}
+  - id: lake
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "a calm low-poly lake with a grassy bank, reeds, a jetty and trees"}
+
+hero: gar
+
+publish:
+  cover_at_s: 2.0
+  cover_headline: "Huge fish, tiny line"
+  cover_label: {big: "153 lb", small: "on 2 lb line"}
+  hashtags: [fishing, physics, gar, science]
+  tagline: "fishing physics that breaks your intuition."
+  youtube:
+    title: "How a 153-Pound Fish Was Caught on 2-Pound Line"
+    description: |
+      How do you land a 153-pound fish on line rated for 2 pounds?
+      In 2025 an angler on Lake Livingston, Texas, landed a 153-pound alligator gar on line rated for just 2 pounds. How? In the water, a fish is about as dense as water, so it weighs almost nothing: the line only has to handle its pull, not its weight. And the reel's drag lets line slip out before it can snap. The fish tires itself out. Just never lift it by the line.
+
+      Source: Outdoor Life, April 2025 (reported as a pending IGFA line-class world record). The gar in the video is our own 3D model.
+  how_made: "How it's made: original 3D characters and scenes, animated by us; the tension gauge follows a simple drag model. The voices are AI voices (ElevenLabs)."

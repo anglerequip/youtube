@@ -1,0 +1,140 @@
+slug: frame-rate-blur
+title: "Why 24 FPS Looks Smooth in Movies but Choppy in Games"
+topic: "a film camera's shutter is open for about half of each frame (180-degree shutter, 1/48 s at 24 fps), so motion is smeared and reads as smooth; a game renders instantaneous sharp frames, so at 24 fps you see discrete jumps; higher frame rates shrink the jumps, and interactivity adds latency"
+component: custom   # the scene is renderer/scenes/framerate3d.js (shared street set)
+renderer: three
+scene: framerate3d
+hook_family: 1          # an everyday paradox
+structure: D            # duo: paradox -> the shutter -> smears -> game frames are sharp -> jumps -> 60 fps -> steering -> payoff
+voice_clips: content/episodes/frame-rate-blur/voice   # duo voiced with ElevenLabs (wizard zYcjlYFOd3taleS0gkk3, woman 0ggs85h7hrWz8ExXnsBc)
+max_inner_pause_s: 0.3
+speakers: {wizard: zYcjlYFOd3taleS0gkk3, woman: 0ggs85h7hrWz8ExXnsBc}
+description: |
+  Movies run at 24 frames a second and look smooth. A video game at 24 looks choppy. The difference: a film
+  camera's shutter stays open for about half of every frame (1/48 s), so anything moving is smeared along
+  its path, and your brain blends the smears into motion. A game draws each frame perfectly sharp, so you
+  see a frozen picture, a jump, another frozen picture. More frames make the jumps smaller, and because
+  you're controlling the game, slow frames also make it react later.
+
+  #shorts #videogames #gaming #fps #science
+tags: [video games, gaming, fps, frame rate, motion blur, physics, optics, science, shorts]
+voice: elevenlabs-duo
+speed: 1.0
+story:
+  core_idea: "Film frames are smeared by an open shutter; game frames are sharp, so the same 24 frames look smooth in one and jumpy in the other."
+  fascination: "the same number, 24, looks smooth in one place and choppy in another, and the reason is blur"
+  steps: 4            # the shutter; smears join up; game frames are sharp; more frames = smaller jumps
+  buildup: medium
+  extras: [twist]     # steering: interactivity adds latency
+  payoff: payoff
+  cut:
+    - "persistence of vision: an outdated explanation; leave it out"
+    - "sample-and-hold blur on LCD screens: true but a second video"
+    - "frame pacing and judder from 24-in-60 pulldown: too technical"
+    - "the Hobbit 48 fps story: a tangent"
+end_hold_s: 1.4
+beats:
+  - id: hook
+    speaker: wizard
+    text: "Movies run at twenty-four frames a second. So why does a game at twenty-four look so *choppy*?"
+    pause_after: 0.25
+  - id: shutter
+    speaker: woman
+    text: "Because a film camera doesn't take sharp pictures. Its shutter stays open for *half* of every frame."
+    pause_after: 0.2
+  - id: smear
+    speaker: woman
+    text: "So anything moving gets smeared along its path... and your brain joins the smears into smooth motion."
+    pause_after: 0.2
+  - id: sharp
+    speaker: woman
+    text: "A game draws every frame perfectly sharp. Ball... gap... ball... gap."
+    pause_after: 0.2
+  - id: jumps
+    speaker: wizard
+    text: "So I'm seeing the *jumps*!"
+    pause_after: 0.2
+  - id: sixty
+    speaker: woman
+    text: "Exactly. At sixty frames, each jump is less than half as big. Some games even add fake blur."
+    pause_after: 0.2
+  - id: steer
+    speaker: woman
+    text: "And you're steering. At twenty-four, a new picture only arrives every forty-two milliseconds."
+    pause_after: 0.2
+  - id: payoff
+    speaker: wizard
+    text: "So movies get away with it... because nobody's holding the controller."
+    pause_after: 0.0
+
+caveats:
+  - "Shutter: the film convention is a 180-degree shutter, i.e. each frame is exposed for half the frame interval (1/48 s at 24 fps). Cinematographers vary it for effect; 'half' is the standard, not a law."
+  - "Games render each frame for a single instant unless a motion-blur effect is added in post-processing, which many games offer as an option."
+  - "Sixty vs twenty-four: an object at the same speed moves 24/60 = 0.4 as far between frames at 60 fps, i.e. less than half the jump (our toy model checks this)."
+  - "Forty-two milliseconds is the frame interval at 24 fps (1000/24 = 41.7 ms). Total input lag in a real game is usually longer (input, game logic, display); the frame interval is only one part of it."
+  - "Interactivity is one reason; others include screen type (sample-and-hold LCD blur) and viewing distance. The video keeps to the two biggest."
+  - "The slowed-down ball sequences are illustrations: the ball's speed and frame copies are drawn to scale with each other, not filmed."
+sources:
+  - "ARRI / American Cinematographer Manual: 180-degree shutter rule, exposure time = 1/(2 x frame rate)."
+  - "UC Berkeley CS184 (2023), lecture 17 'Intro to animation': motion blur and temporal sampling in rendered vs filmed frames."
+  - "Game Developer, 'Framerate and refresh: games and movies are not the same' (motion blur in film vs games)."
+
+claims:
+  - {id: film_fps, beat: hook, unit: count, value: 24, scope: definition,
+     evidence: {quality: 1, source: "cinema standard frame rate: 24 frames per second"}}
+  - {id: game_fps, beat: sixty, unit: count, value: 60, scope: definition,
+     evidence: {quality: 1, source: "common game frame rate target: 60 fps"}}
+  - {id: game_fps_hook, beat: hook, unit: count, value: 24, scope: definition,
+     evidence: {quality: 1, source: "the same 24 frames per second, now in a game (the comparison the question sets up)"}}
+  - {id: frame_ms, beat: steer, unit: count, value: 42, scope: definition,
+     evidence: {quality: 1, source: "frame interval at 24 fps: 1000 ms / 24 = 41.7 ms, spoken rounded as forty-two milliseconds"}}
+
+absolute_ok:
+  - {word: "every", beat: shutter, why: "the 180-degree convention applies to every frame"}
+  - {word: "every", beat: sharp, why: "a rendered frame with no motion-blur effect is an instant snapshot; the next beat says some games add fake blur"}
+  - {word: "perfectly", beat: sharp, why: "a rendered frame with no motion-blur effect has no temporal blur at all"}
+  - {word: "exactly", beat: sixty, why: "conversational agreement with the wizard, not a quantity"}
+  - {word: "every", beat: steer, why: "at a steady 24 fps a new frame arrives at a fixed interval of 1000/24 = 41.7 ms"}
+  - {word: "only", beat: steer, why: "no new picture exists between two frames at a steady 24 fps"}
+  - {word: "nobody", beat: payoff, why: "nobody steers a movie: the payoff joke"}
+
+entities:
+  - id: ball
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "a red ball flying across a grassy verge; in the slowed-down frames it appears either as a row of sharp copies with gaps (game) or a row of smeared streaks with short gaps (film)"}
+  - id: wizard
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the wizard presenter (hat, beard) outdoors beside a road, puzzled, then delighted"}
+  - id: woman
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the young woman presenter (long black hair with a fringe, black outfit) explaining beside the ball frames"}
+  - id: frames
+    type: support
+    category: B
+    importance: secondary
+    visual_contract: {must_read_as: "the frozen frame copies of the ball laid out along its path, evenly spaced, with off-white label cards"}
+  - id: street
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "the warm daylit street set: straight road, verges, low-poly trees, a few parked cars"}
+
+hero: ball
+
+publish:
+  cover_at_s: 9.0
+  cover_headline: "Why games need 60 fps"
+  cover_label: {big: "24 fps", small: "smooth or choppy?"}
+  hashtags: [videogames, gaming, fps, science]
+  tagline: "gaming science that breaks your intuition."
+  youtube:
+    title: "Why 24 FPS Looks Smooth in Movies but Choppy in Games"
+    description: |
+      Movies run at 24 frames a second and look smooth. A game at 24 looks choppy. A film camera's shutter stays open for half of each frame, so moving things are smeared and your brain blends the smears into motion. A game draws every frame perfectly sharp, so you see the jumps. At 60 fps each jump is less than half as big, and because you're steering, a new frame every 42 milliseconds also feels late.
+  how_made: "How it's made: original 3D characters and scenes, animated by us. The voices are AI voices (ElevenLabs)."

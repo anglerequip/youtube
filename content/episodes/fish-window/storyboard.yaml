@@ -1,0 +1,143 @@
+slug: fish-window
+title: "A Fish Sees the Whole Sky Through One Small Circle"
+topic: "Snell's window: refraction squeezes the whole 180-degree sky into a cone about 97 degrees wide above an underwater eye; outside it the surface is a mirror (total internal reflection); things near the horizon, like an angler on the bank, appear squashed at the window's edge"
+component: custom   # the scene is renderer/scenes/fishwindow3d.js (shared lake set renderer/sets/lake.js)
+renderer: three
+scene: fishwindow3d
+hook_family: 1          # a surprising claim
+structure: D            # duo: claim -> disbelief -> why (bending) -> the cone -> how big -> outside -> the angler -> payoff
+voice_clips: content/episodes/fish-window/voice   # duo voiced with ElevenLabs (wizard = Matt 3iY0r3RaYmOh6WfIwMIH, woman = Lara vChnJZ1Cu89g2XXumPfT)
+max_inner_pause_s: 0.3
+speakers: {wizard: 3iY0r3RaYmOh6WfIwMIH, woman: vChnJZ1Cu89g2XXumPfT}
+description: |
+  Underwater, a fish sees the whole sky, from horizon to horizon, squeezed into one circle overhead about 97 degrees
+  wide. Light bends as it enters water, and even light skimming flat across the surface is bent down to about
+  49 degrees from straight up. Outside that circle the surface acts like a mirror. An angler on the bank shows up
+  squashed at the edge of the circle, which is why careful anglers keep low.
+
+  #shorts #fishing #physics #light #science
+tags: [fishing, fish vision, Snell's window, refraction, light, physics, science, shorts]
+voice: elevenlabs-duo
+speed: 1.0
+ambience: lake
+story:
+  core_idea: "Refraction squeezes the whole sky into a small circle above an underwater eye; outside it is a mirror."
+  fascination: "the fish's world above is a bright porthole surrounded by a mirror, and you are squashed at its rim"
+  steps: 3            # light bends at the surface; so the sky fits in a 97-degree cone; outside is reflection
+  buildup: low
+  extras: []
+  payoff: payoff
+  cut:
+    - "the critical-angle formula (arcsin of 1 over 1.33): one number on screen is enough"
+    - "Fresnel dimming near the edge of the window: true, but a second idea"
+    - "fish eye resolution and colour vision: a different video"
+    - "ripples breaking the window up: true, but it muddies the clean picture"
+end_hold_s: 1.4
+beats:
+  - id: hook
+    speaker: woman
+    text: "Down there, that fish sees the *whole* sky... squeezed into one small circle."
+    pause_after: 0.25
+  - id: what
+    speaker: wizard
+    text: "A circle? The sky is everywhere!"
+    pause_after: 0.2
+  - id: bend
+    speaker: woman
+    text: "Light bends when it goes into water. Even light skimming flat across the surface gets bent steeply down."
+    pause_after: 0.2
+  - id: cone
+    speaker: woman
+    text: "So everything above the water, from horizon to horizon, fits inside a cone about ninety-seven degrees wide."
+    pause_after: 0.2
+  - id: size
+    speaker: woman
+    text: "One metre down, that window is only a little over two metres across."
+    pause_after: 0.2
+  - id: outside
+    speaker: wizard
+    text: "And outside the circle?"
+    pause_after: 0.15
+  - id: mirror
+    speaker: woman
+    text: "A *mirror*. The surface reflects the lake bottom back down."
+    pause_after: 0.2
+  - id: tall
+    speaker: wizard
+    text: "So when I stand up tall on the bank..."
+    pause_after: 0.15
+  - id: edge
+    speaker: woman
+    text: "You show up squashed at the edge of its window. That's why careful anglers keep low."
+    pause_after: 0.2
+  - id: payoff
+    speaker: wizard
+    text: "Then I'm fishing... sitting down."
+    pause_after: 0.0
+
+caveats:
+  - "Physics: Snell's law with water's refractive index n = 1.333. Light arriving at grazing incidence (90 degrees from vertical) refracts to the critical angle arcsin(1/1.333) = 48.6 degrees, so the above-water hemisphere maps into a cone of 2 x 48.6 = 97.2 degrees (Wikipedia, 'Snell's window': 'compresses a 180 degree angle of view above water to a 97 degree angle of view below water'; some sources round to 96)."
+  - "Window width at depth d is 2 d tan(48.6 deg) = 2.27 d, so 2.27 m at 1 m depth ('a little over two metres')."
+  - "Outside the window, light from below is totally internally reflected, so the surface shows a reflection of the bottom (or is dark). With ripples, the window edge breaks up; the clean picture is for calm water."
+  - "'Shows up squashed at the edge': objects near the horizon are compressed into a thin ring at the window's rim and dimmed by reflection losses. Keeping low (and back from the edge) is common angling advice; how much any given fish notices depends on species, distance, light and water clarity."
+sources:
+  - "Wikipedia, 'Snell's window' (accessed 2026-11-21): en.wikipedia.org/wiki/Snell%27s_window"
+  - "E. Hecht, Optics (5th ed., Pearson 2017), sections 4.4 (refraction, Snell's law) and 4.7 (total internal reflection)"
+
+claims:
+  - {id: cone_deg, beat: cone, unit: deg, sim: window_cone_deg, tol: 0.6, scope: universal,
+     evidence: {quality: 3, source: "Snell's law, n_water = 1.333: 2 * arcsin(1/1.333) = 97.2 deg (Hecht, Optics; Wikipedia 'Snell's window')"}}
+  - {id: depth_m, beat: size, unit: m, value: 1, scope: illustrative,
+     evidence: {quality: 3, source: "chosen example depth"}}
+  - {id: width_m, beat: size, unit: m, sim: window_width_1m, tol: 0.3, scope: universal, bound: lower,
+     evidence: {quality: 3, source: "2 * 1 m * tan(48.6 deg) = 2.27 m ('a little over two metres')"}}
+
+absolute_ok:
+  - {word: "whole", beat: hook, why: "the entire above-water hemisphere maps into the window (Snell's law), literally true"}
+  - {word: "everything", beat: cone, why: "every direction above the water, horizon to horizon, maps inside the 97-degree cone"}
+  - {word: "everywhere", beat: what, why: "the wizard's own naive objection, answered in the next beats"}
+  - {word: "only", beat: size, why: "compares sizes ('only a little over two metres across' for the whole sky), not an absolute claim"}
+
+entities:
+  - id: window
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "seen from below the surface: a bright circular patch of sky directly above the fish, surrounded by a darker mirror-like surface showing the lake bottom; light rays from the sky bend at the surface into a cone that ends at the fish's eye"}
+  - id: fish
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "a small olive-and-cream trout-like fish hovering a metre under the calm lake surface, tail gently moving"}
+  - id: wizard
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the wizard presenter (hat, beard) standing on a grassy lake bank holding a fishing rod; at the end he sits down"}
+  - id: woman
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the young woman presenter beside him on the bank, explaining"}
+  - id: lake
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "a calm low-poly lake with a grassy bank, reeds, a small wooden jetty and trees"}
+
+hero: window
+
+publish:
+  cover_at_s: 1.5
+  cover_headline: "What a fish sees"
+  cover_label: {big: "97°", small: "of sky"}
+  hashtags: [fishing, physics, light, science]
+  tagline: "fishing physics that breaks your intuition."
+  youtube:
+    title: "What a Fish Sees: The Whole Sky in One Small Circle"
+    description: |
+      What does a fish actually see when it looks up?
+      Underwater, a fish sees everything above the surface, from horizon to horizon, squeezed into one circle about 97 degrees wide. Light bends as it enters water, so even light skimming flat across the lake gets bent steeply down. One metre down, that window is only about 2.3 metres across. Outside it, the surface works like a mirror and reflects the bottom. And an angler on the bank? Squashed at the edge of the circle. That's why careful anglers keep low.
+
+      It's called Snell's window. The clean circle needs calm water; ripples break it up.
+  how_made: "How it's made: original 3D characters and scenes, animated by us; the light paths follow Snell's law. The voices are AI voices (ElevenLabs)."

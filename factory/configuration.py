@@ -41,8 +41,10 @@ class Settings:
     tts_provider: str = _env("TTS_PROVIDER", "kokoro")
     kokoro_voice: str = _env("KOKORO_VOICE", "af_bella")
     fps: int = int(_env("FPS", "30"))
-    min_seconds: float = float(_env("MIN_SECONDS", "15"))
-    max_seconds: float = float(_env("MAX_SECONDS", "60"))
+    # Length is decided by each story (factory/story_length.py), never by a target. These are only
+    # technical sanity limits: a floor that catches a broken render and a ceiling for a Short.
+    min_seconds: float = float(_env("MIN_SECONDS", "10"))
+    max_seconds: float = float(_env("MAX_SECONDS", "90"))
 
     @property
     def db_path(self) -> Path:

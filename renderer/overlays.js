@@ -12,6 +12,7 @@
 //   ring     thin highlight ring that draws itself    {at, r}
 //   flash    full-frame white (or colour) flash        {color, peak}
 //   tint     full-frame colour wash (night, cold)      {color, alpha}
+//   tension  horizontal line-tension meter, per-frame  {xy, values, fps, max, marks: [{v, text, color}], label, unit, over}
 import * as THREE from 'three';
 
 const ACCENT = '#f2c94c';           // our badge outline (warm yellow), never neon
@@ -109,6 +110,44 @@ const DRAW = {
     ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1.5, H * 0.0013);
     ctx.beginPath(); ctx.moveTo(x - tubeW * 1.2, top + 4); ctx.lineTo(x - tubeW * 3.5, top + 4); ctx.stroke();
     label(ctx, o.label ?? '', x - tubeW * 4, top + 4, Math.round(H * 0.018), 'right');
+  },
+  // a horizontal meter whose level follows a per-frame list from the plan (values[i] at i / fps), with labelled
+  // marks (e.g. the reel's drag setting and the line's breaking strength). `subs` (per-frame, optional) is a short note
+  // in the top row, between the label and the value. `over` (per-frame, optional) draws an
+  // overflow arrow past the end of the scale with its own text, for "this would be far off the chart".
+  tension(ctx, W, H, o, t) {
+    const i = Math.max(0, Math.min(o.values.length - 1, Math.round(t * (o.fps ?? 30))));
+    const v = o.values[i], max = o.max ?? 1, x0 = (o.xy?.[0] ?? 0.5) * W, y0 = (o.xy?.[1] ?? 0.2) * H;
+    const bw = W * 0.62, bh = H * 0.016, left = x0 - bw / 2;
+    ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 10;
+    ctx.fillStyle = 'rgba(229,226,214,0.94)'; ctx.beginPath(); ctx.roundRect(left - W * 0.035, y0 - H * 0.04, bw + W * 0.07, H * 0.085, H * 0.014); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(40,44,52,0.25)'; ctx.beginPath(); ctx.roundRect(left, y0, bw, bh, bh / 2); ctx.fill();
+    const u = Math.max(0, Math.min(1, v / max));
+    const red = (o.marks ?? []).find(m => m.color === 'red');
+    ctx.fillStyle = red && v >= red.v ? RED : '#2e8f86';
+    if (u > 0) { ctx.beginPath(); ctx.roundRect(left, y0, Math.max(bh, bw * u), bh, bh / 2); ctx.fill(); }
+    for (const m of o.marks ?? []) {
+      const x = left + bw * Math.min(1, m.v / max);
+      ctx.fillStyle = m.color === 'red' ? RED : '#c58a12';
+      ctx.fillRect(x - 2.5, y0 - bh * 0.7, 5, bh * 2.4);
+      ctx.font = `800 ${Math.round(H * 0.0155)}px Poppins`; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(m.text, x, y0 + bh * 1.9);
+    }
+    ctx.fillStyle = '#3a3a3a'; ctx.font = `700 ${Math.round(H * 0.0145)}px Poppins`; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.fillText(o.label ?? '', left, y0 - bh * 0.5);
+    ctx.textAlign = 'right'; ctx.fillStyle = ctx.fillStyle;
+    const sub = o.subs ? o.subs[i] : null;          // optional per-frame note under the scale (e.g. line paying out)
+    if (sub) { ctx.fillStyle = '#c58a12'; ctx.font = `800 ${Math.round(H * 0.0145)}px Poppins`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+               ctx.fillText(sub, left + bw * 0.55, y0 - bh * 0.5); }
+    ctx.fillStyle = '#3a3a3a'; ctx.font = `700 ${Math.round(H * 0.0145)}px Poppins`; ctx.textBaseline = 'bottom';
+    const ov = o.over ? o.over[i] : null;
+    ctx.fillText(ov ? '' : `${v.toFixed(1)} ${o.unit ?? ''}`, left + bw, y0 - bh * 0.5);
+    if (ov) {                                         // pegged: an arrow off the end of the scale
+      ctx.fillStyle = RED; const ax = left + bw + W * 0.012;
+      ctx.beginPath(); ctx.moveTo(ax, y0 - bh * 0.5); ctx.lineTo(ax + W * 0.03, y0 + bh / 2); ctx.lineTo(ax, y0 + bh * 1.5); ctx.closePath(); ctx.fill();
+      ctx.font = `800 ${Math.round(H * 0.017)}px Poppins`; ctx.textAlign = 'right'; ctx.fillText(ov, left + bw, y0 - bh * 0.5);
+    }
   },
   arrows(ctx, W, H, o, t, world) {
     const p = where(world, o, W, H); if (p.behind) return;

@@ -1,0 +1,137 @@
+slug: gamer-surgeons
+title: "Surgeons Who Game Make Fewer Mistakes"
+topic: "doctors who played video games over 3 hours a week made 37% fewer errors and were 27% faster in laparoscopic (keyhole) surgery drills (Rosser et al., Arch Surg 2007); a correlation, not proof"
+component: custom   # the scene is renderer/scenes/gamersurgeons3d.js (shared home set)
+renderer: three
+scene: gamersurgeons3d
+hook_family: 1          # a surprising claim
+structure: D            # duo: claim -> disbelief -> what keyhole surgery is like -> why it resembles a game -> the study -> honest catch -> payoff
+voice_clips: content/episodes/gamer-surgeons/voice   # duo voiced with ElevenLabs (wizard zYcjlYFOd3taleS0gkk3, woman 0ggs85h7hrWz8ExXnsBc)
+max_inner_pause_s: 0.3
+speakers: {wizard: zYcjlYFOd3taleS0gkk3, woman: 0ggs85h7hrWz8ExXnsBc}
+description: |
+  In a 2007 study of 33 doctors doing keyhole-surgery drills, the ones who had played video games for more
+  than three hours a week made 37% fewer errors and finished 27% faster. Keyhole surgery means steering long
+  tools through tiny openings while watching a flat screen, which is a lot like using a game controller.
+  Honest catch: it's a correlation from one small study, not proof that gaming causes better surgery.
+
+  Source: Rosser et al., "The impact of video games on training surgeons in the 21st century", Arch Surg 2007;142(2):181-186.
+
+  #shorts #videogames #gaming #surgery #science
+tags: [video games, gaming, surgery, brain, hand-eye coordination, science, shorts]
+voice: elevenlabs-duo
+speed: 1.0
+story:
+  core_idea: "Doctors who gamed made far fewer mistakes in keyhole-surgery drills, because the skill looks a lot like gaming."
+  fascination: "a hobby people call a waste of time lines up with a surgeon's skill"
+  steps: 3            # what keyhole surgery is; why it looks like a game; what the study measured
+  buildup: low
+  extras: []
+  payoff: payoff
+  cut:
+    - "the top-tertile numbers (47% fewer errors, 39% faster): one strong number is enough, and it needs more caveats"
+    - "the 'Top Gun' training programme's name: jargon"
+    - "later studies with students: mixed results, a second video"
+    - "named game titles from the study: game IP, not needed"
+end_hold_s: 1.4
+beats:
+  - id: hook
+    speaker: woman
+    text: "Doctors who gamed more than three hours a week made *thirty-seven* percent fewer mistakes in surgery drills."
+    pause_after: 0.25
+  - id: what
+    speaker: wizard
+    text: "Wait. Video games make you a *better* surgeon?"
+    pause_after: 0.2
+  - id: keyhole
+    speaker: woman
+    text: "Think about keyhole surgery. You steer long tools through tiny holes... while watching a screen."
+    pause_after: 0.2
+  - id: flat
+    speaker: woman
+    text: "Your hands are down here. Your eyes are up there. And the picture is flat."
+    pause_after: 0.2
+  - id: gamer
+    speaker: wizard
+    text: "That sounds exactly like playing a *video game*."
+    pause_after: 0.2
+  - id: study
+    speaker: woman
+    text: "That's what one study tested, with thirty-three doctors. The gamers were also twenty-seven percent faster."
+    pause_after: 0.2
+  - id: catch
+    speaker: wizard
+    text: "So I should play more games!"
+    pause_after: 0.2
+  - id: honest
+    speaker: woman
+    text: "Careful. It's a link, not proof. People with quick hands might just enjoy games more."
+    pause_after: 0.2
+  - id: payoff
+    speaker: wizard
+    text: "Fine. Then I'm practising... for science."
+    pause_after: 0.0
+
+caveats:
+  - "Study: Rosser et al. 2007 (Arch Surg 142:181-186), 33 surgical residents and attending physicians in a laparoscopic skills and suturing course (data from 2002). Those with past video game play over 3 hours a week made 37% fewer errors (P<.02) and were 27% faster (P<.03) than those who never played."
+  - "It is a cross-sectional, correlational study with a small sample: it shows a link, not that gaming causes better surgical skill. The script says this out loud."
+  - "'Doctors' = surgical residents and attending physicians, as in the abstract. The drills were training tasks on simulators, not operations on patients."
+  - "The game on the TV in the video is an original abstract design; no real game, logo or character is shown."
+sources:
+  - "J. C. Rosser Jr et al., 'The impact of video games on training surgeons in the 21st century', Archives of Surgery 142(2):181-186 (2007). doi:10.1001/archsurg.142.2.181 (PubMed 17309970)"
+
+claims:
+  - {id: fewer_errors, beat: hook, unit: "%", value: 37, scope: history,
+     evidence: {quality: 2, source: "Rosser et al. 2007 abstract: >3 h/wk past players made 37% fewer errors (P<.02)"}}
+  - {id: hours_week, beat: hook, unit: count, value: 3, scope: history, bound: lower,
+     evidence: {quality: 2, source: "Rosser et al. 2007 abstract: threshold of more than 3 hours of play per week"}}
+  - {id: doctors, beat: study, unit: count, value: 33, scope: history,
+     evidence: {quality: 2, source: "Rosser et al. 2007 abstract: 33 residents and attending physicians"}}
+  - {id: faster, beat: study, unit: "%", value: 27, scope: history,
+     evidence: {quality: 2, source: "Rosser et al. 2007 abstract: 27% faster completion (P<.03)"}}
+
+absolute_ok:
+  - {word: "exactly", beat: gamer, why: "the wizard's own enthusiastic exaggeration, answered by the honest beat"}
+
+entities:
+  - id: trainer
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "a grey keyhole-surgery practice box on the coffee table: two long thin tools poke in through small holes in its lid, a small monitor beside it shows the inside (pegs and two tool tips)"}
+  - id: wizard
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the wizard presenter (hat, beard) in a living room, amazed, then delighted"}
+  - id: woman
+    type: hero_object
+    category: A
+    importance: primary
+    visual_contract: {must_read_as: "the young woman presenter (long black hair with a fringe, black outfit) explaining beside the practice box"}
+  - id: tv
+    type: support
+    category: B
+    importance: secondary
+    visual_contract: {must_read_as: "a TV on a low stand showing an original abstract game (a small ship dodging coloured circles); a game controller on the table"}
+  - id: room
+    type: environment
+    category: E
+    importance: background
+    visual_contract: {must_read_as: "a warm cut-away living room: bookshelf, sofa, rug; no holes"}
+
+hero: trainer
+
+publish:
+  cover_at_s: 1.5
+  cover_headline: "Gamers make better surgeons?"
+  cover_label: {big: "37%", small: "fewer mistakes"}
+  hashtags: [videogames, gaming, surgery, science]
+  tagline: "gaming science that breaks your intuition."
+  youtube:
+    title: "Surgeons Who Play Video Games Make Fewer Mistakes"
+    description: |
+      In one study of 33 doctors doing keyhole-surgery drills, the ones who had played video games for more than 3 hours a week made 37% fewer errors and were 27% faster. Keyhole surgery means steering long tools through tiny holes while watching a flat screen, which is a lot like gaming.
+
+      Honest catch: it's one small study and a correlation, not proof that games cause better surgeons. Rosser et al., Archives of Surgery, 2007.
+  how_made: "How it's made: original 3D characters and scenes, animated by us. The game on screen is our own design. The voices are AI voices (ElevenLabs)."

@@ -227,7 +227,7 @@ def check(ctx, cfg) -> tuple[list[Finding], dict]:
 # ---------------------------------------------------------------- independent Sound Reviewer
 INSTRUCTIONS = """# Sound review (independent)
 
-You are the sound team for a 60-75 s vertical science Short. You did not make it. Your only question:
+You are the sound team for a short vertical science Short (its length is whatever its story needs). You did not make it. Your only question:
 **would a real viewer, watching on a phone with sound on, find anything in this soundtrack annoying,
 distracting or confusing?** Be strict: an annoying sound makes people swipe away.
 

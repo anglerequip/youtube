@@ -10,35 +10,82 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
    footage, branding or exact video concepts.
 2. Research it. Put real, checkable sources and honest caveats in the storyboard. Never invent data
    or overstate a result to make it more dramatic.
-3. Create `content/episodes/<slug>/storyboard.yaml` (copy the structure of `falling-slinky`):
-   - 5-14 beats. Beat 1 is the hook: a surprising claim in under 3 s.
-   - Length follows the story (Caesar, 2026-11-19): typically 18-45 s, up to 60 s only when the story earns it.
-     Never pad, recap or stretch to hit a length. QC allows 15-60 s (`MIN_SECONDS`, `MAX_SECONDS`).
+3. Decide the story's natural length *before* writing it. **Content decides duration; duration never
+   decides content.** There is no target length and no beat count. Answer these in the storyboard's
+   `story:` block, then write exactly that story and stop at its payoff:
+   1. How much explanation is actually required? (`steps:` the viewer genuinely needs, 0-6)
+   2. How quickly can the viewer get the central idea? (`core_idea:` in one sentence)
+   3. What makes this topic fascinating? (`fascination:`)
+   4. Which details create suspense, surprise or curiosity? (keep them; they are the beats)
+   5. Which details are unnecessary? (`cut:` list them with why, so nobody adds them back)
+   6. How much build-up does the payoff need? (`buildup: low | medium | high`; `extras:` only for a
+      history, twist or scale layer that earns its place)
+   7. Where would continuing make it less entertaining? (`payoff:` the beat id; end within a sentence or two)
+
+   ```yaml
+   story:
+     core_idea: "The bottom of a dropped slinky hovers until the collapse reaches it."
+     fascination: "the bottom visibly defies gravity for a moment"
+     steps: 2            # forces balance; the news travels down the spring
+     buildup: low
+     extras: []
+     payoff: land
+     cut: ["centre-of-mass maths: true but a second video", "steel-bar analogy: slows the ending"]
+   end_hold_s: 1.0       # optional: how long the last picture holds after the last word
+   ```
+   Run `python -m factory length <slug>` before any voice or render: it turns the answers into a
+   natural length and word budget and flags padding. As a guide, not a rule (reference hits ran
+   23-39 s): a single surprising event usually lands in about 18-25 s, most explainers in 25-35 s, a
+   multi-step story with a twist in 35-45 s, and only a genuinely rich topic needs 45-60 s. A video can
+   finish at 21.4 or 41.8 s. Never add sentences to reach a length, never cut an explanation until it
+   confuses, and fix a long script by cutting beats, not by speeding up the voice.
+   QC hard limits are 10-90 s (`MIN_SECONDS`, `MAX_SECONDS`: technical guards, not targets); typically 18-45 s, up to 60 s only when the story earns it.
+   TikTok Creator Rewards (pays only for videos longer than one minute) is opt-in per episode: `platforms: {tiktok: {creator_rewards: true}}`.
+   It only reports whether the video qualifies; extend only with real content, never filler.
+4. Create `content/episodes/<slug>/storyboard.yaml` (copy the structure of `falling-slinky`):
+   - **Hook (first 1-2 s):** open on the surprising thing itself, already in motion. No "Did you
+     know", "Have you ever wondered", "In this video".
+   - **Development:** every sentence advances the explanation, raises curiosity, adds a striking
+     detail or sets up the payoff. No recap of what was just said, no "so basically" transitions.
+   - **Payoff:** the answer, twist or satisfying image. Then **end decisively**: no summary of the
+     video, no generic conclusion ("and that's why..."), no artificial cliffhanger, no call to action.
    - Short spoken sentences; spell numbers the way they should be read.
    - `on_screen` for an occasional key phrase or equation, `sfx` (whoosh, thud, pop, tick, rise, ding).
    - Write for the voice (factory/voice_engine/expressive.py turns this into delivery, free):
      vary sentence length and keep it sounding like a person, not a summary; `*word*` stresses one key
      word (at most one or two per beat); `...` is a deliberate pause before a reveal; `!` only for real
      surprise; questions end in `?` (they get a longer pause). Captions drop the stars automatically.
-4. Create `sim.py` with `class Sim(Scene)`. Sync to beats with `self.tl.start("<beat id>")`.
+5. Create `sim.py` with `class Sim(Scene)`. Sync to beats with `self.tl.start("<beat id>")`.
    Keep visuals between y=0.25 and y=0.90 of the frame (captions sit at about y=0.30).
    Add `self_checks()` comparing the simulation to theory, and `sfx_events()` for physical moments.
-5. Fill in the single source of truth (docs/QA.md): `claims:` for every number spoken or shown (value or
+   Time every shot and animation from the narration (`tl.start`/`tl.end` of its beat): a shot lasts as
+   long as it is visually relevant, never holds a finished animation, and is never rushed to save time.
+   The video ends `end_hold_s` after the last word; never pad, loop or slow footage to fill time.
+6. Fill in the single source of truth (docs/QA.md): `claims:` for every number spoken or shown (value or
    `sim:` from plan facts, scope, evidence), `absolute_ok:` for absolute words, `entities:` with risk
    category and visual contract, `hero:`. Export `facts` (and `events` + `observe()`) from plan.py and
    `probes()` from the scene.
-6. Run `python -m factory produce <slug> --previews`. The pre-render gate blocks before the long render
+7. Run `python -m factory produce <slug> --previews`. The pre-render gate blocks before the long render
    on any blocker; read `out/<slug>/qa/report.md` and fix the cause, not the symptom. After the render,
    independent reviewers (fresh context, never the generator) write `out/<slug>/qa/review/critique.json` and `critique_2.json` (two picture reviewers, averaged) and `out/<slug>/qa/review_audio/critique_audio.json` (sound);
    then `python -m factory qa-gate <slug>`. Never write or edit a critique yourself.
    At most two review rounds per video (Caesar): after round 2 the verdict is `deliver`, and the video goes to
    Caesar with its score and the reviewers' notes, whatever it scored. Caesar decides; don't start round 3.
    Fix anything QC flags. Commit the episode folder only (never `out/`, `data/`, `.env`).
+7. Write the `publish:` block in storyboard.yaml (docs/PUBLISHING.md): a cover frame (`cover_at_s`), a
+   cover headline of 3-5 words, the one key number for the cover card, 3-5 topical hashtags, and
+   hand-written YouTube / TikTok / Facebook copy. Every number in it must also be a `claims:` entry.
+   Once QA passes, the package (out/<slug>/publish/) is built automatically; check `review.md` and
+   `cover.jpg`. Never approve or post on Caesar's behalf.
 
 ## Rules
 
-- Nothing is ever published without the human's approval in Telegram. Do not add code paths that
-  upload from the production workflow.
+- Nothing is ever published without Caesar's approval, per platform, for the exact package hash
+  (factory/publishing). Approval is Caesar tapping **Post** on a Post/Skip card in the project chat
+  that shows the platform's text and hash (or the optional Telegram button). Only after that tap run
+  `python -m factory post <slug> <platform> --hash <hash> --by "Caesar via project chat"`.
+  Do not add code paths that upload from the production workflow.
+- AI labels stay on (YouTube synthetic media, TikTok is_aigc, Facebook AI info) unless Caesar says otherwise.
 - Secrets only in `.env` / environment variables.
 - Run `python -m pytest -q` before committing.
 

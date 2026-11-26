@@ -154,7 +154,50 @@ def ding():
     return _norm(y, 0.45)
 
 
-ONE_SHOTS = {"latch": latch, "pop": latch, "impact": impact, "thud": impact, "tink": tink, "tick": tink,
+def blip(seed=13, pitch=1.0):
+    """Soft UI blip for a HUD number update: a short, rounded sine pair, no metallic ring.
+    `pitch` follows the value (a rising counter is heard rising); `seed` varies each instance slightly."""
+    rng = np.random.default_rng(seed)
+    n = int(0.07 * SR); t = _t(n)
+    f = 880 * pitch * (1 + rng.uniform(-0.015, 0.015))
+    y = (np.sin(2 * np.pi * f * t) + 0.35 * np.sin(2 * np.pi * 2 * f * t)) * _env(n, 0.002, 0.018)
+    return _norm(_lp(y, 6000), 0.5)
+
+
+def lock(seed=17, pitch=1.0):
+    """A value landing on its target: low soft thump plus a short two-note confirmation (no bell tail)."""
+    rng = np.random.default_rng(seed)
+    n = int(0.32 * SR); t = _t(n)
+    thump = np.sin(2 * np.pi * (90 * pitch) * t * (1 + 0.6 * np.exp(-t / 0.02))) * _env(n, 0.002, 0.07)
+    y = 0.8 * thump
+    for k, (t0, f) in enumerate([(0.0, 660), (0.06, 990)]):
+        i = int(t0 * SR); m = int(0.12 * SR); tt = _t(m)
+        y[i:i + m] += 0.35 * np.sin(2 * np.pi * f * pitch * (1 + rng.uniform(-0.01, 0.01)) * tt) * _env(m, 0.003, 0.035)
+    return _norm(_lp(y, 7000), 0.8)
+
+
+def bark(seed=19, distant=1.0):
+    """A distant dog's 'woof-woof' heard from indoors: two short voiced bursts (a falling ~420 Hz
+    fundamental with harmonics through a mouth-like formant) plus breath noise, low-passed and with a
+    touch of room tail so it sits outside the window, not in the room."""
+    rng = np.random.default_rng(seed)
+    out = np.zeros(int(0.9 * SR))
+    for k, (t0, f0) in enumerate([(0.0, 430.0), (0.27, 400.0)]):
+        n = int(0.17 * SR); t = _t(n)
+        f = f0 * (1.25 - 0.45 * t / 0.17) * (1 + rng.uniform(-0.03, 0.03))
+        ph = 2 * np.pi * np.cumsum(f) / SR
+        v = sum((0.9 ** h) * np.sin((h + 1) * ph) for h in range(8))
+        v = _bp(v, 500, 1900) + 0.25 * _bp(rng.standard_normal(n), 700, 2500)
+        env = np.clip(t / 0.012, 0, 1) * np.exp(-np.maximum(t - 0.03, 0) / 0.05)
+        i = int(t0 * SR); out[i:i + n] += v * env
+    out = _lp(out, 2600 / max(distant, 0.5))
+    tail = signal.lfilter([1.0], [1, -0.0], out) * 0.0
+    for d, g in ((0.031, 0.35), (0.057, 0.22), (0.089, 0.14)):           # small early reflections
+        j = int(d * SR); tail[j:] += g * out[:-j]
+    return _norm(out + tail, 0.7)
+
+
+ONE_SHOTS = {"bark": bark, "blip": blip, "lock": lock, "latch": latch, "pop": latch, "impact": impact, "thud": impact, "tink": tink, "tick": tink,
              "swish": swish, "whoosh": rewind, "rewind": rewind, "rise": rise, "ding": ding}
 
 
@@ -406,9 +449,13 @@ def render_cue(name: str, p: dict, t: float) -> np.ndarray:
     if fn is None:
         raise ValueError(f"unknown sound {name!r}")
     kw = {k: p[k] for k in ("speed", "slow") if k in p and name in ("impact", "thud")}
-    kw.update({k: p[k] for k in ("seed",) if k in p and name in ("tink", "tick", "latch", "pop", "swish")})
+    kw.update({k: p[k] for k in ("seed",) if k in p and name in ("tink", "tick", "latch", "pop", "swish", "bark")})
     if name in ("tink", "tick"):
         kw.update({k: p[k] for k in ("pitch", "ring") if k in p})
+    if name in ("blip", "lock"):
+        kw.update({k: p[k] for k in ("pitch", "seed") if k in p})
+    if name in ("rise", "swish") and "dur" in p:
+        kw["dur"] = float(p["dur"])
     return fn(**kw)
 
 
@@ -437,7 +484,7 @@ def stems(voice_wav: Path, events: list, duration: float | None = None, music: d
         b = music_bed(duration, mcfg.get("mutes", []), mcfg.get("bpm", 96), swell_at=mcfg.get("swells", []))
         # sidechain ducking under the voice (fast attack, slow release)
         env = np.abs(v)
-        rel = np.exp(-1 / (0.35 * SR))
+        rel = np.exp(-1 / (mcfg.get("duck_release", 0.35) * SR))
         e = signal.lfilter([1 - rel], [1, -rel], env)
         e = e / (np.percentile(e, 99) or 1)
         duck = 1 - 0.65 * np.clip(e, 0, 1)
