@@ -82,7 +82,7 @@ def make_lure(M, color='#d7e04a', length=0.11):
     o.data.materials.append(finn_set._mat('lure_' + color, color, 0.25))
     for p in o.data.polygons: p.use_smooth = True
     for s in (-1, 1):
-        bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=10, radius=0.0045, location=(length * 0.33, s * 0.011, 0.004))
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=10, radius=0.0034, location=(length * 0.33, s * 0.0092, 0.003))
         e = bpy.context.active_object; e.data.materials.append(M['ink']); e.parent = o; e.matrix_parent_inverse = o.matrix_world.inverted()
     return o
 
@@ -198,6 +198,19 @@ GARMENT_PAIRS = [   # (outer, inner): inner surface points that end up OUTSIDE t
 #  3. close-ups carry something soft near the lens (reed, rope, rod butt) and focus on Finn
 #  4. a low sun behind/beside Finn rims the hat and shoulders (finn_v1.host_look)
 
+
+VIS_FINN = {   # lipsync viseme -> MPFB expression shape keys on Finn (weights at full viseme)
+    'rest': {'x_mouth-compression': 0.05},
+    'MBP': {'x_mouth-compression': 0.75},
+    'FV': {'x_mouth-upward-retraction': 0.35, 'x_mouth-compression': 0.2},
+    'EE': {'x_mouth-retraction': 0.7, 'x_mouth-corner-puller': 0.25, 'x_mouth-open': 0.15},
+    'AA': {'x_mouth-open': 0.65, 'x_mouth-retraction': 0.15},
+    'OO': {'x_mouth-parling': 0.8, 'x_mouth-open': 0.25},
+    'CONS': {'x_mouth-open': 0.15, 'x_mouth-retraction': 0.3},
+    'L': {'x_mouth-open': 0.35, 'x_mouth-retraction': 0.1},
+    '_jaw_deg': {'talk': 11.0, 'shout': 20.0, 'smirk': 6.0, 'closed': 4.0},
+    '_smile': {'f_smile_L': 1.0, 'f_smile_R': 1.0},
+}
 
 FINN_FINISH = {   # charkit.finish spec for Finn: outer layer first; inner layers lose what the outer one covers
     'body': 'finn_body',
@@ -469,6 +482,16 @@ def main():
     cam_data.sensor_width = 36; cam_data.clip_start = 0.02; cam_data.clip_end = 1000; cam_data.dof.use_dof = True
 
     shots = plan['shots']; keys = plan['keys']; fps = plan['fps']; talk = plan['talk']; props = plan['props']
+    anim = None
+    if A.look == 'v2' and api:
+        import charkit, lipsync
+        charkit.stylise_finish(sc, rig, body_name='finn_body', drop_systems=('stubble',))
+        wpath = os.path.join(os.path.dirname(os.path.abspath(A.plan)), 'words.json')
+        if os.path.exists(wpath):          # audit 3: visemes from word timings instead of a loudness-driven jaw
+            words = json.load(open(wpath))
+            anim = {'vis': lipsync.visemes(words, plan['n_frames'], fps, env=talk, smile=0.3),
+                    'body': lipsync.talk_layer(words, talk, plan['n_frames'], fps)}
+        grips = {}
     cond = next(s for s in plan['screen'] if s['page'] == 'conditions')
     in_any = lambda t, spans: any(a <= t < b for a, b in spans)
 
@@ -483,9 +506,30 @@ def main():
         blink = 1.0 if any(0 <= t - b < 0.12 for b in plan['blinks']) else 0.0
         if api:
             api.apply_pose(rig, prev['pose'], cur['pose'], mix, frame=i)
-            api.set_face(rig, mouth=cur.get('mouth', 'talk'), open=a * (1.4 if cur.get('mouth') == 'shout' else 1.0),
-                         brow=cur.get('brow', 0.0), blink=blink)
+            if anim:
+                v = anim['vis'][min(i, len(anim['vis']) - 1)]; b = anim['body'][min(i, len(anim['body']) - 1)]
+                mood = cur.get('mouth', 'talk')
+                charkit.apply_visemes(rig, api, v, VIS_FINN, mood=mood, brow=cur.get('brow', 0.0), blink=blink)
+                charkit.talk_motion(rig, b, side='R')
+            else:
+                api.set_face(rig, mouth=cur.get('mouth', 'talk'), open=a * (1.4 if cur.get('mouth') == 'shout' else 1.0),
+                             brow=cur.get('brow', 0.0), blink=blink)
         pose_props(i, t)
+        if anim is not None:              # audit 3: fingers close until they touch the held prop
+            held = [(n, o) for n, o in (('lure', [lure] + list(lure.children)), ('phone', [phone]), ('rod', [rod]))
+                    if not o[0].hide_render]
+            for name, objs in held:
+                key = (cur['pose'], name)
+                if key not in grips:
+                    if name == 'lure':       # small prop: pinch between thumb and index, other fingers tucked
+                        grips[key] = charkit.pinch_place(rig, api, 'R', objs[0], objs)
+                    else:
+                        z = charkit.seat_prop(rig, 'R', objs[0], objs)
+                        grips[key] = (objs[0].location.copy(), charkit.contact_grip(rig, api, 'R', objs))
+                    print('[grip]', key, grips[key], flush=True)
+                objs[0].location = grips[key][0]
+                charkit.apply_grip(rig, api, 'R', grips[key][1])
+                if os.environ.get('GRIP_DEBUG'): print('[gripdbg]', i, tuple(round(x, 3) for x in rig.pose.bones['finger2-3.R'].tail), flush=True)
         bpy.context.view_layer.update()
         sh = next((s for s in shots if s['start'] <= t < s['end']), shots[-1])
         u = ease((t - sh['start']) / max(0.01, sh['end'] - sh['start']))

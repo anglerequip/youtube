@@ -132,3 +132,29 @@ them with the character. `charkit.style_audit(rig)` checks the measurable ones a
 12. One strong key at about 45 degrees, semi-hard shadows (cap brim onto the eyes is welcome), a rim from behind, fill
     about 1/5 of the key. Background darker or more saturated than the face. Soft frontal light flattens planes and is
     a fail.
+
+## 8. Acting and contact (audit 3)
+
+1. **Lip sync is visemes, never loudness.** Get word timings (`out/<slug>/words.json`, Whisper) and drive the mouth
+   with `lipsync.visemes()` through `charkit.apply_visemes()` and a per-character viseme map (8 shapes: rest, MBP, FV,
+   EE, AA, OO, consonants, L). m/b/p close fully; shapes lead the sound by about 40 ms; most openings are small and
+   only the stressed word opens wide. Every character is built with these 8 mouth shapes plus a smile and a smirk.
+2. **Talk through an emotion.** A smile (or the scene's mood) is a layer under every viseme, not a separate pose.
+3. **The head never stops while the character talks.** `lipsync.talk_layer()` + `charkit.talk_motion()`: a nod on
+   each stressed word, slow tilt and drift, the gesturing hand beating a few frames after the head.
+4. **Hands close on what they hold.** No prop floats off the palm: `charkit.pinch_place()` for small props,
+   `charkit.seat_prop()` + `charkit.contact_grip()` for the rest, solved once per pose. One prop per hand at a time.
+   The clipping gate catches props that intersect; a floating prop is just as wrong and is checked on stills.
+5. Pose changes get anticipation, overshoot and settle (Nils rig), never a plain 0.35 s blend between presets.
+
+## 9. The finish: coarse, clean detail (audit 3)
+
+1. **Render at 50-66 % and upscale** (Lanczos). The references keep almost all their detail at half resolution
+   (45 dB when halved and restored, against our 43 dB at the same bitrate).
+2. **No fine noise:** no film grain, no pores, no stubble, no scanned weave, no procedural micro-bump. Target
+   high-frequency energy under 18 % (`tools/look_metrics.py`).
+3. **Texel size:** paint textures so one texel covers about 2-4 screen pixels in a close-up (for a head filling half
+   a 1080x1920 frame: about 512 px across the face). Detail lives in painted shapes, not resolution.
+4. Crisp polygon edges: pixel filter 0.8 (`charkit.stylise_finish`), bevels where edges must catch light.
+5. Painted shading, not toon: soft painted shadow shapes in the base colour plus real PBR light. No cel ramp, no
+   outlines (HOST.md section 2 still holds).

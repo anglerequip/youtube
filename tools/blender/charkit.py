@@ -291,3 +291,183 @@ def style_audit(rig, min_thickness=0.005, max_subsurf=1, scan_dirs=('assets-cc0'
                         and 'skin' in m.name.lower():
                     bad.append(f'{o.name}/{m.name}: clearcoat on skin (rule 11)')
     return sorted(set(bad))
+
+
+# ------------------------------------------------------------------------------- audit 3: acting and the finish
+def stylise_finish(scene, rig, body_name='finn_body', drop_systems=()):
+    """Audit 3 ('still too realistic, no artsy look'): switch off the realism detail that survives on a phone as fine
+    noise (skin pores and clearcoat, stubble strands) and render crisper edges (a narrower pixel filter). The
+    references keep their detail at a coarser scale: they lose almost nothing when downscaled 2x (PSNR 45 dB against
+    our 43 dB at the same bitrate) and carry a third less high-frequency energy (16-17 % against our 24 %)."""
+    body = next((o for o in rig.children_recursive if o.name.startswith(body_name) and o.type == 'MESH'
+                 and o.data.shape_keys), None)
+    if body:
+        for md in body.modifiers:
+            if md.type == 'PARTICLE_SYSTEM' and md.name in drop_systems:
+                md.show_render = md.show_viewport = False
+        for m in body.data.materials:
+            if not m or not m.use_nodes: continue
+            for n in m.node_tree.nodes:
+                if n.type == 'GROUP':
+                    for i in n.inputs:
+                        if i.name in ('Pore strength', 'Clearcoat'): i.default_value = 0.0
+                        if i.name == 'Roughness': i.default_value = 0.68
+    try: scene.render.filter_size = 0.8
+    except Exception: pass
+
+
+def apply_visemes(rig, api, v, vmap, mood='talk', brow=0.0, blink=0.0):
+    """Drive the face from one frame of lipsync.visemes: reset the expression keys (api.set_face 'closed' keeps the
+    brows and blink), add each viseme's shape keys by weight, a smile layer, the smirk on silent frames, and the jaw
+    from the viseme's jaw amount scaled by the mood (a shout opens wider)."""
+    from mathutils import Quaternion
+    api.set_face(rig, mouth='closed', open=0.0, brow=brow, blink=blink)
+    faces = [c for c in rig.children if c.type == 'MESH' and c.data.shape_keys and 'x_mouth-open' in c.data.shape_keys.key_blocks]
+    vis = v['vis']; silent = vis.get('rest', 0.0) > 0.85
+    for body in faces:
+        kb = body.data.shape_keys.key_blocks
+        if 'x_mouth-compression' in kb: kb['x_mouth-compression'].value = 0.0
+        add = {}
+        for name, w in vis.items():
+            for key, val in vmap.get(name, {}).items():
+                add[key] = add.get(key, 0.0) + val * w
+        sm = v.get('smile', 0.0) * (0.3 if mood == 'shout' else 1.0)
+        for key, val in vmap.get('_smile', {}).items():
+            add[key] = add.get(key, 0.0) + val * sm
+        if mood == 'smirk' and silent:
+            add['f_smile_L'] = add.get('f_smile_L', 0.0) + 0.7; add['f_upret_L'] = add.get('f_upret_L', 0.0) + 0.3
+        if mood == 'shout':
+            add['x_mouth-upward-retraction'] = add.get('x_mouth-upward-retraction', 0.0) + 0.2 * v['jaw']
+        for key, val in add.items():
+            if key in kb: kb[key].value = max(0.0, min(1.0, val))
+    deg = vmap.get('_jaw_deg', {}).get(mood, 10.0) * v['jaw']
+    jaw = rig.pose.bones['jaw']; ax = rig.get('finn_jaw_axis') or (1, 0, 0)
+    jaw.rotation_mode = 'QUATERNION'; jaw.rotation_quaternion = Quaternion(Vector(ax), math.radians(deg))
+
+
+def talk_motion(rig, b, side='R', head='head', neck='neck02'):
+    """Add one frame of lipsync.talk_layer on top of the posed rig: head nods and tilts (60 % head, 40 % neck) and
+    the gesturing wrist beating with the accents. Rotations are multiplied onto the pose, so nothing accumulates."""
+    from mathutils import Quaternion
+    P = rig.pose.bones
+    for bn, share in ((head, 0.6), (neck, 0.4)):
+        pb = P.get(bn)
+        if not pb: continue
+        pb.rotation_mode = 'QUATERNION'
+        q = (Quaternion((1, 0, 0), math.radians(b['head_pitch'] * share)) @
+             Quaternion((0, 1, 0), math.radians(b['head_yaw'] * share)) @
+             Quaternion((0, 0, 1), math.radians(b['head_roll'] * share)))
+        pb.rotation_quaternion = pb.rotation_quaternion @ q
+    wr = P.get(f'wrist.{side}')
+    if wr:
+        wr.rotation_mode = 'QUATERNION'
+        wr.rotation_quaternion = wr.rotation_quaternion @ Quaternion((1, 0, 0), math.radians(b['wrist']))
+
+
+def _finger_points(rig, side, k):
+    P = rig.pose.bones; M = rig.matrix_world; pts = []
+    for j in (2, 3):
+        pb = P.get(f'finger{k}-{j}.{side}')
+        if pb:
+            pts += [M @ pb.head, M @ ((pb.head + pb.tail) / 2), M @ pb.tail]
+    return pts
+
+
+def contact_grip(rig, api, side, objs, step=3.0, max_deg=75.0, radius=0.009):
+    """Curl each finger in small steps until it touches the held prop (finger joints within `radius` of the prop's
+    surface: the glove's half-thickness), so a hand closes ON the prop instead of floating next to it or closing
+    through it. Returns {finger: extra degrees}; the rig's finger rotations are restored, apply with apply_grip."""
+    bpy.context.view_layer.update()
+    dg = bpy.context.evaluated_depsgraph_get()
+    bm = bmesh.new()
+    for o in objs:
+        if o.type != 'MESH': continue
+        ev = o.evaluated_get(dg); me = ev.to_mesh(); tmp = bmesh.new(); tmp.from_mesh(me); tmp.transform(ev.matrix_world)
+        m2 = bpy.data.meshes.new('_grip'); tmp.to_mesh(m2); tmp.free(); bm.from_mesh(m2); bpy.data.meshes.remove(m2); ev.to_mesh_clear()
+    if not bm.faces:
+        bm.free(); return {}
+    bvh = BVHTree.FromBMesh(bm); bm.free()
+    P = rig.pose.bones
+    names = [f'finger{k}-{j}.{side}' for k in range(1, 6) for j in (1, 2, 3)]
+    saved = {n: P[n].rotation_quaternion.copy() for n in names if n in P}
+    out = {}
+    for k in range(1, 6):
+        def dist():
+            ds = [bvh.find_nearest(p)[3] for p in _finger_points(rig, side, k)]
+            return min(d for d in ds if d is not None) if ds else 1.0
+        d0 = dist()
+        if d0 > 0.06 or d0 < radius:          # this finger is nowhere near the prop, or already on it
+            out[k] = 0.0; continue
+        tot = 0.0
+        while tot < max_deg and dist() > radius:
+            api._curl(rig, side, {k: step}, 0); tot += step
+        out[k] = tot if dist() <= radius * 1.5 else 0.0     # never touched: leave the finger as posed, not clawed
+    for n, q in saved.items():
+        P[n].rotation_quaternion = q
+    bpy.context.view_layer.update()
+    return out
+
+
+def _clean_fingers(rig, side):
+    # api._curl writes pb.matrix, which leaves tiny scale/location residue in the bone; the per-frame pose resets
+    # rotations only, so without this the residue compounds frame after frame (the fingers grew into giant tubes in
+    # the first audit-3 test render)
+    for pb in rig.pose.bones:
+        if pb.name.startswith('finger') and pb.name.endswith('.' + side):
+            pb.location = (0, 0, 0); pb.scale = (1, 1, 1)
+
+
+def apply_grip(rig, api, side, grip):
+    _clean_fingers(rig, side)
+    if grip and any(grip.values()):
+        api._curl(rig, side, {k: d for k, d in grip.items() if d}, 0)
+        _clean_fingers(rig, side)
+        bpy.context.view_layer.update()
+
+
+def seat_prop(rig, side, root, objs, radius=0.01, step=0.002, floor=-0.01):
+    """Slide a palm-socket prop toward the palm (socket -Z) until it is `radius` from the nearest finger or palm
+    joint, so the hand has something to close on. The old placement lifted props clear of the palm by 3.5 cm to
+    pass the clipping check, which is why they floated in front of open fingers. Returns the socket-space z."""
+    P = rig.pose.bones; M = rig.matrix_world
+    def joints():
+        pts = []
+        for k in range(1, 6):
+            for j in (1, 2, 3):
+                pb = P.get(f'finger{k}-{j}.{side}')
+                if pb: pts += [M @ pb.head, M @ ((pb.head + pb.tail) / 2), M @ pb.tail]
+        return pts
+    def gap():
+        bpy.context.view_layer.update(); dg = bpy.context.evaluated_depsgraph_get(); bm = bmesh.new()
+        for o in objs:
+            if o.type != 'MESH': continue
+            ev = o.evaluated_get(dg); me = ev.to_mesh(); t = bmesh.new(); t.from_mesh(me); t.transform(ev.matrix_world)
+            m2 = bpy.data.meshes.new('_seat'); t.to_mesh(m2); t.free(); bm.from_mesh(m2); bpy.data.meshes.remove(m2); ev.to_mesh_clear()
+        bvh = BVHTree.FromBMesh(bm); bm.free()
+        return min(d for d in (bvh.find_nearest(p)[3] for p in joints()) if d is not None)
+    z = root.location.z
+    while z > floor and gap() > radius:
+        z -= step; root.location.z = z
+    return z
+
+
+def pinch_place(rig, api, side, root, objs, tuck=(3, 4, 5), tuck_deg=55.0):
+    """A small prop (lure, bottle cap, pen) held in a pinch: the other fingers fold out of the way, the prop's
+    centre goes to the midpoint between the thumb tip and the index tip, then contact_grip closes thumb and index on
+    it. Returns (z_offset_in_socket_space, grip) like seat_prop + contact_grip, with the location as a full vector."""
+    P = rig.pose.bones; M = rig.matrix_world
+    saved = {pb.name: pb.rotation_quaternion.copy() for pb in P if pb.name.startswith('finger') and pb.name.endswith('.' + side)}
+    api._curl(rig, side, {k: tuck_deg for k in tuck}, 0)
+    bpy.context.view_layer.update()
+    T = M @ P[f'finger1-3.{side}'].tail; I = M @ P[f'finger2-3.{side}'].tail
+    mw = root.matrix_world.copy(); mw.translation = (T + I) / 2 + (I - T).normalized().cross((M @ P[f'finger2-1.{side}'].head) - I).normalized() * 0.0
+    root.matrix_world = mw; bpy.context.view_layer.update()
+    loc = root.location.copy()
+    for n, q in saved.items(): P[n].rotation_quaternion = q
+    bpy.context.view_layer.update()
+    api._curl(rig, side, {k: tuck_deg for k in tuck}, 0)
+    g = contact_grip(rig, api, side, objs, radius=0.008)
+    for n, q in saved.items(): P[n].rotation_quaternion = q
+    bpy.context.view_layer.update()
+    g = {k: (g.get(k, 0.0) if k in (1, 2) else 0.0) + (tuck_deg if k in tuck else 0.0) for k in range(1, 6)}
+    return loc, g
