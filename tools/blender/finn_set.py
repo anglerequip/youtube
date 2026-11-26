@@ -4,7 +4,8 @@ build_set(opts) makes: a weathered wooden jetty running out into a misty lake, t
 bank with stones, conifer silhouettes on the far shore fading into ground fog, a low warm sun with a cool sky fill,
 and a volume of mist for light shafts. Warm key, cool fill (HOST.md 3). Everything procedural; textures come from
 D:\\CounterPhysical\\assets-cc0\\textures when `tex_dir` is given (CC0), otherwise procedural shaders.
-Coordinates: z up, the jetty runs along +y out over the water, its deck top at z = 0.55, the bank at y < 0.
+Textures (v2): the lookups name folders that exist in assets-cc0/textures (weathered-wood-planks,
+mossy-ground, wet-rocks-pebbles). Coordinates: z up, the jetty runs along +y out over the water, its deck top at z = 0.55, the bank at y < 0.
 """
 import bpy, bmesh, math, os, random
 from mathutils import Vector
@@ -17,8 +18,10 @@ def _lin(hexc):
     return tuple(((x + 0.055) / 1.055) ** 2.4 if x > 0.04045 else x / 12.92 for x in c)
 
 
-def _mat(name, color, rough=0.6, metal=0.0, noise=0.0, noise_scale=6.0, bump=0.0, tex=None, tex_dir=None, uv_scale=1.0):
-    """Principled material; optional colour noise (painted variation), bump, or a CC0 texture set folder."""
+def _mat(name, color, rough=0.6, metal=0.0, noise=0.0, noise_scale=6.0, bump=0.0, tex=None, tex_dir=None, uv_scale=1.0, seed=0):
+    """Principled material; optional colour noise (painted variation), bump, or a CC0 texture set: `tex` is a folder
+    under tex_dir (assets-cc0/textures), either 'category/set' or 'category' (then its first set). seed shifts the
+    texture so neighbouring planks do not repeat."""
     m = bpy.data.materials.get(name)
     if m: return m
     m = bpy.data.materials.new(name); m.use_nodes = True
@@ -39,6 +42,7 @@ def _mat(name, color, rough=0.6, metal=0.0, noise=0.0, noise_scale=6.0, bump=0.0
                 if any(k in fl for k in keys) and fl.endswith(('.png', '.jpg', '.jpeg')): return os.path.join(folder, f)
         tc = nt.nodes.new('ShaderNodeTexCoord'); mp = nt.nodes.new('ShaderNodeMapping')
         mp.inputs['Scale'].default_value = (uv_scale, uv_scale, uv_scale); nt.links.new(tc.outputs['Object'], mp.inputs['Vector'])
+        mp.inputs['Location'].default_value = (0.37 * seed, 0.61 * seed, 0.0)
         col = pick('color', 'albedo', 'diff', 'basecolor')
         if col:
             t = nt.nodes.new('ShaderNodeTexImage'); t.image = bpy.data.images.load(col); t.projection = 'BOX'; t.projection_blend = 0.3
@@ -195,18 +199,23 @@ def light_and_world(opts):
     nt = w.node_tree; bg = nt.nodes['Background']
     sky = nt.nodes.new('ShaderNodeTexGradient'); sky.gradient_type = 'LINEAR'
     tc = nt.nodes.new('ShaderNodeTexCoord'); mp = nt.nodes.new('ShaderNodeMapping')
-    mp.inputs['Rotation'].default_value = (0, math.radians(-90), 0)
+    mp.inputs['Rotation'].default_value = (0, math.radians(90), 0)      # x' = z: the factor rises with elevation
+                                                                        # (v1 had -90: one flat colour over the whole sky)
     nt.links.new(tc.outputs['Generated'], mp.inputs['Vector']); nt.links.new(mp.outputs['Vector'], sky.inputs['Vector'])
     ramp = nt.nodes.new('ShaderNodeValToRGB')
-    ramp.color_ramp.elements[0].position = 0.5; ramp.color_ramp.elements[0].color = (*_lin('#e9c9a0'), 1)   # warm horizon
-    ramp.color_ramp.elements[1].position = 0.72; ramp.color_ramp.elements[1].color = (*_lin('#58769c'), 1)  # cool zenith
+    # v2: pale warm only at the horizon, a clear cool blue sky above it (the cool fill; no sepia wash)
+    # (the gradient factor is the sine of the elevation: 0 at the horizon, 1 straight up)
+    ramp.color_ramp.elements[0].position = 0.0; ramp.color_ramp.elements[0].color = (*_lin('#e4cfb2'), 1)   # pale warm horizon
+    ramp.color_ramp.elements[1].position = 0.14; ramp.color_ramp.elements[1].color = (*_lin('#b0c2d4'), 1)  # cool haze band
+    e = ramp.color_ramp.elements.new(0.5); e.color = (*_lin('#5f84b8'), 1)                                 # cool zenith
     nt.links.new(sky.outputs['Fac'], ramp.inputs['Fac']); nt.links.new(ramp.outputs['Color'], bg.inputs['Color'])
-    bg.inputs['Strength'].default_value = opts.get('sky', 0.9)
-    sun = bpy.data.lights.new('sun', 'SUN'); sun.energy = opts.get('sun', 4.5); sun.color = _lin('#ffc58a'); sun.angle = math.radians(2.0)
+    bg.inputs['Strength'].default_value = opts.get('sky', 0.75)
+    sun = bpy.data.lights.new('sun', 'SUN'); sun.energy = opts.get('sun', 6.0); sun.color = _lin('#ffc286'); sun.angle = math.radians(2.0)
     so = bpy.data.objects.new('sun', sun); sc.collection.objects.link(so)
-    so.rotation_euler = (math.radians(90 - opts.get('sun_elev', 9)), 0, math.radians(opts.get('sun_az', 200)))
-    # the sun disc itself low over the far shore
-    bpy.ops.mesh.primitive_uv_sphere_add(radius=6, location=(-60, 160, 14))
+    az = math.radians(opts.get('sun_az', 160))
+    so.rotation_euler = (math.radians(90 - opts.get('sun_elev', 9)), 0, az)
+    # the sun disc itself low over the far shore, on the side the light comes from
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=6, location=(170 * math.sin(az), -170 * math.cos(az), 14))
     d = bpy.context.active_object; d.name = 'sun_disc'
     md = bpy.data.materials.new('sun_disc'); md.use_nodes = True; e = md.node_tree.nodes.new('ShaderNodeEmission')
     e.inputs['Color'].default_value = (*_lin('#ffd7a0'), 1); e.inputs['Strength'].default_value = 18
@@ -216,12 +225,12 @@ def light_and_world(opts):
     mist.scale = (240, 200, 14)
     mv = bpy.data.materials.new('mist'); mv.use_nodes = True; mt = mv.node_tree
     mt.nodes.remove(mt.nodes['Principled BSDF'])
-    vol = mt.nodes.new('ShaderNodeVolumePrincipled'); vol.inputs['Color'].default_value = (*_lin('#bfc8d2'), 1)
-    vol.inputs['Anisotropy'].default_value = 0.55
+    vol = mt.nodes.new('ShaderNodeVolumePrincipled'); vol.inputs['Color'].default_value = (*_lin(opts.get('mist_color', '#a4b6c9')), 1)
+    vol.inputs['Anisotropy'].default_value = 0.35
     tc2 = mt.nodes.new('ShaderNodeTexCoord'); sep = mt.nodes.new('ShaderNodeSeparateXYZ')
     mt.links.new(tc2.outputs['Generated'], sep.inputs['Vector'])
     cr = mt.nodes.new('ShaderNodeMapRange'); cr.inputs['From Min'].default_value = 0.42; cr.inputs['From Max'].default_value = 0.6
-    cr.inputs['To Min'].default_value = opts.get('mist_low', 0.016); cr.inputs['To Max'].default_value = opts.get('mist_high', 0.0015)
+    cr.inputs['To Min'].default_value = opts.get('mist_low', 0.0018); cr.inputs['To Max'].default_value = opts.get('mist_high', 0.0002)
     mt.links.new(sep.outputs['Z'], cr.inputs['Value']); mt.links.new(cr.outputs['Result'], vol.inputs['Density'])
     mt.links.new(vol.outputs['Volume'], mt.nodes['Material Output'].inputs['Volume']); mist.data.materials.append(mv)
     return so
@@ -229,15 +238,15 @@ def light_and_world(opts):
 
 def materials(tex_dir=None):
     M = {}
-    M['plank'] = [_mat(f'plank{k}', c, 0.8, noise=0.25, noise_scale=40, bump=0.25, tex='wood_planks', tex_dir=tex_dir, uv_scale=1.5)
+    M['plank'] = [_mat(f'plank{k}', c, 0.8, noise=0.25, noise_scale=40, bump=0.25, tex='weathered-wood-planks/weathered_planks', tex_dir=tex_dir, uv_scale=1.2, seed=k)
                   for k, c in enumerate(('#8a7356', '#7b6650', '#94805f', '#6f5d48'))]
-    M['post'] = _mat('post', '#4f4333', 0.85, noise=0.3, noise_scale=20, bump=0.3, tex='wood_planks', tex_dir=tex_dir)
+    M['post'] = _mat('post', '#4f4333', 0.85, noise=0.3, noise_scale=20, bump=0.3, tex='weathered-wood-planks/weathered_brown_planks', tex_dir=tex_dir)
     M['rope'] = _mat('rope', '#a8916a', 0.9, noise=0.2, noise_scale=80, bump=0.4, tex='rope', tex_dir=tex_dir, uv_scale=8)
-    M['ground'] = _mat('ground', '#4d4a2c', 0.95, noise=0.35, noise_scale=3, bump=0.2, tex='mossy_ground', tex_dir=tex_dir, uv_scale=0.4)
+    M['ground'] = _mat('ground', '#4d4a2c', 0.95, noise=0.35, noise_scale=3, bump=0.2, tex='mossy-ground/forest_floor', tex_dir=tex_dir, uv_scale=0.5)
     M['reed'] = _mat('reed', '#7c7a3a', 0.7, noise=0.15)
     M['reed_dry'] = _mat('reed_dry', '#a8925c', 0.7, noise=0.15)
     M['cattail'] = _mat('cattail', '#4a2e1c', 0.8)
-    M['stone'] = _mat('stone', '#6b6a63', 0.75, noise=0.3, noise_scale=8, bump=0.3, tex='wet_rocks', tex_dir=tex_dir)
+    M['stone'] = _mat('stone', '#6b6a63', 0.75, noise=0.3, noise_scale=8, bump=0.3, tex='wet-rocks-pebbles/river_small_rocks', tex_dir=tex_dir, uv_scale=2.0)
     M['forest'] = _mat('forest', '#27311f', 0.95)
     w = bpy.data.materials.new('water'); w.use_nodes = True; nt = w.node_tree; b = nt.nodes['Principled BSDF']
     b.inputs['Base Color'].default_value = (*_lin('#2a3a3c'), 1); b.inputs['Roughness'].default_value = 0.06

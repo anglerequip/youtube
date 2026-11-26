@@ -216,7 +216,7 @@ def main():
 
     bpy.ops.wm.read_factory_settings(use_empty=True)
     sc = bpy.context.scene
-    S = finn_set.build_set({'tex_dir': A.tex if os.path.isdir(A.tex) else None, 'sun_az': 200, 'sun_elev': 9})
+    S = finn_set.build_set({'tex_dir': A.tex if os.path.isdir(A.tex) else None, 'sun_az': 160, 'sun_elev': 9})
     M = prop_materials()
 
     # Finn
