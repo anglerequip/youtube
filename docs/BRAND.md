@@ -71,6 +71,6 @@ doesn't pretend it does.
 
 | Platform | Handle | Status (2026-11-26) |
 |---|---|---|
-| YouTube | AnglerMind (target) | Existing channel is still named CounterPhysical; renaming is Caesar's call |
+| YouTube | AnglerMind | Caesar renames the existing CounterPhysical channel (decided 2026-11-26) |
 | TikTok | @anglermind (target) | Not connected yet |
-| Facebook | AnglerMind Page (target) | Existing Page is still CounterPhysical |
+| Facebook | AnglerMind Page | Caesar renames the existing CounterPhysical Page (decided 2026-11-26) |

@@ -14,11 +14,27 @@ Brand rules for new videos: `docs/BRAND.md`.
   storyboard descriptions and the old 2D wordmark.
 - Brand names in code comments, the reviewer brief (`factory/qa/critic.py`) and the presenter scripts.
 
+## Caesar's decision (2026-11-26)
+
+**Rename the existing YouTube channel and Facebook Page to AnglerMind** (keeps subscribers, the channel
+ID and the upload tokens). Following from that, in this change:
+
+- `factory/autopilot/tagline.py`: AnglerMind sign-offs per topic (`sign_off()` gives
+  "AnglerMind: <line> Try it free at anglermind.com."), an "AnglerMind in action" playlist for tool demos.
+- `rebrand()` runs on every description at post time in `cloud_post.py` and `facebook_post.py`, so the
+  videos queued before the rename go out with "AnglerMind" in place of "Counterphysical" and the site link.
+  The queue folders themselves are not edited (the hourly job may be posting them).
+- New playlists are described as "AnglerMind Shorts".
+- No new general-science topics: new videos follow the pillars in `docs/BRAND.md`.
+
+Merge this after the channel is renamed in YouTube Studio, so posts never say AnglerMind on a channel
+still called CounterPhysical.
+
 ## Deliberately not changed yet
 
 | Thing | Why it waits |
 |---|---|
-| `factory/autopilot/cloud_post.py`, `facebook_post.py` and the queued packages | They post live from `main` every hour. The last science Shorts in the queue keep their own copy. Switch the posting copy when the channel itself is renamed |
+| The queued `package.json` files | Rewritten at post time by `rebrand()` instead, so no folder the hourly job is posting gets edited |
 | `docs/index.html`, `docs/privacy.html` (GitHub Pages) | They are the homepage and privacy policy that Google and Meta checked for the "CounterPhysical uploader" app. Change them together with the app's display name in Google Cloud and Meta, or the reviews can flag a mismatch |
 | Google Cloud project `counterphysical-uploader`, GitHub secrets | Internal IDs, never shown to viewers. Renaming would mean new tokens for nothing |
 | `D:\CounterPhysical` on Caesar's PC, `counterphysical/` in project files | Working folders; renaming breaks paths for no gain. New AnglerMind work can go in `D:\CounterPhysical\anglermind\` |
@@ -27,18 +43,15 @@ Brand rules for new videos: `docs/BRAND.md`.
 
 ## Needs Caesar (only he can do these)
 
-1. Decide what happens to the existing YouTube channel and Facebook Page (rename to AnglerMind, or
-   start new ones). Renaming in YouTube Studio keeps the subscribers, the channel ID and our upload
-   token, so the cloud queue keeps working without new sign-ins.
-2. If renamed: YouTube Studio, Customisation, Basic info (name, handle `@anglermind` if free,
+1. Decided 2026-11-26: rename both. Renaming in YouTube Studio keeps the subscribers, the channel ID
+   and our upload token, so the cloud queue keeps working without new sign-ins.
+2. YouTube Studio, Customisation, Basic info (name, handle `@anglermind` if free,
    description, link to anglermind.com); new avatar and banner. Facebook Page name change goes
    through Meta's review.
 3. TikTok `@anglermind`: create or claim the account, then we connect it.
 
-## After Caesar decides
+## Still to do
 
-- Posting copy in `cloud_post.py` / `facebook_post.py` and `factory/autopilot/tagline.py` switches
-  to AnglerMind sign-offs and playlists (fishing series, tool demos).
 - Pages site and privacy page renamed together with the Google and Meta app names.
 - Avatar and banner made from the site logo and colours.
 - Autopilot topics switch from general science to the AnglerMind pillars in `docs/BRAND.md`.
