@@ -10,6 +10,7 @@ hook_family: 3           # a vow, spoken on frame 0
 structure: H             # host ad: hook -> enemy -> reaction -> weapon -> proof -> comic turn -> reassurance -> CTA
 voice: elevenlabs
 voice_id: 3iY0r3RaYmOh6WfIwMIH     # Matt (Caesar's presenter voice), as Finn for this test
+voice_clips: content/episodes/finn-lure-finder/voice   # Matt via the ElevenLabs connector, eleven_v4, one clip per beat (2026-11-26)
 speed: 1.0
 ambience: lake
 description: |
