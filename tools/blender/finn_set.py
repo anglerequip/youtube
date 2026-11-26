@@ -174,21 +174,81 @@ def bank(M, rnd):
     return objs
 
 
+def _mesh_obj(name, bm, mat, smooth=False):
+    return _obj(name, bm, mat, smooth)
+
+
 def far_shore(M, rnd):
-    """Far shore 70-110 m out: low hills and rows of conifer cones; the fog makes them layered silhouettes."""
+    """Far shore 60-130 m out (v3): low hills, a stony shoreline, and mixed woods: tiered spruces on trunks and
+    white-stemmed birches with clumped crowns, sized and spaced unevenly. Faceted (low-poly) but detailed; the mist
+    turns the rows into layered silhouettes and the low sun throws shafts between the trunks."""
+    from mathutils import Matrix
     objs = []
-    for row, (dist, n) in enumerate(((70, 60), (95, 70), (130, 80))):
-        bm = bmesh.new(); bmesh.ops.create_grid(bm, x_segments=60, y_segments=4, size=1.0)
+    for row, (dist, n_con, n_bir) in enumerate(((62, 90, 34), (92, 110, 20), (128, 120, 0))):
+        bm = bmesh.new(); bmesh.ops.create_grid(bm, x_segments=80, y_segments=6, size=1.0)
         for v in bm.verts:
-            x = v.co.x * 160; yy = dist + (v.co.y + 1) * 15
-            z = (v.co.y + 1) * (4 + row * 3) * (0.6 + 0.4 * math.sin(x * 0.03 + row)) - 0.3
+            x = v.co.x * 170; yy = dist + (v.co.y + 1) * 15
+            z = (v.co.y + 1) * (4 + row * 3) * (0.6 + 0.4 * math.sin(x * 0.03 + row)) - 0.3 + 0.6 * math.sin(x * 0.21 + row * 2)
             v.co = Vector((x, yy, z))
         objs.append(_obj('hill', bm, M['forest'], True))
-        for k in range(n):
-            x = rnd.uniform(-150, 150); y = dist + rnd.uniform(0, 6)
-            h = rnd.uniform(6, 13)
-            bm = bmesh.new(); bmesh.ops.create_cone(bm, cap_ends=True, segments=10, radius1=h * 0.22, radius2=0.0, depth=h)
-            o = _obj('conifer', bm, M['forest']); o.location = (x, y, h / 2 - 0.5 + (row * 1.5)); objs.append(o)
+        cb = bmesh.new(); tb = bmesh.new(); bb = bmesh.new(); kb = bmesh.new()
+        for k in range(n_con):
+            x = rnd.uniform(-160, 160); y = dist + rnd.uniform(0.5, 7); h = rnd.uniform(6, 14) * (1 + 0.15 * row)
+            z0 = -0.4 + row * 1.5 + (y - dist) * 0.25
+            bmesh.ops.create_cone(tb, cap_ends=False, segments=6, radius1=h * 0.022, radius2=h * 0.012, depth=h * 0.3,
+                                  matrix=Matrix.Translation((x, y, z0 + h * 0.15)))
+            tiers = rnd.randint(4, 6)
+            for t in range(tiers):
+                f = t / tiers
+                r = h * 0.24 * (1 - f * 0.8) * rnd.uniform(0.85, 1.1)
+                d = h * 0.34 * (1 - f * 0.4)
+                zc = z0 + h * 0.18 + f * h * 0.78 + d / 2
+                rot = Matrix.Rotation(rnd.uniform(0, 6.3), 4, 'Z') @ Matrix.Rotation(rnd.uniform(-0.05, 0.05), 4, 'X')
+                bmesh.ops.create_cone(cb, cap_ends=True, segments=rnd.choice((7, 8, 9)), radius1=r, radius2=r * 0.12, depth=d,
+                                      matrix=Matrix.Translation((x, y, zc)) @ rot)
+        for k in range(n_bir):
+            x = rnd.uniform(-120, 120); y = dist + rnd.uniform(0, 4); h = rnd.uniform(7, 11)
+            z0 = -0.4 + row * 1.5
+            lean = Matrix.Rotation(rnd.uniform(-0.08, 0.08), 4, 'Y')
+            bmesh.ops.create_cone(bb, cap_ends=False, segments=6, radius1=h * 0.02, radius2=h * 0.008, depth=h * 0.85,
+                                  matrix=Matrix.Translation((x, y, z0 + h * 0.42)) @ lean)
+            for c in range(rnd.randint(5, 8)):
+                cz = z0 + h * rnd.uniform(0.5, 0.95); cr = h * rnd.uniform(0.09, 0.16)
+                bmesh.ops.create_icosphere(kb, subdivisions=1, radius=cr,
+                                           matrix=Matrix.Translation((x + rnd.uniform(-1, 1) * h * 0.1, y + rnd.uniform(-1, 1) * h * 0.08, cz)) @
+                                           Matrix.Diagonal((1, 1, rnd.uniform(0.8, 1.2), 1)))
+        objs.append(_obj('conifers', cb, M['conifer'])); objs.append(_obj('trunks', tb, M['trunk']))
+        if n_bir: objs.append(_obj('birch_stems', bb, M['birch'])); objs.append(_obj('birch_crowns', kb, M['birch_leaf']))
+    # stony shoreline under the near woods
+    sb = bmesh.new()
+    for k in range(70):
+        x = rnd.uniform(-90, 90); r = rnd.uniform(0.4, 1.6)
+        bmesh.ops.create_icosphere(sb, subdivisions=1, radius=r,
+                                   matrix=Matrix.Translation((x, 61.5 + rnd.uniform(-1, 1.5), -0.2)) @ Matrix.Diagonal((1.3, 1, 0.55, 1)))
+    objs.append(_obj('shore_rocks', sb, M['stone']))
+    return objs
+
+
+def near_reeds(M, rnd):
+    """Reed clumps standing in the shallows either side of the jetty, close to the camera positions (foreground
+    depth layer)."""
+    objs = []
+    for c in range(14):
+        side = rnd.choice((-1, 1)); cx = side * rnd.uniform(1.3, 3.8); cy = rnd.uniform(0.8, 8.5)
+        bm = bmesh.new()
+        for k in range(rnd.randint(10, 22)):
+            base = Vector((cx + rnd.gauss(0, 0.18), cy + rnd.gauss(0, 0.18), -0.05))
+            h = rnd.uniform(0.7, 1.5)
+            lean = Vector((rnd.uniform(-0.18, 0.18), rnd.uniform(-0.15, 0.15), 1)).normalized()
+            w = rnd.uniform(0.006, 0.011); sd = Vector((1, 0, 0)) if abs(lean.x) < 0.9 else Vector((0, 1, 0))
+            vs = []
+            for j in range(7):
+                t = j / 6
+                p = base + lean * h * t + Vector((0.08 * t * t * math.copysign(1, lean.x), 0, 0))
+                ww = w * (1 - t) + 0.0008
+                vs.append((bm.verts.new(p - sd * ww), bm.verts.new(p + sd * ww)))
+            for j in range(6): bm.faces.new((vs[j][0], vs[j][1], vs[j + 1][1], vs[j + 1][0]))
+        objs.append(_obj('reeds_near', bm, M['reed'] if rnd.random() < 0.6 else M['reed_dry'], True))
     return objs
 
 
@@ -230,7 +290,7 @@ def light_and_world(opts):
     tc2 = mt.nodes.new('ShaderNodeTexCoord'); sep = mt.nodes.new('ShaderNodeSeparateXYZ')
     mt.links.new(tc2.outputs['Generated'], sep.inputs['Vector'])
     cr = mt.nodes.new('ShaderNodeMapRange'); cr.inputs['From Min'].default_value = 0.42; cr.inputs['From Max'].default_value = 0.6
-    cr.inputs['To Min'].default_value = opts.get('mist_low', 0.0018); cr.inputs['To Max'].default_value = opts.get('mist_high', 0.0002)
+    cr.inputs['To Min'].default_value = opts.get('mist_low', 0.0045); cr.inputs['To Max'].default_value = opts.get('mist_high', 0.0003)
     mt.links.new(sep.outputs['Z'], cr.inputs['Value']); mt.links.new(cr.outputs['Result'], vol.inputs['Density'])
     mt.links.new(vol.outputs['Volume'], mt.nodes['Material Output'].inputs['Volume']); mist.data.materials.append(mv)
     return so
@@ -248,6 +308,10 @@ def materials(tex_dir=None):
     M['cattail'] = _mat('cattail', '#4a2e1c', 0.8)
     M['stone'] = _mat('stone', '#6b6a63', 0.75, noise=0.3, noise_scale=8, bump=0.3, tex='wet-rocks-pebbles/river_small_rocks', tex_dir=tex_dir, uv_scale=2.0)
     M['forest'] = _mat('forest', '#27311f', 0.95)
+    M['conifer'] = _mat('conifer', '#2a3a26', 0.9, noise=0.25, noise_scale=0.5)
+    M['trunk'] = _mat('trunk', '#3a2c22', 0.9)
+    M['birch'] = _mat('birch', '#d6d2c6', 0.7, noise=0.35, noise_scale=30)
+    M['birch_leaf'] = _mat('birch_leaf', '#7c8a3e', 0.85, noise=0.3, noise_scale=0.8)
     w = bpy.data.materials.new('water'); w.use_nodes = True; nt = w.node_tree; b = nt.nodes['Principled BSDF']
     b.inputs['Base Color'].default_value = (*_lin('#2a3a3c'), 1); b.inputs['Roughness'].default_value = 0.06
     b.inputs['IOR'].default_value = 1.33
@@ -264,6 +328,6 @@ def build_set(opts=None):
     opts = opts or {}
     rnd = random.Random(opts.get('seed', 7))
     M = materials(opts.get('tex_dir'))
-    objs = jetty(M, rnd) + [water(M)] + bank(M, rnd) + far_shore(M, rnd)
+    objs = jetty(M, rnd) + [water(M)] + bank(M, rnd) + far_shore(M, rnd) + near_reeds(M, rnd)
     sun = light_and_world(opts)
     return {'M': M, 'objs': objs, 'sun': sun}

@@ -56,7 +56,7 @@ FINN_HEIGHT = 1.84
 SOLE = 0.022                                                          # boot sole under the foot
 
 COL = {
-    'jacket': '#7e3219', 'hat': '#c8b48a', 'band': '#2c3520', 'lens': '#2f6f86', 'lureA': '#d7e04a', 'lureB': '#e2742e',
+    'jacket': '#68230f', 'hat': '#c8b48a', 'band': '#2c3520', 'lens': '#2f6f86', 'lureA': '#d7e04a', 'lureB': '#e2742e',
     'knit': '#e6dcc4', 'wader': '#3d4a2a', 'glove': '#47532f', 'boot': '#1e221c', 'brace': '#22261b', 'brass': '#b8904a',
     'frame': '#17191b', 'beard': '#7a4526', 'hair': '#5e3a22', 'cord': '#5a2a18', 'lining': '#4d5a34', 'sole': '#141210',
 }
@@ -292,7 +292,8 @@ def hair_mat(name, color, tip):
     m = bpy.data.materials.get(name)
     if m: return m
     m = bpy.data.materials.new(name); m.use_nodes = True; N = m.node_tree.nodes; L = m.node_tree.links
-    b = N['Principled BSDF']; b.inputs['Roughness'].default_value = 0.62; b.inputs['Specular IOR Level'].default_value = 0.3   # v2: matte, no tip glitter
+    b = N['Principled BSDF']; b.inputs['Roughness'].default_value = 0.55; b.inputs['Specular IOR Level'].default_value = 0.35   # v2: matte, no tip glitter
+    b.inputs['Coat Weight'].default_value = 0.0
     hi = N.new('ShaderNodeHairInfo'); ramp = N.new('ShaderNodeValToRGB')
     ramp.color_ramp.elements[0].color = (*[x * 0.55 for x in lin(color)], 1)
     ramp.color_ramp.elements[1].position = 0.6; ramp.color_ramp.elements[1].color = (*lin(color), 1)
@@ -435,6 +436,7 @@ def face_masks(B):
     g_beard = b.vertex_groups.new(name='finn_beard'); g_mous = b.vertex_groups.new(name='finn_moustache')
     g_bl = b.vertex_groups.new(name='finn_brow_L'); g_br = b.vertex_groups.new(name='finn_brow_R')
     g_hair = b.vertex_groups.new(name='finn_hair')
+    g_stub = b.vertex_groups.new(name='finn_stubble')
     ears = b.vertex_groups['ears'].index; lips = b.vertex_groups['lips'].index; scalp = b.vertex_groups['scalp'].index
     E = B.eye; Lz = B.lips.z; head_y = B.head.y
     for v in b.data.vertices:
@@ -460,6 +462,11 @@ def face_masks(B):
                 if mw > 0.02: g_mous.add([v.index], mw, 'REPLACE')
                 w *= 0.0 if u > 0.004 else 1.0
             if w > 0.02: g_beard.add([v.index], w, 'REPLACE')
+            # v3: stubble thins out 1-2 cm above the beard line (no hard edge)
+            ws = smooth((top + 0.018 - u) / 0.012 + 0.5) * lo * back * (1 - smooth(lipw * 6))
+            if u > 0.004 and ax < 0.03: ws = 0.0
+            ws = ws * (1 - 0.6 * w)
+            if ws > 0.03: g_stub.add([v.index], ws, 'REPLACE')
         # brows: arch above the eye sockets
         bz = E.z + 0.017 + 0.006 * math.sin(min(1, max(0, (ax - 0.012) / 0.05)) * math.pi) - 0.004 * smooth((ax - 0.045) / 0.02)
         if co.y < E.y + 0.03 and 0.01 < ax < 0.064:
@@ -473,7 +480,7 @@ def face_masks(B):
 
 
 def hair_system(b, name, group, count, length, mat, *, children=6, normal=0.4, down=0.0, side=0.0, fwd=0.0, root=0.06,
-                tip=0.01, rand=0.15, clump=0.2, kink=0.0, seg=4, rough=0.003, child_radius=0.004, tang=0.0):
+                tip=0.01, rand=0.15, clump=0.2, kink=0.0, seg=4, rough=0.003, child_radius=0.004, tang=0.0, length_rand=0.0):
     md = b.modifiers.new(name, 'PARTICLE_SYSTEM'); ps = b.particle_systems[-1]; ps.name = name
     s = ps.settings; s.name = name; s.type = 'HAIR'; s.use_advanced_hair = True
     s.count = count; s.hair_step = seg; s.display_step = 3; s.render_step = 4
@@ -490,20 +497,25 @@ def hair_system(b, name, group, count, length, mat, *, children=6, normal=0.4, d
     s.material_slot = mat.name
     ps.vertex_group_density = group; ps.vertex_group_length = group
     s.use_hair_bspline = True
+    s.length_random = length_rand
     return ps
 
 
 def groom(B):
     b = B.b
     face_masks(B)
-    mb = hair_mat('finn_beard', '#5e321a', '#8a5230'); mh = hair_mat('finn_hairmat', COL['hair'], '#8a5a34')
-    mbr = hair_mat('finn_brow', '#5a321c', '#7a4a2a')
-    for m in (mb, mh, mbr): b.data.materials.append(m)
-    # v2: shorter, finer and denser, lying down the face in small clumps (interpolated children around each guide)
-    hair_system(b, 'beard', 'finn_beard', 50000, 0.011, mb, children=4, normal=0.3, down=0.8, rand=0.12, clump=0.12,
-                rough=0.0012, child_radius=0.0022, root=0.011, tip=0.002)
-    hair_system(b, 'moustache', 'finn_moustache', 9000, 0.012, mb, children=4, normal=0.15, down=0.85, fwd=-0.2, rand=0.1, clump=0.12,
-                rough=0.001, child_radius=0.002, root=0.011, tip=0.002)
+    mb = hair_mat('finn_beard', '#5a2f18', '#b8793f'); mh = hair_mat('finn_hairmat', COL['hair'], '#8a5a34')
+    mbr = hair_mat('finn_brow', '#5a321c', '#7a4a2a'); ms = hair_mat('finn_stubble', '#3e2414', '#6a3e22')
+    for m in (mb, mh, mbr, ms): b.data.materials.append(m)
+    # v3: a groomed short beard: guide strands flowing down the jaw and out from the chin, interpolated children
+    # gathered into visible clumps, varied length, dark roots to copper tips; the moustache separate and longer;
+    # a stubble layer that thins out above the beard line
+    hair_system(b, 'beard', 'finn_beard', 14000, 0.017, mb, children=10, normal=0.16, down=1.0, fwd=-0.1, rand=0.1, clump=0.65,
+                rough=0.0016, child_radius=0.0035, root=0.013, tip=0.002, length_rand=0.35)
+    hair_system(b, 'moustache', 'finn_moustache', 3500, 0.02, mb, children=10, normal=0.18, down=1.0, fwd=-0.15, rand=0.08, clump=0.6,
+                rough=0.0012, child_radius=0.003, root=0.013, tip=0.002, length_rand=0.25)
+    hair_system(b, 'stubble', 'finn_stubble', 45000, 0.0024, ms, children=0, normal=0.7, down=0.3, rand=0.2, clump=0.0,
+                rough=0.0002, child_radius=0.001, root=0.009, tip=0.005, seg=2)
     hair_system(b, 'brow_L', 'finn_brow_L', 1500, 0.0085, mbr, children=0, normal=0.25, side=0.75, rand=0.12, clump=0.3,
                 rough=0.0008, child_radius=0.0018, root=0.08, tip=0.015)
     hair_system(b, 'brow_R', 'finn_brow_R', 1500, 0.0085, mbr, children=0, normal=0.25, side=-0.75, rand=0.12, clump=0.3,
@@ -659,7 +671,7 @@ def knit(B, coll, M):
     def keep(c, w):
         if c.z < B.p['pelvis.L'].z + 0.05: return False
         if bone_sum(w, 'head', 'jaw') > 0.25: return False
-        if c.z > B.chin.z - 0.016: return False
+        if c.z > B.p['neck01'].z + 0.004: return False                      # v3: the turtleneck takes over
         arms = bone_sum(w, 'lowerarm', 'wrist', 'finger', 'metacarpal')
         return arms < 0.3
     o = body_copy(B, 'finn_knit', keep, coll)
@@ -669,26 +681,8 @@ def knit(B, coll, M):
             o.vertex_groups.remove(g)
     subdivide(o, 1)
     neck_z = B.p['neck01'].z
-    top_z = B.chin.z - 0.016
-    # v2: a clean, level roll-neck edge (the face-selected copy left a zig-zag); slightly higher at the back
-    mw = o.matrix_world; mi = mw.inverted()
-    bm = bmesh.new(); bm.from_mesh(o.data)
-    for v in bm.verts:
-        co = mw @ v.co
-        if v.is_boundary and co.z > neck_z:
-            co.z = top_z - 0.004 + 0.008 * smooth((co.y - B.head.y) / 0.08); v.co = mi @ co
-    # ... and an even radius round the neck (the cut wandered in and out): max- then mean-filter by angle
-    top = [v for v in bm.verts if v.is_boundary and (mw @ v.co).z > neck_z]
-    if len(top) > 12:
-        cc = sum(((mw @ v.co) for v in top), Vector()) / len(top)
-        top.sort(key=lambda v: math.atan2((mw @ v.co).y - cc.y, (mw @ v.co).x - cc.x))
-        rr = [((mw @ v.co) - cc).to_2d().length for v in top]; m_ = len(rr)
-        rmax = [max(rr[(i + j) % m_] for j in range(-4, 5)) for i in range(m_)]
-        rsm = [sum(rmax[(i + j) % m_] for j in range(-6, 7)) / 13 for i in range(m_)]
-        for v, r_ in zip(top, rsm):
-            co = mw @ v.co; d = (co - cc).to_2d().normalized()
-            v.co = mi @ Vector((cc.x + d.x * r_, cc.y + d.y * r_, co.z))
-    bm.to_mesh(o.data); bm.free(); o.data.update()
+    top_z = B.chin.z - 0.024
+    # v3: the knit stops at the base of the neck; turtleneck() makes the neck and its roll
 
     def mind(co):
         t = (co.z - neck_z) / max(0.001, top_z - neck_z)
@@ -705,6 +699,69 @@ def knit(B, coll, M):
     offset(o, f)
     store_rest(o); o.data.materials.append(M['knit']); shade(o, 1); solidify(o, 0.003)
     arm(o, B.rig)
+    return o
+
+
+def turtleneck(B, coll, M):
+    """v3: the knit's neck as one lofted piece: a tube that follows the neck (ray-cast rings off the body) from below
+    the knit's cut edge up under the jaw, finished with a soft turned-over roll that sits flush under the beard.
+    Rigged to the neck bones only (the jaw never pulls it)."""
+    z_lo = B.p['neck01'].z - 0.01; z_hi = B.chin.z - 0.026
+    a0 = B.p['neck01']; a1 = B.p['head']
+    n = 96; heights = 10
+    bm = bmesh.new(); rings = []
+
+    def axis(z):
+        t = (z - a0.z) / max(1e-4, a1.z - a0.z)
+        return a0.lerp(a1, max(0.0, min(1.0, t)))
+
+    def neck_r(z, d):
+        c = axis(z); c.z = z
+        hit = B.bvh.ray_cast(c + d * 0.3, -d, 0.4)
+        return c, ((hit[0] - c).to_2d().length if hit[0] else 0.065)
+    for hi in range(heights + 1):
+        t = hi / heights; z = z_lo + (z_hi - z_lo) * t
+        ring = []
+        for i in range(n):
+            a = 2 * math.pi * i / n; d = Vector((math.sin(a), -math.cos(a), 0))
+            c, r = neck_r(z, d)
+            r += 0.024 * (1 - t) ** 2 + 0.008 + 0.0012 * math.sin(a * 48) * (0.3 + 0.7 * t)      # knit ribs
+            ring.append(bm.verts.new(Vector((c.x + d.x * r, c.y + d.y * r, z))))
+        rings.append(ring)
+    # the roll: a half torus curling out and down over the top of the tube
+    m = 9
+    for j in range(1, m + 1):
+        t = math.pi * j / m
+        ring = []
+        for i in range(n):
+            a = 2 * math.pi * i / n; d = Vector((math.sin(a), -math.cos(a), 0))
+            c, r = neck_r(z_hi, d)
+            rr = r + 0.008 + 0.009 * (1 - math.cos(t)) + 0.0006 * noise3(c + d * r, 70, 33)
+            z = z_hi + 0.0095 * math.sin(t) - 0.004 * (1 - math.cos(t))
+            ring.append(bm.verts.new(Vector((c.x + d.x * rr, c.y + d.y * rr, z))))
+        rings.append(ring)
+    for a_, b_ in zip(rings, rings[1:]):
+        for i in range(n):
+            bm.faces.new((a_[i], a_[(i + 1) % n], b_[(i + 1) % n], b_[i]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    me = bpy.data.meshes.new('finn_turtleneck'); bm.to_mesh(me); bm.free()
+    o = bpy.data.objects.new('finn_turtleneck', me); coll.objects.link(o)
+    for pl in me.polygons: pl.use_smooth = True
+    me.materials.append(M['knit']); store_rest(o)
+    set_active(o)
+    for g in B.b.vertex_groups:
+        if g.name in B.rig.data.bones and g.name not in o.vertex_groups: o.vertex_groups.new(name=g.name)
+    md = o.modifiers.new('wt', 'DATA_TRANSFER'); md.object = B.b; md.use_vert_data = True
+    md.data_types_verts = {'VGROUP_WEIGHTS'}; md.vert_mapping = 'POLYINTERP_NEAREST'
+    md.layers_vgroup_select_src = 'ALL'; md.layers_vgroup_select_dst = 'NAME'
+    bpy.ops.object.datalayout_transfer(modifier='wt'); apply_mod(o, 'wt')
+    for g in list(o.vertex_groups):
+        if not g.name.startswith(('neck', 'spine', 'clavicle')): o.vertex_groups.remove(g)
+    top_neck = max((g.name for g in o.vertex_groups if g.name.startswith('neck')), default='neck01')
+    gi = o.vertex_groups[top_neck]
+    for v in me.vertices:
+        if sum(g.weight for g in v.groups) < 0.2: gi.add([v.index], 1.0, 'REPLACE')
+    arm(o, B.rig); shade(o, 1); solidify(o, 0.003)
     return o
 
 
@@ -771,7 +828,7 @@ def beard_shell(B, coll):
     ramp = N.new('ShaderNodeValToRGB'); ramp.color_ramp.elements[0].color = (*lin('#5a3019'), 1); ramp.color_ramp.elements[1].color = (*lin('#8a5230'), 1)
     L.new(nz.outputs['Fac'], ramp.inputs['Fac']); L.new(ramp.outputs['Color'], bsdf.inputs['Base Color'])
     # alpha = weight with a stubble break-up at the edge
-    mr = N.new('ShaderNodeMapRange'); mr.inputs['From Min'].default_value = 0.03; mr.inputs['From Max'].default_value = 0.3
+    mr = N.new('ShaderNodeMapRange'); mr.inputs['From Min'].default_value = 0.25; mr.inputs['From Max'].default_value = 0.75
     L.new(ca.outputs['Fac'], mr.inputs['Value']); L.new(mr.outputs[0], bsdf.inputs['Alpha'])
     me.materials.append(m)
     for p in me.polygons: p.use_smooth = True
@@ -788,7 +845,7 @@ CLO = os.path.join(ASSETS, 'makehuman', 'system_assets', 'clothes')
 PROXY = {   # role: MakeHuman CC0 asset
     'jacket': 'male_casualsuit05',     # field jacket (its shirt, collar and jeans parts are dropped)
     'waders': 'male_worksuit01',       # bib overalls with braces (the tee is dropped, the buttons become brass)
-    'boots': 'shoes03',                # boots with a joined sole and heel -> rubber wader boots
+    'boots': 'shoes03',                # the boot foot (sole and heel); the shaft is lofted onto it
 }
 BOOT_TOP = 0.33                        # wader boot shaft height above the sole (mid-calf)
 
@@ -830,7 +887,7 @@ def fit_proxies(b):
                 elif 40 < n < 60: extra.append(p)                              # buttons
                 else: drop.append(p)                                           # the tee, a stray quad
             else:
-                keep.append(p)
+                (keep if n > 500 else drop).append(p)                     # boot feet only (no socks, laces)
         for p in drop: bpy.data.objects.remove(p)
         out[role] = _join(keep, 'finn_' + role)
         if extra: out[role + '_buttons'] = _join(extra, 'finn_' + role + '_buttons')
@@ -893,6 +950,18 @@ def jacket_v2(B, o, knit_o, waders_o, M):
         v.co = mi @ Vector((co.x * fl, cy + (co.y - cy) * fl, nz))
     o.data.update()
     relax(o, B, 8, 0.45, min_d=0.016)
+    # v3: less shoulder padding: ease the cloth over the shoulder caps toward the body (never closer than 1 cm)
+    for v in o.data.vertices:
+        co = mw @ v.co
+        s_ = 'L' if co.x > 0 else 'R'
+        sh = B.p['upperarm01.' + s_]
+        f_ = smooth(1 - (co - sh).length / 0.11) * smooth((co.z - (sh.z - 0.04)) / 0.04)
+        if f_ <= 0: continue
+        loc, nrm, idx, dist = B.bvh.find_nearest(co)
+        if loc is None: continue
+        side = (co - loc).dot(nrm)
+        if side > 0.011: v.co = mi @ (co - nrm * (side - 0.011) * 0.55 * f_)
+    o.data.update()
     push_out(o, _bvh(knit_o), 0.008)
     push_out(o, _bvh(waders_o), 0.009, reach=0.05)
     el = {s: B.p['lowerarm01.' + s] for s in 'LR'}
@@ -952,32 +1021,38 @@ def waders_v2(B, o, knit_o, M):
     return o
 
 
-def boots_v2(B, o, waders_o, M):
-    """The boot feet (sole and heel joined) from the proxy, in rubber."""
-    subdivide(o, 1)
-    o.data.materials.clear(); o.data.materials.append(M['boot'])
-    store_rest(o); shade(o, 1)
-    push_out(waders_o, _bvh(o), 0.006, reach=0.04, mask=lambda c: c.z < 0.3)
-    return o
+def tuck_waders(B, o):
+    """Below the boot rim the wader leg is tucked in: pulled snug onto the leg so the one-piece boot closes over it."""
+    mw = o.matrix_world; mi = mw.inverted()
+    for v in o.data.vertices:
+        co = mw @ v.co
+        t = smooth((BOOT_TOP - 0.005 - co.z) / 0.03)
+        if t <= 0: continue
+        loc, nrm, idx, dist = B.bvh.find_nearest(co)
+        if loc is None: continue
+        v.co = mi @ co.lerp(loc + nrm * 0.0045, t)
+    o.data.update()
 
 
-def boot_shafts(B, waders_o, coll, M):
-    """Rubber wader-boot shafts joined onto the boot feet: a tube from the ankle to mid-calf that encloses the wader
-    leg (measured per angle, so it follows the calf), an ankle ridge, a thick rolled rim. The wader bags over it."""
-    mw = waders_o.matrix_world
-    wv = [mw @ v.co for v in waders_o.data.vertices]
-    mat = fabric('finn_boot_shaft', COL['boot'], 'neoprene-rubber/Rubber004_1K-JPG', scale=5, rough=(0.22, 0.45),
-                 coat=0.35, normal=0.6, ao=0.5)
-    out = []
-    n, nz, sect = 48, 12, 16
-    z_lo = 0.075
-    zs = [z_lo + (BOOT_TOP - z_lo) * i / (nz - 1) for i in range(nz)]
+def wader_boots(B, coll, M, shoe_o, waders_o):
+    """v3: one rubber wader boot per leg as a single mesh: the CC0 boot foot (its sole and heel) with the shaft lofted
+    straight out of its ankle opening, tapering in at the ankle and easing out round the tucked-in wader leg up to a
+    rolled rim at mid-calf."""
+    mw = shoe_o.matrix_world; mi = mw.inverted()
+    wv = [waders_o.matrix_world @ v.co for v in waders_o.data.vertices]
+    bm = bmesh.new(); bm.from_mesh(shoe_o.data)
+    sect, K = 16, 9
     for s_ in 'LR':
         sg = 1 if s_ == 'L' else -1
-        a = B.p['foot.' + s_]; k = B.p['lowerleg01.' + s_]; ax = k - a
+        opening = [v for v in bm.verts if v.is_boundary and (mw @ v.co).x * sg > 0 and (mw @ v.co).z > 0.045]
+        if len(opening) < 8:
+            print('[finn] boot opening not found', s_, len(opening)); continue
+        a = B.p['foot.' + s_]; k_ = B.p['lowerleg01.' + s_]; ax = k_ - a
+        c0 = sum(((mw @ v.co) for v in opening), Vector()) / len(opening)
+        opening.sort(key=lambda v: math.atan2((mw @ v.co).y - c0.y, (mw @ v.co).x - c0.x))
         pts = [p for p in wv if p.x * sg > 0.015 and p.z < BOOT_TOP + 0.03]
-        R = []
-        for z in zs:
+
+        def env(z):
             c = a + ax * ((z - a.z) / ax.z)
             r = [0.0] * sect
             for p in pts:
@@ -985,53 +1060,60 @@ def boot_shafts(B, waders_o, coll, M):
                 d = Vector((p.x - c.x, p.y - c.y, 0))
                 si = int((math.atan2(d.y, d.x) + math.pi) / (2 * math.pi) * sect) % sect
                 r[si] = max(r[si], d.length)
-            m = max(r) or 0.06
-            r = [x if x > 0.02 else m for x in r]
-            r = [max(r[i], (r[i - 1] + r[(i + 1) % sect]) / 2) for i in range(sect)]
-            R.append((c, r))
-        for i in range(1, nz):                                    # a shaft never narrows going up
-            R[i] = (R[i][0], [max(x, y * 0.97) for x, y in zip(R[i][1], R[i - 1][1])])
-        bm = bmesh.new(); rings = []
-        for iz, (c, r) in enumerate(R):
-            z = zs[iz]
-            ridge = 0.0035 * math.exp(-((z - 0.125) / 0.008) ** 2)
+            m_ = max(r) or 0.055
+            r = [x if x > 0.02 else m_ for x in r]
+            return c, [max(r[i], (r[i - 1] + r[(i + 1) % sect]) / 2) for i in range(sect)]
+        z0 = max((mw @ v.co).z for v in opening)
+        zs = [z0 + (BOOT_TOP - z0) * (kk / K) for kk in range(1, K + 1)]
+        E = [env(z) for z in zs]
+        for kk in range(1, K):                                        # never narrower going up
+            E[kk] = (E[kk][0], [max(x, y * 0.97) for x, y in zip(E[kk][1], E[kk - 1][1])])
+        prev = opening; rings = []
+        for kk, (z, (c, r)) in enumerate(zip(zs, E)):
+            t = (kk + 1) / K; blend = smooth(min(1.0, t * 2.2))
             ring = []
-            for i in range(n):
-                t = 2 * math.pi * i / n - math.pi
-                f = (t + math.pi) / (2 * math.pi) * sect - 0.5
+            for v in opening:
+                o_ = mw @ v.co
+                d = Vector((o_.x - c.x, o_.y - c.y, 0)); ang = math.atan2(d.y, d.x)
+                f = (ang + math.pi) / (2 * math.pi) * sect - 0.5
                 i0 = int(math.floor(f)) % sect; i1 = (i0 + 1) % sect; u = f - math.floor(f)
-                rr = r[i0] * (1 - u) + r[i1] * u + 0.008 + ridge
-                ring.append(bm.verts.new((c.x + rr * math.cos(t), c.y + rr * math.sin(t), z)))
+                rr = r[i0] * (1 - u) + r[i1] * u + 0.009
+                tgt = Vector((c.x + math.cos(ang) * rr, c.y + math.sin(ang) * rr, z))
+                src = Vector((o_.x, o_.y, z))
+                ring.append(bm.verts.new(mi @ src.lerp(tgt, blend)))
             rings.append(ring)
-        c, r = R[-1]                                              # rolled rim
-        for dz, dr in ((0.004, 0.012), (0.006, 0.006)):
-            ring = []
+        # rolled rim
+        c, r = E[-1]
+        rim = []
+        for v, top_v in zip(opening, rings[-1]):
+            q = mw @ top_v.co; d = Vector((q.x - c.x, q.y - c.y, 0)).normalized()
+            rim.append(bm.verts.new(mi @ (q + d * 0.004 + Vector((0, 0, 0.005)))))
+        rings.append(rim)
+        n = len(opening)
+        for ra, rb in zip([opening] + rings, rings):
             for i in range(n):
-                t = 2 * math.pi * i / n - math.pi
-                f = (t + math.pi) / (2 * math.pi) * sect - 0.5
-                i0 = int(math.floor(f)) % sect; i1 = (i0 + 1) % sect; u = f - math.floor(f)
-                rr = r[i0] * (1 - u) + r[i1] * u + dr
-                ring.append(bm.verts.new((c.x + rr * math.cos(t), c.y + rr * math.sin(t), BOOT_TOP + dz)))
-            rings.append(ring)
-        for a_, b_ in zip(rings, rings[1:]):
-            for i in range(n):
-                bm.faces.new((a_[i], a_[(i + 1) % n], b_[(i + 1) % n], b_[i]))
-        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-        me = bpy.data.meshes.new('finn_bootshaft.' + s_); bm.to_mesh(me); bm.free()
-        so = bpy.data.objects.new('finn_bootshaft.' + s_, me); coll.objects.link(so)
-        for pl in me.polygons: pl.use_smooth = True
-        me.materials.append(mat); store_rest(so)
-        bind(so, B.b, B.rig)
-        shade(so, 1); solidify(so, 0.004, off=1.0)
-        out.append(so)
-    return out
+                try: bm.faces.new((ra[i], ra[(i + 1) % n], rb[(i + 1) % n], rb[i]))
+                except ValueError: pass
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(shoe_o.data); bm.free(); shoe_o.data.update()
+    o = shoe_o; o.name = 'finn_boots'
+    rubber = fabric('finn_boot_rubber', COL['boot'], 'neoprene-rubber/Rubber004_1K-JPG', scale=5, rough=(0.22, 0.45),
+                    coat=0.35, normal=0.6, ao=0.5)
+    o.data.materials.clear(); o.data.materials.append(rubber); o.data.materials.append(M['sole'])
+    lo = min((mw @ v.co).z for v in o.data.vertices)
+    for pl in o.data.polygons:
+        pl.material_index = 1 if (mw @ pl.center).z < lo + 0.016 else 0
+        pl.use_smooth = True
+    bind(o, B.b, B.rig)
+    store_rest(o); shade(o, 1); solidify(o, 0.003, off=-1.0)
+    return o
 
 
 def restyle_proxies(B, P, knit_o, coll, M):
     for o in P.values(): link(o, coll)
     wd = waders_v2(B, P['waders'], knit_o, M)
-    bt = boots_v2(B, P['boots'], wd, M)
-    boot_shafts(B, wd, coll, M)
+    tuck_waders(B, wd)
+    bt = wader_boots(B, coll, M, P['boots'], wd)
     jk = jacket_v2(B, P['jacket'], knit_o, wd, M)
     if 'waders_buttons' in P:
         bo = P['waders_buttons']; bo.data.materials.clear(); bo.data.materials.append(M['brass']); shade(bo, 1)
@@ -1645,14 +1727,12 @@ def materials():
     M = {
         # waxed canvas: the proxy's sewn folds and seams, a canvas weave, a waxy low sheen (coat) and patchy wear
         'jacket': proxy_fabric('finn_jacket', COL['jacket'], PROXY['jacket'], 'waxed-cotton-canvas/rough_linen', scale=16,
-                               rough=(0.36, 0.7), sheen=0.05, coat=0.14, normal=1.0, ao=0.6, var=0.16, detail=0.18, pdiff=0.45),
+                               rough=(0.48, 0.8), sheen=0.04, coat=0.05, normal=1.0, ao=0.6, var=0.16, detail=0.18, pdiff=0.45),
         'cord': fabric('finn_cord', COL['cord'], 'corduroy/ribbed_corduroy', scale=14, rough=(0.6, 0.9), sheen=0.4, normal=0.9, ao=0.5),
         'lining': fabric('finn_lining', COL['lining'], 'knit-wool/caban', scale=8, rough=(0.7, 0.95), ao=0.4),
         'knit': fabric('finn_knit', COL['knit'], 'knit-wool/knitted_fleece', scale=7, rough=(0.75, 1.0), sheen=0.5, normal=1.0, ao=0.55, var=0.05),
         'wader': proxy_fabric('finn_wader', COL['wader'], PROXY['waders'], 'neoprene-rubber/scuba_suede', scale=6, rough=(0.4, 0.62),
                               coat=0.1, normal=0.5, ao=0.6, var=0.08, detail=0.12, pdiff=0.35),
-        'boot': proxy_fabric('finn_boot', COL['boot'], PROXY['boots'], 'neoprene-rubber/Rubber004_1K-JPG', scale=5, rough=(0.22, 0.45),
-                             coat=0.35, normal=0.6, ao=0.5, detail=0.1, pdiff=0.12),
         'glove': fabric('finn_glove', COL['glove'], 'fleece/polar_fleece', scale=10, rough=(0.7, 0.95), sheen=0.3, normal=0.7, ao=0.5),
         'hat': fabric('finn_hat', COL['hat'], 'waxed-cotton-canvas/rough_linen', lum=0.78, scale=12, rough=(0.7, 0.95), sheen=0.2, normal=0.8, ao=0.5, var=0.06),
         'band': fabric('finn_band', COL['band'], 'leather/fabric_leather_02', scale=12, rough=(0.5, 0.7), normal=0.6, ao=0.3),
@@ -1698,6 +1778,7 @@ def build():
     M = materials()
     print('[finn] body + rig', round(time.time() - t0, 1), 's')
     kn = knit(B, coll, M)
+    turtleneck(B, coll, M)
     jk, wd, bt = restyle_proxies(B, P, kn, coll, M)
     gl = gloves(B, coll, M)
     print('[finn] clothes', round(time.time() - t0, 1), 's')
