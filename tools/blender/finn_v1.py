@@ -212,6 +212,60 @@ def simple(name, color, rough=0.5, metal=0.0, coat=0.0, emit=None, emit_s=0.0, s
     return m
 
 
+def detail_mat(m, *, rib=None, weave=None, dirt=None, fuzz=0.0):
+    """v4 procedural surface detail on top of a finished fabric material (Blender shader nodes, rest-position
+    coordinates so nothing swims when he moves):
+      rib=(period_m, depth)     vertical knit ribs (bands along world X/Y round the body)
+      weave=(period_m, depth)   a fine plain-weave grid (canvas threads)
+      dirt=(height_m, colour)   mud/wet dirt rising from the boot soles, darker and rougher, broken by noise
+      fuzz                      sheen for soft knit fuzz."""
+    if m.get('finn_detail'): return m
+    m['finn_detail'] = 1
+    N = m.node_tree.nodes; L = m.node_tree.links; b = N['Principled BSDF']
+    att = N.new('ShaderNodeAttribute'); att.attribute_name = 'finn_rest'; att.attribute_type = 'GEOMETRY'
+
+    def wave(period, direction):
+        w = N.new('ShaderNodeTexWave'); w.wave_type = 'BANDS'; w.bands_direction = direction
+        w.inputs['Scale'].default_value = 2 * math.pi / (10 * period); w.inputs['Distortion'].default_value = 0.6
+        w.inputs['Detail'].default_value = 1.0
+        L.new(att.outputs['Vector'], w.inputs['Vector']); return w
+    heights = []
+    if rib:
+        wx = wave(rib[0], 'X'); wy = wave(rib[0], 'Y')
+        mx = N.new('ShaderNodeMath'); mx.operation = 'MAXIMUM'
+        L.new(wx.outputs['Fac'], mx.inputs[0]); L.new(wy.outputs['Fac'], mx.inputs[1]); heights.append((mx.outputs[0], rib[1]))
+    if weave:
+        wx = wave(weave[0], 'X'); wz = wave(weave[0], 'Z')
+        mu = N.new('ShaderNodeMath'); mu.operation = 'MULTIPLY'
+        L.new(wx.outputs['Fac'], mu.inputs[0]); L.new(wz.outputs['Fac'], mu.inputs[1]); heights.append((mu.outputs[0], weave[1]))
+    for h, depth in heights:
+        bp = N.new('ShaderNodeBump'); bp.inputs['Strength'].default_value = 1.0; bp.inputs['Distance'].default_value = depth
+        L.new(h, bp.inputs['Height'])
+        if b.inputs['Normal'].is_linked: L.new(b.inputs['Normal'].links[0].from_socket, bp.inputs['Normal'])
+        L.new(bp.outputs['Normal'], b.inputs['Normal'])
+    if dirt:
+        sep = N.new('ShaderNodeSeparateXYZ'); L.new(att.outputs['Vector'], sep.inputs['Vector'])
+        nz = N.new('ShaderNodeTexNoise'); nz.inputs['Scale'].default_value = 9.0; nz.inputs['Detail'].default_value = 6
+        L.new(att.outputs['Vector'], nz.inputs['Vector'])
+        hz = N.new('ShaderNodeMath'); hz.operation = 'MULTIPLY_ADD'; hz.inputs[1].default_value = 0.12
+        L.new(nz.outputs['Fac'], hz.inputs[0]); L.new(sep.outputs['Z'], hz.inputs[2])
+        mr = N.new('ShaderNodeMapRange'); mr.inputs['From Min'].default_value = dirt[0]; mr.inputs['From Max'].default_value = dirt[0] * 0.35
+        L.new(hz.outputs[0], mr.inputs['Value'])
+        col = b.inputs['Base Color'].links[0].from_socket
+        mix = N.new('ShaderNodeMix'); mix.data_type = 'RGBA'; mix.inputs[7].default_value = (*lin(dirt[1]), 1)
+        f = N.new('ShaderNodeMath'); f.operation = 'MULTIPLY'; f.inputs[1].default_value = 0.8
+        L.new(mr.outputs[0], f.inputs[0]); L.new(f.outputs[0], mix.inputs['Factor'])
+        L.new(col, mix.inputs[6]); L.new(mix.outputs[2], b.inputs['Base Color'])
+        if b.inputs['Roughness'].is_linked:
+            r0 = b.inputs['Roughness'].links[0].from_socket
+            rm = N.new('ShaderNodeMix'); rm.data_type = 'FLOAT'; rm.inputs[3].default_value = 0.92
+            L.new(f.outputs[0], rm.inputs['Factor']); L.new(r0, rm.inputs[2]); L.new(rm.outputs[0], b.inputs['Roughness'])
+    if fuzz:
+        b.inputs['Sheen Weight'].default_value = fuzz; b.inputs['Sheen Roughness'].default_value = 0.6
+        b.inputs['Sheen Tint'].default_value = (1, 1, 1, 1)
+    return m
+
+
 def _mean_lum_masked(im):
     """Like _mean_lum, over the painted texels only (a clothes atlas is mostly black background)."""
     try:
@@ -289,21 +343,30 @@ def lens_mat():
 
 
 def hair_mat(name, color, tip):
+    """v4: Principled Hair BSDF (direct colouring): dark roots to lighter copper tips along each strand, a per-strand
+    random brightness so clumps separate, soft highlights (no plastic glitter)."""
     m = bpy.data.materials.get(name)
     if m: return m
     m = bpy.data.materials.new(name); m.use_nodes = True; N = m.node_tree.nodes; L = m.node_tree.links
-    b = N['Principled BSDF']; b.inputs['Roughness'].default_value = 0.55; b.inputs['Specular IOR Level'].default_value = 0.35   # v2: matte, no tip glitter
-    b.inputs['Coat Weight'].default_value = 0.0
+    N.remove(N['Principled BSDF'])
+    hb = N.new('ShaderNodeBsdfHairPrincipled')
+    try: hb.parametrization = 'COLOR'
+    except Exception: pass
+    for k, v in (('Roughness', 0.32), ('Radial Roughness', 0.45), ('Coat', 0.05), ('IOR', 1.55)):
+        if k in hb.inputs: hb.inputs[k].default_value = v
     hi = N.new('ShaderNodeHairInfo'); ramp = N.new('ShaderNodeValToRGB')
-    ramp.color_ramp.elements[0].color = (*[x * 0.55 for x in lin(color)], 1)
-    ramp.color_ramp.elements[1].position = 0.6; ramp.color_ramp.elements[1].color = (*lin(color), 1)
+    ramp.color_ramp.elements[0].color = (*[x * 0.45 for x in lin(color)], 1)
+    ramp.color_ramp.elements[1].position = 0.55; ramp.color_ramp.elements[1].color = (*lin(color), 1)
     e = ramp.color_ramp.elements.new(1.0); e.color = (*lin(tip), 1)
-    nz = N.new('ShaderNodeTexNoise'); nz.inputs['Scale'].default_value = 400
-    L.new(hi.outputs['Random'], nz.inputs['W']) if 'W' in nz.inputs else None
-    mix = N.new('ShaderNodeMath'); mix.operation = 'MULTIPLY_ADD'; mix.inputs[1].default_value = 0.25
-    L.new(hi.outputs['Random'], mix.inputs[0]); L.new(hi.outputs['Intercept'], mix.inputs[2])
     L.new(hi.outputs['Intercept'], ramp.inputs['Fac'])
-    L.new(ramp.outputs['Color'], b.inputs['Base Color'])
+    vr = N.new('ShaderNodeMapRange'); vr.inputs['To Min'].default_value = 0.75; vr.inputs['To Max'].default_value = 1.2
+    L.new(hi.outputs['Random'], vr.inputs['Value'])
+    mm = N.new('ShaderNodeMix'); mm.data_type = 'RGBA'; mm.blend_type = 'MULTIPLY'; mm.inputs['Factor'].default_value = 1.0
+    L.new(ramp.outputs['Color'], mm.inputs[6]); cc = N.new('ShaderNodeCombineColor')
+    for k in range(3): L.new(vr.outputs[0], cc.inputs[k])
+    L.new(cc.outputs[0], mm.inputs[7])
+    L.new(mm.outputs[2], hb.inputs['Color'])
+    L.new(hb.outputs[0], N['Material Output'].inputs['Surface'])
     return m
 
 
@@ -976,7 +1039,7 @@ def jacket_v2(B, o, knit_o, waders_o, M):
             sw, _ = _limb(B, B.p['wrist.' + s_], 'upperarm01.' + s_, B.p['wrist.' + s_])
             # stacked gravity folds around the elbow (strongest on the inside of the arm), a soft cuff at the wrist
             inner = 0.5 + 0.5 * max(0.0, -r.normalized().dot(Vector((math.copysign(1, co.x), 0, 0)))) if r.length > 1e-5 else 0.5
-            d += 0.0042 * band(s, se - 0.07, se + 0.06, 0.03) * inner * math.sin(s * 2 * math.pi / 0.034 + 2.5 * noise3(co, 9, 2))
+            d += 0.0026 * band(s, se - 0.07, se + 0.06, 0.03) * inner * math.sin(s * 2 * math.pi / 0.034 + 2.5 * noise3(co, 9, 2))
             d += 0.0028 * band(s, sw - 0.075, sw - 0.02, 0.006) - 0.0015 * band(s, sw - 0.083, sw - 0.077, 0.003)
             d += 0.0012 * fold_noise(co, 22, 6)
         else:
@@ -1099,6 +1162,7 @@ def wader_boots(B, coll, M, shoe_o, waders_o):
     o = shoe_o; o.name = 'finn_boots'
     rubber = fabric('finn_boot_rubber', COL['boot'], 'neoprene-rubber/Rubber004_1K-JPG', scale=5, rough=(0.22, 0.45),
                     coat=0.35, normal=0.6, ao=0.5)
+    detail_mat(rubber, dirt=(0.2, '#3b3024'))
     o.data.materials.clear(); o.data.materials.append(rubber); o.data.materials.append(M['sole'])
     lo = min((mw @ v.co).z for v in o.data.vertices)
     for pl in o.data.polygons:
@@ -1727,8 +1791,9 @@ def add_sockets(B):
 def materials():
     M = {
         # waxed canvas: the proxy's sewn folds and seams, a canvas weave, a waxy low sheen (coat) and patchy wear
+        # v4: matte waxed canvas: no painted AO stains, the garment's sewn folds softer, a real-scale weave on top
         'jacket': proxy_fabric('finn_jacket', COL['jacket'], PROXY['jacket'], 'waxed-cotton-canvas/rough_linen', scale=16,
-                               rough=(0.48, 0.8), sheen=0.04, coat=0.05, normal=1.0, ao=0.6, var=0.16, detail=0.18, pdiff=0.45),
+                               rough=(0.55, 0.82), sheen=0.06, coat=0.0, normal=0.8, ao=0.22, var=0.07, detail=0.12, pdiff=0.18, pnormal=0.6),
         'cord': fabric('finn_cord', COL['cord'], 'corduroy/ribbed_corduroy', scale=14, rough=(0.6, 0.9), sheen=0.4, normal=0.9, ao=0.5),
         'lining': fabric('finn_lining', COL['lining'], 'knit-wool/caban', scale=8, rough=(0.7, 0.95), ao=0.4),
         'knit': fabric('finn_knit', COL['knit'], 'knit-wool/knitted_fleece', scale=7, rough=(0.75, 1.0), sheen=0.5, normal=1.0, ao=0.55, var=0.05),
@@ -1745,23 +1810,28 @@ def materials():
         'lureA': simple('finn_lure_a', COL['lureA'], 0.25, coat=1.0), 'lureB': simple('finn_lure_b', COL['lureB'], 0.25, coat=1.0),
         'sole': simple('finn_sole', COL['sole'], 0.8),
     }
+    detail_mat(M['jacket'], weave=(0.0014, 0.0003))
+    detail_mat(M['knit'], rib=(0.0045, 0.0012), fuzz=0.55)
+    detail_mat(M['wader'], dirt=(0.42, '#3a2f22'))
+    detail_mat(M['glove'], rib=(0.002, 0.0003))
+    detail_mat(M['hat'], weave=(0.0012, 0.0002))
     return M
 
 
 def tune_skin(b):
-    """Push the MPFB skin a little toward painted game-engine skin: warmer, softer SSS, slightly less glossy."""
+    """v4 skin: stronger pores, a matte surface (barely any coat: no plastic sheen), warmer subsurface, a touch of
+    redness. MPFB's skin is a node group; its inputs are set by name."""
+    want = {'Pore strength': 0.38, 'Pore scale': 2800.0, 'Pore detail': 3.0, 'Roughness': 0.52, 'Clearcoat': 0.02,
+            'Clearcoat Roughness': 0.55, 'SSS strength': 0.35, 'SSS radius scale': 0.13, 'colorMixInStrength': 0.07}
     for m in b.data.materials:
         if not m or not m.use_nodes: continue
         for n in m.node_tree.nodes:
-            if n.type == 'BSDF_PRINCIPLED':
-                if 'Subsurface Weight' in n.inputs and n.inputs['Subsurface Weight'].default_value > 0:
-                    n.inputs['Subsurface Weight'].default_value = 0.35
-                    n.inputs['Subsurface Radius'].default_value = (1.0, 0.35, 0.18)
             if n.type == 'GROUP':
                 for i in n.inputs:
-                    nm = i.name.lower()
-                    if 'sss' in nm and 'weight' in nm and hasattr(i, 'default_value'): i.default_value = 0.35
-
+                    if i.name in want: i.default_value = want[i.name]
+                    if i.name == 'colorMixIn': i.default_value = (*lin('#c46a5a'), 1)
+            if n.type == 'BSDF_PRINCIPLED' and 'Coat Weight' in n.inputs:
+                n.inputs['Coat Weight'].default_value = min(n.inputs['Coat Weight'].default_value, 0.03)
 
 def build():
     t0 = time.time()
