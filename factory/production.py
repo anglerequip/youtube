@@ -56,6 +56,7 @@ def render(sb: Storyboard, provider: str | None = None, previews: bool = False, 
     cd = voice.clip_dir(sb)
     clips = sorted((p.name, p.stat().st_size) for p in cd.iterdir()) if cd and cd.exists() else None
     vkey = _key([(b.id, b.text, b.pause_after) for b in sb.beats], sb.voice, sb.speed, provider, "expressive-v1", clips,
+                *([sb.extra.get("voice_id")] if sb.extra.get("voice_id") else []),
                 *([voice.tail_for(sb)] if sb.extra.get("end_hold_s") is not None else []))
     if force or not _cached(out, "voice.wav", vkey) or not (out / "timeline.json").exists():
         log.info("[%s] voice (%s)", sb.slug, provider)

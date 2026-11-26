@@ -126,6 +126,12 @@ def _clip_for(ep, beat_id: str) -> Path | None:
     raise FileNotFoundError(f"voice_clips is set but {d}/{beat_id}.mp3 is missing")
 
 
+def _kokoro_voice(v):
+    """A storyboard may name the provider (`voice: elevenlabs`); Kokoro then uses its default (KOKORO_VOICE)."""
+    from ..configuration import settings
+    return settings.kokoro_voice if v in (None, "", "elevenlabs", "kokoro") else v
+
+
 def narrate(ep, out_wav: Path, provider: str | None = None) -> Timeline:
     tts = get_tts(provider) if clip_dir(ep) is None else None
     delivery = _delivery()
@@ -151,13 +157,14 @@ def narrate(ep, out_wav: Path, provider: str | None = None) -> Timeline:
             if mp:
                 samples = cap_pauses(samples, sr, float(mp))
         elif expr is not None:
-            samples, sr = expr.synth(spoken, voice=ep.voice, speed=speed, key=f"{ep.slug}/{ln.id}")
+            samples, sr = expr.synth(spoken, voice=_kokoro_voice(ep.voice), speed=speed, key=f"{ep.slug}/{ln.id}")
         elif getattr(tts, "name", "") == "elevenlabs":
             i = ep.lines.index(ln)
             ctx = lambda j: normalise(ep.lines[j].text) if 0 <= j < len(ep.lines) else None
-            samples, sr = tts.synth(spoken, voice=ep.voice, speed=speed, previous_text=ctx(i - 1), next_text=ctx(i + 1))
+            vid = (getattr(ep, "extra", None) or {}).get("voice_id")      # storyboard `voice_id`: an ElevenLabs voice
+            samples, sr = tts.synth(spoken, voice=vid, speed=speed, previous_text=ctx(i - 1), next_text=ctx(i + 1))
         else:
-            samples, sr = tts.synth(clean(spoken), voice=ep.voice, speed=speed)
+            samples, sr = tts.synth(clean(spoken), voice=_kokoro_voice(ep.voice), speed=speed)
         samples = _trim(np.asarray(samples, dtype=np.float32), sr)
         if sr_ref is None:
             sr_ref = sr

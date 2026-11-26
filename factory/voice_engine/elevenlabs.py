@@ -39,7 +39,9 @@ class ElevenLabsTTS:
 
     def synth(self, text: str, voice: str | None = None, speed: float = 1.0,
               previous_text: str | None = None, next_text: str | None = None):
-        # Episode `voice` values are Kokoro voice names, so ElevenLabs uses its own voice setting.
+        # `voice` is used only when it is an ElevenLabs voice id (a storyboard's `voice_id`); otherwise the
+        # ELEVENLABS_VOICE_ID setting (episode `voice` values are Kokoro names or the provider name).
+        vid = voice if voice and re.fullmatch(r"[A-Za-z0-9]{20}", voice) else self.voice
         body = {"text": to_elevenlabs_text(text), "model_id": self.model,
                 "voice_settings": {**self.settings, "speed": max(0.7, min(1.2, speed))}}
         if previous_text:
@@ -47,7 +49,7 @@ class ElevenLabsTTS:
         if next_text:
             body["next_text"] = to_elevenlabs_text(next_text)
         r = requests.post(
-            API.format(voice=self.voice),
+            API.format(voice=vid),
             params={"output_format": "pcm_24000"},
             headers={"xi-api-key": self.key, "Content-Type": "application/json"},
             json=body,

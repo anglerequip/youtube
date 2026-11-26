@@ -29,11 +29,13 @@ facts = {"models": 756, "colourways": 4627, "match": "9/10", "top_pick": "Rapala
          "colour_call": "Firetiger", "inputs": "Northern pike, shore, dawn/dusk, autumn, overcast, calm, murky"}
 
 
-def _shot(t0, t1, kind, cam0, cam1, tgt0, tgt1, lens, focus=None, fstop=2.8, roll=0.0, note="", track=None):
+def _shot(t0, t1, kind, cam0, cam1, tgt0, tgt1, lens, focus=None, fstop=2.8, roll=0.0, note="", track=None, dist=None):
     d = {"start": round(t0, 3), "end": round(t1, 3), "kind": kind, "cam0": cam0, "cam1": cam1, "tgt0": tgt0,
          "tgt1": tgt1, "lens": lens, "focus": focus or tgt1, "fstop": fstop, "roll": roll, "note": note}
     if track:
-        d["track"] = track          # the renderer keeps the camera's offset from this prop's real position
+        d["track"] = track
+    if dist:
+        d["dist"] = dist          # phone_screen: camera distance in front of the screen          # the renderer keeps the camera's offset from this prop's real position
     return d
 
 
@@ -53,10 +55,10 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     add = lambda *a, **k: shots.append(_shot(*a, **k))
     # hook: low MCU, he holds a chartreuse lure up beside his face, already talking; slow push in
     t_guess = at("hook", "guesses") - 0.05
-    add(0.0, t_guess, "medium", [0.35, ey - 1.55, ez - 0.35], [0.3, ey - 1.3, ez - 0.32], [0.05, ey, ez - 0.25], [0.05, ey, ez - 0.22], 40,
+    add(0.0, t_guess, "medium", [0.1, ey - 1.6, ez - 0.35], [0.08, ey - 1.35, ez - 0.32], [-0.06, ey, ez - 0.22], [-0.06, ey, ez - 0.2], 40,
         focus=face, note="hold-up lure, talk")
     # punch-in close-up on the vow
-    add(t_guess, S("enemy") - 0.05, "close", [0.12, ey - 0.75, ez - 0.02], [0.1, ey - 0.68, ez - 0.02], face, face, 70, focus=face, fstop=2.0,
+    add(t_guess, S("enemy") - 0.05, "close", [0.12, ey - 1.0, ez - 0.02], [0.1, ey - 0.9, ez - 0.02], [face[0], face[1], face[2] - 0.04], [face[0], face[1], face[2] - 0.04], 55, focus=face, fstop=2.0,
         note="shout on 'ever'")
     # enemy: wide, him and the open tackle box on the jetty, mist and the sun behind; slow dolly
     t_every = at("enemy", "Every") - 0.05
@@ -68,12 +70,12 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     add(t_every, t_pick, "insert", [bx + 0.05, by - 0.15, bz + 0.95], [bx + 0.02, by - 0.1, bz + 0.85], [bx, by, bz + 0.05], [bx, by, bz + 0.05], 35,
         focus=[bx, by, bz + 0.08], fstop=2.8, note="hand over trays")
     # medium side: he casts, then waits holding the rod, deadpan (the 0.6 s pause)
-    t_pike = at("enemy", "wait") + 0.3
-    add(t_pick, t_pike, "medium", [-1.6, fy - 1.0, fz + 1.3], [-1.5, fy - 0.9, fz + 1.3], [0.0, fy + 0.3, fz + 1.25], [0.0, fy + 0.3, fz + 1.2], 45,
+    t_pike = at("enemy", "wait") - 0.15     # the pike reaction gets at least 1.2 s (the held pause after "wait")
+    add(t_pick, t_pike, "medium", [-1.7, fy - 1.7, fz + 1.35], [-1.55, fy - 1.55, fz + 1.32], [0.0, fy, fz + 1.15], [0.0, fy, fz + 1.12], 35,
         focus=CHEST, note="rod, waiting")
     # reaction cutaway: a pike's head breaks the surface beside the jetty, looks, sinks (bloop)
     px, py, pz = PIKE
-    add(t_pike, S("nottoday") - 0.05, "close", [px - 0.9, py - 0.9, 0.35], [px - 0.85, py - 0.85, 0.33], [px, py, 0.08], [px, py, 0.06], 60,
+    add(t_pike, S("nottoday") - 0.05, "close", [px - 0.62, py - 0.62, 0.3], [px - 0.55, py - 0.55, 0.27], [px, py, 0.08], [px, py, 0.06], 60,
         focus=[px, py, 0.08], fstop=2.0, note="pike surfaces")
     # 'Not today.' close-up with a slight Dutch tilt, smirk
     add(S("nottoday") - 0.05, S("weapon") - 0.05, "close", [-0.18, ey - 0.8, ez - 0.08], [-0.16, ey - 0.75, ez - 0.07], face, face, 65, focus=face,
@@ -85,17 +87,24 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     # insert: over the shoulder onto the phone, thumb taps pike / murky / dawn
     phone = [0.12, ey - 0.42, ez - 0.42]
     add(t_tell, S("models") - 0.05, "insert", [phone[0] + 0.12, phone[1] + 0.34, phone[2] + 0.3], [phone[0] + 0.1, phone[1] + 0.3, phone[2] + 0.27],
-        phone, phone, 45, focus=phone, fstop=2.4, note="taps", track="phone")
+        phone, phone, 30, focus=phone, fstop=2.8, note="taps", track="phone_screen", dist=0.17)
     # models: insert on the result card (top pick 9/10, '756 real models'), then his face as it lands
     t_real = at("models", "real") - 0.05
     add(t_real, S("colour") - 0.05, "close", [-0.12, ey - 0.85, ez - 0.05], [-0.11, ey - 0.8, ez - 0.05], face, face, 62, focus=face,
         fstop=2.0, note="impressed")
-    add(S("models") - 0.05, t_real, "insert", [0.15, ey - 0.85, ez - 0.35], [0.14, ey - 0.78, ez - 0.36], phone, phone, 60,
-        focus=phone, fstop=2.4, note="result card", track="phone")
+    # the result card, then a hard-cut punch-in on the number (HOST: punch-ins are cuts, no shot over ~3 s)
+    m_res = (S("models") - 0.05 + t_real) / 2
+    add(S("models") - 0.05, m_res, "insert", [0.15, ey - 0.85, ez - 0.35], [0.14, ey - 0.78, ez - 0.36], phone, phone, 32,
+        focus=phone, fstop=2.8, note="result card", track="phone_screen", dist=0.17)
+    add(m_res, t_real, "insert", [0.15, ey - 0.85, ez - 0.35], [0.14, ey - 0.78, ez - 0.36], phone, phone, 32,
+        focus=phone, fstop=2.8, note="756 punch-in", track="phone_screen", dist=0.12)
     # colour: medium, he turns the phone to the lens (present), the Firetiger colour call
     t_out = at("colour", "Out") - 0.05
-    add(t_out, S("box") - 0.05, "insert", [0.15, ey - 0.85, ez - 0.35], [0.14, ey - 0.78, ez - 0.36], phone, phone, 60,
-        focus=phone, fstop=2.4, note="colour card", track="phone")
+    m_col = (t_out + S("box") - 0.05) / 2
+    add(t_out, m_col, "insert", [0.15, ey - 0.85, ez - 0.35], [0.14, ey - 0.78, ez - 0.36], phone, phone, 60,
+        focus=phone, fstop=2.4, note="colour card", track="phone_screen", dist=0.3)
+    add(m_col, S("box") - 0.05, "insert", [0.15, ey - 0.85, ez - 0.35], [0.14, ey - 0.78, ez - 0.36], phone, phone, 60,
+        focus=phone, fstop=2.4, note="4,627 punch-in", track="phone_screen", dist=0.21)
     add(S("colour") - 0.05, t_out, "medium", [0.2, ey - 1.5, ez - 0.45], [0.18, ey - 1.35, ez - 0.43], [0.0, ey, ez - 0.35], [0.0, ey, ez - 0.32], 38,
         focus=face, note="present phone")
     # box: wide-ish, he holds the box out over the water... then hugs it
@@ -120,7 +129,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
         (S("weapon"), "phone_up", {"mouth": "talk"}),
         (S("models"), "phone_up", {"mouth": "talk"}),
         (S("colour"), "phone_present", {"mouth": "talk", "brow": 0.8}),
-        (S("box"), "box_out", {"mouth": "talk", "brow": -0.3}),
+        (S("box") - 0.05, "box_out", {"mouth": "talk", "brow": -0.3, "snap": True}),   # on the cut: no hands passing through the box
         (at("box", "keeping") - 0.1, "box_hug", {"mouth": "smirk", "brow": 0.4}),
         (S("free"), "neutral", {"mouth": "smirk", "brow": 0.6}),
         (S("cta"), "point_down", {"mouth": "talk", "brow": 0.4}),
@@ -132,7 +141,7 @@ def build_plan(tl, fps: int = 30, W: int = 1080, H: int = 1920) -> dict:
     props = {
         "lure_hand": [[0.0, S("enemy")]],
         "rod": [[t_pick - 0.3, E("enemy") + 0.25]],
-        "phone": [[S("weapon"), S("box") - 0.05]],
+        "phone": [[S("weapon") - 0.05, S("box") - 0.05]],     # appears on the cut, never mid-shot
         "box_open": [[S("enemy") - 0.05, dur]],
         "box_in_hands": [[S("box") - 0.05, S("free") - 0.05]],
         "pike": [t_pike, S("nottoday") - 0.05],

@@ -1494,24 +1494,25 @@ POSES = {
     ],
     'phone_up': _STANCE + [
         ('reach', 'R', ('spine02', (-0.04, -0.30, 0.10)), (-1, 0.5, -0.5), (0.25, -0.3, 0.9), (0, 0.5, 0.5)),
-        ('curl', 'R', PHONE, 4), ('rot', 'neck01', (1, 0, 0), 12), ('rot', 'head', (1, 0, 0), 14),
+        ('curl', 'R', OPEN, 4), ('rot', 'neck01', (1, 0, 0), 12), ('rot', 'head', (1, 0, 0), 14),   # v3: screen clear
         ('reach', 'L', ('upperleg01.L', (0.09, -0.05, -0.12)), (0.3, 1, 0), (0.05, -0.15, -1), (-1, 0.2, 0)), ('curl', 'L', RELAX, 4),
     ],
     'phone_present': _STANCE + [
         ('reach', 'R', ('head', (-0.08, -0.40, -0.06)), (-1, 0.3, -0.5), (0.1, -0.15, 1), (0, -1, 0.05)),
-        ('curl', 'R', PHONE, 4),
+        ('curl', 'R', OPEN, 4),            # v3: fingers flat behind the phone, the screen stays clear
         ('reach', 'L', ('upperleg01.L', (0.09, -0.05, -0.12)), (0.3, 1, 0), (0.05, -0.15, -1), (-1, 0.2, 0)), ('curl', 'L', RELAX, 4),
         ('rot', 'head', (0, 0, 1), -4),
     ],
     'box_out': _STANCE + [
         ('rot', 'spine03', (1, 0, 0), 4),
-        ('reach', 'R', ('spine02', (-0.17, -0.40, 0.02)), (-1, 0.3, -0.5), (0.1, -1, 0.0), (0.3, 0.0, 1)),
-        ('reach', 'L', ('spine02', (0.17, -0.40, 0.02)), (1, 0.3, -0.5), (-0.1, -1, 0.0), (-0.3, 0.0, 1)),
+        # v3: hands at the box's sides (box 42 cm wide), far enough out that it clears the jacket
+        ('reach', 'R', ('spine02', (-0.215, -0.42, 0.02)), (-1, 0.3, -0.5), (0.1, -1, 0.0), (1, 0.0, 0.15)),
+        ('reach', 'L', ('spine02', (0.215, -0.42, 0.02)), (1, 0.3, -0.5), (-0.1, -1, 0.0), (-1, 0.0, 0.15)),
         ('curl', 'R', GRIP, 0), ('curl', 'L', GRIP, 0),
     ],
     'box_hug': _STANCE + [
-        ('reach', 'R', ('spine02', (-0.10, -0.26, -0.02)), (-1, 0.5, -0.5), (0.9, -0.2, 0.2), (0.1, -0.3, 1)),
-        ('reach', 'L', ('spine02', (0.10, -0.26, 0.04)), (1, 0.5, -0.5), (-0.9, -0.2, 0.2), (-0.1, -0.3, 1)),
+        ('reach', 'R', ('spine02', (-0.215, -0.34, 0.0)), (-1, 0.5, -0.5), (0.2, -1, 0.1), (1, 0.0, 0.2)),
+        ('reach', 'L', ('spine02', (0.215, -0.34, 0.0)), (1, 0.5, -0.5), (-0.2, -1, 0.1), (-1, 0.0, 0.2)),
         ('curl', 'R', RELAX, 2), ('curl', 'L', RELAX, 2), ('rot', 'head', (0, 1, 0), 5),
     ],
     'point_down': _STANCE + [
@@ -1839,41 +1840,48 @@ SHOTS = {   # name: pose, face, camera offset from Finn (m), look-at height abov
 FINN_AT = Vector((0.0, 5.6, 0.55))
 
 
-def stage_preview():
-    sys.path.insert(0, HERE)
-    import finn_set
-    bpy.context.scene.render.hair_type = 'STRAND'
-    # v2 light (docs/styles/HOST.md 3): the set's own dawn defaults, cool sky and thin cool mist (no sepia wash)
-    finn_set.build_set({'tex_dir': TEX, 'seed': 7})
+def host_look(at, samples=64):
+    """The HOST look around Finn standing at `at` (feet, world): AgX with a little extra contrast, strand hair,
+    Eevee raytracing + volumes, and the light rig (docs/styles/HOST.md 3): one warm low key from screen-right (the
+    sun's side), a weaker cool sky fill from screen-left (about 3:1), the warm rim from the sun behind him, a small
+    glint light for the lens. Used by the preview stills and by render_episode.py, so both look the same."""
+    at = Vector(at)
     sc = bpy.context.scene
-    sc.render.engine = 'BLENDER_EEVEE'
-    sc.render.resolution_x, sc.render.resolution_y, sc.render.resolution_percentage = 1080, 1920, 100
+    sc.render.hair_type = 'STRAND'
     sc.view_settings.view_transform = 'AgX'; sc.view_settings.exposure = -0.7
     try: sc.view_settings.look = 'AgX - Medium High Contrast'
     except Exception: pass
     ee = sc.eevee
-    ee.taa_render_samples = 64
+    ee.taa_render_samples = samples
     for k, v in (('use_raytracing', True), ('use_shadows', True), ('volumetric_tile_size', '4'), ('volumetric_samples', 64),
-                 ('use_volumetric_shadows', True), ('shadow_ray_count', 2), ('shadow_step_count', 8), ('use_gtao', True),
-                 ('fast_gi_distance', 2.0)):
+                 ('use_volumetric_shadows', False), ('volumetric_end', 300.0), ('shadow_ray_count', 2), ('shadow_step_count', 8),
+                 ('use_gtao', True), ('fast_gi_distance', 2.0)):
         try: setattr(ee, k, v)
         except Exception: pass
     try:
         ee.ray_tracing_options.resolution_scale = '1'
     except Exception: pass
-    sc.render.image_settings.file_format = 'JPEG'; sc.render.image_settings.quality = 85
-    # cool fill from the front-left, small warm bounce from the deck, a soft glint light near the lens
+
     def area(name, color, energy, loc, size, target, spec=1.0, diff=1.0):
         l = bpy.data.lights.new(name, 'AREA'); l.color = lin(color); l.energy = energy; l.size = size
         l.specular_factor = spec; l.diffuse_factor = diff
         o = bpy.data.objects.new(name, l); sc.collection.objects.link(o); o.location = loc
         o.rotation_euler = (Vector(target) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler(); return o
-    # one warm low key from screen-right (the sun's side), a weaker cool sky fill from screen-left (about 3:1),
-    # the warm rim from the sun behind him, a small glint light for the lens
-    area('key_warm', '#ffc48a', 950, FINN_AT + Vector((2.6, -1.5, 2.0)), 1.6, FINN_AT + Vector((0, 0, 1.35)), spec=1.0)
-    area('fill_cool', '#8fb2e6', 240, FINN_AT + Vector((-2.4, -2.4, 2.2)), 3.0, FINN_AT + Vector((0, 0, 1.3)), spec=0.35)
-    area('rim_warm', '#ffbe7a', 700, FINN_AT + Vector((1.2, 2.0, 2.4)), 1.2, FINN_AT + Vector((0, 0, 1.4)), spec=1.0)
-    area('glint', '#ffffff', 25, FINN_AT + Vector((-0.6, -1.6, 2.3)), 0.25, FINN_AT + Vector((0, 0, 1.75)), spec=1.0, diff=0.0)
+    return [area('key_warm', '#ffc48a', 950, at + Vector((2.6, -1.5, 2.0)), 1.6, at + Vector((0, 0, 1.35)), spec=1.0),
+            area('fill_cool', '#8fb2e6', 240, at + Vector((-2.4, -2.4, 2.2)), 3.0, at + Vector((0, 0, 1.3)), spec=0.35),
+            area('rim_warm', '#ffbe7a', 700, at + Vector((1.2, 2.0, 2.4)), 1.2, at + Vector((0, 0, 1.4)), spec=1.0),
+            area('glint', '#ffffff', 25, at + Vector((-0.6, -1.6, 2.3)), 0.25, at + Vector((0, 0, 1.75)), spec=1.0, diff=0.0)]
+
+
+def stage_preview():
+    sys.path.insert(0, HERE)
+    import finn_set
+    finn_set.build_set({'tex_dir': TEX, 'seed': 7})
+    sc = bpy.context.scene
+    sc.render.engine = 'BLENDER_EEVEE'
+    sc.render.resolution_x, sc.render.resolution_y, sc.render.resolution_percentage = 1080, 1920, 100
+    sc.render.image_settings.file_format = 'JPEG'; sc.render.image_settings.quality = 85
+    host_look(FINN_AT)
 
 
 def render_shots(rig, shots, out_dir=PREVIEWS, prefix='finn_v2_'):
