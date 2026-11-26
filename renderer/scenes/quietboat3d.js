@@ -97,7 +97,8 @@ export function build(world, plan) {
         }
       } else if (e.kind === 'water') {
         // wide enough to overlap frame to frame at 4.3x speed (no strobing); the big race rings also get a wake
-        out.push([[src[0], src[1], r, e.a * fade], [-1, 1, 0.09, e.src === 'hull' && e.at[1] === 0 ? 0.6 : 0]]);
+        const race = e.src === 'hull' && e.at[1] === 0;   // the race ring is the biggest and fastest: softer, wider front
+        out.push([[src[0], src[1], r, e.a * fade * (race ? 0.8 : 1)], [-1, 1, race ? 0.17 : 0.09, race ? 0.6 : 0]]);
       } else if (e.kind === 'race_air') {
         out.push([[src[0], src[1], r, e.a * fade], [1, 2, 0.035, 0]]);
       }
