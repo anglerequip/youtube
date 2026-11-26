@@ -1,0 +1,101 @@
+slug: finn-lure-finder
+title: "Stop Guessing Lure Colours (Captain Finn Tries Lure Finder)"
+topic: "AnglerMind host test (HOST style, docs/styles/HOST.md): Captain Finn swears an oath against guessing lure colours and shows Lure Finder picking a real lure and its exact factory colour for murky autumn dawn pike water. Real tool output only (ref/tool_output.md)."
+component: custom
+renderer: blender        # Blender Eevee on Caesar's PC (tools/blender/render_episode.py); plan.py lists shots, poses and props
+scene: finn_dock
+style: host
+caption_style: host
+hook_family: 3           # a vow, spoken on frame 0
+structure: H             # host ad: hook -> enemy -> reaction -> weapon -> proof -> comic turn -> reassurance -> CTA
+voice: elevenlabs
+voice_id: 3iY0r3RaYmOh6WfIwMIH     # Matt (Caesar's presenter voice), as Finn for this test
+speed: 1.0
+ambience: lake
+description: |
+  Murky water, an autumn dawn, a pike somewhere out there. Which lure, which colour? Lure Finder on anglermind.com
+  picks one lure out of 756 real models and names the exact factory colour out of 4,627, with the reason.
+
+  Try it free at anglermind.com
+
+  #fishing #pikefishing #lurefishing #anglermind
+tags: [fishing, pike fishing, lure colour, lure fishing, AnglerMind, Lure Finder]
+story:
+  core_idea: "Stop guessing lure colours: Lure Finder names a real lure and its exact factory colour for your conditions."
+  fascination: "a grown man treating lure colour like a sworn enemy, and a tool that actually answers it"
+  steps: 2            # tell it the conditions; it names the lure and the colour (with numbers)
+  buildup: low
+  extras: []
+  payoff: cta
+  cut:
+    - "the other seven lures in the result: one pick is the point"
+    - "wire trace advice: true and useful, but a second video"
+    - "how the scoring works: belongs on the site"
+end_hold_s: 0.4
+beats:
+  - id: hook
+    text: "I swore an oath. No angler... guesses a lure colour *ever* again."
+    pause_after: 0.2
+  - id: enemy
+    text: "You open the box. Every colour on Earth. You pick one... and you wait."
+    pause_after: 0.6
+    sfx: pop
+  - id: nottoday
+    text: "Not today."
+    pause_after: 0.15
+  - id: weapon
+    text: "Lure Finder. Tell it the fish, the water, the light."
+    pause_after: 0.15
+    sfx: tick
+  - id: models
+    text: "It picks one lure out of seven hundred and fifty-six real models..."
+    pause_after: 0.1
+  - id: colour
+    text: "and the *exact* factory colour. Out of four thousand six hundred and twenty-seven."
+    pause_after: 0.5
+    sfx: ding
+  - id: box
+    text: "Okay. I'm keeping the box."
+    pause_after: 0.3
+  - id: free
+    text: "And it's free."
+    pause_after: 0.1
+  - id: cta
+    text: "Try it free at anglermind dot com."
+    pause_after: 0.0
+
+claims:
+  - id: models
+    text: "one lure out of seven hundred and fifty-six real models"
+    value: 756
+    scope: "anglermind.com/lure-finder page text, 2026-11-26"
+    evidence: "content/episodes/finn-lure-finder/ref/tool_output.md"
+  - id: colourways
+    text: "the exact factory colour out of four thousand six hundred and twenty-seven"
+    value: 4627
+    scope: "anglermind.com/lure-finder page text, 2026-11-26"
+    evidence: "content/episodes/finn-lure-finder/ref/tool_output.md"
+  - id: free
+    text: "it's free"
+    scope: "AnglerMind is a free platform with no checkout (docs/BRAND.md); Lure Finder ran without sign-in on 2026-11-26"
+    evidence: "docs/BRAND.md; ref/tool_output.md"
+  - id: result
+    text: "phone screen: Northern pike, murky, dawn, overcast -> Rapala Jointed J11, 9/10 match; Firetiger colour call"
+    scope: "real Lure Finder output for those inputs on 2026-11-26"
+    evidence: "content/episodes/finn-lure-finder/ref/tool_output.md"
+absolute_ok:
+  - "ever: part of a comic vow, not a factual claim"
+  - "every colour on Earth: comic exaggeration about a tackle box"
+entities:
+  - name: Captain Finn
+    risk: character
+    contract: "our own original host (tools/blender/host_v1.py); not modelled on any real person or existing character"
+  - name: pike
+    risk: animal
+    contract: "a northern pike: long olive body, pale bean-shaped spots, duck-bill snout"
+hero: "Captain Finn and the phone showing Lure Finder"
+caveats:
+  - "The phone screen recreates the real Lure Finder result for: Northern pike, shore, dawn/dusk, autumn, overcast, calm, murky (captured 2026-11-26). Results change as the site's data changes."
+  - "Lure brand names appear only because the real tool output shows them; no product is endorsed and no Amazon link is shown in the video."
+sources:
+  - "https://anglermind.com/lure-finder (page text and result, 2026-11-26)"

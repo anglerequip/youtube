@@ -141,6 +141,10 @@ STYLES = {
     # one word at a time, ALL CAPS, white with a dark outline (the "build" explainer look)
     "build": {"font": "Poppins ExtraBold", "cap": 0.024, "center_y": 0.73, "outline": 5, "shadow": 2, "upper": True,
               "max_words": 1, "colors": {}},
+    # plain host-ad captions (docs/styles/HOST.md 5): neo-grotesque medium, white, thin grey outline + soft shadow,
+    # lowercase sentence text, a phrase (up to 5 words) at a time, no highlights
+    "host": {"font": "Inter Medium", "cap": 0.032, "center_y": 0.63, "outline": 2.5, "shadow": 3, "upper": False,
+             "max_words": 5, "colors": {}, "outline_colour": "&H00505050", "back_colour": "&H90000000", "blur": 2},
 }
 
 
@@ -224,7 +228,7 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Cap,{st["font"]},{size},&H00FFFFFF,&H00FFFFFF,&H001A1615,&H60000000,0,0,0,0,100,100,0,0,1,{st["outline"]},{st["shadow"]},5,60,60,0,1
+Style: Cap,{st["font"]},{size},&H00FFFFFF,&H00FFFFFF,{st.get("outline_colour", "&H001A1615")},{st.get("back_colour", "&H60000000")},0,0,0,0,100,100,0,0,1,{st["outline"]},{st["shadow"]},5,60,60,0,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -244,6 +248,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 shown = rf"{{\1c{_ass_color(col)}}}{shown}{{\1c&H00FFFFFF}}"
             words.append(shown)
         tag = rf"{{\pos({W // 2},{cy})}}"
+        if st.get("blur"):      # soft dark halo underneath (host style): blurred, faint, no box
+            halo = rf"{{\pos({W // 2},{cy})\bord9\blur12\1a&HFF&\3c&H000000&\3a&HB0&\4a&HFF&}}"
+            lines.append(f"Dialogue: 0,{_ts(s)},{_ts(e)},Cap,,0,0,0,,{halo}{' '.join(words)}")
         lines.append(f"Dialogue: 1,{_ts(s)},{_ts(e)},Cap,,0,0,0,,{tag}{' '.join(words)}")
     path.write_text(header + "\n".join(lines) + "\n", encoding="utf-8")
 
