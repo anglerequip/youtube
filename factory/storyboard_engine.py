@@ -81,7 +81,7 @@ class Storyboard:
         desc = self.description
         if self.sources:
             desc += "\n\nSources:\n" + "\n".join(f"- {s}" for s in self.sources)
-        desc += f"\n\n{settings.channel_name}: {settings.channel_tagline}"
+        desc += f"\n\n{settings.channel_name}: {settings.channel_tagline} {settings.channel_site}"
         return {"title": self.title[:100], "description": desc[:5000], "tags": self.tags,
                 "categoryId": "28"}  # 28 = Science & Technology
 

@@ -1,4 +1,4 @@
-"""Cloud Facebook queue: posts ONE reel a day to the CounterPhysical Page, with no PC.
+"""Cloud Facebook queue: posts ONE reel a day to the channel's Facebook Page (still named CounterPhysical until the rebrand, docs/REBRAND.md), with no PC.
 
 Caesar (2026-11-21): "queue everything we've ever made that's not already on Facebook, including new
 videos". Rules agreed in the project thread "Find out why Facebook reels disappeared":

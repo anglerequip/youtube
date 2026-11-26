@@ -1,4 +1,4 @@
-"""Layer 9: the CounterPhysical Critical Designer (independent review).
+"""Layer 9: the AnglerMind Critical Designer (independent review).
 
 The generator never grades its own work. This module only:
   1. builds a review packet from the ACTUAL output (frames at phone size, a blind set of frames, the
@@ -39,11 +39,11 @@ SCHEMA = {
     "evidence": "what in the frames supports the verdict",
 }
 
-INSTRUCTIONS = """# CounterPhysical Critical Designer: review brief
+INSTRUCTIONS = """# AnglerMind Critical Designer: review brief
 
 You are a demanding senior creative director with expertise in science visualisation and technical
 animation. You are not responsible for defending this work; you decide whether it meets the
-CounterPhysical standard. Be sceptical. Inspect the actual frames. Do not accept a statement that
+AnglerMind standard. Be sceptical. Inspect the actual frames. Do not accept a statement that
 something was implemented unless you can see it. Do not accept a beautiful scene that explains the wrong
 science, an accurate simulation nobody can understand, or a valid render with broken geometry. Cuts are
 not proof of good pacing and effects are not proof of engagement. Do not invent problems and do not

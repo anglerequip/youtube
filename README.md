@@ -1,4 +1,7 @@
-# Counterphysical: science Shorts factory
+# AnglerMind: video and marketing factory
+
+Makes Shorts, TikToks and reels that market [anglermind.com](https://anglermind.com). Formerly the
+Counterphysical science Shorts factory; see `docs/BRAND.md` and `docs/REBRAND.md`.
 
 Generates original physics and maths YouTube Shorts from code: a real simulation, a free AI voiceover,
 synced captions and generated sound effects, checked automatically and sent to you for approval.
