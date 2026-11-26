@@ -1,4 +1,4 @@
-"""Counterphysical presenters v7: much higher-poly rebuilds of the wizard and the young woman (Blender, procedural).
+"""AnglerMind presenters v7: much higher-poly rebuilds of the wizard and the young woman (Blender, procedural).
 
   python tools/blender/presenters_v7.py --out assets/characters [--preview out_dir] [--only woman|wizard]
 

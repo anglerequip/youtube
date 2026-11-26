@@ -1,4 +1,6 @@
-# Counterphysical Shorts factory: architecture
+# AnglerMind video factory: architecture
+
+(Formerly the Counterphysical Shorts factory. Brand rules: `docs/BRAND.md`.)
 
 Status as of 2026-11-19: Phases 1 and 2 are done (structure, first Short, QC, tests).
 Phases 3 to 7 are listed at the bottom with what is and isn't built.

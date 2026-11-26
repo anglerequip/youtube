@@ -1,4 +1,4 @@
-"""Build the two Counterphysical presenters in Blender (procedural, original designs) and export GLB.
+"""Build the two AnglerMind presenters in Blender (procedural, original designs) and export GLB.
 
   python tools/blender/presenters.py --out assets/characters [--preview out_dir]
 

@@ -1,4 +1,4 @@
-// Counterphysical presenters. v7 (default): Blender-built models from tools/blender/presenters_v7.py, exported to
+// AnglerMind presenters. v7 (default): Blender-built models from tools/blender/presenters_v7.py, exported to
 // assets/characters/{wizard,woman}.glb and preloaded by boot.js (loadPresenters). The older v6 pair is kept in
 // assets/characters/v6/ (plan.presenters = 'v6'). If the GLBs are not loaded,
 // man()/woman() fall back to the procedural v5 models below (same pose API).

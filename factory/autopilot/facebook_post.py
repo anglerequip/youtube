@@ -1,4 +1,4 @@
-"""Cloud Facebook queue: posts ONE reel a day to the CounterPhysical Page, with no PC.
+"""Cloud Facebook queue: posts ONE reel a day to the AnglerMind Facebook Page (formerly CounterPhysical, docs/REBRAND.md), with no PC.
 
 Caesar (2026-11-21): "queue everything we've ever made that's not already on Facebook, including new
 videos". Rules agreed in the project thread "Find out why Facebook reels disappeared":
@@ -132,6 +132,7 @@ def _ok(r, what: str) -> dict:
 def post_reel(folder: Path, page: str, token: str, at: datetime | None = None) -> str:
     """Upload and publish one reel through the Graph API Reels endpoints. Returns the reel id."""
     import requests
+    from .tagline import rebrand
     pkg = json.loads((folder / "package.json").read_text(encoding="utf-8"))
     video = folder / "video.mp4"
     start = _ok(requests.post(f"{GRAPH}/{VERSION}/{page}/video_reels",
@@ -141,7 +142,7 @@ def post_reel(folder: Path, page: str, token: str, at: datetime | None = None) -
         _ok(requests.post(f"{RUPLOAD}/{VERSION}/{vid}", data=fh, timeout=900, headers={
             "Authorization": f"OAuth {token}", "offset": "0", "file_size": str(video.stat().st_size)}), "upload")
     finish = {"upload_phase": "finish", "video_id": vid, "video_state": "PUBLISHED", "access_token": token,
-              "title": pkg["title"], "description": pkg.get("description", "")}
+              "title": pkg["title"], "description": rebrand(pkg.get("description", ""))}
     if pkg.get("is_ai_generated", True):
         finish["is_ai_generated"] = "true"
     if at is not None:

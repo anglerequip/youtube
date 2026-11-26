@@ -129,7 +129,7 @@ def add_to_playlist(yt, video_id: str, name: str, cache: dict) -> None:
             cache.setdefault("", "")
         if name not in cache:
             made = yt.playlists().insert(part="snippet,status", body={
-                "snippet": {"title": name, "description": f"Counterphysical Shorts: {name.lower()}.",
+                "snippet": {"title": name, "description": f"AnglerMind Shorts: {name.lower()}. anglermind.com",
                             "defaultLanguage": "en"},
                 "status": {"privacyStatus": "public"}}).execute()
             cache[name] = made["id"]
@@ -140,11 +140,12 @@ def add_to_playlist(yt, video_id: str, name: str, cache: dict) -> None:
 
 
 def body(pkg: dict) -> dict:
+    from .tagline import rebrand
     status = {"privacyStatus": "private",
               "publishAt": pkg["publish_at"],
               "selfDeclaredMadeForKids": bool(pkg.get("made_for_kids", False)),
               "containsSyntheticMedia": bool(pkg.get("contains_synthetic_media", True))}
-    return {"snippet": {"title": pkg["title"][:100], "description": tidy_description(pkg["description"]),
+    return {"snippet": {"title": pkg["title"][:100], "description": tidy_description(rebrand(pkg["description"])),
                         "tags": tidy_tags(pkg.get("tags", [])), "categoryId": str(pkg.get("category_id", "28")),
                         "defaultLanguage": "en", "defaultAudioLanguage": "en"},
             "status": status}

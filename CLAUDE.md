@@ -1,12 +1,21 @@
-# Counterphysical Shorts factory
+# AnglerMind video factory
+
+**New direction (Caesar, 2026-11-26):** this repo now makes YouTube Shorts, TikToks, reels and ads that
+market **AnglerMind** (https://anglermind.com, a free fishing decision platform; site code in
+`anglerequip/anglermind`). It was the Counterphysical science Shorts factory; the pipeline and rules below
+still apply. Read `docs/BRAND.md` (what AnglerMind is, what a video may show and claim, links, colours,
+tagline, call to action) and `docs/REBRAND.md` (what is renamed, what still waits for Caesar) before any job.
 
 Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session writing new episodes.
-**Every visual must follow the Visual Blueprint below.** It is Caesar's chosen art style.
+**Every visual must follow the Visual Blueprint below** until Caesar picks the new AnglerMind look and
+character (art-style study in its own thread); then the blueprint is replaced.
 
 ## Writing a new episode
 
-1. Pick a topic that is genuinely counterintuitive *and* simulatable with real physics or maths.
-   Check `content/episodes/` so you don't repeat one. Never copy another channel's scripts,
+1. Pick a topic that serves anglers and leads to an AnglerMind tool (pillars in `docs/BRAND.md`: tool in
+   action, fishing science, character skits). Anything the video says the site does must be true on the live
+   site; tool output shown on screen must be real output. Check `content/episodes/` and the topic ledger so
+   you don't repeat one. Never copy another channel's scripts,
    footage, branding or exact video concepts.
 2. Research it. Put real, checkable sources and honest caveats in the storyboard. Never invent data
    or overstate a result to make it more dramatic.
@@ -37,6 +46,9 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
 
 ## Rules
 
+- AnglerMind copy (scripts, captions, titles, descriptions, docs) never uses the em dash, same as the site
+  repo. Rewrite the sentence instead of swapping in another mark.
+- Videos link to anglermind.com, never straight to Amazon or other affiliate links.
 - Nothing is ever published without the human's approval in Telegram. Do not add code paths that
   upload from the production workflow.
 - Secrets only in `.env` / environment variables.
@@ -150,7 +162,7 @@ result. Warm daylight, muted colours, soft haze; the only saturated thing on scr
 that signals the phenomenon.
 
 ## 10. Our branding inside this style
-- Small "COUNTERPHYSICAL" wordmark is optional and must stay out of the caption band.
+- Small "AnglerMind" wordmark is optional and must stay out of the caption band.
 - Our label cards may use our accent colours, but keep the off-white card + one strong colour rule.
 
 ## 11. Polygon budget (Caesar, 2026-11-20: "increase the poly in the videos")
@@ -238,7 +250,8 @@ reasoning in one line in the package (`packaging_notes`) or the PR:
 
 **Facebook reels** (`autopilot_queue_facebook/<slug>/package.json`) follow the same rules, adapted: no `#shorts`,
 at most one emoji on the hook line and one on the comment question, the question before sources, sources shortened to one line,
-then "Animated with real physics by Counterphysical. AI voice." Sources: light research 2026-11-21 (Opus Clip,
+then "Made by AnglerMind, try it free at anglermind.com. AI voice." (Counterphysical-era reels used
+"Animated with real physics by Counterphysical. AI voice.") Sources: light research 2026-11-21 (Opus Clip,
 ContentStudio, Neal Schaffer guides on Facebook Reels captions); the percentages those guides quote are vendor
 claims, so judge by our own numbers once reels have views.
 

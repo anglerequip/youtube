@@ -1,4 +1,4 @@
-// Reusable material library for Counterphysical scenes (premium-stylised, not photoreal).
+// Reusable material library for AnglerMind scenes (premium-stylised, not photoreal).
 // Every material is physically based and picks up the scene environment map for reflections.
 import * as THREE from 'three';
 

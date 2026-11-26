@@ -1,4 +1,4 @@
-// Counterphysical 3D world kit: the house art style from CLAUDE.md "VISUAL BLUEPRINT".
+// AnglerMind 3D world kit: the house art style from CLAUDE.md "VISUAL BLUEPRINT".
 // Low-poly diorama, warm sun with hard shadows, haze, filmic tone mapping, bloom on emissives only.
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
