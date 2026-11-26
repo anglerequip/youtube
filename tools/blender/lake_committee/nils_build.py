@@ -27,7 +27,7 @@ H = 1.70                                  # cap top above the ground
 # Landmarks measured on the model sheet (pixels, 1024 x 1536; ground 1440, cap top 52), and the model's own heights
 SHEET_GUIDES = {'cap rim': 90, 'eyes': 130, 'chin': 262, 'collar': 300, 'bib top': 455, 'fingertips': 962,
                 'boot tops': 1180, 'ground': 1440}
-COL = {'skin': '#c98f6e', 'knit': '#b5521f', 'shirt': '#2e3a44', 'bib': '#5d6332', 'strap': '#4a2d1c',
+COL = {'skin': '#b97a5a', 'knit': '#a8481a', 'shirt': '#26303a', 'bib': '#525a2a', 'strap': '#4a2d1c',
        'brass': '#b08a45', 'boot': '#2b2a27', 'sole': '#1c1b19', 'hair': '#8d8f8c', 'sweater': '#6b4a2e',
        'red': '#b8241c', 'ivory': '#e6dcc2', 'eye': '#ece6da', 'iris': '#4a3a2a', 'mouth': '#3a1a16'}
 
@@ -282,16 +282,16 @@ def proc(m, *, noise_amt=0.0, noise_scale=8.0, grime=None, rib=None, weave=None,
 def materials():
     M = {}
     M['skin'] = proc(mat('NB_skin', COL['skin'], 0.55, sss=0.25), noise_amt=0.08, noise_scale=20, bump_noise=0.0004)
-    M['knit'] = proc(mat('NB_knit', COL['knit'], 0.85, sheen=0.4), noise_amt=0.07, rib=(0.006, 0.0012, 'X'))
-    M['shirt'] = proc(mat('NB_shirt', COL['shirt'], 0.55, sheen=0.15), noise_amt=0.12, noise_scale=6, weave=(0.0016, 0.0002), wear=0.35)
+    M['knit'] = proc(mat('NB_knit', COL['knit'], 0.85, sheen=0.3), noise_amt=0.07)              # ribs are geometry
+    M['shirt'] = proc(mat('NB_shirt', COL['shirt'], 0.5, sheen=0.12), noise_amt=0.14, noise_scale=6, wear=0.45)
     M['bib'] = proc(mat('NB_oilskin', COL['bib'], 0.48, coat=0.12), noise_amt=0.16, noise_scale=5, grime=(0.55, '#4a3b26'), wear=0.4,
                     bump_noise=0.0006)
     M['strap'] = proc(mat('NB_leather', COL['strap'], 0.5, coat=0.1), noise_amt=0.12, wear=0.4)
     M['brass'] = mat('NB_brass', COL['brass'], 0.3, metal=1.0)
     M['boot'] = proc(mat('NB_rubber', COL['boot'], 0.42, coat=0.2), noise_amt=0.1, grime=(0.18, '#4a3a28'), bump_noise=0.0005)
     M['sole'] = mat('NB_sole', COL['sole'], 0.8)
-    M['hair'] = proc(mat('NB_hair', COL['hair'], 0.65, sheen=0.3), noise_amt=0.12, noise_scale=40, rib=(0.0025, 0.0008, 'Z'))
-    M['sweater'] = proc(mat('NB_sweater', COL['sweater'], 0.9, sheen=0.4), noise_amt=0.1, rib=(0.004, 0.0008, 'X'))
+    M['hair'] = proc(mat('NB_hair', COL['hair'], 0.65, sheen=0.25), noise_amt=0.18, noise_scale=60, rib=(0.0045, 0.00025, 'Z'))
+    M['sweater'] = proc(mat('NB_sweater', COL['sweater'], 0.9, sheen=0.4), noise_amt=0.1, rib=(0.005, 0.0003, 'X'))
     M['red'] = mat('NB_float_red', COL['red'], 0.3, coat=0.5)
     M['ivory'] = mat('NB_float_ivory', COL['ivory'], 0.4, coat=0.3)
     M['eye'] = eye_mat()
@@ -323,9 +323,9 @@ def eye_mat():
 
 
 # --------------------------------------------------------------------------------------------------------- the build
-HEAD_PIVOT = V(0, 0.02, 1.44)              # neck pivot: the head tips up and turns around this
+HEAD_PIVOT = V(0, 0.02, 1.43)              # neck pivot: the head tips up and turns around this
 HEAD_TILT = math.radians(-7)               # chin up (rotation about X; negative lifts the face)
-HEAD_TURN = math.radians(14)               # toward his left (+Z rotation turns the face toward +X)
+HEAD_TURN = math.radians(-12)              # a little toward the camera (his right): the sheet's three-quarter face
 
 
 def head_xf(p):
@@ -334,36 +334,43 @@ def head_xf(p):
     return HEAD_PIVOT + (R @ (Vector(p) - HEAD_PIVOT).to_4d()).to_3d()
 
 
-HEAD_SCALE = 1.1
+HEAD_SCALE = 1.17
 
 
 def place_head(o):
     """Head objects are modelled upright, then scaled, tipped and turned as one piece around the neck pivot."""
     R = Matrix.Translation(HEAD_PIVOT) @ Matrix.Rotation(HEAD_TURN, 4, 'Z') @ Matrix.Rotation(HEAD_TILT, 4, 'X') @ Matrix.Scale(HEAD_SCALE, 4) @ Matrix.Translation(-HEAD_PIVOT)
-    o.data.transform(R); o.data.update()
+    o.data.transform(R); o.data.update(); o['nb_head'] = True
 
 
 def build_head(M):
-    """Skull, face planes, wedge nose, square chin, cheekbones, ears and neck as one sculpted surface."""
+    """Skull, one broad face mass, a square jaw and chin shelf, a forehead/brow shelf, the long wedge nose with a flat
+    bridge plane and a squared tip, thin lips set into the face, ears and neck, blended into one surface and reduced to
+    broad planes."""
     bm = bmesh.new()
-    ellipsoid(bm, (0, 0.012, 1.598), (0.094, 0.108, 0.098), (40, 28))             # cranium
-    ellipsoid(bm, (0, -0.03, 1.52), (0.088, 0.078, 0.086), (36, 24))              # face mass / cheeks
-    rbox(bm, (0, -0.055, 1.468), (0.064, 0.05, 0.032), bevel=0.018)                # square chin and jaw shelf
-    rbox(bm, (0, -0.02, 1.488), (0.083, 0.06, 0.03), bevel=0.02)                   # jaw corners
-    for s in (-1, 1):
-        ellipsoid(bm, (s * 0.06, -0.068, 1.565), (0.032, 0.028, 0.022), (24, 16))  # cheekbones
-        ellipsoid(bm, (s * 0.1, 0.022, 1.575), (0.014, 0.03, 0.04), (20, 14))      # ears
-        ellipsoid(bm, (s * 0.048, -0.093, 1.628), (0.03, 0.02, 0.016), (20, 12))  # brow bone (under the hair)
-    capsule(bm, (0, 0.02, 1.36), (0, 0.015, 1.47), 0.068, 28)                      # neck
-    hull(bm, [V(-0.013, -0.098, 1.625), V(0.013, -0.098, 1.625),                   # wedge nose: bridge,
-              V(-0.016, -0.192, 1.538), V(0.016, -0.192, 1.538),                   # long forward tip,
-              V(-0.008, -0.172, 1.522), V(0.008, -0.172, 1.522),                   # abrupt underside,
-              V(-0.028, -0.106, 1.522), V(0.028, -0.106, 1.522),                   # nostril wings
-              V(-0.03, -0.098, 1.555), V(0.03, -0.098, 1.555)])
-    capsule(bm, (-0.03, -0.106, 1.5065), (0.03, -0.106, 1.5065), 0.0075, 16)      # upper lip (overhang)
-    capsule(bm, (-0.024, -0.1, 1.4955), (0.024, -0.1, 1.4955), 0.0068, 16)        # lower lip
+    ellipsoid(bm, (0, 0.015, 1.6), (0.088, 0.1, 0.1), (40, 28))                    # cranium
+    ellipsoid(bm, (0, -0.035, 1.528), (0.086, 0.078, 0.112), (40, 28))             # face: cheeks broad and flat-ish
+    rbox(bm, (0, -0.042, 1.458), (0.068, 0.056, 0.036), bevel=0.03)                  # square jaw
+    rbox(bm, (0, -0.08, 1.437), (0.047, 0.027, 0.03), bevel=0.01)                   # square chin shelf
+    capsule(bm, (-0.058, -0.078, 1.628), (0.058, -0.078, 1.628), 0.021, 24)        # forehead / brow shelf
+    capsule(bm, (0, 0.02, 1.36), (0, 0.015, 1.46), 0.078, 28)                      # neck (thick, mostly in the collar)
+    hull(bm, [V(-0.014, -0.096, 1.634), V(0.014, -0.096, 1.634),                   # wedge nose: bridge between the brows,
+              V(-0.018, -0.15, 1.576), V(0.018, -0.15, 1.576),                     # a straight flat top plane,
+              V(-0.022, -0.195, 1.532), V(0.022, -0.195, 1.532),                   # a broad squared tip,
+              V(-0.023, -0.188, 1.508), V(0.023, -0.188, 1.508),                   # an abrupt turn underneath,
+              V(-0.034, -0.112, 1.502), V(0.034, -0.112, 1.502),                   # wide nostril base
+              V(-0.03, -0.098, 1.565), V(0.03, -0.098, 1.565)])
+    capsule(bm, (-0.029, -0.103, 1.488), (0.029, -0.103, 1.488), 0.0058, 16)      # upper lip with a small overhang
+    capsule(bm, (-0.023, -0.097, 1.477), (0.023, -0.097, 1.477), 0.0052, 16)      # quieter lower lip
     o = new_obj('NB_head', bm, M['skin'])
-    sculpt(o, voxel=0.0028, smooth_iter=6, smooth_fac=0.55, faces=9000, angle=30)
+    sculpt(o, voxel=0.0026, smooth_iter=10, smooth_fac=0.65, faces=3200, angle=26)
+    # ears: their own shapes, set against the side of the head
+    for s_, name in ((1, 'L'), (-1, 'R')):
+        bm = bmesh.new(); ellipsoid(bm, (s_ * 0.094, 0.026, 1.572), (0.012, 0.026, 0.038), (24, 18), rot=(0, s_ * 0.3, s_ * -0.35))
+        ellipsoid(bm, (s_ * 0.1, 0.026, 1.572), (0.006, 0.018, 0.028), (20, 14), rot=(0, s_ * 0.3, s_ * -0.35))
+        ear = new_obj('NB_ear_' + name, bm, M['skin'])
+        sculpt(ear, voxel=0.0018, smooth_iter=6, smooth_fac=0.5, faces=500, angle=35)
+        place_head(ear)
     place_head(o)
     return o
 
@@ -371,27 +378,27 @@ def build_head(M):
 def build_face_parts(M):
     objs = []
     for s, name in ((1, 'L'), (-1, 'R')):
-        c = V(s * 0.04, -0.084, 1.604)
-        bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=40, v_segments=28, radius=0.0145, matrix=Matrix.Translation(c))
+        c = V(s * 0.037, -0.077, 1.604)
+        bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=40, v_segments=28, radius=0.0158, matrix=Matrix.Translation(c))
         e = new_obj('NB_eye_' + name, bm, M['eye'], True); place_head(e); objs.append(e)
         # upper lid: a thick shell over the top 55 % of the eye, its edge a little below centre (half-lidded)
-        bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=40, v_segments=28, radius=0.0162, matrix=Matrix.Translation(c))
-        cut = c + V(0, 0, -0.0035 if s > 0 else -0.0045)       # asymmetric: his left lid a touch more open
+        bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=40, v_segments=28, radius=0.0175, matrix=Matrix.Translation(c))
+        cut = c + V(0, 0, 0.0015 if s > 0 else 0.0)       # asymmetric: his left lid a touch more open
         kill = [v for v in bm.verts if v.co.z < cut.z + 0.004 * (v.co.y - c.y) / 0.016 or v.co.y > c.y + 0.006]
         bmesh.ops.delete(bm, geom=kill, context='VERTS')
         lid = new_obj('NB_lid_upper_' + name, bm, M['skin'], True)
         so = lid.modifiers.new('t', 'SOLIDIFY'); so.thickness = 0.0026; so.offset = 1.0
         apply_mods(lid); place_head(lid); objs.append(lid)
-        bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=40, v_segments=28, radius=0.0158, matrix=Matrix.Translation(c))
-        kill = [v for v in bm.verts if v.co.z > c.z - 0.0085 or v.co.y > c.y + 0.004]
+        bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=40, v_segments=28, radius=0.017, matrix=Matrix.Translation(c))
+        kill = [v for v in bm.verts if v.co.z > c.z - 0.0095 or v.co.y > c.y + 0.004]
         bmesh.ops.delete(bm, geom=kill, context='VERTS')
         lo = new_obj('NB_lid_lower_' + name, bm, M['skin'], True)
         so = lo.modifiers.new('t', 'SOLIDIFY'); so.thickness = 0.002; so.offset = 1.0
         apply_mods(lo); place_head(lo); objs.append(lo)
     # brows: angular grey masses with an underside; built asymmetric (his right lower and heavier, his left higher
     # at the outer end and set a little further forward), never mirrored
-    brows = {'L': dict(inner=V(0.014, -0.106, 1.624), outer=V(0.074, -0.082, 1.646), h=0.02, d=0.024, fwd=-0.006),
-             'R': dict(inner=V(-0.014, -0.105, 1.62), outer=V(-0.074, -0.083, 1.634), h=0.022, d=0.022, fwd=0.0)}
+    brows = {'L': dict(inner=V(0.012, -0.108, 1.624), outer=V(0.082, -0.08, 1.648), h=0.026, d=0.032, fwd=-0.006),
+             'R': dict(inner=V(-0.012, -0.107, 1.619), outer=V(-0.082, -0.081, 1.638), h=0.028, d=0.03, fwd=0.0)}
     for name, B in brows.items():
         a, b = B['inner'] + V(0, B['fwd'], 0), B['outer'] + V(0, B['fwd'], 0)
         pts = []
@@ -408,14 +415,14 @@ def build_face_parts(M):
     # squared grey sideburns and the hair band under the cap
     for s, name in ((1, 'L'), (-1, 'R')):
         bm = bmesh.new()
-        hull(bm, [V(s * 0.087, -0.032, 1.648), V(s * 0.087, 0.018, 1.648), V(s * 0.081, -0.03, 1.548), V(s * 0.083, 0.004, 1.548),
-                  V(s * 0.101, -0.03, 1.646), V(s * 0.103, 0.016, 1.646), V(s * 0.095, -0.028, 1.55), V(s * 0.097, 0.002, 1.55)])
+        hull(bm, [V(s * 0.082, -0.012, 1.655), V(s * 0.084, 0.022, 1.655), V(s * 0.079, -0.008, 1.534), V(s * 0.081, 0.016, 1.534),
+                  V(s * 0.09, -0.012, 1.655), V(s * 0.092, 0.022, 1.655), V(s * 0.087, -0.008, 1.536), V(s * 0.089, 0.016, 1.536)])
         sb = new_obj('NB_sideburn_' + name, bm, M['hair']); facet(sb, 25, 0.0015); place_head(sb); objs.append(sb)
     bm = bmesh.new()
     pts = []
     for k in range(25):
-        a = math.radians(-70 + k * (320 / 24))                     # round the back, open at the face
-        for z, r in ((1.665, 0.104), (1.605, 0.104), (1.57, 0.096)):
+        a = math.radians(70 + k * (220 / 24))                      # round the back only (the face side is open)
+        for z, r in ((1.66, 0.094), (1.6, 0.094), (1.565, 0.088)):
             pts.append(V(math.sin(a) * r, 0.012 + math.cos(a) * r * 1.05, z))
     rings = [[pts[k * 3 + j] for k in range(25)] for j in range(3)]
     bm2 = bmesh.new(); R = [[bm2.verts.new(p) for p in rr] for rr in rings]
@@ -424,9 +431,9 @@ def build_face_parts(M):
     hb = new_obj('NB_hair_back', bm2, M['hair'], True)
     so = hb.modifiers.new('t', 'SOLIDIFY'); so.thickness = 0.01; so.offset = 1; apply_mods(hb); place_head(hb); objs.append(hb)
     # mouth: a dark seam between the lips and a simple interior behind it
-    bm = bmesh.new(); rbox(bm, (0, -0.103, 1.5008), (0.026, 0.006, 0.0012), bevel=0.0008)
+    bm = bmesh.new(); rbox(bm, (0, -0.101, 1.4818), (0.029, 0.006, 0.0014), bevel=0.0008)
     ml = new_obj('NB_mouth_line', bm, M['mouth']); place_head(ml); objs.append(ml)
-    bm = bmesh.new(); ellipsoid(bm, (0, -0.075, 1.498), (0.026, 0.022, 0.014), (24, 14))
+    bm = bmesh.new(); ellipsoid(bm, (0, -0.075, 1.479), (0.026, 0.022, 0.014), (24, 14))
     mi = new_obj('NB_mouth_interior', bm, M['mouth'], True); place_head(mi); objs.append(mi)
     return objs
 
@@ -436,8 +443,8 @@ def build_cap(M):
     distinct rolled cuff whose ribs turn with it."""
     rings = []
     n = 96
-    for k, (z, r, dy) in enumerate(((1.648, 1.0, 0.0), (1.67, 1.005, 0.0), (1.692, 0.97, 0.004), (1.716, 0.87, 0.008),
-                                     (1.733, 0.7, 0.012), (1.74, 0.46, 0.014), (1.743, 0.2, 0.015))):
+    for k, (z, r, dy) in enumerate(((1.662, 1.0, 0.0), (1.684, 1.005, 0.0), (1.704, 0.97, 0.004), (1.726, 0.87, 0.008),
+                                     (1.742, 0.7, 0.012), (1.749, 0.46, 0.014), (1.752, 0.2, 0.015))):
         pts = []
         for i in range(n):
             a = 2 * math.pi * i / n
@@ -453,12 +460,13 @@ def build_cap(M):
     # rolled cuff: a thick roll (a tube swept round the rim), ribs running across the roll
     rings = []
     m = 20
+    n = 180
     for i in range(n + 1):
         a = 2 * math.pi * i / n
         cx, cy = math.sin(a) * 0.113, 0.014 - math.cos(a) * 0.127
-        cz = 1.646 - 0.008 * math.cos(a)
+        cz = 1.66 - 0.008 * math.cos(a)
         out = V(math.sin(a), -math.cos(a), 0)
-        rib = 0.0018 * math.cos(a * 70)
+        rib = 0.0009 * math.cos(a * 90)
         rr = []
         for j in range(m):
             t = 2 * math.pi * j / m
@@ -507,10 +515,10 @@ def build_shirt(M):
     # collar: two flaps that stand around the neck and turn out, with air under the points
     rings = []
     n = 40
-    for z, r, out in ((1.4, 0.104, 0.0), (1.442, 0.11, 0.0), (1.455, 0.13, 0.02), (1.43, 0.16, 0.045)):
+    for z, r, out in ((1.38, 0.106, 0.0), (1.418, 0.114, 0.0), (1.43, 0.134, 0.02), (1.405, 0.162, 0.045)):
         pts = []
         for i in range(n):
-            a = -math.pi * 0.86 + (2 * math.pi * 0.86) * i / (n - 1)           # open at the front
+            a = -math.pi * 0.8 + (2 * math.pi * 0.8) * i / (n - 1)             # open at the front
             rr = r + out * (0.6 + 0.4 * math.cos(a)) + (0.012 if abs(a) > 2.2 and out else 0)
             pts.append(V(math.sin(a) * rr, 0.02 - math.cos(a) * rr * 0.9 + 0.0, z - (0.03 if abs(a) > 2.3 and out else 0)))
         rings.append(pts)
@@ -520,7 +528,7 @@ def build_shirt(M):
     col_ = new_obj('NB_collar', bm, M['shirt'])
     so = col_.modifiers.new('t', 'SOLIDIFY'); so.thickness = 0.006; so.offset = 1; apply_mods(col_); facet(col_, 30, 0.002)
     # sweater neckline (brown knit) under the collar
-    bm = loft([ring((0, 0.02, 0), 0.09, 0.083, 40, z=1.39), ring((0, 0.02, 0), 0.084, 0.078, 40, z=1.43)])
+    bm = loft([ring((0, 0.02, 0), 0.096, 0.09, 40, z=1.37), ring((0, 0.02, 0), 0.09, 0.086, 40, z=1.415)])
     sw = new_obj('NB_sweater_neck', bm, M['sweater'], True)
     so = sw.modifiers.new('t', 'SOLIDIFY'); so.thickness = 0.01; so.offset = 1; apply_mods(sw)
     return [torso, col_, sw] + sleeves
@@ -566,7 +574,7 @@ def build_bib(M):
         tcapsule(bm, (s_ * 0.12, 0.0, 0.82), (s_ * 0.132, -0.01, 0.5), 0.152, 0.146, 24)   # thigh to a baggy knee
         tcapsule(bm, (s_ * 0.132, -0.01, 0.5), (s_ * 0.142, -0.015, 0.3), 0.146, 0.106, 24)  # into the boot
     trousers = new_obj('NB_bib_trousers', bm, M['bib'])
-    garment(trousers, 650, [(0.032, 5.0, 7, lambda p: smooth01((p.z - 0.3) / 0.12) * (1 - smooth01((p.z - 0.96) / 0.06))), (0.016, 9.0, 9)], voxel=0.008)
+    garment(trousers, 520, [(0.028, 3.6, 7, lambda p: smooth01((p.z - 0.3) / 0.12) * (1 - smooth01((p.z - 0.96) / 0.06)))], voxel=0.008)
     # bib panel over the torso
     pts_l, pts_r = [], []
     rows = [(0.98, 0.175, -0.246), (1.06, 0.165, -0.238), (1.14, 0.155, -0.226), (1.212, 0.148, -0.214)]
@@ -732,8 +740,8 @@ def studio():
         l = bpy.data.lights.new(name, 'AREA'); l.energy = e; l.size = size; l.color = lin(color)
         o = bpy.data.objects.new(name, l); sc.collection.objects.link(o); o.location = loc
         o.rotation_euler = (V(*tgt) - V(*loc)).to_track_quat('-Z', 'Y').to_euler()
-    area('ST_key', 900, (-2.6, -2.4, 3.4), 2.6, (0, 0, 1.2))
-    area('ST_fill', 160, (2.8, -2.6, 1.4), 3.0, (0, 0, 1.0), '#dfe6f2')
+    area('ST_key', 520, (-2.6, -2.4, 3.4), 2.6, (0, 0, 1.2))
+    area('ST_fill', 70, (2.8, -2.6, 1.4), 3.0, (0, 0, 1.0), '#dfe6f2')
     area('ST_rim', 260, (1.4, 2.6, 2.6), 1.5, (0, 0, 1.3))
 
 
@@ -755,7 +763,7 @@ def render_setup(w=1024, h=1536, samples=48):
     for k, v in (('use_raytracing', True), ('use_shadows', True), ('use_gtao', True)):
         try: setattr(sc.eevee, k, v)
         except Exception: pass
-    sc.view_settings.view_transform = 'AgX'
+    sc.view_settings.view_transform = 'AgX'; sc.view_settings.exposure = -0.4
     try: sc.view_settings.look = 'AgX - Medium High Contrast'
     except Exception: pass
     sc.render.image_settings.file_format = 'JPEG'; sc.render.image_settings.quality = 90
@@ -775,7 +783,7 @@ def set_clay(on, M):
 
 def landmarks():
     """3D points for the guide lines (posed model)."""
-    return {'cap rim': head_xf(V(0, -0.11, 1.648)), 'eyes': head_xf(V(0.04, -0.09, 1.604)), 'chin': head_xf(V(0, -0.1, 1.437)),
+    return {'cap rim': head_xf(V(0, -0.11, 1.662)), 'eyes': head_xf(V(0.04, -0.09, 1.604)), 'chin': head_xf(V(0, -0.1, 1.41)),
             'collar': V(0.12, -0.1, 1.43), 'bib top': V(0, -0.186, 1.207), 'fingertips': V(0.33, -0.08, 0.64),
             'boot tops': V(0.15, -0.12, 0.32), 'ground': V(0.15, -0.24, 0.0)}
 
@@ -803,10 +811,52 @@ def match_sheet(out_dir, cam, tag):
 
 def turnaround(out_dir, M):
     sc = bpy.context.scene; sc.render.image_settings.file_format = 'PNG'
+    cyc = bpy.data.objects.get('ST_cyc')
     for ang, nm in ((0, 'front'), (35, 'three_quarter'), (90, 'side'), (180, 'back')):
-        a = math.radians(ang); D = 5.0
-        camera((-math.sin(a) * D, -math.cos(a) * D, 0.95), (0, 0, 0.9), 50, 'ST_turn')
+        a = math.radians(ang); D = 4.2
+        if cyc: cyc.hide_render = ang > 100            # the backdrop would sit between the camera and him
+        camera((-math.sin(a) * D, -math.cos(a) * D, 0.95), (0, 0, 0.88), 68, 'ST_turn')
         render(os.path.join(out_dir, f'_turn_{nm}.png'))
+    if cyc: cyc.hide_render = False
+    sc.render.image_settings.file_format = 'JPEG'
+
+
+def look_clip(out_dir, frames=60):
+    """The brief's silent look, 2.5 s at 24 fps, from the portrait camera: he is looking down at the float; a
+    three-frame eye shift to the lens, five frames later a ten-frame head turn up to the camera, then a hold.
+    Head parts follow one control at the neck pivot; each eye turns about its own centre."""
+    sc = bpy.context.scene; sc.render.fps = 24; sc.frame_start = 1; sc.frame_end = frames
+    ctrl = bpy.data.objects.get('NB_head_ctrl') or bpy.data.objects.new('NB_head_ctrl', None)
+    if ctrl.name not in coll().objects: coll().objects.link(ctrl)
+    ctrl.location = HEAD_PIVOT; ctrl.rotation_mode = 'XYZ'; ctrl.empty_display_size = 0.05
+    eyes = {}
+    for side, cx in (('L', 0.037), ('R', -0.037)):
+        e = bpy.data.objects.get('NB_eye_ctrl_' + side) or bpy.data.objects.new('NB_eye_ctrl_' + side, None)
+        if e.name not in coll().objects: coll().objects.link(e)
+        e.location = head_xf(V(cx, -0.077, 1.604)); e.rotation_mode = 'XYZ'; e.empty_display_size = 0.01
+        eyes[side] = e
+    bpy.context.view_layer.update()
+    for o in [o for o in coll().objects if o.get('nb_head')]:
+        mw = o.matrix_world.copy()
+        par = eyes['L'] if o.name == 'NB_eye_L' else eyes['R'] if o.name == 'NB_eye_R' else ctrl
+        o.parent = par; o.matrix_world = mw
+    for e in eyes.values():
+        mw = e.matrix_world.copy(); e.parent = ctrl; e.matrix_world = mw
+    def key(f, head, eye):
+        ctrl.rotation_euler = (math.radians(head[0]), 0, math.radians(head[1])); ctrl.keyframe_insert('rotation_euler', frame=f)
+        for e in eyes.values():
+            e.rotation_euler = (math.radians(eye[0]), 0, math.radians(eye[1])); e.keyframe_insert('rotation_euler', frame=f)
+    down = (11, 16)                      # chin down, turned toward the float on his left
+    key(1, down, (14, 12)); key(12, down, (14, 12))
+    key(15, down, (-6, -14))             # 3-frame eye shift up to the lens
+    key(20, down, (-6, -14))             # 5 frames before the head moves
+    key(30, (0, 0), (-2, -6))            # 10-frame head turn; the eyes settle
+    key(frames, (0, 0), (-2, -6))        # hold
+    for fc in (ctrl.animation_data.action.fcurves if ctrl.animation_data and hasattr(ctrl.animation_data.action, 'fcurves') else []):
+        for kp in fc.keyframe_points: kp.interpolation = 'BEZIER'
+    sc.render.image_settings.file_format = 'PNG'
+    d = os.path.join(out_dir, '_look'); os.makedirs(d, exist_ok=True)
+    sc.render.filepath = os.path.join(d, 'f'); bpy.ops.render.render(animation=True)
     sc.render.image_settings.file_format = 'JPEG'
 
 
@@ -832,7 +882,19 @@ def main(argv):
     cam = camera(MATCH_CAM['loc'], MATCH_CAM['target'], MATCH_CAM['lens'])
     set_clay(True, M)
     match_sheet(a.previews, cam, 'clay')
-    if a.only == 'match': return
+    if a.only == 'headviews':                     # front / three-quarter / side of the head, clay
+        sc = bpy.context.scene; sc.render.resolution_x = sc.render.resolution_y = 640; sc.render.image_settings.file_format = 'PNG'
+        hc = head_xf(V(0, -0.02, 1.57))
+        for ang, nm in ((0, 'front'), (40, 'tq'), (90, 'side')):
+            r = math.radians(ang)
+            camera((hc.x - math.sin(r) * 2.2, hc.y - math.cos(r) * 2.2, hc.z), (hc.x, hc.y, hc.z), 220, 'ST_head')
+            render(os.path.join(a.previews, f'_head_{nm}.png'))
+        return
+    if a.only in ('match', 'head'):
+        if a.only == 'head':                      # the same camera at 3x resolution for a head crop
+            sc = bpy.context.scene; sc.render.resolution_percentage = 300
+            match_sheet(a.previews, cam, 'head'); sc.render.resolution_percentage = 100
+        return
     turnaround(a.previews, M)
     set_clay(False, M)
     cam = camera(MATCH_CAM['loc'], MATCH_CAM['target'], MATCH_CAM['lens'])
@@ -841,6 +903,8 @@ def main(argv):
     camera((head.x - 0.55, head.y - 1.05, head.z - 0.08), (head.x, head.y, head.z - 0.02), 85, 'ST_portrait')
     bpy.context.scene.render.resolution_x, bpy.context.scene.render.resolution_y = 1080, 1350
     render(os.path.join(a.previews, 'nils_v001_lit_portrait.jpg'))
+    if a.only != 'noclip':
+        look_clip(a.previews)
     bpy.context.scene.render.resolution_x, bpy.context.scene.render.resolution_y = 1024, 1536
     bpy.context.scene.camera = bpy.data.objects['ST_cam']
     bpy.ops.wm.save_mainfile()
