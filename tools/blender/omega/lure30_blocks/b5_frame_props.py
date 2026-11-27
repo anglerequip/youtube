@@ -1,5 +1,9 @@
     # ---------------------------------------------------------------- props that follow hands, the hero lure, the weather
     bpy.context.view_layer.update()
+    for who_, a_ in rig.items():                                    # feet stay on the floor (mocap bends knees, hips don't drop)
+        az = min((a_.matrix_world @ a_.pose.bones[b_].tail).z for b_ in ('shin.L', 'shin.R'))
+        a_.location.z += ANK0[who_] - az; a_.keyframe_insert('location', index=2, frame=f)
+    bpy.context.view_layer.update()
     def tail(who, b): return rig[who].matrix_world @ rig[who].pose.bones[b].tail
     def ss(u): u = min(1.0, max(0.0, u)); return u * u * (3 - 2 * u)
     hl = tail('nils', 'hand.L'); hz = hl.z

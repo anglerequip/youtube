@@ -321,10 +321,16 @@ def sheet_face():
     gt = nt.nodes.new('ShaderNodeMath'); gt.operation = 'GREATER_THAN'; gt.inputs[1].default_value = 1.585
     nt.links.new(sep.outputs['Z'], gt.inputs[0])
     fb = nt.nodes.new('ShaderNodeMix'); fb.data_type = 'RGBA'
-    fb.inputs['A'].default_value = kit.hexc('#7a6e66'); fb.inputs['B'].default_value = kit.hexc('#c9531c')
+    fb.inputs['A'].default_value = kit.hexc('#b98468'); fb.inputs['B'].default_value = kit.hexc('#c9531c')
     nt.links.new(gt.outputs[0], fb.inputs['Factor'])
     mx = nt.nodes.new('ShaderNodeMix'); mx.data_type = 'RGBA'
-    nt.links.new(im.outputs['Alpha'], mx.inputs['Factor']); nt.links.new(fb.outputs['Result'], mx.inputs['A']); nt.links.new(im.outputs['Color'], mx.inputs['B'])
+    geo = nt.nodes.new('ShaderNodeNewGeometry'); vt = nt.nodes.new('ShaderNodeVectorTransform')
+    vt.vector_type = 'NORMAL'; vt.convert_from = 'WORLD'; vt.convert_to = 'OBJECT'; nt.links.new(geo.outputs['Normal'], vt.inputs['Vector'])
+    sn = nt.nodes.new('ShaderNodeSeparateXYZ'); nt.links.new(vt.outputs['Vector'], sn.inputs['Vector'])
+    fr = nt.nodes.new('ShaderNodeMapRange'); fr.inputs['From Min'].default_value = -0.15; fr.inputs['From Max'].default_value = -0.55
+    nt.links.new(sn.outputs['Y'], fr.inputs['Value'])                     # facing -Y (the painted view) -> 1, side-on -> 0
+    am = nt.nodes.new('ShaderNodeMath'); am.operation = 'MULTIPLY'; nt.links.new(im.outputs['Alpha'], am.inputs[0]); nt.links.new(fr.outputs['Result'], am.inputs[1])
+    nt.links.new(am.outputs[0], mx.inputs['Factor']); nt.links.new(fb.outputs['Result'], mx.inputs['A']); nt.links.new(im.outputs['Color'], mx.inputs['B'])
     nt.links.new(mx.outputs['Result'], b.inputs['Base Color'])
     b.inputs['Roughness'].default_value = 0.72
     try: b.inputs['Specular IOR Level'].default_value = 0.25
@@ -411,9 +417,36 @@ except Exception: pass
 ACT = False
 TL = json.load(open(arg('--timeline'))); N = int(math.ceil(TL['total'] * FPS))
 bpy.context.preferences.edit.keyframe_new_interpolation_type = 'LINEAR'
-theo.location = (-0.4, -0.38, 0); bpy.context.view_layer.update()           # close enough to reach the box
+theo.location = (-0.58, -0.46, 0); bpy.context.view_layer.update()           # close enough to reach the box
 H_T = theo.matrix_world @ Vector((0, -0.03, 1.56))
-BOXP = Vector((0.16, 0.0, 0.0))
+def clean_regions(name, iters=4):
+    """Mode filter on the painted clothing regions: a face takes the material most of its neighbours have, so
+    stray patches (yellow flecks on a grey sleeve, blue blots on the bib) disappear and borders stop being ragged."""
+    o = bpy.data.objects.get(name)
+    if not o: return
+    bm_ = bmesh.new(); bm_.from_mesh(o.data); bm_.faces.ensure_lookup_table()
+    nb = [[g.index for e in f.edges for g in e.link_faces if g.index != f.index] for f in bm_.faces]
+    mi = [f.material_index for f in bm_.faces]; changed = 0
+    for _ in range(iters):
+        new = mi[:]
+        for i, ns in enumerate(nb):
+            if not ns: continue
+            cnt = {}
+            for j in ns: cnt[mi[j]] = cnt.get(mi[j], 0) + 1
+            top = max(cnt, key=cnt.get)
+            if top != mi[i] and cnt[top] >= max(2, len(ns) * 0.6): new[i] = top; changed += 1
+        mi = new
+    for f, m_ in zip(bm_.faces, mi): f.material_index = m_
+    bm_.to_mesh(o.data); bm_.free(); print('CLEAN', name, changed)
+clean_regions('nils_tsg'); clean_regions('theo_tsg')
+# the image-to-3D body kept its hands at the thighs; once the arms were rebuilt, those lumps hung off Theo's jeans
+# like a black box (Caesar's screenshot). Flatten them back onto the thigh.
+_tb = bpy.data.objects.get('theo_tsg')
+if _tb:
+    for v_ in _tb.data.vertices:
+        if 0.5 < v_.co.z < 1.0 and abs(v_.co.x) > 0.245: v_.co.x = math.copysign(0.245, v_.co.x)
+BOXP = Vector((0.06, -0.1, 0.0))
+ANK0 = {w_: min((a_.matrix_world @ a_.data.bones[b_].tail_local).z for b_ in ('shin.L', 'shin.R')) for w_, a_ in (('nils', nils), ('theo', theo))}
 TBM = kit.painted('tb_giant', ['#b8481a', '#d25a22', '#e46e30'], rough=0.7, scale=5.0, cavity=0.5)
 BW, BD, BH = 0.6, 0.4, 0.3
 kit.box('gt_body', (BW, BD, BH), (BOXP.x, BOXP.y, BH / 2), mat=TBM, bev=0.02, segs=2)
@@ -435,15 +468,13 @@ RL = random.Random(11)
 NL = int(arg('--lures', '330'))
 GRAV, DT = -9.8, 1.0 / (FPS * 4)
 NF_ = nils.matrix_world @ Vector((0, 0, 0))                                 # Nils's feet
-FEET = [nils.matrix_world @ Vector((sx, 0.0, 0)) for sx in (-0.11, 0.11)]
+FEET = [a_.matrix_world @ a_.data.bones[b_].tail_local for a_ in (nils, theo) for b_ in ('shin.L', 'shin.R')]   # ankles
 CELL = 0.045; HF = {}
 def hf(x, y):
     k = (int(math.floor(x / CELL)), int(math.floor(y / CELL)))
     if k not in HF:
         h = 0.0
         if abs(x - BOXP.x) < BW / 2 and abs(y - BOXP.y) < BD / 2: h = BH - 0.05
-        for fp in FEET:
-            if (Vector((x, y)) - fp.xy).length < 0.085: h = 0.11                # lures land on his boots too
         HF[k] = h
     return k
 def sim_lure(p, v, t0, spin):
@@ -457,6 +488,11 @@ def sim_lure(p, v, t0, spin):
             for _ in range(4):
                 v.z += GRAV * DT; p += v * DT
                 if landed == 0: rot += spin * DT
+                for fp in FEET:                                              # boots are solid: slide the lure off
+                    d_ = Vector((p.x - fp.x, p.y - fp.y))
+                    if d_.length < 0.13 and p.z < 0.16:
+                        d_ = d_.normalized() if d_.length > 1e-4 else Vector((1, 0)); p.x, p.y = fp.x + d_.x * 0.13, fp.y + d_.y * 0.13
+                        v.x, v.y = 0.4 * d_.x * max(0.2, v.xy.length), 0.4 * d_.y * max(0.2, v.xy.length)
                 k = hf(p.x, p.y); floor = HF[k] + 0.011
                 if p.z < floor:
                     p.z = floor
@@ -529,7 +565,7 @@ def make_phone(name):
         sm = bpy.data.materials.new('screen_s'); sm.use_nodes = True; nt_ = sm.node_tree; bb = nt_.nodes['Principled BSDF']
         ti = nt_.nodes.new('ShaderNodeTexImage'); ti.image = bpy.data.images.load(SCREEN_IMG, check_existing=True)
         nt_.links.new(ti.outputs['Color'], bb.inputs['Base Color']); nt_.links.new(ti.outputs['Color'], bb.inputs['Emission Color'])
-        bb.inputs['Emission Strength'].default_value = 1.6; bb.inputs['Roughness'].default_value = 0.35
+        bb.inputs['Emission Strength'].default_value = 0.8; bb.inputs['Roughness'].default_value = 0.35
     bpy.ops.mesh.primitive_plane_add(size=1, location=(0, -0.0052, 0), rotation=(math.radians(90), 0, 0))
     s_ = bpy.context.active_object; s_.name = name + '_screen'; s_.scale = (0.068, 0.136, 1); s_.data.materials.append(sm); s_.parent = root
     return root
@@ -608,7 +644,7 @@ cuts = [(0.0, 'burst', ('creep', 0.06)),
         (ts(7) - 0.1, 'theo', ('punch', word_t(7, 'window') - 0.1, 1.3)),
         (ts(8) - 0.1, 'two', ('creep', 0.06)),
         (word_t(8, 'asked') - 0.1, 'nils', ('punch', word_t(8, 'AnglerMind') - 0.05, 1.35)),
-        (ts(9) - 0.1, 'phone', ('creep', 0.2)),
+        (ts(9) - 0.1, 'phone', ('creep', 0.03)),
         (22.55, 'float', ('creep', 0.08)),
         (ts(10) - 0.1, 'theo', ('creep', 0.06)),
         (ts(11) - 0.1, 'ecu', ('punch', word_t(11, 'presents') - 0.05, 1.2)),
@@ -743,7 +779,7 @@ def gesture(who, t, name, side='R', T=7, hold=None):
     pose(who, F(t), pose_, T=T)
     if hold: pose(who, F(t + hold), {**G('L'), **G('R')}, T=9)
 # arms that motion capture can't give us: blended over the captured arms in these windows (ovr below)
-pose('nils', 0, G('L', -22, 6, -80, -5))                                                   # the mug, held at the belly
+pose('nils', 0, G('L', -42, 14, -62, -5))                                                   # the mug, held at the belly
 pose('theo', F(ts(3) - 0.4), {**G('L', -50, 18, -80, 0), **G('R', -50, 18, -80, 0)}, T=6)   # a lure in each hand
 pose('nils', F(ts(8)), G('R', -40, 2, -105, -15), T=7)                                     # the phone
 pose('nils', F(word_t(8, 'AnglerMind') - 0.1), G('R', -62, 10, -78, -10), T=6)             # ... held up to show Theo
@@ -889,6 +925,10 @@ for f in range(1, N + 1):
             o = bpy.data.objects[n]; o.rotation_euler = (r0.x + math.radians(bl + 0.3 * max(0, ep)), r0.y, r0.z); o.keyframe_insert('rotation_euler', frame=f)
     # the clock's minute hand creeps (time is half the topic)
     # ---------------------------------------------------------------- props that follow hands, the hero lure, the weather
+    bpy.context.view_layer.update()
+    for who_, a_ in rig.items():                                    # feet stay on the floor (mocap bends knees, hips don't drop)
+        az = min((a_.matrix_world @ a_.pose.bones[b_].tail).z for b_ in ('shin.L', 'shin.R'))
+        a_.location.z += ANK0[who_] - az; a_.keyframe_insert('location', index=2, frame=f)
     bpy.context.view_layer.update()
     def tail(who, b): return rig[who].matrix_world @ rig[who].pose.bones[b].tail
     def ss(u): u = min(1.0, max(0.0, u)); return u * u * (3 - 2 * u)

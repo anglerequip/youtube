@@ -319,10 +319,16 @@ def sheet_face():
     gt = nt.nodes.new('ShaderNodeMath'); gt.operation = 'GREATER_THAN'; gt.inputs[1].default_value = 1.585
     nt.links.new(sep.outputs['Z'], gt.inputs[0])
     fb = nt.nodes.new('ShaderNodeMix'); fb.data_type = 'RGBA'
-    fb.inputs['A'].default_value = kit.hexc('#7a6e66'); fb.inputs['B'].default_value = kit.hexc('#c9531c')
+    fb.inputs['A'].default_value = kit.hexc('#b98468'); fb.inputs['B'].default_value = kit.hexc('#c9531c')
     nt.links.new(gt.outputs[0], fb.inputs['Factor'])
     mx = nt.nodes.new('ShaderNodeMix'); mx.data_type = 'RGBA'
-    nt.links.new(im.outputs['Alpha'], mx.inputs['Factor']); nt.links.new(fb.outputs['Result'], mx.inputs['A']); nt.links.new(im.outputs['Color'], mx.inputs['B'])
+    geo = nt.nodes.new('ShaderNodeNewGeometry'); vt = nt.nodes.new('ShaderNodeVectorTransform')
+    vt.vector_type = 'NORMAL'; vt.convert_from = 'WORLD'; vt.convert_to = 'OBJECT'; nt.links.new(geo.outputs['Normal'], vt.inputs['Vector'])
+    sn = nt.nodes.new('ShaderNodeSeparateXYZ'); nt.links.new(vt.outputs['Vector'], sn.inputs['Vector'])
+    fr = nt.nodes.new('ShaderNodeMapRange'); fr.inputs['From Min'].default_value = -0.15; fr.inputs['From Max'].default_value = -0.55
+    nt.links.new(sn.outputs['Y'], fr.inputs['Value'])                     # facing -Y (the painted view) -> 1, side-on -> 0
+    am = nt.nodes.new('ShaderNodeMath'); am.operation = 'MULTIPLY'; nt.links.new(im.outputs['Alpha'], am.inputs[0]); nt.links.new(fr.outputs['Result'], am.inputs[1])
+    nt.links.new(am.outputs[0], mx.inputs['Factor']); nt.links.new(fb.outputs['Result'], mx.inputs['A']); nt.links.new(im.outputs['Color'], mx.inputs['B'])
     nt.links.new(mx.outputs['Result'], b.inputs['Base Color'])
     b.inputs['Roughness'].default_value = 0.72
     try: b.inputs['Specular IOR Level'].default_value = 0.25

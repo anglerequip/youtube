@@ -38,7 +38,7 @@ def gesture(who, t, name, side='R', T=7, hold=None):
     pose(who, F(t), pose_, T=T)
     if hold: pose(who, F(t + hold), {**G('L'), **G('R')}, T=9)
 # arms that motion capture can't give us: blended over the captured arms in these windows (ovr below)
-pose('nils', 0, G('L', -22, 6, -80, -5))                                                   # the mug, held at the belly
+pose('nils', 0, G('L', -42, 14, -62, -5))                                                   # the mug, held at the belly
 pose('theo', F(ts(3) - 0.4), {**G('L', -50, 18, -80, 0), **G('R', -50, 18, -80, 0)}, T=6)   # a lure in each hand
 pose('nils', F(ts(8)), G('R', -40, 2, -105, -15), T=7)                                     # the phone
 pose('nils', F(word_t(8, 'AnglerMind') - 0.1), G('R', -62, 10, -78, -10), T=6)             # ... held up to show Theo

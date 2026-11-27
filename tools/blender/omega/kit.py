@@ -3,7 +3,7 @@
 Everything here is built in Blender from scratch (no external assets). Run inside Blender 5.2:
   blender -b -P tools/blender/omega/calib_m3.py -- --shot prop
 """
-import math, random
+import math, os, random
 import bpy, bmesh
 from mathutils import Vector, Matrix, Euler
 

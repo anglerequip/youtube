@@ -5,9 +5,36 @@
 ACT = False
 TL = json.load(open(arg('--timeline'))); N = int(math.ceil(TL['total'] * FPS))
 bpy.context.preferences.edit.keyframe_new_interpolation_type = 'LINEAR'
-theo.location = (-0.4, -0.38, 0); bpy.context.view_layer.update()           # close enough to reach the box
+theo.location = (-0.58, -0.46, 0); bpy.context.view_layer.update()           # close enough to reach the box
 H_T = theo.matrix_world @ Vector((0, -0.03, 1.56))
-BOXP = Vector((0.16, 0.0, 0.0))
+def clean_regions(name, iters=4):
+    """Mode filter on the painted clothing regions: a face takes the material most of its neighbours have, so
+    stray patches (yellow flecks on a grey sleeve, blue blots on the bib) disappear and borders stop being ragged."""
+    o = bpy.data.objects.get(name)
+    if not o: return
+    bm_ = bmesh.new(); bm_.from_mesh(o.data); bm_.faces.ensure_lookup_table()
+    nb = [[g.index for e in f.edges for g in e.link_faces if g.index != f.index] for f in bm_.faces]
+    mi = [f.material_index for f in bm_.faces]; changed = 0
+    for _ in range(iters):
+        new = mi[:]
+        for i, ns in enumerate(nb):
+            if not ns: continue
+            cnt = {}
+            for j in ns: cnt[mi[j]] = cnt.get(mi[j], 0) + 1
+            top = max(cnt, key=cnt.get)
+            if top != mi[i] and cnt[top] >= max(2, len(ns) * 0.6): new[i] = top; changed += 1
+        mi = new
+    for f, m_ in zip(bm_.faces, mi): f.material_index = m_
+    bm_.to_mesh(o.data); bm_.free(); print('CLEAN', name, changed)
+clean_regions('nils_tsg'); clean_regions('theo_tsg')
+# the image-to-3D body kept its hands at the thighs; once the arms were rebuilt, those lumps hung off Theo's jeans
+# like a black box (Caesar's screenshot). Flatten them back onto the thigh.
+_tb = bpy.data.objects.get('theo_tsg')
+if _tb:
+    for v_ in _tb.data.vertices:
+        if 0.5 < v_.co.z < 1.0 and abs(v_.co.x) > 0.245: v_.co.x = math.copysign(0.245, v_.co.x)
+BOXP = Vector((0.06, -0.1, 0.0))
+ANK0 = {w_: min((a_.matrix_world @ a_.data.bones[b_].tail_local).z for b_ in ('shin.L', 'shin.R')) for w_, a_ in (('nils', nils), ('theo', theo))}
 TBM = kit.painted('tb_giant', ['#b8481a', '#d25a22', '#e46e30'], rough=0.7, scale=5.0, cavity=0.5)
 BW, BD, BH = 0.6, 0.4, 0.3
 kit.box('gt_body', (BW, BD, BH), (BOXP.x, BOXP.y, BH / 2), mat=TBM, bev=0.02, segs=2)
@@ -29,15 +56,13 @@ RL = random.Random(11)
 NL = int(arg('--lures', '330'))
 GRAV, DT = -9.8, 1.0 / (FPS * 4)
 NF_ = nils.matrix_world @ Vector((0, 0, 0))                                 # Nils's feet
-FEET = [nils.matrix_world @ Vector((sx, 0.0, 0)) for sx in (-0.11, 0.11)]
+FEET = [a_.matrix_world @ a_.data.bones[b_].tail_local for a_ in (nils, theo) for b_ in ('shin.L', 'shin.R')]   # ankles
 CELL = 0.045; HF = {}
 def hf(x, y):
     k = (int(math.floor(x / CELL)), int(math.floor(y / CELL)))
     if k not in HF:
         h = 0.0
         if abs(x - BOXP.x) < BW / 2 and abs(y - BOXP.y) < BD / 2: h = BH - 0.05
-        for fp in FEET:
-            if (Vector((x, y)) - fp.xy).length < 0.085: h = 0.11                # lures land on his boots too
         HF[k] = h
     return k
 def sim_lure(p, v, t0, spin):
@@ -51,6 +76,11 @@ def sim_lure(p, v, t0, spin):
             for _ in range(4):
                 v.z += GRAV * DT; p += v * DT
                 if landed == 0: rot += spin * DT
+                for fp in FEET:                                              # boots are solid: slide the lure off
+                    d_ = Vector((p.x - fp.x, p.y - fp.y))
+                    if d_.length < 0.13 and p.z < 0.16:
+                        d_ = d_.normalized() if d_.length > 1e-4 else Vector((1, 0)); p.x, p.y = fp.x + d_.x * 0.13, fp.y + d_.y * 0.13
+                        v.x, v.y = 0.4 * d_.x * max(0.2, v.xy.length), 0.4 * d_.y * max(0.2, v.xy.length)
                 k = hf(p.x, p.y); floor = HF[k] + 0.011
                 if p.z < floor:
                     p.z = floor
@@ -123,7 +153,7 @@ def make_phone(name):
         sm = bpy.data.materials.new('screen_s'); sm.use_nodes = True; nt_ = sm.node_tree; bb = nt_.nodes['Principled BSDF']
         ti = nt_.nodes.new('ShaderNodeTexImage'); ti.image = bpy.data.images.load(SCREEN_IMG, check_existing=True)
         nt_.links.new(ti.outputs['Color'], bb.inputs['Base Color']); nt_.links.new(ti.outputs['Color'], bb.inputs['Emission Color'])
-        bb.inputs['Emission Strength'].default_value = 1.6; bb.inputs['Roughness'].default_value = 0.35
+        bb.inputs['Emission Strength'].default_value = 0.8; bb.inputs['Roughness'].default_value = 0.35
     bpy.ops.mesh.primitive_plane_add(size=1, location=(0, -0.0052, 0), rotation=(math.radians(90), 0, 0))
     s_ = bpy.context.active_object; s_.name = name + '_screen'; s_.scale = (0.068, 0.136, 1); s_.data.materials.append(sm); s_.parent = root
     return root
