@@ -53,6 +53,72 @@ def sculpt_block(name, verts_fn, mat, smooth=28.0):
     return keep(o)
 
 
+HAIRS = kit.painted('nils_hairlock', ['#403d3a', '#5b5753', '#77726c'], rough=0.72, scale=30.0, cavity=0.6,
+                    cavity_dist=0.012, stripes=(70.0, 0.4), grain_axis='X')
+def surf_x(side, y, z):
+    h = HB.ray_cast(Vector((side * 1.0, y, z)), Vector((-side, 0, 0)), 2.0)
+    return h[0].x if h[0] else side * 0.11
+
+def loft(name, rows, mat, smooth=35.0):
+    """rows: list of 4-point cross-sections along the lock (front-top, front-bottom, back-bottom, back-top)."""
+    bm = bmesh.new(); rings = [[bm.verts.new(p) for p in r] for r in rows]
+    for a, b in zip(rings, rings[1:]):
+        for i in range(4):
+            j = (i + 1) % 4
+            bm.faces.new((a[i], a[j], b[j], b[i]))
+    bm.faces.new(list(reversed(rings[0]))); bm.faces.new(rings[-1])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    o = kit.from_bm(name, bm, mat, smooth_angle=smooth); kit.bevel(o, 0.0018, 2, angle=30)
+    return keep(o)
+
+def loft_brow(side, lift):
+    """A heavy brow lock: a rounded bar (6-point section) that stands 7-10 mm proud of the brow ridge, thick at the
+    inner end, arching and flaring to a squared outer tip, so its underside shades the lid (brief: 'the brow as a mass
+    with an underside')."""
+    n = 8; rings = []
+    bm = bmesh.new()
+    for k in range(n):
+        t = k / (n - 1)
+        x = side * (0.008 + 0.088 * t)
+        zc = 1.589 + lift + 0.014 * t + 0.006 * math.sin(math.pi * t)
+        hgt = 0.031 * (1 - 0.42 * t) * (0.8 if k in (0, n - 1) else 1.0)
+        ys = (surf_y(x, zc) or -0.19)
+        yf = ys - 0.011 * (1 - 0.3 * t)                         # proud of the surface, most at the inner end
+        sec = [(yf + 0.004, zc + hgt * 0.55), (yf, zc + hgt * 0.15), (yf + 0.001, zc - hgt * 0.35),
+               (yf + 0.006, zc - hgt * 0.5), (ys + 0.012, zc - hgt * 0.35), (ys + 0.012, zc + hgt * 0.5)]
+        rings.append([bm.verts.new((x, yy, zz)) for yy, zz in sec])
+    m = len(rings[0])
+    for a_, b_ in zip(rings, rings[1:]):
+        for i in range(m):
+            j = (i + 1) % m
+            bm.faces.new((a_[i], a_[j], b_[j], b_[i]))
+    bm.faces.new(list(reversed(rings[0]))); bm.faces.new(rings[-1])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    o = kit.from_bm(f'brow_{"L" if side > 0 else "R"}', bm, HAIRS, smooth_angle=40); kit.bevel(o, 0.0015, 2, angle=35)
+    keep(o)
+
+def sideburn(side):
+    """Squared grey sideburn hugging the side of the face: a raycast surface patch lifted 3 mm, 5 mm thick."""
+    rows, cols = 6, 4
+    bm = bmesh.new(); grid = []
+    for r in range(rows):
+        z = 1.586 - 0.07 * r / (rows - 1)
+        row = []
+        for c in range(cols):
+            y = -0.088 + 0.032 * c / (cols - 1) + 0.004 * r / (rows - 1)
+            h = HB.ray_cast(Vector((side * 1.0, y, z)), Vector((-side, 0, 0)), 2.0)
+            p = h[0] + h[1] * 0.003 if h[0] else Vector((side * 0.11, y, z))
+            row.append(bm.verts.new(p))
+        grid.append(row)
+    for r in range(rows - 1):
+        for c in range(cols - 1):
+            f = (grid[r][c], grid[r][c + 1], grid[r + 1][c + 1], grid[r + 1][c])
+            bm.faces.new(f if side > 0 else tuple(reversed(f)))
+    o = kit.from_bm(f'sideburn_{"L" if side > 0 else "R"}', bm, HAIRS, smooth_angle=50)
+    sol = o.modifiers.new('thick', 'SOLIDIFY'); sol.thickness = 0.005; sol.offset = -1
+    kit.bevel(o, 0.0012, 1, angle=40)
+    keep(o)
+
 EYE_Z, EYE_X, EYE_R = float(arg('--eyez', '1.556')), float(arg('--eyex', '0.042')), 0.0125
 for side in (-1, 1):
     sy = surf_y(side * EYE_X, EYE_Z)
@@ -87,6 +153,7 @@ for side in (-1, 1):
         return [(x0, -0.205, zi - 0.011), (x1, -0.188, zo - 0.008), (x1, -0.188, zo + 0.012), (x0, -0.205, zi + 0.009),
                 (x0, -0.178, zi - 0.006), (x1, -0.16, zo - 0.004), (x1, -0.16, zo + 0.014), (x0, -0.178, zi + 0.012)]
     if not GENERATED_FEATURES: sculpt_block(f'brow_{"L" if side > 0 else "R"}', brow, HAIR)
+    else: loft_brow(side, lift)
     # sideburn: squared grey block down the side of the face
     def burn():
         x = side * 0.104
@@ -94,6 +161,7 @@ for side in (-1, 1):
                 (x + side * 0.014, -0.095, 1.525), (x + side * 0.014, -0.06, 1.522), (x + side * 0.014, -0.06, 1.6),
                 (x + side * 0.014, -0.1, 1.6)]
     if not GENERATED_FEATURES: sculpt_block(f'sideburn_{"L" if side > 0 else "R"}', burn, HAIR)
+    else: sideburn(side)
 
 # nose: long wedge from the bridge between the brows to a blunt, downward-turned tip
 def nose():
@@ -111,12 +179,71 @@ for p in pts:
     a = bm.verts.new((p[0], p[1], p[2] + 0.0012)); b = bm.verts.new((p[0], p[1], p[2] - 0.0012))
     if prev: bm.faces.new((prev[0], prev[1], b, a))
     prev = (a, b)
-ml = kit.from_bm('mouth', bm, MOUTH, smooth_angle=60); keep(ml)
-ml.modifiers.new('t', 'SOLIDIFY').thickness = 0.002
+if not GENERATED_FEATURES:
+    ml = kit.from_bm('mouth', bm, MOUTH, smooth_angle=60); keep(ml)
+    ml.modifiers.new('t', 'SOLIDIFY').thickness = 0.002
 def lip():
     return [(-0.024, -0.198, 1.4905), (0.024, -0.198, 1.4915), (0.02, -0.203, 1.499), (-0.02, -0.203, 1.498),
             (-0.024, -0.186, 1.4905), (0.024, -0.186, 1.4915), (0.02, -0.19, 1.5), (-0.02, -0.19, 1.499)]
 if not GENERATED_FEATURES: sculpt_block('upper_lip', lip, SKIN, smooth=30)
+
+# braces: modelled straps from the bib's top corners up over the shoulders and down the back, with brass buckles
+LEATHER = kit.painted('nils_leather', ['#2e1c10', '#45291a', '#5c3a24'], rough=0.42, scale=20.0, cavity=0.6, cavity_dist=0.01)
+BRASS = bpy.data.materials.get('nils_brass') or kit.painted('nils_brass2', ['#6e5422', '#a07c3a', '#c9a55c'], rough=0.22, metal=1.0)
+_bb0 = bmesh.new(); _bb0.from_mesh(body.data); _bb0.transform(body.matrix_world); BODY_BVH = BVHTree.FromBMesh(_bb0)
+def strap(side):
+    """Path points (x, y, z) are seeds; each is projected onto the body along its own direction, lifted 3 mm."""
+    w = 0.034
+    path = []
+    for k in range(6):                                     # front: bib corner up to the shoulder top
+        t = k / 5; path.append(((side * (0.115 - 0.01 * t)), None, 1.235 + 0.2 * t, Vector((0, 1, 0))))
+    for k in range(1, 5):                                  # over the shoulder, from front to back
+        t = k / 5; path.append((side * (0.105 - 0.015 * t), -0.1 + 0.2 * t, None, Vector((0, 0, -1))))
+    for k in range(5):                                     # down the back, angling to the centre
+        t = k / 4; path.append((side * (0.09 - 0.05 * t), None, 1.42 - 0.2 * t, Vector((0, -1, 0))))
+    bm = bmesh.new(); prev = None
+    for (x, y, z, d) in path:
+        if z is None:   o = Vector((x, y, 3.0))
+        elif y is None: o = Vector((x, -d.y * 3.0, z))
+        h = BODY_BVH.ray_cast(o, d, 6.0)
+        if not h[0]: continue
+        p = h[0] + h[1] * 0.004
+        across = Vector((1, 0, 0))
+        pair = (bm.verts.new(p - across * w / 2), bm.verts.new(p + across * w / 2))
+        if prev:
+            f = (prev[0], prev[1], pair[1], pair[0])
+            bm.faces.new(f)
+        prev = pair
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    o = kit.from_bm(f'strap_{"L" if side > 0 else "R"}', bm, LEATHER, smooth_angle=50)
+    sol = o.modifiers.new('thick', 'SOLIDIFY'); sol.thickness = 0.006; sol.offset = 0
+    kit.bevel(o, 0.0015, 2, angle=40); keep(o)
+    # buckle at the bib corner: a squared brass frame with a bar
+    hb = BODY_BVH.ray_cast(Vector((side * 0.115, -3.0, 1.262)), Vector((0, 1, 0)), 6.0)
+    if hb[0]:
+        bk = kit.box(f'buckle_{"L" if side > 0 else "R"}', (0.046, 0.012, 0.036), tuple(hb[0] + Vector((0, -0.008, 0))),
+                     mat=BRASS, bev=0.003, segs=2)
+        inner = kit.box('buckle_hole', (0.03, 0.02, 0.02), (0, 0, 0), mat=LEATHER, bev=0.002)
+        bo = bk.modifiers.new('hole', 'BOOLEAN'); bo.object = inner; bo.operation = 'DIFFERENCE'
+        inner.parent = bk; inner.hide_render = True; inner.hide_viewport = True
+        keep(bk)
+for side in (-1, 1):
+    strap(side)
+
+# bib top hem: a raised, bevelled band along the bib's top edge (hides the paint border, gives the panel its edge)
+OIL = bpy.data.materials.get('nils_bib')
+bm = bmesh.new(); top = []; bot = []
+for k in range(17):
+    x = -0.2 + 0.4 * k / 16
+    for z, lst in ((1.252, top), (1.226, bot)):
+        h = BODY_BVH.ray_cast(Vector((x, -3.0, z)), Vector((0, 1, 0)), 6.0)
+        lst.append(bm.verts.new(h[0] + h[1] * 0.003 if h[0] else Vector((x, -0.2, z))))
+for k in range(16):
+    bm.faces.new((bot[k], bot[k + 1], top[k + 1], top[k]))
+bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+hem = kit.from_bm('bib_hem', bm, OIL, smooth_angle=40)
+hem.modifiers.new('thick', 'SOLIDIFY').thickness = 0.008
+kit.bevel(hem, 0.002, 2, angle=40); keep(hem)
 
 # the red-and-ivory float hanging from his left strap (viewer's right), a brass clip above it (brief: check it after
 # every costume change)

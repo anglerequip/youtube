@@ -19,9 +19,10 @@ SRC, OUT = arg('--blend'), arg('--out')
 
 # region: (sheet sample sRGB for classification, paint tones, roughness, metal)
 PAL = {
-    'cap':    ('#a84a26', ['#7f2c12', '#a03c1a', '#b9501f'], 0.88, 0.0),
-    'skin':   ('#b98068', ['#985a40', '#b26f4f', '#c78866'], 0.62, 0.0),
-    'nose':   ('#c0705a', ['#a85a3e', '#c26b4a', '#d4805c'], 0.55, 0.0),
+    'cap':    ('#a84a26', ['#6e250e', '#8f3514', '#a5441a'], 0.9, 0.0),
+    'skin':   ('#b98068', ['#87503a', '#a0603f', '#b47552'], 0.64, 0.0),
+    'lip':    ('#8e4c3a', ['#6a3426', '#7c3e2e', '#8c4a36'], 0.55, 0.0),
+    'nose':   ('#c0705a', ['#a24a30', '#b85a3a', '#c86a46'], 0.55, 0.0),
     'hair':   ('#8a8682', ['#6b6866', '#8d8985', '#a9a49e'], 0.75, 0.0),
     'shirt':  ('#38434c', ['#27313a', '#36424c', '#46525c'], 0.78, 0.0),
     'bib':    ('#615f2c', ['#46441d', '#5e5c29', '#77733a'], 0.62, 0.0),
@@ -47,7 +48,8 @@ MATS = {}
 for n in NAMES:
     _, tones, rough, metal = PAL[n]
     MATS[n] = kit.painted('nils_' + n, tones, rough=rough, metal=metal, scale=3.0, cavity=0.5,
-                          cavity_dist=0.03, rough_var=0.06)
+                          cavity_dist=0.03, rough_var=0.06,
+                          ribs=(64, 0.35, (0.0, -0.03, 1.66)) if n == 'cap' else None)
 for ob in [o for o in bpy.data.objects if o.type == 'MESH' and o.name.startswith('nils') and 'paint' in o.data.color_attributes]:
     bpy.context.view_layer.update(); mw = np.array(ob.matrix_world)
     me = ob.data
@@ -75,14 +77,15 @@ for ob in [o for o in bpy.data.objects if o.type == 'MESH' and o.name.startswith
     boot = zz <= 0.34
     front = y < -0.02
     ear = head & (ax > 0.112) & (y > -0.08) & (y < 0.03) & (zz > 1.47) & (zz < 1.57)
-    hair = head & ~ear & ((y > 0.035) & (zz < 1.585) | ((ax > 0.10) & (ax < 0.13) & (y > -0.10) & (y < -0.065) & (zz > 1.50) & (zz < 1.578)))
-    browz = head & (zz > 1.572) & (zz < 1.607) & (ax > 0.01) & (ax < 0.085) & (y < -0.172)
+    hair = head & ~ear & (y > 0.035) & (zz < 1.585)
+    browz = head & False
+    lipz = head & (ax < 0.03) & (zz > 1.474) & (zz < 1.489) & (y < -0.178)
     nosez = head & (ax < 0.026) & (zz > 1.493) & (zz < 1.572) & (y < -0.198)
     bibm = torso & front & (ax < 0.2) & (zz < 1.24)
-    strap = torso & front & (ax > 0.065) & (ax < 0.15) & (zz >= 1.2) & (zz < 1.36)
+    strap = torso & False          # straps are modelled (nils_face.py)
     buckle = strap & (zz < 1.27) & (ax > 0.09) & (ax < 0.13)
     backw = torso & ~front & (zz < 1.06)
-    allow(cap, 'cap'); allow(head & ~hair & ~browz & ~nosez, 'skin'); allow(hair | browz, 'hair'); allow(nosez, 'nose'); allow(collar & ~strap & ~((ax < 0.05) & front), 'shirt')
+    allow(cap, 'cap'); allow(head & ~hair & ~browz & ~nosez & ~lipz, 'skin'); allow(lipz, 'lip'); allow(hair | browz, 'hair'); allow(nosez, 'nose'); allow(collar & ~strap & ~((ax < 0.05) & front), 'shirt')
     allow(collar & (ax < 0.05) & front, 'knit')
     allow(torso & ~bibm & ~strap & ~backw, 'shirt'); allow(bibm | backw, 'bib'); allow(strap & ~buckle, 'strap'); allow(buckle, 'brass')
     allow(arm, 'shirt'); allow(hand, 'skin'); allow(legs, 'bib'); allow(boot, 'boot')

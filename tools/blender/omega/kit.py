@@ -149,7 +149,7 @@ def hexc(h, a=1.0):
 
 
 def painted(name, tones, rough=0.7, metal=0.0, scale=1.6, cavity=0.55, cavity_dist=0.06, rough_var=0.08,
-            spec=0.5, stripes=None, coat=0.0, grain_axis='Y'):
+            spec=0.5, stripes=None, coat=0.0, grain_axis='Y', ribs=None):
     """A painted (not scanned) material: 2-3 tones blended by large-scale noise (value breakup over 10-30 cm),
     darker in cavities (AO node), roughness varied gently with the same noise. `stripes` (scale, strength) adds
     long grain bands along local X for wood."""
@@ -201,6 +201,25 @@ def painted(name, tones, rough=0.7, metal=0.0, scale=1.6, cavity=0.55, cavity_di
     except Exception: pass
     if coat:
         b.inputs['Coat Weight'].default_value = coat
+    if ribs:
+        # knit ribs: count ribs around a vertical axis through `center` (world), as a bump (count, strength, center)
+        count, strength, center = ribs
+        geo = N.new('ShaderNodeNewGeometry')
+        sub = N.new('ShaderNodeVectorMath'); sub.operation = 'SUBTRACT'; sub.inputs[1].default_value = center
+        L.new(geo.outputs['Position'], sub.inputs[0])
+        grad = N.new('ShaderNodeTexGradient'); grad.gradient_type = 'RADIAL'
+        L.new(sub.outputs['Vector'], grad.inputs['Vector'])
+        mul = N.new('ShaderNodeMath'); mul.operation = 'MULTIPLY'; mul.inputs[1].default_value = count * 6.2832
+        L.new(grad.outputs['Fac'], mul.inputs[0])
+        sn = N.new('ShaderNodeMath'); sn.operation = 'SINE'; L.new(mul.outputs[0], sn.inputs[0])
+        ab = N.new('ShaderNodeMath'); ab.operation = 'ABSOLUTE'; L.new(sn.outputs[0], ab.inputs[0])
+        bp = N.new('ShaderNodeBump'); bp.inputs['Strength'].default_value = strength; bp.inputs['Distance'].default_value = 0.004
+        L.new(ab.outputs[0], bp.inputs['Height']); L.new(bp.outputs['Normal'], b.inputs['Normal'])
+        dk = N.new('ShaderNodeMix'); dk.data_type = 'RGBA'; dk.blend_type = 'MULTIPLY'; dk.inputs['Factor'].default_value = 0.35
+        L.new(b.inputs['Base Color'].links[0].from_socket, dk.inputs['A'])
+        ramp2 = N.new('ShaderNodeValToRGB'); ramp2.color_ramp.elements[0].color = (0.55, 0.55, 0.55, 1)
+        L.new(ab.outputs[0], ramp2.inputs['Fac']); L.new(ramp2.outputs['Color'], dk.inputs['B'])
+        L.new(dk.outputs['Result'], b.inputs['Base Color'])
     return m
 
 

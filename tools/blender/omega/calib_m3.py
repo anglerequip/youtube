@@ -341,11 +341,25 @@ elif SHOT == 'prop':
                focus=(Vector((DESK.x + 0.3, DESK.y + 0.02, DESK.z + 0.05)) - Vector((DESK.x + 0.20, DESK.y - 0.46, DESK.z + 0.17))).length)
 elif SHOT == 'wide':
     kit.camera('cam', (1.9, -3.4, 1.55), (0.0, 1.4, 0.75), lens=30, fstop=8.0)
+elif SHOT == 'anim':
+    import anim_m5
+    anim_m5.build(sc, DESK, kit)
 else:
     raise SystemExit(f'unknown shot {SHOT}')
 
-raw = os.path.join(OUT, f'{SHOT}_raw.png')
-sc.render.filepath = raw
-bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, f'{SHOT}.blend'))
-bpy.ops.render.render(write_still=True)
-print('WROTE', raw)
+if SHOT == 'anim':
+    fdir = os.path.join(OUT, 'frames'); os.makedirs(fdir, exist_ok=True)
+    sc.render.filepath = os.path.join(fdir, 'f')
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, f'{SHOT}.blend'))
+    if '--still' in argv:
+        sc.frame_set(int(arg('--still', '1'))); sc.render.filepath = os.path.join(OUT, f'anim_still_{sc.frame_current}_raw.png')
+        bpy.ops.render.render(write_still=True)
+    else:
+        bpy.ops.render.render(animation=True)
+    print('WROTE', fdir)
+else:
+    raw = os.path.join(OUT, f'{SHOT}_raw.png')
+    sc.render.filepath = raw
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, f'{SHOT}.blend'))
+    bpy.ops.render.render(write_still=True)
+    print('WROTE', raw)
