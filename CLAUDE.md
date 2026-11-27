@@ -247,7 +247,7 @@ ContentStudio, Neal Schaffer guides on Facebook Reels captions); the percentages
 claims, so judge by our own numbers once reels have views.
 
 ## 13. Look v3 and shot craft (quality overhaul, Caesar 2026-11-21: "make the quality 5x better")
-Every 3D render now goes through `renderer/look.js` automatically (opt out per plan with `look: legacy`):
+Every 3D render goes through `renderer/look.js` automatically (opt out per plan with `look: legacy`):
 - **Sky-matched lighting:** an environment map built from the shot's lighting preset (sky, horizon, ground, sun),
   so materials get soft fill and real reflections. Soft procedural clouds in the sky dome (`clouds` per preset).
 - **Ambient occlusion** (half-res GTAO, solid surfaces only): contact shading under feet, props and furniture.
@@ -271,9 +271,9 @@ Shot craft (what reviewers marked us down for, rounds 1-2 of the last batch):
 2. Never crop a head at the top edge or cut a character at the neck, elbows or knees. A presenter close-up shows
    head and shoulders with a little headroom; a two-shot shows both faces.
 3. Three depth layers in most shots: something near the lens (grass, a post, a reed, a shoulder), the subject,
-   and a background. Depth of field and ground cover now make this read.
-4. Things touch the world: feet on the ground, objects in hands, props sitting on surfaces (AO shows it now;
-   a floating object looks worse than before).
+   and a background. Depth of field and ground cover make this read.
+4. Things touch the world: feet on the ground, objects in hands, props sitting on surfaces (ambient occlusion
+   makes a floating object stand out).
 5. Show the event, don't hold a static frame while the narration explains it: each beat gets motion on the
    subject or a new angle, and no shot holds still for more than about 3 s.
 6. The hook frame (0-2 s) is the most interesting picture in the video, already in motion, subject large.
