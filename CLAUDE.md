@@ -12,7 +12,7 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
    footage, branding or exact video concepts.
 2. Research it. Put real, checkable sources and honest caveats in the storyboard. Never invent data
    or overstate a result to make it more dramatic.
-3. Create `content/episodes/<slug>/storyboard.yaml` (copy the structure of `falling-slinky`):
+3. Create `content/episodes/<slug>/storyboard.yaml` (copy the structure of `falling-slinky-3d`, or `falling-slinky` for 2D):
    - 5-14 beats. Beat 1 is the hook: a surprising claim in under 3 s.
    - Length follows the story (Caesar, 2026-11-19): typically 18-45 s, up to 60 s only when the story earns it.
      Never pad, recap or stretch to hit a length. QC allows 15-60 s (`MIN_SECONDS`, `MAX_SECONDS`).
@@ -22,9 +22,11 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
      vary sentence length and keep it sounding like a person, not a summary; `*word*` stresses one key
      word (at most one or two per beat); `...` is a deliberate pause before a reveal; `!` only for real
      surprise; questions end in `?` (they get a longer pause). Captions drop the stars automatically.
-4. Create `sim.py` with `class Sim(Scene)`. Sync to beats with `self.tl.start("<beat id>")`.
-   Keep visuals between y=0.25 and y=0.90 of the frame (captions sit at about y=0.30).
-   Add `self_checks()` comparing the simulation to theory, and `sfx_events()` for physical moments.
+4. Build the visuals, synced to beats with `tl.start("<beat id>")`. A 3D episode (the usual case, see
+   `falling-slinky-3d`) has `plan.py` with `SCENE = "<name>"` and `build_plan(tl, ...)`, drawn by
+   `renderer/scenes/<name>.js`. A 2D Matplotlib episode has `sim.py` with `class Sim(Scene)`; keep its visuals
+   between y=0.25 and y=0.90 of the frame (captions sit at about y=0.30).
+   Either way, add `self_checks()` comparing the simulation to theory, and `sfx_events()` for physical moments.
 5. Fill in the single source of truth (docs/QA.md): `claims:` for every number spoken or shown (value or
    `sim:` from plan facts, scope, evidence), `absolute_ok:` for absolute words, `entities:` with risk
    category and visual contract, `hero:`. Export `facts` (and `events` + `observe()`) from plan.py and
