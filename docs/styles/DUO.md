@@ -1,7 +1,7 @@
 # Style module: DUO (two presenters playing off each other)
 
 Optional. Use it when a topic has a natural "wait, what?" moment that a person would argue with. It sits on top of
-the house Visual Blueprint (CLAUDE.md sections 1-11): same diorama world, same polygon budget, same honesty rules.
+the house Visual Blueprint (CLAUDE.md sections 1-11 and 13): same diorama world, same polygon budget, same honesty rules.
 Only the pacing, the camera grammar around the characters, the captions and the writing change.
 
 Source: a study on 2026-11-20 of a TikTok Caesar shared (vm.tiktok.com/ZN8m14TmC, 117.7 s, 1080x1920, 30 fps), read
@@ -80,7 +80,7 @@ The reference uses big rounded bold words, white with a thick dark outline, one 
 
 ## 6. Sound
 
-- Each line is its own ElevenLabs take (presenter voices: man `3iY0r3RaYmOh6WfIwMIH` ("Matt", Caesar, 2026-11-21; replaced `zYcjlYFOd3taleS0gkk3`), woman `vChnJZ1Cu89g2XXumPfT` ("Lara", Caesar, 2026-11-21; replaced `0ggs85h7hrWz8ExXnsBc`)),
+- Each line is its own ElevenLabs take (presenter voices: man `3iY0r3RaYmOh6WfIwMIH` ("Matt"), woman `vChnJZ1Cu89g2XXumPfT` ("Lara")),
   placed with 0.1-0.3 s gaps; leave a longer gap before a reaction line.
 - A soft whoosh on each hard cut, a real-sounding sfx for the physical moment (thud on landing).
 

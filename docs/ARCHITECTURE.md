@@ -1,7 +1,6 @@
 # Counterphysical Shorts factory: architecture
 
-Status as of 2026-11-19: Phases 1 and 2 are done (structure, first Short, QC, tests).
-Phases 3 to 7 are listed at the bottom with what is and isn't built.
+The phases and what is and isn't built are listed at the bottom.
 
 ## 1. How a video is made
 
@@ -53,8 +52,8 @@ visuals automatically. A sim can also declare `self_checks()` (physics tests tha
 | Part | Choice | Why |
 |---|---|---|
 | Language | Python 3.10+ | everything below is Python-native |
-| Visuals | numpy simulations drawn with Matplotlib, piped to FFmpeg | exact physics, no GPU, renders at about real time on 4 CPU cores; Manim can be added per component later |
-| Voice | Kokoro-82M via `kokoro-onnx` | free, offline, natural; ElevenLabs is a drop-in (`TTS_PROVIDER=elevenlabs`) |
+| Visuals | 3D dioramas in three.js, rendered in headless Chromium (`renderer/`, driven by an episode's `plan.py`); 2D numpy simulations drawn with Matplotlib (`sim.py`); both piped to FFmpeg | exact physics from the numpy models; the 3D look follows the Visual Blueprint in CLAUDE.md |
+| Voice | ElevenLabs (`TTS_PROVIDER=elevenlabs`; voice ids in CLAUDE.md "Voices") | natural delivery; Kokoro-82M via `kokoro-onnx` stays as the free offline fallback (`TTS_PROVIDER=kokoro`) |
 | Captions | timed from the narration itself (each beat is synthesised separately) | exact sync with no Whisper pass; Whisper word alignment can be added later for word-level highlighting |
 | Sound effects | synthesised in numpy (`video_editor.sfx`) | original, license-free |
 | Database | SQLite (WAL) | zero setup, safe for one machine |
@@ -92,7 +91,8 @@ Measured in the build container (4 CPU cores, no GPU) on the 41.5 s slinky Short
 voice 11 s (including model load), simulation render 38 s, mux 8 s, QC 3 s. About **1 minute per
 Short**, so 20 Shorts/day is about 20 CPU-minutes. Storage is about 2-3 MB per final video plus
 about 10 MB of intermediates (deletable). The voice model is a one-time 350 MB download.
-These numbers will differ on your PC; `python -m factory produce` prints its own timings.
+These numbers are for the 2D Matplotlib route. A full 3D render takes far longer (about 1.5-2.5 hours,
+see `docs/QA.md`), which is why the pre-render gate exists. `python -m factory produce` prints its own timings.
 
 ## 5. Implementation sequence
 
@@ -102,6 +102,6 @@ These numbers will differ on your PC; `python -m factory produce` prints its own
 | 2 | First original Short end to end, QC, unit + end-to-end tests | done |
 | 3 | Reusable components (traffic waves, pendulums/projectiles, probability/maths), three video types, idea scoring, LLM provider interface | next |
 | 4 | Telegram approval bot (preview, title, topic, duration, caveats; Approve / Reject / Revise) | not started |
-| 5 | YouTube OAuth upload + scheduling, sha256 and idempotency guards | not started |
+| 5 | YouTube OAuth upload + scheduling, sha256 and idempotency guards | built as the cloud queue: `factory/autopilot/cloud_post.py`, run hourly by `.github/workflows/publish.yml`, uploads and schedules queued videos; Facebook reels via `facebook_post.py` |
 | 6 | Analytics pull + performance database + format comparisons | not started |
 | 7 | Batch generation, job queue, parallel renders, daily scheduler | not started |

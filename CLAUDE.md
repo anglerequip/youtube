@@ -6,11 +6,13 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
 ## Writing a new episode
 
 1. Pick a topic that is genuinely counterintuitive *and* simulatable with real physics or maths.
-   Check `content/episodes/` so you don't repeat one. Never copy another channel's scripts,
+   Check the topic ledger so you don't repeat one: `python -m factory.autopilot ledger check "<core claim>"`
+   (`content/ledger/topics.jsonl` lists every topic made, scheduled or rejected, including the many whose
+   episode folders are not in `content/episodes/`). Never copy another channel's scripts,
    footage, branding or exact video concepts.
 2. Research it. Put real, checkable sources and honest caveats in the storyboard. Never invent data
    or overstate a result to make it more dramatic.
-3. Create `content/episodes/<slug>/storyboard.yaml` (copy the structure of `falling-slinky`):
+3. Create `content/episodes/<slug>/storyboard.yaml` (copy the structure of `falling-slinky-3d`, or `falling-slinky` for 2D):
    - 5-14 beats. Beat 1 is the hook: a surprising claim in under 3 s.
    - Length follows the story (Caesar, 2026-11-19): typically 18-45 s, up to 60 s only when the story earns it.
      Never pad, recap or stretch to hit a length. QC allows 15-60 s (`MIN_SECONDS`, `MAX_SECONDS`).
@@ -20,9 +22,11 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
      vary sentence length and keep it sounding like a person, not a summary; `*word*` stresses one key
      word (at most one or two per beat); `...` is a deliberate pause before a reveal; `!` only for real
      surprise; questions end in `?` (they get a longer pause). Captions drop the stars automatically.
-4. Create `sim.py` with `class Sim(Scene)`. Sync to beats with `self.tl.start("<beat id>")`.
-   Keep visuals between y=0.25 and y=0.90 of the frame (captions sit at about y=0.30).
-   Add `self_checks()` comparing the simulation to theory, and `sfx_events()` for physical moments.
+4. Build the visuals, synced to beats with `tl.start("<beat id>")`. A 3D episode (the usual case, see
+   `falling-slinky-3d`) has `plan.py` with `SCENE = "<name>"` and `build_plan(tl, ...)`, drawn by
+   `renderer/scenes/<name>.js`. A 2D Matplotlib episode has `sim.py` with `class Sim(Scene)`; keep its visuals
+   between y=0.25 and y=0.90 of the frame (captions sit at about y=0.30).
+   Either way, add `self_checks()` comparing the simulation to theory, and `sfx_events()` for physical moments.
 5. Fill in the single source of truth (docs/QA.md): `claims:` for every number spoken or shown (value or
    `sim:` from plan facts, scope, evidence), `absolute_ok:` for absolute words, `entities:` with risk
    category and visual contract, `hero:`. Export `facts` (and `events` + `observe()`) from plan.py and
@@ -177,7 +181,7 @@ Every new or edited model uses at least these segment counts. Prefer more on any
 
 ## 12. Optional style modules (Caesar, 2026-11-20)
 Two extra looks studied from TikToks Caesar shared. Use either one whole when the topic fits, or borrow single blocks
-(an overlay, the weather, a caption style) into a normal episode. Both sit on top of sections 1-11 and the honesty rules.
+(an overlay, the weather, a caption style) into a normal episode. Both sit on top of sections 1-11, section 13 and the honesty rules.
 - **DUO** (`docs/styles/DUO.md`): our two presenters as skeptic + explainer, fast alternating short lines, punch-in
   reaction close-ups, speaker-coloured captions (`caption_style: duo`, beat field `speaker: man|woman`), lighting `clear`.
 - **BUILD** (`docs/styles/BUILD.md`): one hero object transforms step by step ("But X... so you Y"), callout labels,
@@ -243,7 +247,7 @@ ContentStudio, Neal Schaffer guides on Facebook Reels captions); the percentages
 claims, so judge by our own numbers once reels have views.
 
 ## 13. Look v3 and shot craft (quality overhaul, Caesar 2026-11-21: "make the quality 5x better")
-Every 3D render now goes through `renderer/look.js` automatically (opt out per plan with `look: legacy`):
+Every 3D render goes through `renderer/look.js` automatically (opt out per plan with `look: legacy`):
 - **Sky-matched lighting:** an environment map built from the shot's lighting preset (sky, horizon, ground, sun),
   so materials get soft fill and real reflections. Soft procedural clouds in the sky dome (`clouds` per preset).
 - **Ambient occlusion** (half-res GTAO, solid surfaces only): contact shading under feet, props and furniture.
@@ -267,9 +271,9 @@ Shot craft (what reviewers marked us down for, rounds 1-2 of the last batch):
 2. Never crop a head at the top edge or cut a character at the neck, elbows or knees. A presenter close-up shows
    head and shoulders with a little headroom; a two-shot shows both faces.
 3. Three depth layers in most shots: something near the lens (grass, a post, a reed, a shoulder), the subject,
-   and a background. Depth of field and ground cover now make this read.
-4. Things touch the world: feet on the ground, objects in hands, props sitting on surfaces (AO shows it now;
-   a floating object looks worse than before).
+   and a background. Depth of field and ground cover make this read.
+4. Things touch the world: feet on the ground, objects in hands, props sitting on surfaces (ambient occlusion
+   makes a floating object stand out).
 5. Show the event, don't hold a static frame while the narration explains it: each beat gets motion on the
    subject or a new angle, and no shot holds still for more than about 3 s.
 6. The hook frame (0-2 s) is the most interesting picture in the video, already in motion, subject large.

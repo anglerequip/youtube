@@ -227,7 +227,7 @@ def check(ctx, cfg) -> tuple[list[Finding], dict]:
 # ---------------------------------------------------------------- independent Sound Reviewer
 INSTRUCTIONS = """# Sound review (independent)
 
-You are the sound team for a 60-75 s vertical science Short. You did not make it. Your only question:
+You are the sound team for a 15-60 s vertical science Short. You did not make it. Your only question:
 **would a real viewer, watching on a phone with sound on, find anything in this soundtrack annoying,
 distracting or confusing?** Be strict: an annoying sound makes people swipe away.
 
@@ -242,7 +242,7 @@ You cannot hear the audio, so judge from the evidence in this folder like a soun
 Look for, in this order:
 1. Repetition: the same sound over and over (especially bright tonal "ding/tink" cues), metronome rhythms.
 2. Clutter: more effects than events the viewer can see; effects with no on-screen reason.
-3. Competition with the voice: effects or music loud while she speaks.
+3. Competition with the voice: effects or music loud while someone is speaking.
 4. Startle: a cue much louder than its neighbours; sudden onsets.
 5. Missing sound: an important physical moment (a snap, an impact) with no cue, or a cue in the wrong place.
 6. Fatigue over the whole video: would the 3rd viewing be irritating?
