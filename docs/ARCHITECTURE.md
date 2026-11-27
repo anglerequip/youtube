@@ -54,7 +54,7 @@ visuals automatically. A sim can also declare `self_checks()` (physics tests tha
 |---|---|---|
 | Language | Python 3.10+ | everything below is Python-native |
 | Visuals | 3D dioramas in three.js, rendered in headless Chromium (`renderer/`, driven by an episode's `plan.py`); 2D numpy simulations drawn with Matplotlib (`sim.py`); both piped to FFmpeg | exact physics from the numpy models; the 3D look follows the Visual Blueprint in CLAUDE.md |
-| Voice | Kokoro-82M via `kokoro-onnx` | free, offline, natural; ElevenLabs is a drop-in (`TTS_PROVIDER=elevenlabs`) |
+| Voice | ElevenLabs (`TTS_PROVIDER=elevenlabs`; voice ids in CLAUDE.md "Voices") | natural delivery; Kokoro-82M via `kokoro-onnx` stays as the free offline fallback (`TTS_PROVIDER=kokoro`) |
 | Captions | timed from the narration itself (each beat is synthesised separately) | exact sync with no Whisper pass; Whisper word alignment can be added later for word-level highlighting |
 | Sound effects | synthesised in numpy (`video_editor.sfx`) | original, license-free |
 | Database | SQLite (WAL) | zero setup, safe for one machine |
