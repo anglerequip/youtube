@@ -29,7 +29,9 @@ for L in TL['lines']:
     for i in range(0, len(merged), 4):
         g = merged[i:i + 4]
         txt = ' '.join(x[0] for x in g)
-        for a, b in (('Angler Mind', 'AnglerMind'), ('sign up', 'sign-up'), ("that's free.", "that's free?"), ('drop -offs', 'drop-offs')):
+        for a, b in (('Angler Mind', 'AnglerMind'), ('sign up', 'sign-up'), ("that's free.", "that's free?"), ('drop -offs', 'drop-offs'),
+                     ('lure finder', 'Lure Finder'), ('all of these.', 'all of these?'), ('Cloudy bit windy.', 'Cloudy? Bit windy?'),
+                     ('depends what', 'Depends. What'), ('weather doing.', 'weather doing?'), ('AnglerMind .com', 'anglermind.com'), ('AnglerMind.com', 'anglermind.com'), ('doing.', 'doing?')):
             txt = txt.replace(a, b)
         groups.append((g[0][1] - 0.05, g[-1][2] + 0.15, txt))
 for k in range(len(groups) - 1):          # never overlap: a group ends when the next begins

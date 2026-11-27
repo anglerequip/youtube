@@ -34,6 +34,7 @@ B = {  # name: (head, tail, parent)
     'spine': ((0, 0, 1.12), (0, 0, 1.28), 'hips'),
     'chest': ((0, 0, 1.28), (0, -0.02, 1.41), 'spine'),
     'neck': ((0, -0.03, 1.41), (0, -0.03, 1.56), 'chest'),
+    'jaw': ((0, -0.02, 1.50), (0, -0.12, 1.47), 'neck'),
 }
 for s, n in ((1, 'L'), (-1, 'R')):
     B[f'shoulder.{n}'] = ((s * 0.06, 0.0, 1.35), (s * 0.25, 0.01, 1.34), 'chest')
@@ -48,14 +49,18 @@ bpy.context.view_layer.objects.active = arm; bpy.ops.object.mode_set(mode='EDIT'
 for name, (h, t, par) in B.items():
     eb = ad.edit_bones.new(name); eb.head, eb.tail = h, t
     if par: eb.parent = ad.edit_bones[par]; eb.use_connect = False
-    eb.use_deform = name not in ('root', 'neck')
+    eb.use_deform = name not in ('root', 'neck', 'jaw')
 bpy.ops.object.mode_set(mode='OBJECT')
 
 # rigid parts first (so the automatic weights only see the body)
 def to_bone(o, bone):
+    """Bone-parent keeping the object's current world placement in the rest pose (the bone frame is its tail)."""
+    bpy.context.view_layer.update()
     mw = o.matrix_world.copy()
+    b = ad.bones[bone]
     o.parent = arm; o.parent_type = 'BONE'; o.parent_bone = bone
-    bpy.context.view_layer.update(); o.matrix_world = mw
+    o.matrix_parent_inverse = (arm.matrix_world @ b.matrix_local @ Matrix.Translation((0, b.length, 0))).inverted()
+    o.matrix_basis = mw
 for o in list(bpy.data.objects):
     if o.parent != body: continue
     n = o.name[len(P):] if o.name.startswith(P) else o.name
@@ -137,16 +142,51 @@ mwB = body.matrix_world
 mpos_l = Vector((0.0, -0.3, MZ))
 h = HB.ray_cast(mwB @ Vector((0, -1.0, MZ)), (mwB.to_3x3() @ Vector((0, 1, 0))).normalized(), 3.0)
 front = h[0] if h[0] else mwB @ Vector((0, -0.19, MZ))
-mroot = bpy.data.objects.new(P + 'mouth', None); kit.link(mroot); mroot.location = front + (mwB.to_3x3() @ Vector((0, 0.004, 0)))
+mroot = bpy.data.objects.new(P + 'mouth', None); kit.link(mroot)
+mroot.location = front + (mwB.to_3x3() @ Vector((0, -0.002, 0.0015)))   # top edge just under the upper lip
 mroot.rotation_euler = mwB.to_euler()
 INT = kit.flat(P + 'mouth_in', '#1a0806', rough=0.8); TEETH = kit.flat(P + 'teeth', '#e6dfd0', rough=0.35)
 TONGUE = kit.flat(P + 'tongue', '#8a3a33', rough=0.6)
 bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=24, v_segments=12, radius=1.0)
-for v in bm.verts: v.co = Vector((v.co.x * 0.024, v.co.y * 0.006, v.co.z * 0.014))
+for v in bm.verts: v.co = Vector((v.co.x * 0.023, v.co.y * 0.009, (v.co.z - 1.0) * 0.014))   # hangs down from its origin
 cav = kit.from_bm(P + 'mouth_cavity', bm, INT, smooth_angle=89); cav.parent = mroot
-tb = kit.box(P + 'teeth_top', (0.032, 0.004, 0.006), (0, -0.002, 0.009), mat=TEETH, bev=0.0012); tb.parent = mroot
-tg = kit.box(P + 'tongue', (0.026, 0.006, 0.006), (0, 0.001, -0.01), mat=TONGUE, bev=0.002); tg.parent = mroot
+tb = kit.box(P + 'teeth_top', (0.03, 0.004, 0.005), (0, -0.003, -0.0035), mat=TEETH, bev=0.0012); tb.parent = mroot
+tg = kit.box(P + 'tongue', (0.024, 0.006, 0.006), (0, 0.002, -0.021), mat=TONGUE, bev=0.002); tg.parent = mroot
 mroot.scale = (1, 1, 0.02)
 to_bone(mroot, 'neck')
+
+# lips (Caesar, 27 Nov: "like they have no lips"): sculpted upper and lower lip that frame the dark mouth. The upper
+# lip is rigid on the head; the lower lip rides a jaw pivot that turns with the jaw_open key (same hinge, 13 deg).
+LIPM = kit.painted(P + 'lips', ['#5e2620', '#74322a', '#874034'] if P == 'nils_' else ['#8a3c34', '#a04a40', '#b2584c'],
+                   rough=0.42, scale=30.0, cavity=0.35, cavity_dist=0.006)
+fwd = (mwB.to_3x3() @ Vector((0, 1, 0))).normalized()
+def surf_local(xl, zl):
+    hh = HB.ray_cast(mwB @ Vector((xl, -1.0, zl)), fwd, 3.0)
+    return (mwB.inverted() @ hh[0]).y if hh[0] else -0.19
+def lip(name, zc, hz0, hy0, out, droop):
+    Wd = 0.028; n = 15; m = 8
+    bm = bmesh.new(); rings = []
+    for k in range(n):
+        u = -1 + 2 * k / (n - 1); xl = u * Wd
+        taper = max(0.18, 1 - 0.75 * u * u)
+        z0 = zc + droop * (u * u)                          # corners turn slightly down (Nils) or up
+        ys = surf_local(xl, z0) - out * taper
+        ring = []
+        for j in range(m):
+            a = 2 * math.pi * j / m
+            ring.append(bm.verts.new(mwB @ Vector((xl, ys + hy0 * taper * math.cos(a) * (0.6 if math.cos(a) > 0 else 1.0),
+                                                  z0 + hz0 * taper * math.sin(a)))))
+        rings.append(ring)
+    for a_, b_ in zip(rings, rings[1:]):
+        for j in range(m):
+            jj = (j + 1) % m
+            bm.faces.new((a_[j], a_[jj], b_[jj], b_[j]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    return kit.from_bm(name, bm, LIPM, smooth_angle=70)
+droop = -0.0015 if P == 'nils_' else 0.0008
+up_l = lip(P + 'lip_upper', MZ + 0.0045, 0.0052, 0.0055, 0.0035, droop)
+lo_l = lip(P + 'lip_lower', MZ - 0.006, 0.0065, 0.0062, 0.005, droop)
+to_bone(up_l, 'neck')
+to_bone(lo_l, 'jaw')
 bpy.ops.wm.save_as_mainfile(filepath=arg('--out'))
 print('RIG', P, 'bones', len(ad.bones), 'keys', [k.name for k in head.data.shape_keys.key_blocks])

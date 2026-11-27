@@ -168,7 +168,7 @@ def painted(name, tones, rough=0.7, metal=0.0, scale=1.6, cavity=0.55, cavity_di
     if stripes:
         # wood grain: a noise stretched along the board (grain_axis), lightly distorted, mixed under the breakup
         gm = N.new('ShaderNodeMapping')
-        gm.inputs['Scale'].default_value = (0.06, 1.0, 1.0) if grain_axis == 'X' else (1.0, 0.06, 1.0)
+        gm.inputs['Scale'].default_value = {'X': (0.06, 1.0, 1.0), 'Y': (1.0, 0.06, 1.0), 'Z': (1.0, 1.0, 0.06)}[grain_axis]
         L.new(tc.outputs['Object'], gm.inputs['Vector'])
         gn = N.new('ShaderNodeTexNoise'); gn.inputs['Scale'].default_value = stripes[0]
         gn.inputs['Detail'].default_value = 3.0; gn.inputs['Distortion'].default_value = 0.4
