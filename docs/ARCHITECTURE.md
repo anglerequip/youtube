@@ -1,7 +1,6 @@
 # Counterphysical Shorts factory: architecture
 
-Status as of 2026-11-19: Phases 1 and 2 are done (structure, first Short, QC, tests).
-Phases 3 to 7 are listed at the bottom with what is and isn't built.
+The phases and what is and isn't built are listed at the bottom.
 
 ## 1. How a video is made
 
@@ -103,6 +102,6 @@ see `docs/QA.md`), which is why the pre-render gate exists. `python -m factory p
 | 2 | First original Short end to end, QC, unit + end-to-end tests | done |
 | 3 | Reusable components (traffic waves, pendulums/projectiles, probability/maths), three video types, idea scoring, LLM provider interface | next |
 | 4 | Telegram approval bot (preview, title, topic, duration, caveats; Approve / Reject / Revise) | not started |
-| 5 | YouTube OAuth upload + scheduling, sha256 and idempotency guards | not started |
+| 5 | YouTube OAuth upload + scheduling, sha256 and idempotency guards | built as the cloud queue: `factory/autopilot/cloud_post.py`, run hourly by `.github/workflows/publish.yml`, uploads and schedules queued videos; Facebook reels via `facebook_post.py` |
 | 6 | Analytics pull + performance database + format comparisons | not started |
 | 7 | Batch generation, job queue, parallel renders, daily scheduler | not started |
