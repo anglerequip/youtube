@@ -92,7 +92,8 @@ Measured in the build container (4 CPU cores, no GPU) on the 41.5 s slinky Short
 voice 11 s (including model load), simulation render 38 s, mux 8 s, QC 3 s. About **1 minute per
 Short**, so 20 Shorts/day is about 20 CPU-minutes. Storage is about 2-3 MB per final video plus
 about 10 MB of intermediates (deletable). The voice model is a one-time 350 MB download.
-These numbers will differ on your PC; `python -m factory produce` prints its own timings.
+These numbers are for the 2D Matplotlib route. A full 3D render takes far longer (about 1.5-2.5 hours,
+see `docs/QA.md`), which is why the pre-render gate exists. `python -m factory produce` prints its own timings.
 
 ## 5. Implementation sequence
 
