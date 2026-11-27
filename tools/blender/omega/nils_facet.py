@@ -18,7 +18,7 @@ for name, ang in (('nils_tsg', float(arg('--body', '7'))), ('nils_head', float(a
     d.delimit = {'MATERIAL'}
     bpy.ops.object.modifier_apply(modifier=d.name)
     t = ob.modifiers.new('tri', 'TRIANGULATE'); bpy.ops.object.modifier_apply(modifier=t.name)
-    # flat planes, sharp borders: every face its own plane
-    for p in ob.data.polygons: p.use_smooth = False
+    # flat planes, sharp borders: every face its own plane (the head keeps smooth shading inside its planes)
+    for p in ob.data.polygons: p.use_smooth = name == 'nils_head'
     print('FACET', name, n0, '->', len(ob.data.polygons))
 bpy.ops.wm.save_as_mainfile(filepath=arg('--out'))

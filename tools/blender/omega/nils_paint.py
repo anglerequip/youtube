@@ -16,6 +16,7 @@ argv = sys.argv[sys.argv.index('--') + 1:]
 def arg(n, d=None):
     return argv[argv.index(n) + 1] if n in argv else d
 SRC, OUT = arg('--blend'), arg('--out')
+VARIANT = arg('--variant', 'nils')      # 'theo': the beginner (new yellow rain jacket, jeans, new green boots)
 
 # region: (sheet sample sRGB for classification, paint tones, roughness, metal)
 PAL = {
@@ -33,6 +34,19 @@ PAL = {
     'red':    ('#a8261d', ['#8a1a12', '#b2261b', '#c93a26'], 0.25, 0.0),
     'ivory':  ('#d2c6a6', ['#bfb08b', '#d9ccaa', '#e8dec2'], 0.3, 0.0),
 }
+if VARIANT == 'theo':
+    PAL.update({
+        'cap':   ('#1f6f78', ['#14525a', '#1c6a73', '#278590'], 0.8, 0.0),
+        'skin':  ('#c98e70', ['#b27258', '#c88a6c', '#d9a083'], 0.6, 0.0),
+        'nose':  ('#c98e70', ['#b46a50', '#c97e60', '#d99274'], 0.55, 0.0),
+        'lip':   ('#a05c48', ['#8a4a3a', '#9a5644', '#a8614d'], 0.5, 0.0),
+        'hair':  ('#5a3a22', ['#3e2716', '#583820', '#71492b'], 0.7, 0.0),
+        'shirt': ('#d9b02a', ['#c4961c', '#dcb02a', '#ecc643'], 0.35, 0.0),   # brand-new rain jacket, still glossy
+        'bib':   ('#d9b02a', ['#c4961c', '#dcb02a', '#ecc643'], 0.35, 0.0),
+        'knit':  ('#2b3a4a', ['#1f2a36', '#2b3a4a', '#384a5c'], 0.85, 0.0),
+        'boot':  ('#2f5d3a', ['#22472b', '#2f5d3a', '#3c7349'], 0.25, 0.0),   # new rubber boots, shiny
+    })
+    PAL['jeans'] = ('#3a5a80', ['#2a4464', '#36557a', '#46668e'], 0.8, 0.0)
 NAMES = list(PAL)
 
 def to_lab(rgb):
@@ -47,9 +61,11 @@ bpy.ops.wm.open_mainfile(filepath=SRC)
 MATS = {}
 for n in NAMES:
     _, tones, rough, metal = PAL[n]
-    MATS[n] = kit.painted('nils_' + n, tones, rough=rough, metal=metal, scale=3.0, cavity=0.5,
-                          cavity_dist=0.03, rough_var=0.06,
+    skinlike = n in ('skin', 'nose', 'lip')
+    MATS[n] = kit.painted('nils_' + n, tones, rough=rough, metal=metal, scale=1.2 if skinlike else 3.0,
+                          cavity=0.18 if skinlike else 0.5, cavity_dist=0.012 if skinlike else 0.03, rough_var=0.04,
                           ribs=(64, 0.35, (0.0, -0.03, 1.66)) if n == 'cap' else None)
+    MATS[n].name = ('theo_' if VARIANT == 'theo' else 'nils_') + n
 for ob in [o for o in bpy.data.objects if o.type == 'MESH' and o.name.startswith('nils') and 'paint' in o.data.color_attributes]:
     bpy.context.view_layer.update(); mw = np.array(ob.matrix_world)
     me = ob.data
@@ -70,16 +86,18 @@ for ob in [o for o in bpy.data.objects if o.type == 'MESH' and o.name.startswith
     cap = zz > 1.59 - 0.08 * y
     head = (zz > 1.43) & ~cap
     collar = (zz > 1.36) & (zz <= 1.43)
+    if ob.name == 'nils_head':        # the head's skirt under the chin is neck skin; the body's collar covers the seam
+        head = head | collar; collar = collar & False
     torso = (zz > 1.0) & (zz <= 1.36) & (ax < 0.25)
     arm = (zz > 0.84) & (zz <= 1.36) & (ax >= 0.25)
-    hand = (zz > 0.52) & (zz <= 0.86) & (ax >= 0.235)
+    hand = (zz > 0.58) & (zz <= 0.83) & (ax >= 0.262)
     legs = (zz > 0.34) & (zz <= 1.0) & ~hand
     boot = zz <= 0.34
     front = y < -0.02
     ear = head & (ax > 0.112) & (y > -0.08) & (y < 0.03) & (zz > 1.47) & (zz < 1.57)
     hair = head & ~ear & (y > 0.035) & (zz < 1.585)
     browz = head & False
-    lipz = head & (ax < 0.03) & (zz > 1.474) & (zz < 1.489) & (y < -0.178)
+    lipz = head & False            # the mouth is a rigged part now (char_rig.py)
     nosez = head & (ax < 0.026) & (zz > 1.493) & (zz < 1.572) & (y < -0.198)
     bibm = torso & front & (ax < 0.2) & (zz < 1.24)
     strap = torso & False          # straps are modelled (nils_face.py)
@@ -88,7 +106,7 @@ for ob in [o for o in bpy.data.objects if o.type == 'MESH' and o.name.startswith
     allow(cap, 'cap'); allow(head & ~hair & ~browz & ~nosez & ~lipz, 'skin'); allow(lipz, 'lip'); allow(hair | browz, 'hair'); allow(nosez, 'nose'); allow(collar & ~strap & ~((ax < 0.05) & front), 'shirt')
     allow(collar & (ax < 0.05) & front, 'knit')
     allow(torso & ~bibm & ~strap & ~backw, 'shirt'); allow(bibm | backw, 'bib'); allow(strap & ~buckle, 'strap'); allow(buckle, 'brass')
-    allow(arm, 'shirt'); allow(hand, 'skin'); allow(legs, 'bib'); allow(boot, 'boot')
+    allow(arm, 'shirt'); allow(hand, 'skin'); allow(legs & ((zz < 0.8) if VARIANT == 'theo' else True), 'jeans' if VARIANT == 'theo' else 'bib'); allow(legs & (zz >= 0.8), 'shirt') if VARIANT == 'theo' else None; allow(boot, 'boot')
     flt = (x > 0.1) & (x < 0.3) & (y < -0.05) & (zz > 1.05) & (zz < 1.32)
     # the float is a separate prop (nils_face.py), not painted onto the bib
     allowed[~allowed.any(1), NAMES.index('shirt')] = True
