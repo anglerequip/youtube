@@ -1,7 +1,7 @@
 # Style module: BUILD (one object transforms, step by step, to solve a problem)
 
 Optional. Use it for "why is X shaped like this?" or "what would it take to survive Y?" topics, where one hero
-object changes in place, one fix at a time. It sits on top of the house Visual Blueprint (CLAUDE.md sections 1-11):
+object changes in place, one fix at a time. It sits on top of the house Visual Blueprint (CLAUDE.md sections 1-11 and 13):
 same honesty rules and polygon budget. It can be used whole, or you can take single building blocks from it
 (any overlay, the weather, a caption style) into a normal episode.
 

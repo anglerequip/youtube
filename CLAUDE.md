@@ -181,7 +181,7 @@ Every new or edited model uses at least these segment counts. Prefer more on any
 
 ## 12. Optional style modules (Caesar, 2026-11-20)
 Two extra looks studied from TikToks Caesar shared. Use either one whole when the topic fits, or borrow single blocks
-(an overlay, the weather, a caption style) into a normal episode. Both sit on top of sections 1-11 and the honesty rules.
+(an overlay, the weather, a caption style) into a normal episode. Both sit on top of sections 1-11, section 13 and the honesty rules.
 - **DUO** (`docs/styles/DUO.md`): our two presenters as skeptic + explainer, fast alternating short lines, punch-in
   reaction close-ups, speaker-coloured captions (`caption_style: duo`, beat field `speaker: man|woman`), lighting `clear`.
 - **BUILD** (`docs/styles/BUILD.md`): one hero object transforms step by step ("But X... so you Y"), callout labels,
