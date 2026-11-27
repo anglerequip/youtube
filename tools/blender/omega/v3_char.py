@@ -140,7 +140,7 @@ def shell(name, regions, off, mat, extra=None, solid=0.008, hem=True, relax=12, 
         NC = sum((v.co for v in CLEAN.data.vertices if abs(v.co.z - 1.52) < 0.01 and CREG[v.index] == 'head'), Vector())
         nn = sum(1 for v in CLEAN.data.vertices if abs(v.co.z - 1.52) < 0.01 and CREG[v.index] == 'head'); NC /= max(1, nn)
         bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.calc_center_median().z > 1.44 and
-                                   ((f.calc_center_median().x - NC.x) ** 2 + ((f.calc_center_median().y - NC.y) / 1.1) ** 2) ** 0.5 < 0.105], context='FACES')
+                                   ((f.calc_center_median().x - NC.x) ** 2 + ((f.calc_center_median().y - NC.y) / 1.1) ** 2) ** 0.5 < 0.088], context='FACES')
     bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
     for _ in range(0 if cuts else 12):                                 # a smooth cut line, not a voxel staircase
         bnd = [v for v in bm.verts if v.is_boundary]
@@ -205,10 +205,10 @@ if WHO == 'nils':
         h = TREE.ray_cast(Vector((x, 0.0, 1.5)), Vector((0, 0, -1)), 3.0)   # from below the head: lands on the shoulder
         return h[0] + h[1] * out
     for sg in (1, -1):                                                 # straps: clean flat bands over the shoulders
-        x0 = sg * 0.1
-        fr = [on_surface(x0, z, True, o_) for z, o_ in ((1.3, 0.085), (1.36, 0.05), (1.42, 0.042))]
-        bk = [on_surface(x0, z, False, o_) for z, o_ in ((1.42, 0.042), (1.34, 0.042), (1.24, 0.045), (1.12, 0.05), (1.02, 0.05))]
-        top = (fr[-1] + bk[0]) / 2; top.z = max(fr[-1].z, bk[0].z) + 0.045             # over the shoulder
+        x0 = sg * 0.13
+        fr = [on_surface(x0, z, True, o_) for z, o_ in ((1.3, 0.085), (1.36, 0.066), (1.42, 0.06))]
+        bk = [on_surface(x0, z, False, o_) for z, o_ in ((1.42, 0.058), (1.34, 0.058), (1.24, 0.058), (1.12, 0.06), (1.02, 0.06))]
+        top = (fr[-1] + bk[0]) / 2; top.z = max(fr[-1].z, bk[0].z) + 0.06             # over the shoulder
         pts = [p_ for p_ in fr + [top] + bk if p_ is not None]
         cu = bpy.data.curves.new(f'strap_{sg}', 'CURVE'); cu.dimensions = '3D'
         sp = cu.splines.new('NURBS'); sp.points.add(len(pts) - 1)
