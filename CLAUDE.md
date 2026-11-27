@@ -6,7 +6,9 @@ Read `docs/ARCHITECTURE.md` first. This file is the guide for a Claude session w
 ## Writing a new episode
 
 1. Pick a topic that is genuinely counterintuitive *and* simulatable with real physics or maths.
-   Check `content/episodes/` so you don't repeat one. Never copy another channel's scripts,
+   Check the topic ledger so you don't repeat one: `python -m factory.autopilot ledger check "<core claim>"`
+   (`content/ledger/topics.jsonl` lists every topic made, scheduled or rejected, including the many whose
+   episode folders are not in `content/episodes/`). Never copy another channel's scripts,
    footage, branding or exact video concepts.
 2. Research it. Put real, checkable sources and honest caveats in the storyboard. Never invent data
    or overstate a result to make it more dramatic.
