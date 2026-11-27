@@ -23,7 +23,10 @@ sys.path.insert(0, a.repo); sys.path.insert(0, os.path.join(a.repo, 'scripts'))
 import numpy as np
 import torch
 from huggingface_hub import snapshot_download
+import diffusers.models.normalization as _dn   # diffusers >= 0.33 dropped this alias; TripoSG still imports it
+if not hasattr(_dn, 'LayerNorm'): _dn.LayerNorm = torch.nn.LayerNorm
 from triposg.pipelines.pipeline_triposg import TripoSGPipeline
+import triposg.schedulers.scheduling_rectified_flow, triposg.models.autoencoders, triposg.models.transformers  # diffusers loads only imported modules
 from image_process import prepare_image
 import trimesh
 
@@ -36,6 +39,8 @@ CANDIDATES = [   # name, input, seed, steps, guidance, hierarchical depth
     ('B_body_s7', 'nils_input_rgba.png', 7, 50, 7.0, 9),
     ('C_body_s42_g5', 'nils_input_rgba.png', 42, 60, 5.0, 9),
     ('D_head_s42', 'nils_head_rgba.png', 42, 50, 7.0, 9),
+    ('E_head_s7_d8', 'nils_head_rgba.png', 7, 50, 5.0, 8),
+    ('F_head_s11_d8', 'nils_head_rgba.png', 11, 60, 4.0, 8),
 ]
 log = []
 for name, src, seed, steps, g, depth in CANDIDATES:
