@@ -242,7 +242,7 @@ You cannot hear the audio, so judge from the evidence in this folder like a soun
 Look for, in this order:
 1. Repetition: the same sound over and over (especially bright tonal "ding/tink" cues), metronome rhythms.
 2. Clutter: more effects than events the viewer can see; effects with no on-screen reason.
-3. Competition with the voice: effects or music loud while she speaks.
+3. Competition with the voice: effects or music loud while someone is speaking.
 4. Startle: a cue much louder than its neighbours; sudden onsets.
 5. Missing sound: an important physical moment (a snap, an impact) with no cue, or a cue in the wrong place.
 6. Fatigue over the whole video: would the 3rd viewing be irritating?
