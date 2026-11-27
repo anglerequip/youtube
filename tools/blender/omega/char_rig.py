@@ -69,6 +69,104 @@ for o in list(bpy.data.objects):
     else:
         to_bone(o, 'chest')
 
+# ------------------------------------------------------------------ jointed arms (Caesar, 27 Nov: "fix the models so
+# they can be flexible and move their bodies"). The generated body has its hands fused to the thighs, so the arms are
+# cut away (the cuts are capped) and rebuilt as rigid, jointed pieces on the arm bones: sleeve with a shoulder dome,
+# elbow ball, forearm sleeve with a rolled cuff, and a chunky hand (palm, finger block, thumb).
+mwB = body.matrix_world.copy()
+def cut_arms():
+    bm = bmesh.new(); bm.from_mesh(body.data); bm.faces.ensure_lookup_table()
+    dead = []
+    for f in bm.faces:
+        c = f.calc_center_median(); ax_ = abs(c.x)
+        if 0.56 < c.z < 1.37 and (ax_ > (0.245 if c.z > 0.86 else 0.232)):
+            dead.append(f)
+    bmesh.ops.delete(bm, geom=dead, context='FACES')
+    loose = [v for v in bm.verts if not v.link_faces]; bmesh.ops.delete(bm, geom=loose, context='VERTS')
+    edges = [e for e in bm.edges if e.is_boundary]
+    res = bmesh.ops.holes_fill(bm, edges=edges, sides=0)
+    bmesh.ops.triangulate(bm, faces=res['faces'])
+    bm.to_mesh(body.data); bm.free()
+    return len(dead)
+ncut = cut_arms()
+SHIRT = body.data.materials.get(P + 'shirt') or body.data.materials[0]
+SKINM = body.data.materials.get(P + 'skin') or SHIRT
+CUFFM = SHIRT
+def lb(name): return Vector(B[name][0]), Vector(B[name][1])
+def tube(name, a, b, r0, r1, mat, seg=20):
+    """A tapered sleeve tube from a to b (body-local), capped, smooth."""
+    d = (b - a); L_ = d.length
+    bm = bmesh.new(); bmesh.ops.create_cone(bm, cap_ends=True, segments=seg, radius1=r0, radius2=r1, depth=L_)
+    for v in bm.verts: v.co.z += L_ / 2
+    o = kit.from_bm(name, bm, mat, smooth_angle=60)
+    o.matrix_world = mwB @ Matrix.Translation(a) @ d.to_track_quat('Z', 'Y').to_matrix().to_4x4()
+    kit.bevel(o, 0.004, 2, angle=50)
+    return o
+def ball(name, c, r, mat):
+    bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=20, v_segments=12, radius=r)
+    o = kit.from_bm(name, bm, mat, smooth_angle=89); o.matrix_world = mwB @ Matrix.Translation(c)
+    return o
+arms = []
+SLEEVES = []
+GLOVE = kit.painted(P + 'glove', ['#2a1d14', '#3a2a1e', '#4a3626'], rough=0.75, scale=20.0, cavity=0.5) if P == 'nils_' else SKINM
+def sleeve(name, pts, radii, mat, seg=16):
+    """One continuous tapered sleeve along shoulder -> elbow -> wrist (reviewer c6: no tubes, balls or pipe cuffs).
+    Rings are oriented along the path; weights blend upper_arm -> forearm across the elbow; the top ring sits inside
+    the torso so the shoulder reads as one shape."""
+    bm = bmesh.new(); rings = []; ts_ = []
+    for k, (c, r) in enumerate(zip(pts, radii)):
+        d = (pts[min(k + 1, len(pts) - 1)] - pts[max(k - 1, 0)]).normalized()
+        q = d.to_track_quat('Z', 'Y')
+        ring = []
+        for j in range(seg):
+            a_ = 2 * math.pi * j / seg
+            ring.append(bm.verts.new(c + q @ Vector((r * math.cos(a_), r * math.sin(a_), 0))))
+        rings.append(ring)
+    for r0, r1 in zip(rings, rings[1:]):
+        for j in range(seg):
+            jj = (j + 1) % seg; bm.faces.new((r0[j], r0[jj], r1[jj], r1[j]))
+    bm.faces.new(list(reversed(rings[0]))); bm.faces.new(rings[-1])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    o = kit.from_bm(name, bm, mat, smooth_angle=70)
+    o.matrix_world = mwB.copy()
+    return o, [len(r) for r in rings]
+for n, sg in (('L', 1), ('R', -1)):
+    sh_a, sh_b = lb(f'upper_arm.{n}'); fo_a, fo_b = lb(f'forearm.{n}'); ha_a, ha_b = lb(f'hand.{n}')
+    top = sh_a + Vector((-sg * 0.045, 0, 0.0))                     # sunk into the torso
+    pts, radii, wts = [], [], []
+    N_ = 14
+    for k in range(N_ + 1):
+        t = k / N_
+        if t < 0.5:
+            u = t / 0.5; c = top.lerp(sh_b, u); r = 0.062 + (0.05 - 0.062) * u
+        else:
+            u = (t - 0.5) / 0.5; c = sh_b.lerp(fo_b, u); r = 0.05 + (0.044 - 0.05) * u
+        pts.append(c); radii.append(r)
+        wts.append(max(0.0, min(1.0, (t - 0.42) / 0.16)))           # 0 = upper_arm, 1 = forearm, blended at the elbow
+    o, counts = sleeve(f'{P}sleeve_{n}', pts, radii, SHIRT)
+    gu = o.vertex_groups.new(name=f'upper_arm.{n}'); gf = o.vertex_groups.new(name=f'forearm.{n}')
+    idx = 0
+    for k, cnt in enumerate(counts):
+        ids = list(range(idx, idx + cnt)); idx += cnt
+        gu.add(ids, 1.0 - wts[k], 'REPLACE'); gf.add(ids, wts[k], 'REPLACE')
+    o.parent = arm; o.matrix_parent_inverse = arm.matrix_world.inverted() @ Matrix.Identity(4)
+    o.matrix_world = mwB.copy()
+    md = o.modifiers.new('rig', 'ARMATURE'); md.object = arm
+    SLEEVES.append(o.name); arms.append(o.name)
+    cuff = tube(f'{P}arm_cuff_{n}', fo_b - (fo_b - fo_a).normalized() * 0.035, fo_b + (fo_b - fo_a).normalized() * 0.004, 0.047, 0.047, CUFFM, seg=24)
+    hdir = (ha_b - ha_a).normalized()
+    # hands: 1.25x, a separated thumb, finger block with a relaxed curl; Nils wears dark work gloves
+    palm = kit.box(f'{P}hand_palm_{n}', (0.034, 0.088, 0.085), (0, 0, 0), mat=GLOVE, bev=0.013, segs=3)
+    for i in range(4):                                               # four grooved fingers
+        fi = kit.box(f'{P}hand_f{i}_{n}', (0.026, 0.019, 0.07), (0, -0.031 + i * 0.0205, -0.07), mat=GLOVE, bev=0.008, segs=2)
+        fi.rotation_euler = (0, math.radians(sg * -14), 0); fi.parent = palm
+    thumb = kit.cyl(f'{P}hand_thumb_{n}', 0.016, 0.065, (-sg * 0.014, -0.05, -0.01), (math.radians(-50), math.radians(-sg * 15), 0), seg=12, mat=GLOVE, bev=0.007)
+    thumb.parent = palm
+    palm.matrix_world = mwB @ Matrix.Translation(ha_a + hdir * 0.052)
+    for o2, bone in ((cuff, f'forearm.{n}'), (palm, f'hand.{n}')):
+        to_bone(o2, bone); arms.append(o2.name)
+print('ARMS cut', ncut, 'faces; built', len(arms), 'pieces')
+
 # body skin
 mwb = body.matrix_world.copy()
 bpy.ops.object.select_all(action='DESELECT'); body.select_set(True); arm.select_set(True)
@@ -81,7 +179,7 @@ how = 'geometric'
 Vb = np.array([v.co[:] for v in body.data.vertices]); bx, by, bz = Vb[:, 0], Vb[:, 1], Vb[:, 2]; ax_ = np.abs(bx)
 def ss(a, b, v):
     t = np.clip((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t)
-armness = np.where(bz > 0.86, ss(0.235, 0.27, ax_), ss(0.215, 0.245, ax_)) * ss(0.56, 0.6, bz) * ss(1.42, 1.36, bz)
+armness = np.zeros(len(bz))                                         # arms are rebuilt as jointed pieces
 shoulder_blend = ss(1.24, 1.32, bz) * ss(0.17, 0.26, ax_)               # deltoid: shared by chest and upper arm
 legs = ss(0.98, 0.9, bz) * (1 - armness)
 torso = np.clip(1 - armness - legs, 0, 1)
@@ -150,14 +248,14 @@ TONGUE = kit.flat(P + 'tongue', '#8a3a33', rough=0.6)
 bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=24, v_segments=12, radius=1.0)
 for v in bm.verts: v.co = Vector((v.co.x * 0.023, v.co.y * 0.009, (v.co.z - 1.0) * 0.014))   # hangs down from its origin
 cav = kit.from_bm(P + 'mouth_cavity', bm, INT, smooth_angle=89); cav.parent = mroot
-tb = kit.box(P + 'teeth_top', (0.03, 0.004, 0.005), (0, -0.003, -0.0035), mat=TEETH, bev=0.0012); tb.parent = mroot
+tb = kit.box(P + 'teeth_top', (0.026, 0.004, 0.004), (0, 0.001, -0.0045), mat=TEETH, bev=0.0012); tb.parent = mroot
 tg = kit.box(P + 'tongue', (0.024, 0.006, 0.006), (0, 0.002, -0.021), mat=TONGUE, bev=0.002); tg.parent = mroot
 mroot.scale = (1, 1, 0.02)
 to_bone(mroot, 'neck')
 
 # lips (Caesar, 27 Nov: "like they have no lips"): sculpted upper and lower lip that frame the dark mouth. The upper
 # lip is rigid on the head; the lower lip rides a jaw pivot that turns with the jaw_open key (same hinge, 13 deg).
-LIPM = kit.painted(P + 'lips', ['#5e2620', '#74322a', '#874034'] if P == 'nils_' else ['#8a3c34', '#a04a40', '#b2584c'],
+LIPM = kit.painted(P + 'lips', ['#b0624e', '#bf705a', '#cc7e66'] if P == 'nils_' else ['#c87a68', '#d48a76', '#de9884'],
                    rough=0.42, scale=30.0, cavity=0.35, cavity_dist=0.006)
 fwd = (mwB.to_3x3() @ Vector((0, 1, 0))).normalized()
 def surf_local(xl, zl):

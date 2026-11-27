@@ -31,8 +31,8 @@ GENERATED_FEATURES = headob is not body      # the generated head already carrie
 mats = {m.name: m for m in bpy.data.materials}
 SKIN, HAIR = mats[PFX + 'skin'], mats[PFX + 'hair']
 NOSE = kit.painted('nils_nose', ['#b0634a', '#c8775b', '#d88d6e'], rough=0.55, scale=6.0, cavity=0.5, cavity_dist=0.02)
-WHITE = kit.flat('nils_eyewhite', '#d8d0c4', rough=0.3)
-IRIS = kit.flat('nils_iris', '#5a4630', rough=0.25)
+WHITE = kit.flat('nils_eyewhite', '#e6dfd4', rough=0.06)
+IRIS = kit.flat('nils_iris', '#6a4e30', rough=0.08)
 PUPIL = kit.flat('nils_pupil', '#0d0b0a', rough=0.15)
 LIP = kit.painted('nils_lip', ['#7a3e30', '#8e4c3a', '#9c5843'], rough=0.5, scale=8.0, cavity=0.4)
 MOUTH = kit.flat('nils_mouthline', '#2a1611', rough=0.7)
@@ -83,9 +83,9 @@ def loft_brow(side, lift):
     bm = bmesh.new()
     for k in range(n):
         t = k / (n - 1)
-        x = side * (0.008 + 0.088 * t)
-        zc = 1.589 + lift + 0.014 * t + 0.006 * math.sin(math.pi * t)
-        hgt = 0.031 * (1 - 0.42 * t) * (0.8 if k in (0, n - 1) else 1.0)
+        x = side * (0.01 + 0.075 * t)
+        zc = 1.589 + lift + 0.006 * t + 0.004 * math.sin(math.pi * t)
+        hgt = 0.024 * (1 - 0.35 * t) * (0.8 if k in (0, n - 1) else 1.0)
         ys = (surf_y(x, zc) or -0.19)
         yf = ys - 0.011 * (1 - 0.3 * t)                         # proud of the surface, most at the inner end
         sec = [(yf + 0.004, zc + hgt * 0.55), (yf, zc + hgt * 0.15), (yf + 0.001, zc - hgt * 0.35),
@@ -136,7 +136,7 @@ def sideburn(side):
     kit.bevel(o, 0.0012, 1, angle=40)
     keep(o)
 
-EYE_Z, EYE_X, EYE_R = float(arg('--eyez', '1.556')), float(arg('--eyex', '0.042')), 0.0125
+EYE_Z, EYE_X, EYE_R = float(arg('--eyez', '1.556')), float(arg('--eyex', '0.042')), 0.0138
 for side in (-1, 1):
     sy = surf_y(side * EYE_X, EYE_Z)
     c = Vector((side * EYE_X, sy + EYE_R - 0.0035, EYE_Z))   # the front of the eye sits 3.5 mm proud of the socket
@@ -313,7 +313,7 @@ if VARIANT == 'theo':
             u = j / 3; wdt = 0.014 * (1 - 0.55 * u)
             rows.append([(x - wdt, ys - 0.006, zc - ln_ * u), (x + wdt, ys - 0.006, zc - ln_ * u),
                          (x + wdt, ys + 0.004, zc - ln_ * u + 0.002), (x - wdt, ys + 0.004, zc - ln_ * u + 0.002)])
-        loft(f'fringe_{k}', rows, HAIR, smooth=50)
+        pass                                                     # cycle 7: fringe removed (read as sawtooth)
     # brand-new gear: a price tag still hanging from the beanie on a string
     TAG = kit.painted('theo_tag', ['#e8e2d0', '#f1ecdd', '#faf6ea'], rough=0.7, scale=20.0, cavity=0.2)
     hb = HB.ray_cast(Vector((1.0, -0.05, 1.63)), Vector((-1, 0, 0)), 2.0)

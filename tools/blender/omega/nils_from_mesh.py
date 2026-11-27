@@ -108,6 +108,11 @@ for it in range(400):
     known[newly] = True
 log['coloured_frac'] = round(float(known.mean()), 3)
 bm.free()
+# cycle 11: keep the projection itself as a UV map ('sheet') so the model sheet's painted image can texture the mesh
+uvl = me.uv_layers.new(name='sheet')
+uvs = np.stack([pu / W, 1.0 - pv / H], 1)
+loop_v = np.zeros(len(me.loops), np.int64); me.loops.foreach_get('vertex_index', loop_v)
+uvl.data.foreach_set('uv', uvs[loop_v].astype(np.float32).ravel())
 ca = me.color_attributes.new('paint', 'FLOAT_COLOR', 'POINT')
 srgb2lin = lambda c: np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
 lin = srgb2lin(np.clip(col, 0, 1))
@@ -140,6 +145,9 @@ if VOXEL:
         me.color_attributes.new('paint', 'FLOAT_COLOR', 'POINT')
     dt = ob.modifiers.new('dt', 'DATA_TRANSFER'); dt.object = src
     dt.use_vert_data = True; dt.data_types_verts = {'COLOR_VERTEX'}; dt.vert_mapping = 'NEAREST'
+    if 'sheet' not in me.uv_layers: me.uv_layers.new(name='sheet')
+    dt.use_loop_data = True; dt.data_types_loops = {'UV'}; dt.loop_mapping = 'POLYINTERP_NEAREST'
+    dt.layers_uv_select_src = 'ALL'; dt.layers_uv_select_dst = 'NAME'
     bpy.ops.object.modifier_apply(modifier=dt.name)
     bpy.data.objects.remove(src)
     log['faces_remeshed'] = len(me.polygons)

@@ -21,9 +21,9 @@ VARIANT = arg('--variant', 'nils')      # 'theo': the beginner (new yellow rain 
 # region: (sheet sample sRGB for classification, paint tones, roughness, metal)
 PAL = {
     'cap':    ('#a84a26', ['#6e250e', '#8f3514', '#a5441a'], 0.9, 0.0),
-    'skin':   ('#b98068', ['#87503a', '#a0603f', '#b47552'], 0.64, 0.0),
+    'skin':   ('#b98068', ['#9a5e44', '#b37356', '#c88c6c'], 0.62, 0.0),
     'lip':    ('#8e4c3a', ['#6a3426', '#7c3e2e', '#8c4a36'], 0.55, 0.0),
-    'nose':   ('#c0705a', ['#a24a30', '#b85a3a', '#c86a46'], 0.55, 0.0),
+    'nose':   ('#c0705a', ['#b05a44', '#c26a50', '#d07c5e'], 0.58, 0.0),
     'hair':   ('#8a8682', ['#6b6866', '#8d8985', '#a9a49e'], 0.75, 0.0),
     'shirt':  ('#38434c', ['#27313a', '#36424c', '#46525c'], 0.78, 0.0),
     'bib':    ('#615f2c', ['#46441d', '#5e5c29', '#77733a'], 0.62, 0.0),
@@ -37,7 +37,7 @@ PAL = {
 if VARIANT == 'theo':
     PAL.update({
         'cap':   ('#1f6f78', ['#14525a', '#1c6a73', '#278590'], 0.8, 0.0),
-        'skin':  ('#c98e70', ['#b27258', '#c88a6c', '#d9a083'], 0.6, 0.0),
+        'skin':  ('#c98e70', ['#bf8466', '#d09a7c', '#ddb092'], 0.6, 0.0),
         'nose':  ('#c98e70', ['#b46a50', '#c97e60', '#d99274'], 0.55, 0.0),
         'lip':   ('#a05c48', ['#8a4a3a', '#9a5644', '#a8614d'], 0.5, 0.0),
         'hair':  ('#5a3a22', ['#3e2716', '#583820', '#71492b'], 0.7, 0.0),
@@ -76,7 +76,13 @@ for ob in [o for o in bpy.data.objects if o.type == 'MESH' and o.name.startswith
     ref = to_lab(np.array([[int(PAL[n][0][i:i + 2], 16) / 255 for i in (1, 3, 5)] for n in NAMES]))
     w = np.array([0.45, 1.3, 1.3])                 # lightness matters less than hue: the sheet's light is baked in
     d = (((lab[:, None, :] - ref[None]) * w) ** 2).sum(-1)
-    V = np.array([v.co[:] for v in me.vertices]); V = V @ mw[:3, :3].T + mw[:3, 3]; x, y, z = V[:, 0], V[:, 1], V[:, 2]
+    V = np.array([v.co[:] for v in me.vertices])
+    PERFACE = '--perface' in argv          # cycle 4: zones decided per face centroid -> straight region borders
+    if PERFACE:
+        FV = [list(p_.vertices) for p_ in me.polygons]
+        V = np.array([V[i].mean(0) for i in FV]); lab = np.array([lab[i].mean(0) for i in FV])
+        d = (((lab[:, None, :] - ref[None]) * w) ** 2).sum(-1)
+    V = V @ mw[:3, :3].T + mw[:3, 3]; x, y, z = V[:, 0], V[:, 1], V[:, 2]
     zz = z                 # rules are written for a 1.75 m Nils facing -Y (his left = +X)
     ax = np.abs(x)
     # allowed labels per zone (anatomy and garment layout from the model sheet); colour picks within them
@@ -115,7 +121,7 @@ for ob in [o for o in bpy.data.objects if o.type == 'MESH' and o.name.startswith
 
     bm = bmesh.new(); bm.from_mesh(me); bm.verts.ensure_lookup_table(); bm.faces.ensure_lookup_table()
     nbr = [[e.other_vert(v).index for e in v.link_edges] for v in bm.verts]
-    for it in range(int(arg('--filter', '7'))):
+    for it in range(0 if PERFACE else int(arg('--filter', '7'))):
         new = lab_id.copy()
         for k, ns in enumerate(nbr):
             if ns:
@@ -126,7 +132,7 @@ for ob in [o for o in bpy.data.objects if o.type == 'MESH' and o.name.startswith
     for n in NAMES:
         me.materials.append(MATS[n])
     for f in bm.faces:
-        f.material_index = int(np.bincount(lab_id[[v.index for v in f.verts]], minlength=len(NAMES)).argmax())
+        f.material_index = int(lab_id[f.index]) if PERFACE else int(np.bincount(lab_id[[v.index for v in f.verts]], minlength=len(NAMES)).argmax())
     bm.to_mesh(me); bm.free()
     counts = {n: int((lab_id == i).sum()) for i, n in enumerate(NAMES)}
     print('REGIONS', counts)

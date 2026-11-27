@@ -360,3 +360,65 @@ def camera(name, loc, target, lens=50.0, fstop=None, focus=None, sensor=36.0):
         c.dof.focus_distance = focus if focus else (Vector(target) - Vector(loc)).length
     bpy.context.scene.camera = o
     return o
+
+
+def asset(p):
+    """Local Windows path on Caesar's PC; with OMEGA_ROOT set (cloud render), the same file in the repo bundle
+    assets/omega: textures/<set>/..., anim/<glb>, and loose images by file name."""
+    r = os.environ.get('OMEGA_ROOT')
+    if not r: return p
+    q = p.replace('\\', '/')
+    if '/textures' in q: return os.path.join(r, 'textures' + q.split('/textures', 1)[1])
+    return os.path.join(r, 'anim' if q.endswith('.glb') else '', os.path.basename(q))
+
+
+TEX_ROOT = asset(r'D:\CounterPhysical\assets-cc0\textures')
+
+
+def tex_material(name, set_name, scale=1.0, tint=None, rough_add=0.15, normal=0.35, saturation=1.0, flat=None, detail=1.0):
+    """A matte game-style material from a CC0 PBR set (ambientCG): colour, roughness and a soft normal, box-projected
+    in object space (no UVs needed). Cycle 1-2 audits: the references carry painted game textures on every surface."""
+    import os
+    m = bpy.data.materials.new(name); m.use_nodes = True
+    nt = m.node_tree; N, L = nt.nodes, nt.links; b = N['Principled BSDF']
+    base = os.path.join(TEX_ROOT, set_name, set_name)
+    tc = N.new('ShaderNodeTexCoord'); mp = N.new('ShaderNodeMapping'); mp.inputs['Scale'].default_value = (scale, scale, scale)
+    L.new(tc.outputs['Object'], mp.inputs['Vector'])
+    def img(suffix, noncolor):
+        p = base + suffix
+        if not os.path.exists(p): return None
+        n = N.new('ShaderNodeTexImage'); n.image = bpy.data.images.load(p, check_existing=True)
+        n.projection = 'BOX'; n.projection_blend = 0.25
+        if noncolor: n.image.colorspace_settings.name = 'Non-Color'
+        L.new(mp.outputs['Vector'], n.inputs['Vector']); return n
+    c = img('_Color.jpg', False); r = img('_Roughness.jpg', True); nrm = img('_NormalGL.jpg', True)
+    col = c.outputs['Color']
+    if tint or saturation != 1.0:
+        hs = N.new('ShaderNodeHueSaturation'); hs.inputs['Saturation'].default_value = saturation
+        L.new(col, hs.inputs['Color']); col = hs.outputs['Color']
+        if tint:
+            mx = N.new('ShaderNodeMix'); mx.data_type = 'RGBA'; mx.blend_type = 'MULTIPLY'; mx.inputs['Factor'].default_value = 1.0
+            L.new(col, mx.inputs['A']); mx.inputs['B'].default_value = hexc(tint); col = mx.outputs['Result']
+    if flat:                                  # cycle 3 review: photo textures read as 'realistic Blender'; keep the
+        lum = N.new('ShaderNodeRGBToBW'); L.new(col, lum.inputs['Color'])          # texture only as a value modulation
+        mr = N.new('ShaderNodeMapRange'); mr.inputs['From Min'].default_value = 0.15; mr.inputs['From Max'].default_value = 0.6
+        mr.inputs['To Min'].default_value = 1.0 - 0.35 * detail; mr.inputs['To Max'].default_value = 1.0 + 0.12 * detail
+        L.new(lum.outputs['Val'], mr.inputs['Value'])
+        mx2 = N.new('ShaderNodeMix'); mx2.data_type = 'RGBA'; mx2.blend_type = 'MULTIPLY'; mx2.inputs['Factor'].default_value = 1.0
+        mx2.inputs['A'].default_value = hexc(flat); L.new(mr.outputs['Result'], mx2.inputs['B'])
+        nz = N.new('ShaderNodeTexNoise'); nz.inputs['Scale'].default_value = 2.0; L.new(tc.outputs['Object'], nz.inputs['Vector'])
+        mr2 = N.new('ShaderNodeMapRange'); mr2.inputs['To Min'].default_value = 0.9; mr2.inputs['To Max'].default_value = 1.08
+        L.new(nz.outputs['Fac'], mr2.inputs['Value'])
+        mx3 = N.new('ShaderNodeMix'); mx3.data_type = 'RGBA'; mx3.blend_type = 'MULTIPLY'; mx3.inputs['Factor'].default_value = 1.0
+        L.new(mx2.outputs['Result'], mx3.inputs['A']); L.new(mr2.outputs['Result'], mx3.inputs['B'])
+        col = mx3.outputs['Result']
+    L.new(col, b.inputs['Base Color'])
+    if r:
+        ad = N.new('ShaderNodeMath'); ad.operation = 'ADD'; ad.inputs[1].default_value = rough_add; ad.use_clamp = True
+        L.new(r.outputs['Color'], ad.inputs[0]); L.new(ad.outputs[0], b.inputs['Roughness'])
+    if nrm:
+        nm = N.new('ShaderNodeNormalMap'); nm.inputs['Strength'].default_value = normal
+        L.new(nrm.outputs['Color'], nm.inputs['Color']); L.new(nm.outputs['Normal'], b.inputs['Normal'])
+    try: b.inputs['Specular IOR Level'].default_value = 0.2
+    except Exception: pass
+    return m

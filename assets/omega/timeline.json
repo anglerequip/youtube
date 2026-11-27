@@ -1,0 +1,460 @@
+{
+ "lines": [
+  {
+   "i": 1,
+   "who": "theo",
+   "text": "I bought every lure. Just to be safe.",
+   "wav": "D:\\CounterPhysical\\research\\omega\\lure30\\audio\\l01_theo.wav",
+   "dur": 1.89,
+   "words": [
+    {
+     "w": "I",
+     "s": 0.0,
+     "e": 0.06
+    },
+    {
+     "w": "bought",
+     "s": 0.06,
+     "e": 0.18
+    },
+    {
+     "w": "every",
+     "s": 0.18,
+     "e": 0.46
+    },
+    {
+     "w": "lure.",
+     "s": 0.46,
+     "e": 0.74
+    },
+    {
+     "w": "Just",
+     "s": 0.74,
+     "e": 1.1
+    },
+    {
+     "w": "to",
+     "s": 1.1,
+     "e": 1.24
+    },
+    {
+     "w": "be",
+     "s": 1.24,
+     "e": 1.3
+    },
+    {
+     "w": "safe.",
+     "s": 1.3,
+     "e": 1.56
+    }
+   ],
+   "start": 0.9
+  },
+  {
+   "i": 2,
+   "who": "nils",
+   "text": "Every lure. For one lake.",
+   "wav": "D:\\CounterPhysical\\research\\omega\\lure30\\audio\\l02_nils.wav",
+   "dur": 2.0,
+   "words": [
+    {
+     "w": "Every",
+     "s": 0.0,
+     "e": 0.28
+    },
+    {
+     "w": "lure.",
+     "s": 0.28,
+     "e": 0.58
+    },
+    {
+     "w": "For",
+     "s": 0.58,
+     "e": 1.08
+    },
+    {
+     "w": "one",
+     "s": 1.08,
+     "e": 1.3
+    },
+    {
+     "w": "lake.",
+     "s": 1.3,
+     "e": 1.6
+    }
+   ],
+   "start": 4.0
+  },
+  {
+   "i": 3,
+   "who": "theo",
+   "text": "So which one do I use?",
+   "wav": "D:\\CounterPhysical\\research\\omega\\lure30\\audio\\l03_theo.wav",
+   "dur": 1.2,
+   "words": [
+    {
+     "w": "So",
+     "s": 0.0,
+     "e": 0.08
+    },
+    {
+     "w": "which",
+     "s": 0.08,
+     "e": 0.18
+    },
+    {
+     "w": "one",
+     "s": 0.18,
+     "e": 0.32
+    },
+    {
+     "w": "do",
+     "s": 0.32,
+     "e": 0.44
+    },
+    {
+     "w": "I",
+     "s": 0.44,
+     "e": 0.58
+    },
+    {
+     "w": "use?",
+     "s": 0.58,
+     "e": 0.84
+    }
+   ],
+   "start": 6.3
+  },
+  {
+   "i": 4,
+   "who": "nils",
+   "text": "Depends. Look outside.",
+   "wav": "D:\\CounterPhysical\\research\\omega\\lure30\\audio\\l04_nils.wav",
+   "dur": 1.96,
+   "words": [
+    {
+     "w": "Depends.",
+     "s": 0.0,
+     "e": 0.42
+    },
+    {
+     "w": "Look",
+     "s": 0.84,
+     "e": 0.92
+    },
+    {
+     "w": "outside.",
+     "s": 0.92,
+     "e": 1.28
+    }
+   ],
+   "start": 7.8
+  },
+  {
+   "i": 5,
+   "who": "nils",
+   "text": "Cloudy. South-west wind. Pressure falling.",
+   "wav": "D:\\CounterPhysical\\research\\omega\\lure30\\audio\\l05_nils.wav",
+   "dur": 2.99,
+   "words": [
+    {
+     "w": "Cloudy.",
+     "s": 0.0,
+     "e": 0.4
+    },
+    {
+     "w": "South-west",
+     "s": 0.4,
+     "e": 0.84
+    },
+    {
+     "w": "wind.",
+     "s": 0.84,
+     "e": 1.34
+    },
+    {
+     "w": "Pressure",
+     "s": 1.82,
+     "e": 2.08
+    },
+    {
+     "w": "falling.",
+     "s": 2.08,
+     "e": 2.62
+    }
+   ],
+   "start": 10.0
+  },
+  {
+   "i": 6,
+   "who": "nils",
+   "text": "The pike move to the windy bank.",
+   "wav": "D:\\CounterPhysical\\research\\omega\\lure30\\audio\\l06_nils.wav",
+   "dur": 2.53,
+   "words": [
+    {
+     "w": "The",
+     "s": 0.0,
+     "e": 0.08
+    },
+    {
+     "w": "pike",
+     "s": 0.08,
+     "e": 0.4
+    },
+    {
+     "w": "move",
+     "s": 0.4,
+     "e": 0.7
+    },
+    {
+     "w": "to",
+     "s": 0.7,
+     "e": 1.36
+    },
+    {
+     "w": "the",
+     "s": 1.36,
+     "e": 1.48
+    },
+    {
+     "w": "windy",
+     "s": 1.48,
+     "e": 1.86
+    },
+    {
+     "w": "bank.",
+     "s": 1.86,
+     "e": 2.08
+    }
+   ],
+   "start": 13.25
+  },
+  {
+   "i": 7,
+   "who": "theo",
+   "text": "You can tell all that from a window?",
+   "wav": "D:\\CounterPhysical\\research\\omega\\lure30\\audio\\l07_theo.wav",
+   "dur": 1.52,
+   "words": [
+    {
+     "w": "You",
+     "s": 0.0,
+     "e": 0.06
+    },
+    {
+     "w": "can",
+     "s": 0.06,
+     "e": 0.14
+    },
+    {
+     "w": "tell",
+     "s": 0.14,
+     "e": 0.3
+    },
+    {
+     "w": "all",
+     "s": 0.3,
+     "e": 0.52
+    },
+    {
+     "w": "that",
+     "s": 0.52,
+     "e": 0.68
+    },
+    {
+     "w": "from",
+     "s": 0.68,
+     "e": 0.86
+    },
+    {
+     "w": "a",
+     "s": 0.86,
+     "e": 0.96
+    },
+    {
+     "w": "window?",
+     "s": 0.96,
+     "e": 1.18
+    }
+   ],
+   "start": 16.0
+  },
+  {
+   "i": 8,
+   "who": "nils",
+   "text": "No. I asked AnglerMind.",
+   "wav": "D:\\CounterPhysical\\research\\omega\\lure30\\audio\\l08_nils.wav",
+   "dur": 2.14,
+   "words": [
+    {
+     "w": "No.",
+     "s": 0.0,
+     "e": 0.22
+    },
+    {
+     "w": "I",
+     "s": 0.52,
+     "e": 0.58
+    },
+    {
+     "w": "asked",
+     "s": 0.58,
+     "e": 0.9
+    },
+    {
+     "w": "AnglerMind.",
+     "s": 0.9,
+     "e": 1.7
+    }
+   ],
+   "start": 17.75
+  },
+  {
+   "i": 9,
+   "who": "nils",
+   "text": "It reads the wind and the light, ranks the spots, and picks the lure.",
+   "wav": "D:\\CounterPhysical\\research\\omega\\lure30\\audio\\l09_nils.wav",
+   "dur": 4.48,
+   "words": [
+    {
+     "w": "It",
+     "s": 0.0,
+     "e": 0.08
+    },
+    {
+     "w": "reads",
+     "s": 0.08,
+     "e": 0.28
+    },
+    {
+     "w": "the",
+     "s": 0.28,
+     "e": 0.58
+    },
+    {
+     "w": "wind",
+     "s": 0.58,
+     "e": 0.78
+    },
+    {
+     "w": "and",
+     "s": 0.78,
+     "e": 1.18
+    },
+    {
+     "w": "the",
+     "s": 1.18,
+     "e": 1.3
+    },
+    {
+     "w": "light,",
+     "s": 1.3,
+     "e": 1.56
+    },
+    {
+     "w": "ranks",
+     "s": 1.56,
+     "e": 2.18
+    },
+    {
+     "w": "the",
+     "s": 2.18,
+     "e": 2.5
+    },
+    {
+     "w": "spots,",
+     "s": 2.5,
+     "e": 2.86
+    },
+    {
+     "w": "and",
+     "s": 2.86,
+     "e": 3.44
+    },
+    {
+     "w": "picks",
+     "s": 3.44,
+     "e": 3.62
+    },
+    {
+     "w": "the",
+     "s": 3.62,
+     "e": 3.88
+    },
+    {
+     "w": "lure.",
+     "s": 3.88,
+     "e": 4.1
+    }
+   ],
+   "start": 20.1
+  },
+  {
+   "i": 10,
+   "who": "theo",
+   "text": "So... the other three hundred?",
+   "wav": "D:\\CounterPhysical\\research\\omega\\lure30\\audio\\l10_theo.wav",
+   "dur": 1.3,
+   "words": [
+    {
+     "w": "So...",
+     "s": 0.0,
+     "e": 0.12
+    },
+    {
+     "w": "the",
+     "s": 0.22,
+     "e": 0.36
+    },
+    {
+     "w": "other",
+     "s": 0.36,
+     "e": 0.44
+    },
+    {
+     "w": "three hundred?",
+     "s": 0.44,
+     "e": 0.86
+    }
+   ],
+   "start": 24.85
+  },
+  {
+   "i": 11,
+   "who": "nils",
+   "text": "Christmas presents.",
+   "wav": "D:\\CounterPhysical\\research\\omega\\lure30\\audio\\l11_nils.wav",
+   "dur": 1.36,
+   "words": [
+    {
+     "w": "Christmas",
+     "s": 0.0,
+     "e": 0.36
+    },
+    {
+     "w": "presents.",
+     "s": 0.36,
+     "e": 0.82
+    }
+   ],
+   "start": 26.4
+  },
+  {
+   "i": 12,
+   "who": "nils",
+   "text": "AnglerMind dot com.",
+   "wav": "D:\\CounterPhysical\\research\\omega\\lure30\\audio\\l12_nils.wav",
+   "dur": 2.03,
+   "words": [
+    {
+     "w": "anglermind.com",
+     "s": 0.0,
+     "e": 1.66
+    }
+   ],
+   "start": 28.8
+  }
+ ],
+ "total": 31.8
+}
